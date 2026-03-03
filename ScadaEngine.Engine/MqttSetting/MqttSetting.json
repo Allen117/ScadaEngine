@@ -1,0 +1,12 @@
+{
+  "MqttConfig": {
+    "szBrokerIp": "127.0.0.1",
+    "nPort": 1883,
+    "szClientId": "SCADA_Main_Engine",
+    "szBaseTopic": "SCADA/Realtime",
+    "isRetain": true
+  },
+  "ConnectionStrings": {
+    "szDefaultConnection": "Server=localhost;Database=ScadaDB;User Id=sa;Password=your_password;"
+  }
+}

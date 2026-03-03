@@ -1,0 +1,95 @@
+@model ScadaEngine.Web.Features.Login.Models.LoginModel
+@{
+    ViewData["Title"] = "SCADA 系統登入";
+    Layout = "~/Views/Shared/_LoginLayout.cshtml";
+}
+
+<div class="card login-card">
+    <div class="card-body p-4">
+        <h2 class="login-title fs-3">
+            <i class="fas fa-shield-alt"></i>
+            SCADA 系統登入
+        </h2>
+
+        <form asp-action="Index" asp-controller="Login" method="post" id="frmLogin">
+            @Html.AntiForgeryToken()
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger" role="alert">
+                    @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                    {
+                        <div>@error.ErrorMessage</div>
+                    }
+                </div>
+            }
+
+            <!-- 使用者名稱輸入框 -->
+            <div class="mb-3">
+                <label asp-for="szUserName" class="form-label">
+                    <i class="fas fa-user"></i>
+                    使用者名稱
+                </label>
+                <input asp-for="szUserName"
+                       class="form-control"
+                       id="tbUserName"
+                       placeholder="請輸入使用者名稱"
+                       autocomplete="username"
+                       required />
+                <span asp-validation-for="szUserName" class="text-danger"></span>
+            </div>
+
+            <!-- 密碼輸入框 -->
+            <div class="mb-3">
+                <label asp-for="szPassword" class="form-label">
+                    <i class="fas fa-key"></i>
+                    密碼
+                </label>
+                <input asp-for="szPassword"
+                       type="password"
+                       class="form-control"
+                       id="tbPassword"
+                       placeholder="請輸入密碼"
+                       autocomplete="current-password"
+                       required />
+                <span asp-validation-for="szPassword" class="text-danger"></span>
+            </div>
+
+            <!-- 記住我選項 -->
+            <div class="mb-3 form-check">
+                <input asp-for="isRememberMe"
+                       type="checkbox"
+                       class="form-check-input"
+                       id="chkRememberMe" />
+                <label asp-for="isRememberMe" class="form-check-label">
+                    記住我
+                </label>
+            </div>
+
+            <!-- 登入按鈕 -->
+            <div class="d-grid">
+                <button type="submit"
+                        class="btn btn-primary btn-lg btn-login"
+                        id="btnLogin">
+                    <i class="fas fa-sign-in-alt"></i>
+                    立即登入
+                </button>
+            </div>
+        </form>
+
+        <!-- 預設帳密提示 (僅在 Users 資料表為空時顯示) -->
+        @if (ViewBag.ShowDefaultHint ?? false)
+        {
+            <div class="test-account-info mt-3">
+                <small class="text-muted">
+                    <i class="fas fa-info-circle"></i>
+                    預設帳號：ITRI &nbsp;／&nbsp; 密碼：ITRI
+                </small>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/site.js" asp-append-version="true"></script>
+}

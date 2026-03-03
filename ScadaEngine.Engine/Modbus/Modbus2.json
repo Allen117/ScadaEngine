@@ -1,0 +1,53 @@
+{
+  "IP": "127.0.0.1",
+  "Port": 502,
+  "ModbusId": "3",
+  "connectTimeout": 100,
+  "Tags": [
+    {
+      "Name": "Single1-1",
+      "Address": "1001",
+      "DataType": "UINTEGER",
+      "Ratio": "1",
+      "Unit": "",
+      "Min": "0",
+      "Max": "100"
+    },
+    {
+      "Name": "Single1-2",
+      "Address": "1002",
+      "DataType": "UINTEGER",
+      "Ratio": "1",
+      "Unit": "",
+      "Min": "0",
+      "Max": "100"
+    },
+    {
+      "Name": "Single2-1",
+      "Address": "2001",
+      "DataType": "UINTEGER",
+      "Ratio": "1",
+      "Unit": "",
+      "Min": "0",
+      "Max": "1"
+    },
+    {
+      "Name": "Single2-2",
+      "Address": "2004",
+      "DataType": "UINTEGER",
+      "Ratio": "1",
+      "Unit": "",
+      "Min": "0",
+      "Max": "1"
+    },
+    {
+      "Name": "Single2-3",
+      "Address": "2006",
+      "DataType": "UINTEGER",
+      "Ratio": "1",
+      "Unit": "",
+      "Min": "0",
+      "Max": "1"
+    }
+  ]
+}

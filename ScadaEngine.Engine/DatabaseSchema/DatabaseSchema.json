@@ -1,0 +1,61 @@
+{
+  "Tables": [
+    {
+      "TableName": "ModbusCoordinator",
+      "Columns": [
+        { "Name": "Id", "Type": "int", "IsPrimaryKey": true, "IsIdentity": true, "Nullable": false },
+        { "Name": "Name", "Type": "varchar", "Length": 100, "Nullable": false },
+        { "Name": "ModbusID", "Type": "varchar", "Length": 100, "Nullable": false },
+        { "Name": "DelayTime", "Type": "int", "Default": 0, "Nullable": false },
+        { "Name": "MonitorEnabled", "Type": "bit", "Default": true, "Nullable": false }
+      ]
+    },
+    {
+      "TableName": "HistoryData",
+      "Columns": [
+        { "Name": "SID", "Type": "nvarchar", "Length": 50, "IsPrimaryKey": true, "Nullable": false },
+        { "Name": "Value", "Type": "float", "Nullable": false },
+        { "Name": "Quality", "Type": "int", "Nullable": false },
+        { "Name": "Timestamp", "Type": "datetime", "IsPrimaryKey": true, "Nullable": false }
+      ],
+      "ClusteredIndex": ["SID", "Timestamp"]
+    },
+    {
+      "TableName": "LatestData",
+      "Columns": [
+        { "Name": "SID", "Type": "nvarchar", "Length": 100, "IsPrimaryKey": true, "Nullable": false },
+        { "Name": "Value", "Type": "float", "Nullable": true },
+        { "Name": "Timestamp", "Type": "datetime", "Default": "getdate()", "Nullable": true },
+        { "Name": "Quality", "Type": "int", "Default": 1, "Nullable": true }
+      ]
+    },
+    {
+      "TableName": "Users",
+      "Columns": [
+        { "Name": "UserID", "Type": "int", "IsPrimaryKey": true, "IsIdentity": true, "Nullable": false },
+        { "Name": "Username", "Type": "nvarchar", "Length": 50, "Nullable": false, "IsUnique": true },
+        { "Name": "RealName", "Type": "nvarchar", "Length": 100, "Nullable": true },
+        { "Name": "PasswordHash", "Type": "nvarchar", "Length": -1, "Nullable": false },
+        { "Name": "Role", "Type": "nvarchar", "Length": 20, "Nullable": false },
+        { "Name": "Department", "Type": "nvarchar", "Length": 50, "Nullable": true },
+        { "Name": "IsActive", "Type": "bit", "Default": 1, "Nullable": true },
+        { "Name": "LastLoginAt", "Type": "datetime", "Nullable": true },
+        { "Name": "CreatedAt", "Type": "datetime", "Default": "getdate()", "Nullable": true },
+        { "Name": "UpdatedAt", "Type": "datetime", "Default": "getdate()", "Nullable": true }
+      ]
+    },
+    {
+      "TableName": "ModbusPoints",
+      "Columns": [
+        { "Name": "SID", "Type": "nvarchar", "Length": 100, "IsPrimaryKey": true, "Nullable": false },
+        { "Name": "Name", "Type": "nvarchar", "Length": 100, "Nullable": false },
+        { "Name": "Address", "Type": "nvarchar", "Length": 50, "Nullable": false },
+        { "Name": "DataType", "Type": "nvarchar", "Length": 100, "Nullable": false },
+        { "Name": "Ratio", "Type": "float", "Default": 1.0, "Nullable": false },
+        { "Name": "Unit", "Type": "nvarchar", "Length": 50, "Nullable": false },
+        { "Name": "Min", "Type": "float", "Nullable": true },
+        { "Name": "Max", "Type": "float", "Nullable": true }
+      ]
+    }
+  ]
+}

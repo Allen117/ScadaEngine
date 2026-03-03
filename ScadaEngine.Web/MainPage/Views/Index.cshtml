@@ -1,0 +1,284 @@
+@model ScadaEngine.Web.Features.MainPage.Models.MainPageViewModel
+@{
+    ViewData["Title"] = "SCADA 主頁面";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-4">
+    <!-- 頁面標題列 -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="display-4 text-primary mb-1">
+                        <i class="fas fa-tachometer-alt"></i>
+                        SCADA 監控系統
+                    </h1>
+                    <small class="text-muted">
+                        <i class="fas fa-clock"></i>
+                        登入時間：@Model.GetFormattedLoginTime()
+                    </small>
+                </div>
+                <div class="d-flex align-items-center">
+                    <span class="me-3">
+                        <i class="fas fa-user"></i>
+                        歡迎，<strong>@Model.szUserName</strong>
+                        @if (Model.IsAdministrator())
+                        {
+                            <span class="badge bg-warning text-dark ms-1">管理員</span>
+                        }
+                    </span>
+                    <form asp-controller="Login" asp-action="Logout" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                            <i class="fas fa-sign-out-alt"></i>
+                            登出
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 錯誤訊息顯示 -->
+    @if (ViewData["ErrorMessage"] != null)
+    {
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    @ViewData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- 系統狀態卡片 -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle"></i>
+                            系統狀態
+                        </h5>
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-@(Model.systemStatus.GetHealthStatusClass()) me-2">
+                                @Model.systemStatus.GetOverallHealthStatus()
+                            </span>
+                            <button type="button" class="btn btn-outline-light btn-sm" id="btnRefreshStatus">
+                                <i class="fas fa-sync-alt"></i>
+                                重新整理
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center" id="systemStatusCards">
+                        <div class="col-md-3 mb-3">
+                            <div class="card @(Model.systemStatus.isSystemOnline ? "border-success" : "border-danger")">
+                                <div class="card-body">
+                                    <h5 class="@(Model.systemStatus.isSystemOnline ? "text-success" : "text-danger")">
+                                        <i class="fas fa-@(Model.systemStatus.isSystemOnline ? "check-circle" : "times-circle")"></i>
+                                        系統狀態
+                                    </h5>
+                                    <p class="text-muted">@(Model.systemStatus.isSystemOnline ? "運行正常" : "離線")</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card @(Model.systemStatus.isDatabaseConnected ? "border-info" : "border-warning")">
+                                <div class="card-body">
+                                    <h5 class="@(Model.systemStatus.isDatabaseConnected ? "text-info" : "text-warning")">
+                                        <i class="fas fa-database"></i>
+                                        資料庫連線
+                                    </h5>
+                                    <p class="text-muted">@(Model.systemStatus.isDatabaseConnected ? "已連接" : "連線失敗")</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card @(Model.systemStatus.isModbusReady ? "border-success" : "border-warning")">
+                                <div class="card-body">
+                                    <h5 class="@(Model.systemStatus.isModbusReady ? "text-success" : "text-warning")">
+                                        <i class="fas fa-network-wired"></i>
+                                        Modbus 通訊
+                                    </h5>
+                                    <p class="text-muted">@(Model.systemStatus.isModbusReady ? "已連接" : "等待連接")</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card @(Model.systemStatus.isMqttReady ? "border-success" : "border-secondary")">
+                                <div class="card-body">
+                                    <h5 class="@(Model.systemStatus.isMqttReady ? "text-success" : "text-secondary")">
+                                        <i class="fas fa-share-alt"></i>
+                                        MQTT 發布
+                                    </h5>
+                                    <p class="text-muted">@(Model.systemStatus.isMqttReady ? "正在發布" : "待啟動")</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 統計資訊 -->
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="text-muted">連接設備數量</h6>
+                                    <h4 class="text-primary" id="deviceCount">@Model.systemStatus.nConnectedDevices</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="text-muted">最後更新時間</h6>
+                                    <h6 class="text-secondary" id="lastUpdateTime">@DateTime.Now.ToString("HH:mm:ss")</h6>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 功能區域 -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-cogs"></i>
+                        功能區域
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="card border-primary h-100">
+                                <div class="card-body text-center d-flex flex-column">
+                                    <i class="fas fa-chart-line fa-3x text-primary mb-3"></i>
+                                    <h5>即時監控</h5>
+                                    <p class="text-muted flex-grow-1">查看即時數據和狀態</p>
+                                    <button class="btn btn-primary mt-auto" disabled>
+                                        <i class="fas fa-eye"></i>
+                                        監控面板
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card border-success h-100">
+                                <div class="card-body text-center d-flex flex-column">
+                                    <i class="fas fa-history fa-3x text-success mb-3"></i>
+                                    <h5>歷史數據</h5>
+                                    <p class="text-muted flex-grow-1">查看歷史記錄和趨勢</p>
+                                    <button class="btn btn-success mt-auto" disabled>
+                                        <i class="fas fa-chart-area"></i>
+                                        歷史報表
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card border-info h-100">
+                                <div class="card-body text-center d-flex flex-column">
+                                    <i class="fas fa-sliders-h fa-3x text-info mb-3"></i>
+                                    <h5>系統設定</h5>
+                                    <p class="text-muted flex-grow-1">配置系統參數</p>
+                                    <button class="btn btn-info mt-auto" disabled>
+                                        <i class="fas fa-wrench"></i>
+                                        設定面板
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 重新整理系統狀態按鈕
+            const btnRefreshStatus = document.getElementById('btnRefreshStatus');
+            if (btnRefreshStatus) {
+                btnRefreshStatus.addEventListener('click', function() {
+                    refreshSystemStatus();
+                });
+            }
+
+            // 定時自動更新系統狀態 (每30秒)
+            setInterval(function() {
+                refreshSystemStatus();
+            }, 30000);
+
+            // 更新當前時間
+            function updateCurrentTime() {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString('zh-TW');
+                const timeElement = document.getElementById('lastUpdateTime');
+                if (timeElement) {
+                    timeElement.textContent = timeString;
+                }
+            }
+
+            // 重新整理系統狀態
+            function refreshSystemStatus() {
+                const refreshIcon = btnRefreshStatus.querySelector('i');
+                if (refreshIcon) {
+                    refreshIcon.classList.add('fa-spin');
+                }
+
+                fetch('/MainPage/GetSystemStatus', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        updateSystemStatusDisplay(data.data);
+                        updateCurrentTime();
+                        console.log('系統狀態更新成功');
+                    } else {
+                        console.error('系統狀態更新失敗:', data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('請求系統狀態時發生錯誤:', error);
+                })
+                .finally(() => {
+                    if (refreshIcon) {
+                        refreshIcon.classList.remove('fa-spin');
+                    }
+                });
+            }
+
+            // 更新系統狀態顯示
+            function updateSystemStatusDisplay(statusData) {
+                // 更新設備數量
+                const deviceCountElement = document.getElementById('deviceCount');
+                if (deviceCountElement) {
+                    deviceCountElement.textContent = statusData.nConnectedDevices || 0;
+                }
+
+                // TODO: 更新其他狀態顯示
+                // 可以根據需要動態更新各個狀態卡片的顏色和文字
+            }
+
+            // 每秒更新時間
+            setInterval(updateCurrentTime, 1000);
+            updateCurrentTime(); // 初始化顯示
+        });
+    </script>
+}

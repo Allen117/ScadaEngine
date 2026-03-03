@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl:*)",
+      "Bash(dotnet build:*)",
+      "Bash(pkill:*)",
+      "Bash(kill:*)",
+      "Bash(python3:*)",
+      "Bash(powershell.exe -Command \"Get-Process -Name ''ScadaEngine.Web'' | Stop-Process -Force\")",
+      "Bash(Start-Process dotnet -ArgumentList \"run\" -WindowStyle Normal)",
+      "Bash(powershell.exe -Command \"Start-Process dotnet -ArgumentList ''run'' -WorkingDirectory ''C:\\\\Users\\\\A50388.ITRI\\\\Desktop\\\\ScadaEngine\\\\ScadaEngine.Web'' -WindowStyle Normal\")",
+      "Bash(powershell.exe -Command \"Get-Process -Name ''ScadaEngine.Web'' -ErrorAction SilentlyContinue | Select-Object Id, ProcessName, CPU, StartTime\")",
+      "Bash(powershell.exe -Command \"Get-Process | Where-Object { $_Name -like ''*Scada*'' -or $_Name -like ''*dotnet*'' } | Select-Object Id, ProcessName, CPU\")",
+      "Bash(powershell.exe -Command \"netstat -an | findstr '':5038''\")",
+      "Bash(tasklist)",
+      "Bash(powershell.exe -Command \"Get-Process -Name ''ScadaEngine.Web'' -ErrorAction SilentlyContinue | Stop-Process -Force; Write-Host ''stopped''\")"
+    ]
+  }
+}

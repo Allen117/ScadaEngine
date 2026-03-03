@@ -1,0 +1,529 @@
+@model ScadaEngine.Web.Features.Realtime.Models.RealtimeMonitorViewModel
+@{
+    ViewData["Title"] = "SCADA 即時監控儀表板";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var firstCoordinator = Model.CoordinatorList.FirstOrDefault();
+    // SID 格式: {nDatabaseId * 65536 + nModbusId * 256 + 1}-S{N}
+    // 同一個 Coordinator 的所有 SID 數字都落在 [Id*65536, (Id+1)*65536) 範圍內
+    static List<RealtimeDataItemModel> FilterByCoordinatorId(List<RealtimeDataItemModel> list, int coordinatorId)
+    {
+        if (coordinatorId <= 0) return list;
+        int rangeBase = coordinatorId * 65536;
+        return list.Where(x =>
+        {
+            var hyphen = x.szSID.IndexOf('-');
+            if (hyphen < 0) return false;
+            return int.TryParse(x.szSID[..hyphen], out var num) && num >= rangeBase && num < rangeBase + 65536;
+        }).ToList();
+    }
+    var initialFilteredList = firstCoordinator == null
+        ? Model.RealtimeDataList
+        : FilterByCoordinatorId(Model.RealtimeDataList, firstCoordinator.Id);
+}
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- 左側 Coordinator 清單 -->
+        <div class="col-md-2 pe-0">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-dark text-white py-2">
+                    <h6 class="mb-0">
+                        <i class="fas fa-server me-1"></i>
+                        設備清單
+                    </h6>
+                </div>
+                <div class="list-group list-group-flush" id="coordinatorList">
+                    @if (Model.CoordinatorList.Any())
+                    {
+                        var isFirst = true;
+                        @foreach (var coordinator in Model.CoordinatorList)
+                        {
+                            <a href="#" class="list-group-item list-group-item-action py-2 coordinator-item @(isFirst ? "active" : "")"
+                               data-id="@coordinator.Id"
+                               data-modbusid="@coordinator.szModbusID"
+                               data-name="@coordinator.szName">
+                                <i class="fas fa-plug me-1 text-secondary"></i>
+                                <span class="small">@coordinator.szName</span>
+                            </a>
+                            isFirst = false;
+                        }
+                    }
+                    else
+                    {
+                        <div class="list-group-item text-muted small py-3 text-center">
+                            <i class="fas fa-inbox d-block mb-1"></i>
+                            無設備資料
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- 右側主要內容 -->
+        <div class="col-md-10">
+    <!-- 頁面標題與連線狀態 -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">
+                    <i class="fas fa-tachometer-alt text-primary me-2"></i>
+                    SCADA 即時監控儀表板
+                </h2>
+                <div class="d-flex align-items-center">
+                    <span class="badge @(Model.isConnectionHealthy ? "bg-success" : "bg-danger") me-3" id="connectionStatus">
+                        <i class="fas @(Model.isConnectionHealthy ? "fa-wifi" : "fa-exclamation-triangle") me-1"></i>
+                        @(Model.isConnectionHealthy ? "連線正常" : "連線異常")
+                    </span>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="refreshData()" id="refreshBtn">
+                        <i class="fas fa-sync-alt me-1" id="refreshIcon"></i> 重新整理
+                    </button>
+                </div>
+            </div>
+
+    <!-- 統計卡片 -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="totalPoints">@Model.nTotalPoints</h4>
+                            <small>總點位數</small>
+                        </div>
+                        <i class="fas fa-list-ul fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="activePoints">@Model.nActivePoints</h4>
+                            <small>活躍點位</small>
+                        </div>
+                        <i class="fas fa-heartbeat fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="updateRate">@((Model.nActivePoints > 0 && Model.nTotalPoints > 0) ? Math.Round((double)Model.nActivePoints / Model.nTotalPoints * 100, 1) : 0)%</h4>
+                            <small>資料更新率</small>
+                        </div>
+                        <i class="fas fa-chart-line fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="lastUpdateTime">@Model.dtLastUpdated.ToString("HH:mm:ss")</h4>
+                            <small>最後更新</small>
+                        </div>
+                        <i class="fas fa-clock fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 錯誤訊息 -->
+    @if (!string.IsNullOrEmpty(Model.szErrorMessage))
+    {
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    @Model.szErrorMessage
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- 即時資料表格 -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-table text-primary me-2"></i>
+                        即時資料監控 (<span id="pointCount">@initialFilteredList.Count</span> 筆)
+                        @if (firstCoordinator != null)
+                        {
+                            <small class="text-muted ms-2" id="currentCoordinatorName">— @firstCoordinator.szName</small>
+                        }
+                    </h5>
+                </div>
+                
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover mb-0" id="realtimeTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th style="width: 25%; cursor: pointer; user-select: none;" onclick="sortTable('name')" id="th-name">名稱 <span class="sort-icon">⇅</span></th>
+                                    <th style="width: 20%; cursor: pointer; user-select: none;" onclick="sortTable('subTopic')" id="th-subTopic">SID <span class="sort-icon">⇅</span></th>
+                                    <th style="width: 15%; cursor: pointer; user-select: none;" class="text-end" onclick="sortTable('value')" id="th-value">數值 <span class="sort-icon">⇅</span></th>
+                                    <th style="width: 10%; cursor: pointer; user-select: none;" onclick="sortTable('unit')" id="th-unit">單位 <span class="sort-icon">⇅</span></th>
+                                    <th style="width: 15%; cursor: pointer; user-select: none;" onclick="sortTable('quality')" id="th-quality">品質 <span class="sort-icon">⇅</span></th>
+                                    <th style="width: 15%; cursor: pointer; user-select: none;" onclick="sortTable('timestamp')" id="th-timestamp">時間戳記 <span class="sort-icon">⇅</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="realtimeTableBody">
+                                @if (initialFilteredList.Any())
+                                {
+                                    @foreach (var item in initialFilteredList)
+                                    {
+                                        <tr class="@item.CssRowClass" data-subtopic="@item.szSubTopic">
+                                            <td>@item.szName</td>
+                                            <td><small class="text-muted">@item.szSubTopic</small></td>
+                                            <td class="text-end">
+                                                <span class="fw-bold">@(item.hasData ? item.dValue.ToString("F3") : "--")</span>
+                                            </td>
+                                            <td><span class="badge bg-light text-dark">@item.szUnit</span></td>
+                                            <td><span class="badge @item.QualityBadgeClass">@item.szQuality</span></td>
+                                            <td><small>@(item.hasData ? item.dtTimestamp.ToString("MM-dd HH:mm:ss") : "--")</small></td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted py-4">
+                                            <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                                            尚無即時資料，請確認 MQTT 連線狀態
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="card-footer bg-light text-muted">
+                    <div class="d-flex justify-content-between">
+                        <small>
+                            <i class="fas fa-info-circle me-1"></i>
+                            自動更新週期: 3 秒 | 訂閱主題: SCADA/Realtime/+
+                        </small>
+                        <small id="footerLastUpdate">
+                            最後更新: @DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+        </div><!-- /col-md-10 -->
+    </div><!-- /row -->
+</div>
+
+<!-- 自訂樣式 -->
+<style>
+    .table-hover tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.1) !important;
+    }
+    
+    .row-recent {
+        animation: pulse-green 1s ease-in-out;
+    }
+    
+    .row-outdated {
+        opacity: 0.7;
+    }
+
+    .row-nodata {
+        opacity: 0.5;
+        color: #6c757d;
+    }
+
+    thead th .sort-icon {
+        font-size: 0.75em;
+        opacity: 0.5;
+        margin-left: 4px;
+    }
+
+    thead th.sort-asc .sort-icon::before { content: '▲'; }
+    thead th.sort-desc .sort-icon::before { content: '▼'; }
+    thead th.sort-asc .sort-icon,
+    thead th.sort-desc .sort-icon { opacity: 1; font-size: 0.8em; }
+    thead th.sort-asc span,
+    thead th.sort-desc span { display: inline; }
+    
+    @@keyframes pulse-green {
+        0% { background-color: rgba(40, 167, 69, 0.3); }
+        100% { background-color: inherit; }
+    }
+    
+    .card {
+        border: none;
+        border-radius: 10px;
+    }
+
+    .card-header {
+        border-radius: 10px 10px 0 0 !important;
+    }
+
+    .coordinator-item {
+        border-left: 3px solid transparent;
+        transition: border-color 0.15s;
+    }
+    .coordinator-item:hover {
+        border-left-color: #0d6efd;
+    }
+    .coordinator-item.active {
+        border-left-color: #0d6efd;
+        background-color: #e8f0fe !important;
+        color: #0d6efd !important;
+    }
+</style>
+
+<!-- JavaScript 自動更新邏輯 -->
+<script>
+    let isRefreshing = false;
+
+    // 目前選取的 Coordinator DB Id（0 = 不篩選）
+    let currentCoordinatorDbId = @(firstCoordinator?.Id ?? 0);
+
+    // 排序狀態
+    let sortColumn = null;
+    let sortDirection = 'asc'; // 'asc' | 'desc'
+
+    // 排序點擊處理
+    function sortTable(column) {
+        if (sortColumn === column) {
+            sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            sortColumn = column;
+            sortDirection = 'asc';
+        }
+        updateSortIcons();
+        // 直接對現有資料重新排序（不需等下次 AJAX）
+        if (lastData.length > 0) {
+            updateTable(lastData);
+        }
+    }
+
+    // 更新欄位排序圖示
+    function updateSortIcons() {
+        ['name', 'subTopic', 'value', 'unit', 'quality', 'timestamp'].forEach(col => {
+            const th = document.getElementById('th-' + col);
+            if (!th) return;
+            th.classList.remove('sort-asc', 'sort-desc');
+            th.querySelector('.sort-icon').textContent = '⇅';
+            if (col === sortColumn) {
+                th.classList.add(sortDirection === 'asc' ? 'sort-asc' : 'sort-desc');
+                th.querySelector('.sort-icon').textContent = '';
+            }
+        });
+    }
+
+    // 對資料陣列排序
+    function applySorting(data) {
+        if (!sortColumn) return data;
+        return [...data].sort((a, b) => {
+            let va = a[sortColumn] ?? '';
+            let vb = b[sortColumn] ?? '';
+            // 數值欄位嘗試數字排序（'--' 排到最後）
+            if (sortColumn === 'value') {
+                const na = parseFloat(va);
+                const nb = parseFloat(vb);
+                const aIsNum = !isNaN(na);
+                const bIsNum = !isNaN(nb);
+                if (aIsNum && bIsNum) { va = na; vb = nb; }
+                else if (!aIsNum && bIsNum) return 1;
+                else if (aIsNum && !bIsNum) return -1;
+            }
+            if (va < vb) return sortDirection === 'asc' ? -1 : 1;
+            if (va > vb) return sortDirection === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }
+
+    // 快取最近一次資料供排序使用
+    let lastData = [];
+
+    // 依目前選取的 Coordinator 篩選資料
+    // SID 格式: {nDatabaseId*65536 + nModbusId*256 + 1}-S{N}
+    // 同一 Coordinator 的 SID 數字落在 [Id*65536, (Id+1)*65536) 範圍內
+    function filterByCoordinator(data) {
+        if (!currentCoordinatorDbId) return data;
+        const rangeBase = currentCoordinatorDbId * 65536;
+        return data.filter(item => {
+            if (!item.sid) return false;
+            const hyphen = item.sid.indexOf('-');
+            if (hyphen < 0) return false;
+            const sidNum = parseInt(item.sid.substring(0, hyphen));
+            return !isNaN(sidNum) && sidNum >= rangeBase && sidNum < rangeBase + 65536;
+        });
+    }
+
+    // 自動更新函式
+    async function refreshData() {
+        if (isRefreshing) return;
+        
+        try {
+            isRefreshing = true;
+            const refreshBtn = document.getElementById('refreshBtn');
+            const refreshIcon = document.getElementById('refreshIcon');
+            
+            // 顯示載入動畫
+            refreshIcon.classList.add('fa-spin');
+            refreshBtn.disabled = true;
+            
+            const response = await fetch('/api/realtime/latest');
+            const result = await response.json();
+            
+            if (result.success) {
+                updateStatistics(result.statistics, result.connectionStatus);
+                updateTable(result.data);
+                updateConnectionStatus(result.connectionStatus);
+                updateFooterTime(result.timestamp);
+            } else {
+                console.error('更新資料失敗:', result.error);
+                showTemporaryAlert('更新資料失敗: ' + result.error, 'danger');
+            }
+            
+        } catch (error) {
+            console.error('AJAX 請求失敗:', error);
+            showTemporaryAlert('網路請求失敗，請檢查連線', 'danger');
+        } finally {
+            isRefreshing = false;
+            const refreshBtn = document.getElementById('refreshBtn');
+            const refreshIcon = document.getElementById('refreshIcon');
+            
+            refreshIcon.classList.remove('fa-spin');
+            refreshBtn.disabled = false;
+        }
+    }
+    
+    // 更新統計資訊
+    function updateStatistics(stats, isConnected) {
+        document.getElementById('totalPoints').textContent = stats.total;
+        document.getElementById('activePoints').textContent = stats.active;
+        
+        const updateRate = stats.total > 0 ? Math.round((stats.active / stats.total) * 100) : 0;
+        document.getElementById('updateRate').textContent = updateRate + '%';
+        
+        document.getElementById('lastUpdateTime').textContent = new Date().toLocaleTimeString();
+    }
+    
+    // 更新連線狀態
+    function updateConnectionStatus(isConnected) {
+        const statusBadge = document.getElementById('connectionStatus');
+        if (isConnected) {
+            statusBadge.className = 'badge bg-success me-3';
+            statusBadge.innerHTML = '<i class="fas fa-wifi me-1"></i>連線正常';
+        } else {
+            statusBadge.className = 'badge bg-danger me-3';
+            statusBadge.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>連線異常';
+        }
+    }
+    
+    // 更新表格資料
+    function updateTable(data) {
+        if (data !== undefined) {
+            lastData = data || [];
+        }
+        const filtered = filterByCoordinator(lastData);
+        const tbody = document.getElementById('realtimeTableBody');
+
+        // 更新點位數量
+        const pointCountEl = document.getElementById('pointCount');
+        if (pointCountEl) pointCountEl.textContent = filtered.length;
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">
+                        <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                        尚無即時資料，請確認 MQTT 連線狀態
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = applySorting(filtered).map(item => `
+            <tr class="${item.cssClass}" data-subtopic="${item.subTopic}">
+                <td>${item.name}</td>
+                <td><small class="text-muted">${item.subTopic}</small></td>
+                <td class="text-end"><span class="fw-bold">${item.value}</span></td>
+                <td><span class="badge bg-light text-dark">${item.unit}</span></td>
+                <td><span class="badge ${item.badgeClass}">${item.quality}</span></td>
+                <td><small>${item.timestamp === '--' ? '--' : item.timestamp.substring(5, 19)}</small></td>
+            </tr>
+        `).join('');
+    }
+    
+    // 更新頁腳時間
+    function updateFooterTime(timestamp) {
+        document.getElementById('footerLastUpdate').textContent = '最後更新: ' + timestamp;
+    }
+    
+    // 顯示臨時提醒
+    function showTemporaryAlert(message, type = 'info') {
+        const alertHtml = `
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                <i class="fas fa-info-circle me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        
+        const container = document.querySelector('.container-fluid');
+        const alertDiv = document.createElement('div');
+        alertDiv.innerHTML = alertHtml;
+        container.insertBefore(alertDiv, container.firstChild);
+        
+        // 3秒後自動消失
+        setTimeout(() => {
+            const alert = document.querySelector('.alert');
+            if (alert) {
+                alert.remove();
+            }
+        }, 3000);
+    }
+    
+    // 頁面載入完成後啟動自動更新
+    document.addEventListener('DOMContentLoaded', function() {
+        // 設備清單點擊事件
+        document.querySelectorAll('.coordinator-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelectorAll('.coordinator-item').forEach(el => el.classList.remove('active'));
+                this.classList.add('active');
+                currentCoordinatorDbId = parseInt(this.dataset.id) || 0;
+                // 更新表格標頭顯示設備名稱
+                const nameEl = document.getElementById('currentCoordinatorName');
+                if (nameEl) nameEl.textContent = '— ' + (this.dataset.name || '');
+                // 用現有快取資料重新篩選，無需等下次 AJAX
+                updateTable();
+            });
+        });
+
+        // 立即執行一次更新
+        setTimeout(refreshData, 1000);
+
+        // 每3秒自動更新
+        setInterval(refreshData, 3000);
+
+        console.log('SCADA 即時監控儀表板已啟動，自動更新週期: 3秒');
+    });
+    
+    // 手動重新整理按鈕
+    function manualRefresh() {
+        refreshData();
+    }
+</script>

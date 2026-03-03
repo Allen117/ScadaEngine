@@ -1,0 +1,8 @@
+{
+  "szBrokerIp": "127.0.0.1",
+  "nPort": 1883,
+  "szClientId": "SCADA_Web_Monitor",
+  "szBaseTopic": "SCADA/Realtime",
+  "isRetain": false,
+  "szDefaultConnection": "Data Source=127.0.0.1;Initial Catalog=wsnCsharp;User ID=wsn;Password=password;Persist Security Info=True;Trust Server Certificate=True;"
+}
