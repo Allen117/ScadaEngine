@@ -13,7 +13,10 @@
       "Bash(powershell.exe -Command \"Get-Process | Where-Object { $_Name -like ''*Scada*'' -or $_Name -like ''*dotnet*'' } | Select-Object Id, ProcessName, CPU\")",
       "Bash(powershell.exe -Command \"netstat -an | findstr '':5038''\")",
       "Bash(tasklist)",
-      "Bash(powershell.exe -Command \"Get-Process -Name ''ScadaEngine.Web'' -ErrorAction SilentlyContinue | Stop-Process -Force; Write-Host ''stopped''\")"
+      "Bash(powershell.exe -Command \"Get-Process -Name ''ScadaEngine.Web'' -ErrorAction SilentlyContinue | Stop-Process -Force; Write-Host ''stopped''\")",
+      "Bash(powershell.exe -Command \"Get-Process -Name ''ScadaEngine.Web'' -ErrorAction SilentlyContinue | Stop-Process -Force; Write-Host ''done''\")",
+      "Bash(powershell.exe -Command \"Get-Process -Name ''ScadaEngine.Web'' -ErrorAction SilentlyContinue | Stop-Process -Force; Write-Host ''Done''\")",
+      "Bash(powershell.exe -Command \"Get-Process -Name ''ScadaEngine.Web'' -ErrorAction SilentlyContinue | Stop-Process -Force; Write-Host ''Stopped''\")"
     ]
   }
 }

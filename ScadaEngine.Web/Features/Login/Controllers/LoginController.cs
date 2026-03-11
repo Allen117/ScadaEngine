@@ -34,7 +34,7 @@ public class LoginController : Controller
     public async Task<IActionResult> Index()
     {
         if (User.Identity?.IsAuthenticated == true)
-            return Redirect("/RealTime");
+            return Redirect("/ScadaPage");
 
         // 若 Users 資料表無使用者，顯示預設帳密提示
         var userCount = await _dataRepository.GetUserCountAsync();
@@ -99,7 +99,7 @@ public class LoginController : Controller
         _logger.LogInformation("使用者登入成功：{UserName}", loginModel.szUserName);
 
         loginModel.ClearSensitiveData();
-        return Redirect("/RealTime");
+        return Redirect("/ScadaPage");
     }
 
     /// <summary>

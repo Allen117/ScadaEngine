@@ -20,9 +20,89 @@
     var initialFilteredList = firstCoordinator == null
         ? Model.RealtimeDataList
         : FilterByCoordinatorId(Model.RealtimeDataList, firstCoordinator.Id);
+    var initialTotal = initialFilteredList.Count;
+    var initialActive = initialFilteredList.Count(x => x.hasData);
+    var initialRate = initialTotal > 0 ? Math.Round((double)initialActive / initialTotal * 100, 1) : 0.0;
 }
 
 <div class="container-fluid mt-4">
+
+    <!-- 頁面標題與連線狀態 -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">
+            <i class="fas fa-tachometer-alt text-primary me-2"></i>
+            SCADA 即時監控儀表板
+        </h2>
+        <div class="d-flex align-items-center">
+            <span class="badge @(Model.isConnectionHealthy ? "bg-success" : "bg-danger") me-3" id="connectionStatus">
+                <i class="fas @(Model.isConnectionHealthy ? "fa-wifi" : "fa-exclamation-triangle") me-1"></i>
+                @(Model.isConnectionHealthy ? "連線正常" : "連線異常")
+            </span>
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="refreshData()" id="refreshBtn">
+                <i class="fas fa-sync-alt me-1" id="refreshIcon"></i> 重新整理
+            </button>
+        </div>
+    </div>
+
+    <!-- 統計卡片（依選取設備計算） -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="totalPoints">@initialTotal</h4>
+                            <small>總點位數</small>
+                        </div>
+                        <i class="fas fa-list-ul fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="activePoints">@initialActive</h4>
+                            <small>活躍點位</small>
+                        </div>
+                        <i class="fas fa-heartbeat fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="updateRate">@initialRate%</h4>
+                            <small>資料更新率</small>
+                        </div>
+                        <i class="fas fa-chart-line fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="lastUpdateTime">@Model.dtLastUpdated.ToString("HH:mm:ss")</h4>
+                            <small>最後更新</small>
+                        </div>
+                        <i class="fas fa-clock fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row">
         <!-- 左側 Coordinator 清單 -->
         <div class="col-md-2 pe-0">
@@ -62,81 +142,6 @@
 
         <!-- 右側主要內容 -->
         <div class="col-md-10">
-    <!-- 頁面標題與連線狀態 -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="mb-0">
-                    <i class="fas fa-tachometer-alt text-primary me-2"></i>
-                    SCADA 即時監控儀表板
-                </h2>
-                <div class="d-flex align-items-center">
-                    <span class="badge @(Model.isConnectionHealthy ? "bg-success" : "bg-danger") me-3" id="connectionStatus">
-                        <i class="fas @(Model.isConnectionHealthy ? "fa-wifi" : "fa-exclamation-triangle") me-1"></i>
-                        @(Model.isConnectionHealthy ? "連線正常" : "連線異常")
-                    </span>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="refreshData()" id="refreshBtn">
-                        <i class="fas fa-sync-alt me-1" id="refreshIcon"></i> 重新整理
-                    </button>
-                </div>
-            </div>
-
-    <!-- 統計卡片 -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="mb-0" id="totalPoints">@Model.nTotalPoints</h4>
-                            <small>總點位數</small>
-                        </div>
-                        <i class="fas fa-list-ul fa-2x opacity-50"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="mb-0" id="activePoints">@Model.nActivePoints</h4>
-                            <small>活躍點位</small>
-                        </div>
-                        <i class="fas fa-heartbeat fa-2x opacity-50"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-3">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="mb-0" id="updateRate">@((Model.nActivePoints > 0 && Model.nTotalPoints > 0) ? Math.Round((double)Model.nActivePoints / Model.nTotalPoints * 100, 1) : 0)%</h4>
-                            <small>資料更新率</small>
-                        </div>
-                        <i class="fas fa-chart-line fa-2x opacity-50"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-3">
-            <div class="card bg-warning text-dark">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="mb-0" id="lastUpdateTime">@Model.dtLastUpdated.ToString("HH:mm:ss")</h4>
-                            <small>最後更新</small>
-                        </div>
-                        <i class="fas fa-clock fa-2x opacity-50"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- 錯誤訊息 -->
     @if (!string.IsNullOrEmpty(Model.szErrorMessage))
@@ -166,7 +171,7 @@
                         }
                     </h5>
                 </div>
-                
+
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-striped table-hover mb-0" id="realtimeTable">
@@ -210,7 +215,7 @@
                         </table>
                     </div>
                 </div>
-                
+
                 <div class="card-footer bg-light text-muted">
                     <div class="d-flex justify-content-between">
                         <small>
@@ -227,7 +232,7 @@
     </div>
         </div><!-- /col-md-10 -->
     </div><!-- /row -->
-</div>
+</div><!-- /container-fluid -->
 
 <!-- 自訂樣式 -->
 <style>
@@ -386,7 +391,6 @@
             const result = await response.json();
             
             if (result.success) {
-                updateStatistics(result.statistics, result.connectionStatus);
                 updateTable(result.data);
                 updateConnectionStatus(result.connectionStatus);
                 updateFooterTime(result.timestamp);
@@ -408,17 +412,6 @@
         }
     }
     
-    // 更新統計資訊
-    function updateStatistics(stats, isConnected) {
-        document.getElementById('totalPoints').textContent = stats.total;
-        document.getElementById('activePoints').textContent = stats.active;
-        
-        const updateRate = stats.total > 0 ? Math.round((stats.active / stats.total) * 100) : 0;
-        document.getElementById('updateRate').textContent = updateRate + '%';
-        
-        document.getElementById('lastUpdateTime').textContent = new Date().toLocaleTimeString();
-    }
-    
     // 更新連線狀態
     function updateConnectionStatus(isConnected) {
         const statusBadge = document.getElementById('connectionStatus');
@@ -431,6 +424,17 @@
         }
     }
     
+    // 依篩選後資料更新統計卡片
+    function updateFilteredStatistics(filtered) {
+        const total = filtered.length;
+        const active = filtered.filter(item => item.value !== '--').length;
+        const rate = total > 0 ? Math.round(active / total * 100) : 0;
+        document.getElementById('totalPoints').textContent = total;
+        document.getElementById('activePoints').textContent = active;
+        document.getElementById('updateRate').textContent = rate + '%';
+        document.getElementById('lastUpdateTime').textContent = new Date().toLocaleTimeString();
+    }
+
     // 更新表格資料
     function updateTable(data) {
         if (data !== undefined) {
@@ -439,9 +443,10 @@
         const filtered = filterByCoordinator(lastData);
         const tbody = document.getElementById('realtimeTableBody');
 
-        // 更新點位數量
+        // 更新點位數量與統計卡片
         const pointCountEl = document.getElementById('pointCount');
         if (pointCountEl) pointCountEl.textContent = filtered.length;
+        updateFilteredStatistics(filtered);
 
         if (filtered.length === 0) {
             tbody.innerHTML = `
@@ -526,4 +531,5 @@
     function manualRefresh() {
         refreshData();
     }
+
 </script>

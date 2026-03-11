@@ -1,8 +1,8 @@
 using ScadaEngine.Engine;
+using ScadaEngine.Engine.Services;
 using ScadaEngine.Engine.Communication.Modbus.Extensions;
 using ScadaEngine.Engine.Communication.Mqtt.Extensions;
 using ScadaEngine.Engine.Data.Extensions;
-using ScadaEngine.Engine.Services;
 using Serilog;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Hosting.WindowsServices;
@@ -67,6 +67,9 @@ try
 
     // 註冊資料庫相關服務 (包含儲存服務)
     builder.Services.AddDataServices();
+
+    // 註冊條件控制服務
+    builder.Services.AddHostedService<ConditionControlService>();
 
     var host = builder.Build();
 

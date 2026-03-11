@@ -1,16 +1,616 @@
+@model ScadaEngine.Web.Features.ControlAlgorithm.Models.ConditionControlViewModel
 @{
     ViewData["Title"] = "控制邏輯";
     Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var pointJson = System.Text.Json.JsonSerializer.Serialize(
+        Model.PointList.Select(p => new { sid = p.szSID, name = p.szName, unit = p.szUnit ?? "" })
+    );
+
+    var coordJson = System.Text.Json.JsonSerializer.Serialize(
+        Model.CoordinatorList.Select(c => new { id = c.Id, name = c.szName })
+    );
+
+    // 把 DB 規則序列化為 JS 可用格式（operator 轉為符號字串）
+    var existingRulesJson = System.Text.Json.JsonSerializer.Serialize(
+        Model.ExistingRules.Select(r => new {
+            conditionPointSid  = r.szConditionPointSID,
+            operatorSymbol     = r.OperatorSymbol,
+            conditionValue     = r.dConditionValue,
+            controlPointSid    = r.szControlPointSID,
+            controlValue       = r.dControlValue,
+            remarks            = r.szRemarks ?? ""
+        })
+    );
 }
 
-<div class="container-fluid py-4">
-    <div class="row mb-4">
-        <div class="col">
-            <h2>
-                <i class="fas fa-microchip me-2 text-primary"></i>
-                控制邏輯
-            </h2>
-            <p class="text-muted">ControlAlgorithm</p>
-        </div>
+<div class="container-fluid mt-4">
+
+    <!-- 頁面標題 -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">
+            <i class="fas fa-microchip text-primary me-2"></i>控制邏輯
+        </h2>
+        <span class="text-muted small">
+            <i class="fas fa-cogs me-1"></i>條件控制設定
+        </span>
     </div>
+
+    <!-- 功能頁籤 -->
+    <ul class="nav nav-tabs mb-3" id="controlTabs">
+        <li class="nav-item">
+            <a class="nav-link active" href="#tabCondition" data-bs-toggle="tab">
+                <i class="fas fa-code-branch me-1"></i>條件控制
+            </a>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="tabCondition">
+
+            <!-- 新增條件控制規則 -->
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-plus-circle text-success me-2"></i>新增條件控制規則
+                    </h5>
+                </div>
+                <div class="card-body">
+
+                    <!-- 第一列：條件側（設備 → 條件點位 → 運算子 → 數值） -->
+                    <div class="row g-3 align-items-end mb-2">
+
+                        <!-- 條件設備 -->
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-server text-dark me-1"></i>設備
+                            </label>
+                            <select id="conditionCoordinator" class="form-select form-select-sm">
+                                <option value="0">— 全部設備 —</option>
+                                @foreach (var c in Model.CoordinatorList)
+                                {
+                                    <option value="@c.Id">@c.szName</option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- 條件點位 -->
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-tag text-primary me-1"></i>參考點位
+                            </label>
+                            <select id="conditionPoint" class="form-select form-select-sm">
+                                <option value="">— 請選擇點位 —</option>
+                                @foreach (var p in Model.PointList)
+                                {
+                                    <option value="@p.szSID" data-name="@p.szName" data-unit="@(p.szUnit ?? "")">
+                                        @p.szName
+                                    </option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- 運算子 -->
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-not-equal text-warning me-1"></i>運算子
+                            </label>
+                            <select id="conditionOperator" class="form-select form-select-sm">
+                                <option value=">">&gt;　（大於）</option>
+                                <option value="<">&lt;　（小於）</option>
+                                <option value=">=">&gt;=　（大於等於）</option>
+                                <option value="<=">&lt;=　（小於等於）</option>
+                                <option value="==">=　（等於）</option>
+                                <option value="!=">≠　（不等於）</option>
+                            </select>
+                        </div>
+
+                        <!-- 數值 -->
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-hashtag text-info me-1"></i>數值
+                            </label>
+                            <input type="number" id="conditionValue" class="form-control form-control-sm"
+                                   placeholder="輸入比較數值" step="any" />
+                        </div>
+
+                    </div>
+
+                    <!-- 第二列：控制側（設備 → 控制點位 → 控制值） -->
+                    <div class="row g-3 align-items-end">
+
+                        <!-- 控制設備 -->
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-server text-dark me-1"></i>設備
+                            </label>
+                            <select id="controlCoordinator" class="form-select form-select-sm">
+                                <option value="0">— 全部設備 —</option>
+                                @foreach (var c in Model.CoordinatorList)
+                                {
+                                    <option value="@c.Id">@c.szName</option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- 控制點位 -->
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-bolt text-danger me-1"></i>控制點位
+                            </label>
+                            <select id="controlPoint" class="form-select form-select-sm">
+                                <option value="">— 請選擇點位 —</option>
+                                @foreach (var p in Model.PointList)
+                                {
+                                    <option value="@p.szSID" data-name="@p.szName" data-unit="@(p.szUnit ?? "")">
+                                        @p.szName
+                                    </option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- 控制值 -->
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-pen text-secondary me-1"></i>控制值
+                            </label>
+                            <input type="number" id="controlValue" class="form-control form-control-sm"
+                                   placeholder="輸入控制值" step="any" />
+                        </div>
+
+                        <!-- 備註 -->
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-comment-alt text-muted me-1"></i>備註
+                                <small class="text-muted fw-normal">（選填，最多 50 字）</small>
+                            </label>
+                            <input type="text" id="remarksValue" class="form-control form-control-sm"
+                                   placeholder="輸入備註說明" maxlength="50" />
+                        </div>
+
+                    </div>
+
+                    <div class="mt-3 d-flex align-items-center gap-2">
+                        <button id="btnAddRule" class="btn btn-success btn-sm px-4">
+                            <i class="fas fa-plus me-1"></i>新增規則
+                        </button>
+                        <button id="btnClearForm" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-times me-1"></i>清除
+                        </button>
+                        <button id="btnSaveEdit" class="btn btn-warning btn-sm px-4 d-none">
+                            <i class="fas fa-save me-1"></i>編輯
+                        </button>
+                        <button id="btnCancelEdit" class="btn btn-outline-secondary btn-sm d-none">
+                            <i class="fas fa-ban me-1"></i>取消
+                        </button>
+                        <div id="formAlert" class="alert alert-warning py-1 px-3 mb-0 d-none small">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            <span id="formAlertMsg"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 規則清單 -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list text-primary me-2"></i>
+                        條件控制規則清單
+                        <span class="badge bg-secondary ms-1" id="ruleCount">0</span>
+                    </h5>
+                    <div class="d-flex align-items-center gap-2">
+                        <div id="saveAlert" class="d-none small"></div>
+                        <button id="btnSaveToDb" class="btn btn-primary btn-sm d-none">
+                            <i class="fas fa-database me-1"></i>儲存規則至資料庫
+                        </button>
+                        <button id="btnClearAll" class="btn btn-outline-danger btn-sm d-none">
+                            <i class="fas fa-trash-alt me-1"></i>清除全部
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div id="emptyRuleMsg" class="text-center py-5 text-muted">
+                        <i class="fas fa-clipboard-list fa-3x mb-3 d-block opacity-25"></i>
+                        <div>尚未新增任何條件控制規則</div>
+                        <small>請填寫上方表單後按下「新增規則」</small>
+                    </div>
+                    <div class="table-responsive d-none" id="ruleTableWrapper">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th class="text-center" style="width:50px">#</th>
+                                    <th><i class="fas fa-tag me-1"></i>條件點位</th>
+                                    <th class="text-center" style="width:90px">運算子</th>
+                                    <th class="text-center" style="width:100px">數值</th>
+                                    <th><i class="fas fa-bolt me-1"></i>控制點位</th>
+                                    <th class="text-center" style="width:100px">控制值</th>
+                                    <th>備註</th>
+                                    <th class="text-center" style="width:70px">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ruleTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /tabCondition -->
+    </div><!-- /tab-content -->
 </div>
+
+<style>
+    .card { border: none; border-radius: 10px; }
+    .card-header { border-radius: 10px 10px 0 0 !important; }
+    .operator-badge { font-size: 1rem; font-weight: 700; }
+</style>
+
+@section Scripts {
+<script>
+const allPoints      = @Html.Raw(pointJson);
+const allCoords      = @Html.Raw(coordJson);
+const dbRules        = @Html.Raw(existingRulesJson);
+let rules        = [];
+let ruleSeq      = 0;
+let editingRuleId = null;
+
+// operator 符號 ↔ tinyint 對照
+const opToInt = { '>': 0, '<': 1, '>=': 2, '<=': 3, '==': 4, '!=': 5 };
+const intToOp = { 0: '>', 1: '<', 2: '>=', 3: '<=', 4: '==', 5: '!=' };
+
+const conditionCoordinator = document.getElementById('conditionCoordinator');
+const controlCoordinator   = document.getElementById('controlCoordinator');
+const conditionPoint       = document.getElementById('conditionPoint');
+const conditionOperator = document.getElementById('conditionOperator');
+const conditionValue    = document.getElementById('conditionValue');
+const controlPoint      = document.getElementById('controlPoint');
+const controlValue      = document.getElementById('controlValue');
+const remarksValue      = document.getElementById('remarksValue');
+const btnAddRule        = document.getElementById('btnAddRule');
+const btnClearForm      = document.getElementById('btnClearForm');
+const btnSaveEdit       = document.getElementById('btnSaveEdit');
+const btnCancelEdit     = document.getElementById('btnCancelEdit');
+const btnClearAll       = document.getElementById('btnClearAll');
+const btnSaveToDb       = document.getElementById('btnSaveToDb');
+const saveAlert         = document.getElementById('saveAlert');
+const ruleTableBody     = document.getElementById('ruleTableBody');
+const ruleTableWrapper  = document.getElementById('ruleTableWrapper');
+const emptyRuleMsg      = document.getElementById('emptyRuleMsg');
+const ruleCountBadge    = document.getElementById('ruleCount');
+const formAlert         = document.getElementById('formAlert');
+const formAlertMsg      = document.getElementById('formAlertMsg');
+
+// ── 從 SID 反推所屬 Coordinator ID ───────────────────────────────────────
+function findCoordForSid(sid) {
+    const hyphen = sid.indexOf('-');
+    if (hyphen < 0) return 0;
+    const num = parseInt(sid.substring(0, hyphen));
+    if (isNaN(num)) return 0;
+    const coord = allCoords.find(c => num >= c.id * 65536 && num < (c.id + 1) * 65536);
+    return coord ? coord.id : 0;
+}
+
+// ── 載入規則至表單 ────────────────────────────────────────────────────────
+function loadRule(nId) {
+    if (editingRuleId !== null) return;   // 編輯模式中不允許行點擊帶入
+    const r = rules.find(x => x.id === nId);
+    if (!r) return;
+
+    // 條件側
+    const condCoordId = findCoordForSid(r.conditionPointSid);
+    conditionCoordinator.value = condCoordId;
+    filterPointDropdown(conditionPoint, condCoordId);
+    conditionPoint.value    = r.conditionPointSid;
+    conditionOperator.value = r.operator;
+    conditionValue.value    = r.conditionValue;
+
+    // 控制側
+    const ctrlCoordId = findCoordForSid(r.controlPointSid);
+    controlCoordinator.value = ctrlCoordId;
+    filterPointDropdown(controlPoint, ctrlCoordId);
+    controlPoint.value = r.controlPointSid;
+    controlValue.value = r.controlValue;
+
+    remarksValue.value = r.remarks || '';
+    hideFormAlert();
+
+    // 捲動至表單
+    document.querySelector('#tabCondition .card.shadow-sm.mb-3')
+        .scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── 進入 / 離開編輯模式 ───────────────────────────────────────────────────
+function enterEditMode(nId) {
+    const prev = editingRuleId;
+    editingRuleId = null;                  // 暫時清除保護，讓 loadRule 可以執行
+    loadRule(nId);
+    if (prev !== null && prev === nId) {}  // 已是同一筆，繼續
+    editingRuleId = nId;
+
+    btnAddRule.disabled  = true;
+    btnClearForm.disabled = true;
+    btnSaveEdit.classList.remove('d-none');
+    btnCancelEdit.classList.remove('d-none');
+
+    // 高亮正在編輯的列
+    document.querySelectorAll('#ruleTableBody tr[data-ruleid]').forEach(tr =>
+        tr.classList.toggle('table-warning', parseInt(tr.dataset.ruleid) === nId)
+    );
+}
+
+function exitEditMode() {
+    editingRuleId = null;
+    btnAddRule.disabled   = false;
+    btnClearForm.disabled = false;
+    btnSaveEdit.classList.add('d-none');
+    btnCancelEdit.classList.add('d-none');
+    document.querySelectorAll('#ruleTableBody tr[data-ruleid]').forEach(tr =>
+        tr.classList.remove('table-warning')
+    );
+    clearForm();
+}
+
+function saveEdit() {
+    const condSid = conditionPoint.value;
+    const op      = conditionOperator.value;
+    const condVal = conditionValue.value.trim();
+    const ctrlSid = controlPoint.value;
+    const ctrlVal = controlValue.value.trim();
+
+    if (!condSid) { showFormAlert('請選擇條件點位'); return; }
+    if (!condVal) { showFormAlert('請輸入條件數值'); return; }
+    if (!ctrlSid) { showFormAlert('請選擇控制點位'); return; }
+    if (!ctrlVal) { showFormAlert('請輸入控制值');   return; }
+    if (condSid === ctrlSid) { showFormAlert('條件點位與控制點位不能相同'); return; }
+
+    const condOpt  = conditionPoint.options[conditionPoint.selectedIndex];
+    const ctrlOpt  = controlPoint.options[controlPoint.selectedIndex];
+    const ruleIdx  = rules.findIndex(r => r.id === editingRuleId);
+    if (ruleIdx < 0) { exitEditMode(); return; }
+
+    rules[ruleIdx] = {
+        ...rules[ruleIdx],
+        conditionPointSid:  condSid,
+        conditionPointName: condOpt.dataset.name || condSid,
+        operator:           op,
+        conditionValue:     parseFloat(condVal),
+        controlPointSid:    ctrlSid,
+        controlPointName:   ctrlOpt.dataset.name || ctrlSid,
+        controlValue:       parseFloat(ctrlVal),
+        remarks:            remarksValue.value.trim().substring(0, 50)
+    };
+
+    renderRules();
+    exitEditMode();
+}
+
+// ── 設備篩選 → 重新填充點位下拉選單 ─────────────────────────────────────
+function filterPointDropdown(selectEl, nDbId) {
+    const currentVal = selectEl.value;
+    while (selectEl.options.length > 1) selectEl.remove(1);
+
+    const pts = nDbId <= 0
+        ? allPoints
+        : allPoints.filter(p => {
+            const hyphen = p.sid.indexOf('-');
+            if (hyphen < 0) return false;
+            const num = parseInt(p.sid.substring(0, hyphen));
+            if (isNaN(num)) return false;
+            return num >= nDbId * 65536 && num < (nDbId + 1) * 65536;
+        });
+
+    pts.forEach(p => {
+        const opt = new Option(p.name, p.sid);
+        opt.dataset.name = p.name;
+        opt.dataset.unit = p.unit;
+        selectEl.add(opt);
+    });
+
+    selectEl.value = pts.some(p => p.sid === currentVal) ? currentVal : '';
+}
+
+// ── 表格渲染 ──────────────────────────────────────────────────────────────
+function renderRules() {
+    ruleCountBadge.textContent = rules.length;
+
+    if (rules.length === 0) {
+        emptyRuleMsg.classList.remove('d-none');
+        ruleTableWrapper.classList.add('d-none');
+        btnClearAll.classList.add('d-none');
+        btnSaveToDb.classList.add('d-none');
+        return;
+    }
+
+    emptyRuleMsg.classList.add('d-none');
+    ruleTableWrapper.classList.remove('d-none');
+    btnClearAll.classList.remove('d-none');
+    btnSaveToDb.classList.remove('d-none');
+
+    const opDisplay = { '>':'&gt;', '<':'&lt;', '>=':'&gt;=', '<=':'&lt;=', '==':'=', '!=':'&ne;' };
+
+    ruleTableBody.innerHTML = rules.map((r, idx) => `
+        <tr data-ruleid="${r.id}" class="${r.id === editingRuleId ? 'table-warning' : ''}"
+            style="cursor:pointer" onclick="loadRule(${r.id})" title="點擊載入至表單">
+            <td class="text-center text-muted">${idx + 1}</td>
+            <td>
+                <span class="fw-semibold">${escHtml(r.conditionPointName)}</span>
+            </td>
+            <td class="text-center">
+                <span class="operator-badge text-primary">${opDisplay[r.operator] || r.operator}</span>
+            </td>
+            <td class="text-center fw-bold">${escHtml(String(r.conditionValue))}</td>
+            <td>
+                <span class="fw-semibold">${escHtml(r.controlPointName)}</span>
+            </td>
+            <td class="text-center fw-bold text-success">${escHtml(String(r.controlValue))}</td>
+            <td><small class="text-muted">${escHtml(r.remarks || '')}</small></td>
+            <td class="text-center">
+                <button class="btn btn-outline-primary btn-sm py-0 px-1 me-1" onclick="event.stopPropagation(); enterEditMode(${r.id})" title="編輯">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-outline-danger btn-sm py-0 px-1" onclick="event.stopPropagation(); deleteRule(${r.id})" title="刪除">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// ── 新增規則 ──────────────────────────────────────────────────────────────
+function addRule() {
+    const condSid = conditionPoint.value;
+    const op      = conditionOperator.value;
+    const condVal = conditionValue.value.trim();
+    const ctrlSid = controlPoint.value;
+    const ctrlVal = controlValue.value.trim();
+
+    if (!condSid) { showFormAlert('請選擇條件點位'); return; }
+    if (!condVal) { showFormAlert('請輸入條件數值'); return; }
+    if (!ctrlSid) { showFormAlert('請選擇控制點位'); return; }
+    if (!ctrlVal) { showFormAlert('請輸入控制值');   return; }
+    if (condSid === ctrlSid) { showFormAlert('條件點位與控制點位不能相同'); return; }
+
+    hideFormAlert();
+
+    const condOpt = conditionPoint.options[conditionPoint.selectedIndex];
+    const ctrlOpt = controlPoint.options[controlPoint.selectedIndex];
+
+    rules.push({
+        id:                 ++ruleSeq,
+        conditionPointSid:  condSid,
+        conditionPointName: condOpt.dataset.name || condSid,
+        operator:           op,
+        conditionValue:     parseFloat(condVal),
+        controlPointSid:    ctrlSid,
+        controlPointName:   ctrlOpt.dataset.name || ctrlSid,
+        controlValue:       parseFloat(ctrlVal),
+        remarks:            remarksValue.value.trim().substring(0, 50)
+    });
+
+    renderRules();
+    clearForm();
+}
+
+function deleteRule(nId) {
+    rules = rules.filter(r => r.id !== nId);
+    renderRules();
+}
+
+function clearForm() {
+    conditionCoordinator.value = '0';
+    controlCoordinator.value   = '0';
+    filterPointDropdown(conditionPoint, 0);
+    filterPointDropdown(controlPoint,   0);
+    conditionPoint.value    = '';
+    controlPoint.value      = '';
+    conditionOperator.value = '>';
+    conditionValue.value    = '';
+    controlValue.value      = '';
+    remarksValue.value      = '';
+    hideFormAlert();
+}
+
+function showFormAlert(msg) {
+    formAlertMsg.textContent = msg;
+    formAlert.classList.remove('d-none');
+}
+
+function hideFormAlert() {
+    formAlert.classList.add('d-none');
+}
+
+function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── 儲存規則至資料庫 ──────────────────────────────────────────────────────
+async function saveRulesToDb() {
+    if (rules.length === 0) { showSaveAlert('尚無規則可儲存', 'warning'); return; }
+
+    btnSaveToDb.disabled = true;
+    btnSaveToDb.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>儲存中…';
+
+    const payload = rules.map(r => ({
+        ConditionPointSID: r.conditionPointSid,
+        Operator:          opToInt[r.operator] ?? 0,
+        ConditionValue:    r.conditionValue,
+        ControlPointSID:   r.controlPointSid,
+        ControlValue:      r.controlValue,
+        Remarks:           r.remarks || null
+    }));
+
+    try {
+        const resp = await fetch('/ControlAlgorithm/SaveRules', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+        if (resp.ok && data.success) {
+            showSaveAlert(data.message, 'success');
+        } else {
+            showSaveAlert(data.message || '儲存失敗', 'danger');
+        }
+    } catch (e) {
+        showSaveAlert('網路錯誤，請稍後再試', 'danger');
+    } finally {
+        btnSaveToDb.disabled = false;
+        btnSaveToDb.innerHTML = '<i class="fas fa-database me-1"></i>儲存規則至資料庫';
+    }
+}
+
+function showSaveAlert(msg, type) {
+    saveAlert.className = `alert alert-${type} py-1 px-3 mb-0 small`;
+    saveAlert.textContent = msg;
+    saveAlert.classList.remove('d-none');
+    setTimeout(() => saveAlert.classList.add('d-none'), 4000);
+}
+
+// ── 事件 ──────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function () {
+
+    // 從資料庫載入已存在規則
+    dbRules.forEach(d => {
+        const condPt = allPoints.find(p => p.sid === d.conditionPointSid);
+        const ctrlPt = allPoints.find(p => p.sid === d.controlPointSid);
+        rules.push({
+            id:                 ++ruleSeq,
+            conditionPointSid:  d.conditionPointSid,
+            conditionPointName: condPt ? condPt.name : d.conditionPointSid,
+            operator:           d.operatorSymbol,
+            conditionValue:     d.conditionValue,
+            controlPointSid:    d.controlPointSid,
+            controlPointName:   ctrlPt ? ctrlPt.name : d.controlPointSid,
+            controlValue:       d.controlValue,
+            remarks:            d.remarks || ''
+        });
+    });
+    if (rules.length > 0) renderRules();
+
+    conditionCoordinator.addEventListener('change', function () {
+        filterPointDropdown(conditionPoint, parseInt(this.value) || 0);
+    });
+
+    controlCoordinator.addEventListener('change', function () {
+        filterPointDropdown(controlPoint, parseInt(this.value) || 0);
+    });
+
+    btnAddRule.addEventListener('click', addRule);
+    btnClearForm.addEventListener('click', clearForm);
+    btnSaveEdit.addEventListener('click', saveEdit);
+    btnCancelEdit.addEventListener('click', exitEditMode);
+    btnSaveToDb.addEventListener('click', saveRulesToDb);
+
+    btnClearAll.addEventListener('click', () => {
+        if (confirm('確定要清除所有規則嗎？')) {
+            rules = [];
+            renderRules();
+        }
+    });
+
+    [conditionValue, controlValue].forEach(el => {
+        el.addEventListener('keydown', e => { if (e.key === 'Enter') addRule(); });
+    });
+});
+</script>
+}

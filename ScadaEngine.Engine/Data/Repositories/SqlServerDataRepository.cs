@@ -572,8 +572,12 @@ public class SqlServerDataRepository : IDataRepository, IDisposable
             await connection.OpenAsync();
 
             const string szSql = @"
-                SELECT TOP (@Limit) SID, Value, Quality, Timestamp
-                FROM LatestData 
+                SELECT TOP (@Limit)
+                    SID       AS szSID,
+                    Value     AS fValue,
+                    Quality   AS nQuality,
+                    Timestamp AS dtTimestamp
+                FROM LatestData
                 ORDER BY Timestamp DESC";
 
             var result = await connection.QueryAsync<LatestDataModel>(szSql, new { Limit = nLimit });
@@ -742,10 +746,19 @@ public class SqlServerDataRepository : IDataRepository, IDisposable
 
             try
             {
-                // Step 1: 刪除 ModbusPoints 表的所有內容
-                var szDeleteSql = @"DELETE FROM ModbusPoints";
-                
-                var nDeletedCount = await connection.ExecuteAsync(szDeleteSql, transaction: transaction);
+                // Step 1: 只刪除此 Coordinator 對應的 SID 範圍
+                // SID 格式: {nDatabaseId*65536 + nModbusId*256 + 1}-S{N}
+                // 每個 Coordinator 的數字前綴落在 [nCoordinatorId*65536, (nCoordinatorId+1)*65536) 範圍內
+                var szDeleteSql = @"
+                    DELETE FROM ModbusPoints
+                    WHERE CAST(SUBSTRING(SID, 1, CHARINDEX('-S', SID) - 1) AS BIGINT)
+                          BETWEEN @MinSidValue AND @MaxSidValue";
+
+                var nDeletedCount = await connection.ExecuteAsync(szDeleteSql, new
+                {
+                    MinSidValue = (long)nCoordinatorId * 65536,
+                    MaxSidValue = (long)(nCoordinatorId + 1) * 65536 - 1
+                }, transaction: transaction);
 
                 _logger.LogInformation("已清空 ModbusPoints 表，刪除 {Count} 個舊點位", nDeletedCount);
 
@@ -881,7 +894,15 @@ public class SqlServerDataRepository : IDataRepository, IDisposable
             await connection.OpenAsync();
 
             const string szSql = @"
-                SELECT SID, Name, Address, DataType, Ratio, Unit, Min, Max
+                SELECT
+                    SID      AS szSID,
+                    Name     AS szName,
+                    Address  AS szAddress,
+                    DataType AS szDataType,
+                    Ratio    AS fRatio,
+                    Unit     AS szUnit,
+                    Min      AS fMin,
+                    Max      AS fMax
                 FROM ModbusPoints
                 ORDER BY SID";
 
@@ -894,6 +915,269 @@ public class SqlServerDataRepository : IDataRepository, IDisposable
         {
             _logger.LogError(ex, "查詢所有 ModbusPoints 時發生錯誤");
             return Enumerable.Empty<ModbusPointModel>();
+        }
+    }
+
+    #endregion
+
+    /// <summary>
+    /// 查詢 HistoryData 資料表中指定 SID 的歷史記錄
+    /// </summary>
+    public async Task<IEnumerable<HistoryDataModel>> GetHistoryTableDataAsync(
+        string szSID, DateTime dtStartTime, DateTime dtEndTime, int nMaxRecords = 5000)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+        {
+            await InitializeAsync();
+        }
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+
+            const string szSql = @"
+                SELECT TOP (@MaxRecords)
+                    SID       AS szSID,
+                    Value     AS fValue,
+                    Quality   AS nQuality,
+                    Timestamp AS dtTimestamp
+                FROM HistoryData
+                WHERE SID = @SID
+                  AND Timestamp BETWEEN @StartTime AND @EndTime
+                ORDER BY Timestamp ASC";
+
+            var result = await connection.QueryAsync<HistoryDataModel>(szSql, new
+            {
+                MaxRecords = nMaxRecords,
+                SID        = szSID,
+                StartTime  = dtStartTime,
+                EndTime    = dtEndTime
+            });
+
+            _logger.LogDebug("查詢 HistoryData 完成: SID={SID}, 筆數={Count}", szSID, result.Count());
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "查詢 HistoryData 時發生錯誤: SID={SID}", szSID);
+            return Enumerable.Empty<HistoryDataModel>();
+        }
+    }
+
+    #region 條件控制規則操作方法
+
+    /// <summary>
+    /// 取得所有條件控制規則
+    /// </summary>
+    public async Task<IEnumerable<ConditionControlRuleModel>> GetAllConditionControlRulesAsync()
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+
+            const string szSql = @"
+                SELECT Id,
+                       ConditionPointSID AS szConditionPointSID,
+                       Operator          AS nOperator,
+                       ConditionValue    AS dConditionValue,
+                       ControlPointSID   AS szControlPointSID,
+                       ControlValue      AS dControlValue,
+                       Remarks           AS szRemarks,
+                       IsEnabled         AS isEnabled,
+                       CreatedAt         AS dtCreatedAt
+                FROM ConditionControlRules
+                ORDER BY Id";
+
+            var result = await connection.QueryAsync<ConditionControlRuleModel>(szSql);
+            _logger.LogDebug("查詢 ConditionControlRules 完成: {Count} 筆", result.Count());
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "查詢 ConditionControlRules 時發生錯誤");
+            return [];
+        }
+    }
+
+    /// <summary>
+    /// 全量覆寫條件控制規則（先清空再批次插入）
+    /// </summary>
+    public async Task<bool> SaveConditionControlRulesAsync(IEnumerable<ConditionControlRuleModel> rules)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        var ruleList = rules.ToList();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+            using var transaction = await connection.BeginTransactionAsync();
+
+            try
+            {
+                await connection.ExecuteAsync("DELETE FROM ConditionControlRules", transaction: transaction);
+
+                const string szInsertSql = @"
+                    INSERT INTO ConditionControlRules
+                        (ConditionPointSID, Operator, ConditionValue, ControlPointSID, ControlValue, Remarks, IsEnabled)
+                    VALUES
+                        (@ConditionPointSID, @Operator, @ConditionValue, @ControlPointSID, @ControlValue, @Remarks, @IsEnabled)";
+
+                foreach (var r in ruleList)
+                {
+                    await connection.ExecuteAsync(szInsertSql, new
+                    {
+                        ConditionPointSID = r.szConditionPointSID,
+                        Operator          = r.nOperator,
+                        ConditionValue    = r.dConditionValue,
+                        ControlPointSID   = r.szControlPointSID,
+                        ControlValue      = r.dControlValue,
+                        Remarks           = r.szRemarks,
+                        IsEnabled         = r.isEnabled
+                    }, transaction);
+                }
+
+                await transaction.CommitAsync();
+                _logger.LogInformation("儲存 ConditionControlRules 完成: {Count} 筆", ruleList.Count);
+                return true;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "儲存 ConditionControlRules 時發生錯誤");
+            return false;
+        }
+    }
+
+    #endregion
+
+    #region ScadaDesign 相關方法
+
+    /// <summary>
+    /// 儲存畫面設計（先清除舊版 IsPublished，再插入新版 + 頁面資料）
+    /// </summary>
+    public async Task<bool> SaveDesignAsync(string szName, IEnumerable<ScadaDesignPageModel> pages)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        var pageList = pages.ToList();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+            using var transaction = await connection.BeginTransactionAsync();
+
+            try
+            {
+                // Step 1: 將所有舊版標記為未發布
+                await connection.ExecuteAsync(
+                    "UPDATE ScadaDesign SET IsPublished = 0 WHERE IsPublished = 1",
+                    transaction: transaction);
+
+                // Step 2: 插入新版設計，取得 Id
+                var nDesignId = await connection.QuerySingleAsync<int>(@"
+                    INSERT INTO ScadaDesign (Name, IsPublished, SavedAt)
+                    OUTPUT INSERTED.Id
+                    VALUES (@Name, 1, GETDATE())",
+                    new { Name = szName },
+                    transaction: transaction);
+
+                // Step 3: 批量插入頁面
+                const string szPageSql = @"
+                    INSERT INTO ScadaDesignPage
+                        (DesignId, PageSid, ParentPageSid, SortOrder,
+                         PageName, PageIcon, CanvasW, CanvasH,
+                         BgFileName, BgDataUrl, WidgetStateJson)
+                    VALUES
+                        (@DesignId, @PageSid, @ParentPageSid, @SortOrder,
+                         @PageName, @PageIcon, @CanvasW, @CanvasH,
+                         @BgFileName, @BgDataUrl, @WidgetStateJson)";
+
+                foreach (var page in pageList)
+                {
+                    await connection.ExecuteAsync(szPageSql, new
+                    {
+                        DesignId        = nDesignId,
+                        PageSid         = page.szPageSid,
+                        ParentPageSid   = page.szParentPageSid,
+                        SortOrder       = page.nSortOrder,
+                        PageName        = page.szPageName,
+                        PageIcon        = page.szPageIcon,
+                        CanvasW         = page.nCanvasW,
+                        CanvasH         = page.nCanvasH,
+                        BgFileName      = page.szBgFileName,
+                        BgDataUrl       = page.szBgDataUrl,
+                        WidgetStateJson = page.szWidgetStateJson
+                    }, transaction: transaction);
+                }
+
+                await transaction.CommitAsync();
+                _logger.LogInformation("SaveDesignAsync 完成：設計 Id={Id}，共 {Count} 頁", nDesignId, pageList.Count);
+                return true;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "SaveDesignAsync 時發生錯誤");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 讀取已發布的畫面設計（IsPublished=1）的所有頁面
+    /// </summary>
+    public async Task<IEnumerable<ScadaDesignPageModel>> LoadPublishedDesignAsync()
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            const string szSql = @"
+                SELECT
+                    p.PageSid         AS szPageSid,
+                    p.ParentPageSid   AS szParentPageSid,
+                    p.SortOrder       AS nSortOrder,
+                    p.PageName        AS szPageName,
+                    p.PageIcon        AS szPageIcon,
+                    p.CanvasW         AS nCanvasW,
+                    p.CanvasH         AS nCanvasH,
+                    p.BgFileName      AS szBgFileName,
+                    p.BgDataUrl       AS szBgDataUrl,
+                    p.WidgetStateJson AS szWidgetStateJson
+                FROM ScadaDesignPage p
+                INNER JOIN ScadaDesign d ON p.DesignId = d.Id
+                WHERE d.IsPublished = 1
+                ORDER BY p.SortOrder";
+
+            var pages = await connection.QueryAsync<ScadaDesignPageModel>(szSql);
+            _logger.LogDebug("LoadPublishedDesignAsync 完成：共 {Count} 頁", pages.Count());
+            return pages;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "LoadPublishedDesignAsync 時發生錯誤");
+            return Enumerable.Empty<ScadaDesignPageModel>();
         }
     }
 

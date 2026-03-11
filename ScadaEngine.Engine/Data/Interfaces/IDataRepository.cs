@@ -125,6 +125,42 @@ public interface IDataRepository
     Task<IEnumerable<CoordinatorModel>> GetAllCoordinatorsAsync();
 
     /// <summary>
+    /// 查詢 HistoryData 資料表中指定 SID 的歷史記錄
+    /// </summary>
+    /// <param name="szSID">點位識別碼</param>
+    /// <param name="dtStartTime">開始時間</param>
+    /// <param name="dtEndTime">結束時間</param>
+    /// <param name="nMaxRecords">最大筆數上限，預設 5000</param>
+    /// <returns>歷史資料清單 (時間升冪)</returns>
+    Task<IEnumerable<HistoryDataModel>> GetHistoryTableDataAsync(string szSID, DateTime dtStartTime, DateTime dtEndTime, int nMaxRecords = 5000);
+
+    /// <summary>
+    /// 取得所有條件控制規則
+    /// </summary>
+    Task<IEnumerable<ConditionControlRuleModel>> GetAllConditionControlRulesAsync();
+
+    /// <summary>
+    /// 全量覆寫條件控制規則（先清空再批次插入）
+    /// </summary>
+    /// <param name="rules">規則清單</param>
+    /// <returns>儲存成功回傳 true</returns>
+    Task<bool> SaveConditionControlRulesAsync(IEnumerable<ConditionControlRuleModel> rules);
+
+    /// <summary>
+    /// 儲存畫面設計至資料庫（先將舊版 IsPublished 清零，再插入新版）
+    /// </summary>
+    /// <param name="szName">設計名稱</param>
+    /// <param name="pages">頁面清單（已展平的樹狀結構）</param>
+    /// <returns>儲存成功回傳 true</returns>
+    Task<bool> SaveDesignAsync(string szName, IEnumerable<ScadaDesignPageModel> pages);
+
+    /// <summary>
+    /// 讀取已發布的畫面設計（IsPublished=1）的所有頁面
+    /// </summary>
+    /// <returns>頁面平坦清單；若無發布版本回傳空集合</returns>
+    Task<IEnumerable<ScadaDesignPageModel>> LoadPublishedDesignAsync();
+
+    /// <summary>
     /// 釋放資源
     /// </summary>
     void Dispose();

@@ -45,6 +45,21 @@
       ]
     },
     {
+      "TableName": "ConditionControlRules",
+      "Columns": [
+        { "Name": "Id",                 "Type": "int",      "IsPrimaryKey": true, "IsIdentity": true, "Nullable": false },
+        { "Name": "ConditionPointSID",  "Type": "nvarchar", "Length": 100,        "Nullable": false },
+        { "Name": "Operator",           "Type": "tinyint",                        "Nullable": false,
+          "_comment": "0=>  1=<  2=>=  3=<=  4===  5=!=" },
+        { "Name": "ConditionValue",     "Type": "float",                          "Nullable": false },
+        { "Name": "ControlPointSID",    "Type": "nvarchar", "Length": 100,        "Nullable": false },
+        { "Name": "ControlValue",       "Type": "float",                          "Nullable": false },
+        { "Name": "Remarks",            "Type": "nvarchar", "Length": 50,         "Nullable": true  },
+        { "Name": "IsEnabled",          "Type": "bit",                            "Nullable": false, "Default": 1 },
+        { "Name": "CreatedAt",          "Type": "datetime",                       "Nullable": true,  "Default": "getdate()" }
+      ]
+    },
+    {
       "TableName": "ModbusPoints",
       "Columns": [
         { "Name": "SID", "Type": "nvarchar", "Length": 100, "IsPrimaryKey": true, "Nullable": false },
@@ -55,6 +70,42 @@
         { "Name": "Unit", "Type": "nvarchar", "Length": 50, "Nullable": false },
         { "Name": "Min", "Type": "float", "Nullable": true },
         { "Name": "Max", "Type": "float", "Nullable": true }
+      ]
+    },
+    {
+      "_comment": "畫面設計 — 版本紀錄。IsPublished=1 的那筆為即時監控顯示的設計。",
+      "TableName": "ScadaDesign",
+      "Columns": [
+        { "Name": "Id",          "Type": "int",          "IsPrimaryKey": true, "IsIdentity": true, "Nullable": false },
+        { "Name": "Name",        "Type": "nvarchar",     "Length": 100,        "Nullable": false, "Default": "未命名設計" },
+        { "Name": "IsPublished", "Type": "bit",                                "Nullable": false, "Default": 0,
+          "_comment": "1 = 即時監控顯示此版本，同時只有一筆應為 1" },
+        { "Name": "SavedAt",     "Type": "datetime",                           "Nullable": false, "Default": "getdate()" }
+      ]
+    },
+    {
+      "_comment": "畫面設計 — 各頁面資料。WidgetStateJson 儲存該頁 widget 陣列 JSON；BgDataUrl 儲存背景圖 base64（獨立欄位避免全樹讀取時搬運大量圖片資料）。",
+      "TableName": "ScadaDesignPage",
+      "Columns": [
+        { "Name": "Id",             "Type": "int",      "IsPrimaryKey": true, "IsIdentity": true, "Nullable": false },
+        { "Name": "DesignId",       "Type": "int",                            "Nullable": false,
+          "_comment": "FK → ScadaDesign.Id（由應用程式保證一致性）" },
+        { "Name": "PageSid",        "Type": "nvarchar", "Length": 50,         "Nullable": false,
+          "_comment": "對應前端 szId，例如 p1、p2-1" },
+        { "Name": "ParentPageSid",  "Type": "nvarchar", "Length": 50,         "Nullable": true,
+          "_comment": "父頁面 szId；NULL 表示根節點" },
+        { "Name": "SortOrder",      "Type": "int",                            "Nullable": false, "Default": 0,
+          "_comment": "同層頁面的顯示順序（由 0 起算）" },
+        { "Name": "PageName",       "Type": "nvarchar", "Length": 100,        "Nullable": false },
+        { "Name": "PageIcon",       "Type": "nvarchar", "Length": 50,         "Nullable": true,
+          "_comment": "FontAwesome class，例如 fa-home" },
+        { "Name": "CanvasW",        "Type": "int",                            "Nullable": false, "Default": 1200 },
+        { "Name": "CanvasH",        "Type": "int",                            "Nullable": false, "Default": 800  },
+        { "Name": "BgFileName",     "Type": "nvarchar", "Length": 255,        "Nullable": true  },
+        { "Name": "BgDataUrl",      "Type": "nvarchar", "Length": -1,         "Nullable": true,
+          "_comment": "背景圖 base64 DataURL；nvarchar(MAX)" },
+        { "Name": "WidgetStateJson","Type": "nvarchar", "Length": -1,         "Nullable": true,
+          "_comment": "該頁 widget 陣列 JSON，格式: [{szType,nX,nY,nW,nH,props:{...}}]" }
       ]
     }
   ]

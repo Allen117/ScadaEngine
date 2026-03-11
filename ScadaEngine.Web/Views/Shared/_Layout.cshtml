@@ -60,7 +60,7 @@
     {
         <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
             <div class="container">
-                <a class="navbar-brand" href="/">
+                <a class="navbar-brand" href="/ScadaPage">
                     <i class="fas fa-industry me-2"></i>
                     SCADA 監控系統
                 </a>
@@ -71,6 +71,12 @@
                 
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/ScadaPage">
+                                <i class="fas fa-desktop me-1"></i>
+                                即時監控
+                            </a>
+                        </li>
                         <li class="nav-item">
                             <a class="nav-link" href="/RealTime">
                                 <i class="fas fa-tachometer-alt me-1"></i>
@@ -93,11 +99,16 @@
                                 <li><a class="dropdown-item" href="/History/Report">報表查詢</a></li>
                             </ul>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/Config">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                                 <i class="fas fa-cogs me-1"></i>
                                 系統設定
                             </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/Designer"><i class="fas fa-paint-brush me-2"></i>畫面設計</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="/Config"><i class="fas fa-sliders-h me-2"></i>系統參數</a></li>
+                            </ul>
                         </li>
                     </ul>
                     
