@@ -30,6 +30,13 @@ public class CoordinatorModel
     public string szModbusID { get; set; } = string.Empty;
 
     /// <summary>
+    /// 裝置名稱
+    /// </summary>
+    [StringLength(100)]
+    [Column("DeviceName")]
+    public string szDeviceName { get; set; } = string.Empty;
+
+    /// <summary>
     /// 延遲時間（毫秒）
     /// </summary>
     [Column("DelayTime")]

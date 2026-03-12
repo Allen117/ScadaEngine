@@ -374,6 +374,7 @@ public class SqlServerDataRepository : IDataRepository, IDisposable
                 SELECT Id,
                        Name          AS szName,
                        ModbusID      AS szModbusID,
+                       DeviceName    AS szDeviceName,
                        DelayTime     AS nDelayTime,
                        MonitorEnabled AS isMonitorEnabled
                 FROM ModbusCoordinator
@@ -386,6 +387,34 @@ public class SqlServerDataRepository : IDataRepository, IDisposable
         {
             _logger.LogError(ex, "查詢所有 Coordinator 時發生錯誤");
             return [];
+        }
+    }
+
+    /// <summary>
+    /// 更新 ModbusCoordinator 的 DeviceName 欄位
+    /// </summary>
+    public async Task<bool> UpdateDeviceNameAsync(int nId, string szDeviceName)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+
+            const string szSql = @"
+                UPDATE ModbusCoordinator
+                SET DeviceName = @szDeviceName
+                WHERE Id = @nId";
+
+            var nRows = await connection.ExecuteAsync(szSql, new { nId, szDeviceName });
+            return nRows > 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "更新 Coordinator DeviceName 時發生錯誤 (Id={Id})", nId);
+            return false;
         }
     }
 
@@ -710,6 +739,89 @@ public class SqlServerDataRepository : IDataRepository, IDisposable
         catch (Exception ex)
         {
             _logger.LogError(ex, "驗證使用者 {Username} 時發生錯誤", szUsername);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 取得所有使用者帳號資料
+    /// </summary>
+    public async Task<IEnumerable<UserModel>> GetAllUsersAsync()
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+        {
+            await InitializeAsync();
+        }
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+
+            const string szSql = @"
+                SELECT UserID      AS nUserID,
+                       Username    AS szUsername,
+                       RealName    AS szRealName,
+                       PasswordHash AS szPasswordHash,
+                       Role        AS szRole,
+                       Department  AS szDepartment,
+                       IsActive    AS isActive,
+                       LastLoginAt AS dtLastLoginAt,
+                       CreatedAt   AS dtCreatedAt,
+                       UpdatedAt   AS dtUpdatedAt
+                FROM Users
+                ORDER BY UserID";
+
+            var users = await connection.QueryAsync<UserModel>(szSql);
+            _logger.LogDebug("取得 {Count} 筆使用者資料", users.Count());
+            return users;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "查詢 Users 表所有使用者時發生錯誤");
+            return Enumerable.Empty<UserModel>();
+        }
+    }
+
+    /// <summary>
+    /// 新增使用者帳號（密碼以 SHA256 hex 儲存）
+    /// </summary>
+    public async Task<bool> CreateUserAsync(UserModel user)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+        {
+            await InitializeAsync();
+        }
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+
+            // 將明文密碼轉為 SHA256 hex
+            var szHashedPassword = Convert.ToHexString(
+                SHA256.HashData(Encoding.UTF8.GetBytes(user.szPasswordHash))).ToLower();
+
+            const string szSql = @"
+                INSERT INTO Users (Username, RealName, PasswordHash, Role, Department, IsActive, CreatedAt, UpdatedAt)
+                VALUES (@Username, @RealName, @PasswordHash, @Role, @Department, @IsActive, GETDATE(), GETDATE())";
+
+            var nRows = await connection.ExecuteAsync(szSql, new
+            {
+                Username = user.szUsername,
+                RealName = string.IsNullOrEmpty(user.szRealName) ? (string?)null : user.szRealName,
+                PasswordHash = szHashedPassword,
+                Role = user.szRole,
+                Department = string.IsNullOrEmpty(user.szDepartment) ? (string?)null : user.szDepartment,
+                IsActive = user.isActive
+            });
+
+            _logger.LogInformation("新增使用者 {Username} 成功", user.szUsername);
+            return nRows > 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "新增使用者 {Username} 時發生錯誤", user.szUsername);
             return false;
         }
     }

@@ -1261,6 +1261,7 @@ private List<RealtimeDataModel> ReadBatchGroup(ModbusBatchGroup batchGroup, byte
             {
                 dtTimestamp = DateTime.Now,
                 szSID = szDynamicSID,
+                szCoordinatorName = _deviceConfig.szCoordinatorName,
                 szTagName = tag.szName,
                 fValue = fPhysicalValue,
                 szUnit = tag.szUnit,
@@ -1325,6 +1326,7 @@ private List<RealtimeDataModel> ReadBatchGroup(ModbusBatchGroup batchGroup, byte
             {
                 dtTimestamp = DateTime.Now,
                 szSID = szDynamicSID,
+                szCoordinatorName = _deviceConfig.szCoordinatorName,
                 szTagName = tag.szName,
                 fValue = 0.0f,
                 szUnit = tag.szUnit,

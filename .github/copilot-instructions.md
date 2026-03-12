@@ -176,6 +176,7 @@
 * **SwappedFP (32-bit)**: 讀取 2 個連續 Registers，按照"ABCD"順序後解析 。
 * **Double (64-bit)**: 讀取 4 個連續 Registers，按照"GHEFCDAB"順序後解析。
 * **SwappedDouble (64-bit)**: 讀取 4 個連續 Registers，按照"ABCDEFGH"順序後解析。
+* **UINT32 BE (32-bit)**: 讀取 2 個連續 Registers，按照"ABCD" Big-Endian 順序後解析為無號 32 位元整數 (`uint`)。
 ### 7.3 批量讀取優化 (Batch Read)
 * **邏輯**：系統應分析 `tagList`，將地址連續（相差在 10 個 Register 以內）的點位自動打包成單次指令，以減少網路封包負擔。
 

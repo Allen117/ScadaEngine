@@ -6,6 +6,7 @@
         { "Name": "Id", "Type": "int", "IsPrimaryKey": true, "IsIdentity": true, "Nullable": false },
         { "Name": "Name", "Type": "varchar", "Length": 100, "Nullable": false },
         { "Name": "ModbusID", "Type": "varchar", "Length": 100, "Nullable": false },
+        { "Name": "DeviceName", "Type": "nvarchar", "Length": 100, "Nullable": true },
         { "Name": "DelayTime", "Type": "int", "Default": 0, "Nullable": false },
         { "Name": "MonitorEnabled", "Type": "bit", "Default": true, "Nullable": false }
       ]

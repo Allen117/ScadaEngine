@@ -125,6 +125,14 @@ public interface IDataRepository
     Task<IEnumerable<CoordinatorModel>> GetAllCoordinatorsAsync();
 
     /// <summary>
+    /// 更新 ModbusCoordinator 的 DeviceName 欄位
+    /// </summary>
+    /// <param name="nId">Coordinator Id</param>
+    /// <param name="szDeviceName">裝置名稱（逗點分隔）</param>
+    /// <returns>更新成功回傳 true</returns>
+    Task<bool> UpdateDeviceNameAsync(int nId, string szDeviceName);
+
+    /// <summary>
     /// 查詢 HistoryData 資料表中指定 SID 的歷史記錄
     /// </summary>
     /// <param name="szSID">點位識別碼</param>
@@ -159,6 +167,19 @@ public interface IDataRepository
     /// </summary>
     /// <returns>頁面平坦清單；若無發布版本回傳空集合</returns>
     Task<IEnumerable<ScadaDesignPageModel>> LoadPublishedDesignAsync();
+
+    /// <summary>
+    /// 取得所有使用者帳號資料
+    /// </summary>
+    /// <returns>使用者清單</returns>
+    Task<IEnumerable<UserModel>> GetAllUsersAsync();
+
+    /// <summary>
+    /// 新增使用者帳號（密碼以 SHA256 hex 儲存）
+    /// </summary>
+    /// <param name="user">使用者資料（szPasswordHash 欄位傳入明文密碼，方法內自動雜湊）</param>
+    /// <returns>新增成功回傳 true</returns>
+    Task<bool> CreateUserAsync(UserModel user);
 
     /// <summary>
     /// 釋放資源

@@ -127,6 +127,7 @@ public class RealtimeDataItemModel
     public string GetCssRowClass()
     {
         if (!hasData) return "row-nodata";
+        if (szQuality.Equals("STALE", StringComparison.OrdinalIgnoreCase)) return "row-outdated table-warning";
         if (!isQualityGood) return "row-error table-danger";
         if (!isRecent) return "row-outdated table-warning";
         return "row-recent";
@@ -142,6 +143,7 @@ public class RealtimeDataItemModel
             "GOOD" => "bg-success",
             "UNCERTAIN" => "bg-warning",
             "BAD" => "bg-danger",
+            "STALE" => "bg-warning",
             "NO_DATA" => "bg-secondary",
             _ => "bg-secondary"
         };

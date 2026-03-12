@@ -155,6 +155,9 @@ public class ModbusTagModel
             case "SWAPPEDDOUBLE":
                 nRegisterCount = 4;
                 break;
+            case "UINT32BE":
+                nRegisterCount = 2;
+                break;
             default:
                 nRegisterCount = 1;
                 break;
@@ -230,15 +233,27 @@ public class ModbusTagModel
                 {
                     // 對應 ModScan "Swapped Double": 其實際邏輯為 High Word First (ABCDEFGH)
                     var bytes = new byte[8];
-                    bytes[0] = (byte)(rawData[3] & 0xFF);       
-                    bytes[1] = (byte)(rawData[3] >> 8);         
-                    bytes[2] = (byte)(rawData[2] & 0xFF);       
-                    bytes[3] = (byte)(rawData[2] >> 8);         
-                    bytes[4] = (byte)(rawData[1] & 0xFF);       
-                    bytes[5] = (byte)(rawData[1] >> 8);         
-                    bytes[6] = (byte)(rawData[0] & 0xFF);       
-                    bytes[7] = (byte)(rawData[0] >> 8);         
+                    bytes[0] = (byte)(rawData[3] & 0xFF);
+                    bytes[1] = (byte)(rawData[3] >> 8);
+                    bytes[2] = (byte)(rawData[2] & 0xFF);
+                    bytes[3] = (byte)(rawData[2] >> 8);
+                    bytes[4] = (byte)(rawData[1] & 0xFF);
+                    bytes[5] = (byte)(rawData[1] >> 8);
+                    bytes[6] = (byte)(rawData[0] & 0xFF);
+                    bytes[7] = (byte)(rawData[0] >> 8);
                     fRawValue = (float)BitConverter.ToDouble(bytes, 0);
+                }
+                break;
+            case "UINT32BE":
+                if (rawData.Length >= 2)
+                {
+                    // UINT32 Big-Endian: rawData[0] 為高位字組，rawData[1] 為低位字組 (ABCD)
+                    var bytes = new byte[4];
+                    bytes[0] = (byte)(rawData[1] & 0xFF);
+                    bytes[1] = (byte)(rawData[1] >> 8);
+                    bytes[2] = (byte)(rawData[0] & 0xFF);
+                    bytes[3] = (byte)(rawData[0] >> 8);
+                    fRawValue = BitConverter.ToUInt32(bytes, 0);
                 }
                 break;
         }

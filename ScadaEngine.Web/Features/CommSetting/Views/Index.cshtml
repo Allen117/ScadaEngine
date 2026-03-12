@@ -1,0 +1,341 @@
+@using ScadaEngine.Engine.Models
+@model List<CoordinatorModel>
+@{
+    ViewData["Title"] = "通訊設定";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-4">
+    <h4 class="mb-3"><i class="fas fa-network-wired me-2"></i>通訊設定</h4>
+
+    <div class="row">
+        <!-- 左側選單 -->
+        <div class="col-md-3 pe-0">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-dark text-white py-2">
+                    <h6 class="mb-0"><i class="fas fa-server me-1"></i> Modbus 通訊</h6>
+                </div>
+                <div id="coordinatorList">
+                    @if (Model.Any())
+                    {
+                        @for (var i = 0; i < Model.Count; i++)
+                        {
+                            var c = Model[i];
+                            var modbusIds = c.szModbusID.Split(',', StringSplitOptions.TrimEntries);
+                            var deviceNames = c.szDeviceName.Split(',', StringSplitOptions.TrimEntries);
+                            var hasSubItems = modbusIds.Length > 1;
+
+                            if (hasSubItems)
+                            {
+                                <!-- 有子選單的 Coordinator -->
+                                <div class="coordinator-group">
+                                    <a href="#"
+                                       class="list-group-item list-group-item-action py-2 coordinator-toggle"
+                                       data-index="@i">
+                                        <i class="fas fa-chevron-right me-1 toggle-icon text-secondary" style="font-size:.7rem;transition:transform .2s;"></i>
+                                        <i class="fas fa-plug me-1 text-secondary"></i>
+                                        <span class="small">@c.szName</span>
+                                        @if (!c.isMonitorEnabled)
+                                        {
+                                            <span class="badge bg-secondary ms-1" style="font-size:.6rem;">停用</span>
+                                        }
+                                    </a>
+                                    <div class="sub-menu" style="display:none;">
+                                        @for (var j = 0; j < modbusIds.Length; j++)
+                                        {
+                                            var subName = j < deviceNames.Length ? deviceNames[j] : "";
+                                            var subId = modbusIds[j];
+                                            <a href="#"
+                                               class="list-group-item list-group-item-action py-1 ps-4 sub-item"
+                                               data-index="@i"
+                                               data-sub-index="@j"
+                                               data-sub-id="@c.Id"
+                                               data-sub-modbusid="@subId"
+                                               data-sub-name="@subName">
+                                                <i class="fas fa-microchip me-1 text-muted" style="font-size:.75rem;"></i>
+                                                <span class="small">@(string.IsNullOrEmpty(subName) ? subId : subName)</span>
+                                            </a>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <!-- 無子選單的 Coordinator -->
+                                <a href="#"
+                                   class="list-group-item list-group-item-action py-2 coordinator-item"
+                                   data-index="@i">
+                                    <i class="fas fa-plug me-1 text-secondary"></i>
+                                    <span class="small">@c.szName</span>
+                                    @if (!c.isMonitorEnabled)
+                                    {
+                                        <span class="badge bg-secondary ms-1" style="font-size:.6rem;">停用</span>
+                                    }
+                                </a>
+                            }
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                            尚無設備資料
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- 右側詳情 -->
+        <div class="col-md-9">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light d-flex align-items-center">
+                    <h6 class="mb-0" id="detailTitle">
+                        <i class="fas fa-info-circle me-1"></i>
+                        @(Model.Any() ? "設備詳細資料" : "請選擇設備")
+                    </h6>
+                </div>
+                <div class="card-body" id="detailBody">
+                    @if (Model.Any())
+                    {
+                        <!-- 完整欄位（單一 ModbusID 時顯示） -->
+                        <div id="fullDetail" class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-muted small">Id</label>
+                                <input type="text" class="form-control form-control-sm" id="fieldId" readonly />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-muted small">Name（設備名稱）</label>
+                                <input type="text" class="form-control form-control-sm" id="fieldName" readonly />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-muted small">ModbusID</label>
+                                <input type="text" class="form-control form-control-sm" id="fieldModbusID" readonly />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-muted small">DelayTime（延遲時間 ms）</label>
+                                <input type="text" class="form-control form-control-sm" id="fieldDelayTime" readonly />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-muted small">MonitorEnabled（啟用監控）</label>
+                                <input type="text" class="form-control form-control-sm" id="fieldMonitorEnabled" readonly />
+                            </div>
+                        </div>
+
+                        <!-- 子項目欄位（子選單項目點擊時顯示） -->
+                        <div id="subDetail" class="row g-3" style="display:none;">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-muted small">Id</label>
+                                <input type="text" class="form-control form-control-sm" id="subFieldId" readonly />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-muted small">ModbusID</label>
+                                <input type="text" class="form-control form-control-sm" id="subFieldModbusID" readonly />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-muted small">名稱</label>
+                                <input type="text" class="form-control form-control-sm" id="subFieldName" />
+                            </div>
+                            <div class="col-12 mt-2">
+                                <button class="btn btn-primary btn-sm" id="btnSaveName">
+                                    <i class="fas fa-save me-1"></i>儲存名稱
+                                </button>
+                                <span id="saveStatus" class="ms-2 small" style="display:none;"></span>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted py-5">
+                            <i class="fas fa-hand-pointer fa-3x mb-3 d-block"></i>
+                            <p>目前無設備資料，請先於 Engine 設定 Modbus 裝置。</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .coordinator-item,
+    .coordinator-toggle {
+        border-left: 3px solid transparent;
+        transition: border-color 0.15s;
+    }
+    .coordinator-item:hover,
+    .coordinator-toggle:hover {
+        border-left-color: #0d6efd;
+    }
+    .coordinator-item.active,
+    .coordinator-toggle.active {
+        border-left-color: #0d6efd;
+        background-color: #e8f0fe !important;
+        color: #0d6efd !important;
+    }
+    .sub-item {
+        border-left: 3px solid transparent;
+        background-color: #f8f9fa;
+        transition: border-color 0.15s;
+    }
+    .sub-item:hover {
+        border-left-color: #6ea8fe;
+    }
+    .sub-item.active {
+        border-left-color: #6ea8fe;
+        background-color: #dbe9fd !important;
+        color: #0d6efd !important;
+    }
+    .toggle-icon.open {
+        transform: rotate(90deg);
+    }
+</style>
+
+@section Scripts {
+<script>
+(function () {
+    const coordinators = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model));
+
+    function clearAllActive() {
+        document.querySelectorAll('.coordinator-item, .coordinator-toggle, .sub-item')
+            .forEach(el => el.classList.remove('active'));
+    }
+
+    // 顯示完整 Coordinator 欄位（單一 ModbusID）
+    function showFullDetail(index) {
+        const c = coordinators[index];
+        if (!c) return;
+
+        document.getElementById('fullDetail').style.display = '';
+        document.getElementById('subDetail').style.display = 'none';
+        document.getElementById('detailTitle').innerHTML =
+            '<i class="fas fa-info-circle me-1"></i>設備詳細資料 — ' + (c.szName || '');
+
+        document.getElementById('fieldId').value             = c.Id;
+        document.getElementById('fieldName').value           = c.szName ?? '';
+        document.getElementById('fieldModbusID').value       = c.szModbusID ?? '';
+        document.getElementById('fieldDelayTime').value      = c.nDelayTime;
+        document.getElementById('fieldMonitorEnabled').value = c.isMonitorEnabled ? '是' : '否';
+    }
+
+    let nCurrentIndex = -1;   // 目前選中的 coordinator index
+    let nCurrentSubIndex = -1; // 目前選中的 sub-item index
+
+    // 顯示子項目欄位（Id + ModbusID + 名稱）
+    function showSubDetail(id, modbusId, name, index, subIndex) {
+        nCurrentIndex = index;
+        nCurrentSubIndex = subIndex;
+
+        document.getElementById('fullDetail').style.display = 'none';
+        document.getElementById('subDetail').style.display = '';
+        document.getElementById('detailTitle').innerHTML =
+            '<i class="fas fa-microchip me-1"></i>裝置資料 — ' + modbusId;
+
+        document.getElementById('subFieldId').value       = id;
+        document.getElementById('subFieldModbusID').value = modbusId;
+        document.getElementById('subFieldName').value     = name || '';
+        document.getElementById('saveStatus').style.display = 'none';
+    }
+
+    // 單一 Coordinator 點擊
+    document.querySelectorAll('.coordinator-item').forEach(item => {
+        item.addEventListener('click', function (e) {
+            e.preventDefault();
+            clearAllActive();
+            this.classList.add('active');
+            showFullDetail(parseInt(this.dataset.index));
+        });
+    });
+
+    // 展開 / 收合子選單，同時顯示該 Coordinator 完整資料
+    document.querySelectorAll('.coordinator-toggle').forEach(toggle => {
+        toggle.addEventListener('click', function (e) {
+            e.preventDefault();
+            const subMenu = this.nextElementSibling;
+            const icon = this.querySelector('.toggle-icon');
+            if (subMenu.style.display === 'none') {
+                subMenu.style.display = '';
+                icon.classList.add('open');
+            } else {
+                subMenu.style.display = 'none';
+                icon.classList.remove('open');
+            }
+            clearAllActive();
+            this.classList.add('active');
+            showFullDetail(parseInt(this.dataset.index));
+        });
+    });
+
+    // 子項目點擊
+    document.querySelectorAll('.sub-item').forEach(item => {
+        item.addEventListener('click', function (e) {
+            e.preventDefault();
+            clearAllActive();
+            this.classList.add('active');
+            showSubDetail(this.dataset.subId, this.dataset.subModbusid, this.dataset.subName,
+                parseInt(this.dataset.index), parseInt(this.dataset.subIndex));
+        });
+    });
+
+    // 儲存名稱按鈕
+    document.getElementById('btnSaveName').addEventListener('click', async function () {
+        if (nCurrentIndex < 0 || nCurrentSubIndex < 0) return;
+
+        const c = coordinators[nCurrentIndex];
+        const deviceNames = (c.szDeviceName || '').split(',').map(s => s.trim());
+        const modbusIds = (c.szModbusID || '').split(',');
+        // 確保 deviceNames 陣列長度與 modbusIds 一致
+        while (deviceNames.length < modbusIds.length) deviceNames.push('');
+
+        // 更新目前子項目的名稱
+        deviceNames[nCurrentSubIndex] = document.getElementById('subFieldName').value.trim();
+
+        const szNewDeviceName = deviceNames.join(',');
+        const statusEl = document.getElementById('saveStatus');
+
+        try {
+            const resp = await fetch('/CommSetting/UpdateDeviceName', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: c.Id, deviceName: szNewDeviceName })
+            });
+            const result = await resp.json();
+            if (result.success) {
+                // 更新本地快取
+                c.szDeviceName = szNewDeviceName;
+                // 更新左側選單顯示
+                const subItems = document.querySelectorAll('.sub-item[data-index="' + nCurrentIndex + '"]');
+                subItems.forEach((el, j) => {
+                    const name = deviceNames[j] || '';
+                    el.dataset.subName = name;
+                    const span = el.querySelector('span');
+                    if (span) span.textContent = name || el.dataset.subModbusid;
+                });
+                statusEl.textContent = '儲存成功';
+                statusEl.className = 'ms-2 small text-success';
+            } else {
+                statusEl.textContent = result.message || '儲存失敗';
+                statusEl.className = 'ms-2 small text-danger';
+            }
+        } catch (ex) {
+            statusEl.textContent = '儲存失敗：' + ex.message;
+            statusEl.className = 'ms-2 small text-danger';
+        }
+        statusEl.style.display = '';
+    });
+
+    // 預設：若第一筆是單一 ModbusID，自動載入
+    if (coordinators.length > 0) {
+        const first = coordinators[0];
+        const ids = (first.szModbusID || '').split(',');
+        if (ids.length <= 1) {
+            const firstItem = document.querySelector('.coordinator-item');
+            if (firstItem) {
+                firstItem.classList.add('active');
+                showFullDetail(0);
+            }
+        }
+    }
+})();
+</script>
+}

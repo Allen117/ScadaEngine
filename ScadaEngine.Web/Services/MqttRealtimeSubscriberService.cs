@@ -237,19 +237,22 @@ public class MqttRealtimeSubscriberService : BackgroundService, IDisposable
     {
         try
         {
-            var expiredKeys = _realtimeDataCache
-                .Where(kvp => DateTime.Now.Subtract(kvp.Value.dtTimestamp).TotalMinutes > 5)
-                .Select(kvp => kvp.Key)
+            // 過期項目保留 hasData=true，僅更新品質標記為 STALE
+            // SCADA 系統應始終顯示最後已知數值，由前端 isRecent / GetCssRowClass 處理視覺提示
+            var staleItems = _realtimeDataCache
+                .Where(kvp => kvp.Value.hasData
+                            && kvp.Value.szQuality != "STALE"
+                            && DateTime.Now.Subtract(kvp.Value.dtTimestamp).TotalMinutes > 5)
                 .ToList();
 
-            foreach (var key in expiredKeys)
+            foreach (var kvp in staleItems)
             {
-                _realtimeDataCache.TryRemove(key, out _);
+                kvp.Value.szQuality = "STALE";
             }
 
-            if (expiredKeys.Any())
+            if (staleItems.Any())
             {
-                _logger.LogDebug("清理過期資料: {Count} 筆", expiredKeys.Count);
+                _logger.LogDebug("標記過期資料為 STALE（保留數值顯示）: {Count} 筆", staleItems.Count);
             }
         }
         catch (Exception ex)
@@ -259,7 +262,8 @@ public class MqttRealtimeSubscriberService : BackgroundService, IDisposable
     }
 
     /// <summary>
-    /// 從資料庫讀取所有已設定點位，預填快取（尚未收到 MQTT 資料的點位顯示為 NO_DATA）
+    /// 從資料庫讀取所有已設定點位與最新數值，預填快取
+    /// 有 LatestData 的點位立即顯示目前數值，其餘顯示為 NO_DATA
     /// </summary>
     private async Task InitializePointCacheAsync()
     {
@@ -270,24 +274,51 @@ public class MqttRealtimeSubscriberService : BackgroundService, IDisposable
             var allPoints = await repository.GetAllModbusPointsAsync();
             var pointList = allPoints.ToList();
 
+            // 讀取 LatestData 表，取得所有點位的目前數值
+            var latestDataList = await repository.GetLatestDataAsync(nLimit: 100000);
+            var latestDataMap = latestDataList.ToDictionary(x => x.szSID, x => x);
+
+            int nWithValue = 0;
             foreach (var point in pointList)
             {
-                var placeholder = new RealtimeDataItemModel
+                RealtimeDataItemModel item;
+                if (latestDataMap.TryGetValue(point.szSID, out var latestData))
                 {
-                    szSubTopic = point.szSID,
-                    szSID = point.szSID,
-                    szName = point.szName,
-                    szUnit = point.szUnit,
-                    szQuality = "NO_DATA",
-                    dValue = 0,
-                    dtTimestamp = DateTime.MinValue,
-                    hasData = false
-                };
+                    // 有最新數值：填入實際資料，讓初次顯示即可看到目前數值
+                    item = new RealtimeDataItemModel
+                    {
+                        szSubTopic = point.szSID,
+                        szSID = point.szSID,
+                        szName = point.szName,
+                        szUnit = point.szUnit,
+                        szQuality = latestData.nQuality == 1 ? "GOOD" : "BAD",
+                        dValue = latestData.fValue,
+                        dtTimestamp = latestData.dtTimestamp,
+                        hasData = true
+                    };
+                    nWithValue++;
+                }
+                else
+                {
+                    // 無最新數值：佔位
+                    item = new RealtimeDataItemModel
+                    {
+                        szSubTopic = point.szSID,
+                        szSID = point.szSID,
+                        szName = point.szName,
+                        szUnit = point.szUnit,
+                        szQuality = "NO_DATA",
+                        dValue = 0,
+                        dtTimestamp = DateTime.MinValue,
+                        hasData = false
+                    };
+                }
                 // TryAdd：若 MQTT 已先到資料則不覆蓋
-                _realtimeDataCache.TryAdd(point.szSID, placeholder);
+                _realtimeDataCache.TryAdd(point.szSID, item);
             }
 
-            _logger.LogInformation("預填點位快取完成，共 {Count} 個點位", pointList.Count);
+            _logger.LogInformation("預填點位快取完成，共 {Count} 個點位，其中 {WithValue} 個有最新數值",
+                pointList.Count, nWithValue);
         }
         catch (Exception ex)
         {

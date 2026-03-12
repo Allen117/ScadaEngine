@@ -20,9 +20,21 @@
     var initialFilteredList = firstCoordinator == null
         ? Model.RealtimeDataList
         : FilterByCoordinatorId(Model.RealtimeDataList, firstCoordinator.Id);
-    var initialTotal = initialFilteredList.Count;
-    var initialActive = initialFilteredList.Count(x => x.hasData);
-    var initialRate = initialTotal > 0 ? Math.Round((double)initialActive / initialTotal * 100, 1) : 0.0;
+    // 輸出完整點位資料給 JS，讓切換設備時立即可用
+    var initialDataJson = System.Text.Json.JsonSerializer.Serialize(
+        Model.RealtimeDataList.Select(item => new {
+            subTopic = item.szSubTopic,
+            sid = item.szSID,
+            name = item.szName,
+            value = item.hasData ? item.dValue.ToString("F3") : "--",
+            unit = item.szUnit,
+            quality = item.szQuality,
+            timestamp = item.hasData ? item.dtTimestamp.ToString("yyyy-MM-dd HH:mm:ss") : "--",
+            isRecent = item.isRecent,
+            cssClass = item.CssRowClass,
+            badgeClass = item.QualityBadgeClass
+        })
+    );
 }
 
 <div class="container-fluid mt-4">
@@ -44,65 +56,6 @@
         </div>
     </div>
 
-    <!-- 統計卡片（依選取設備計算） -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="mb-0" id="totalPoints">@initialTotal</h4>
-                            <small>總點位數</small>
-                        </div>
-                        <i class="fas fa-list-ul fa-2x opacity-50"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="mb-0" id="activePoints">@initialActive</h4>
-                            <small>活躍點位</small>
-                        </div>
-                        <i class="fas fa-heartbeat fa-2x opacity-50"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="mb-0" id="updateRate">@initialRate%</h4>
-                            <small>資料更新率</small>
-                        </div>
-                        <i class="fas fa-chart-line fa-2x opacity-50"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card bg-warning text-dark">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="mb-0" id="lastUpdateTime">@Model.dtLastUpdated.ToString("HH:mm:ss")</h4>
-                            <small>最後更新</small>
-                        </div>
-                        <i class="fas fa-clock fa-2x opacity-50"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div class="row">
         <!-- 左側 Coordinator 清單 -->
         <div class="col-md-2 pe-0">
@@ -113,20 +66,56 @@
                         設備清單
                     </h6>
                 </div>
-                <div class="list-group list-group-flush" id="coordinatorList">
+                <div id="coordinatorList">
                     @if (Model.CoordinatorList.Any())
                     {
                         var isFirst = true;
                         @foreach (var coordinator in Model.CoordinatorList)
                         {
-                            <a href="#" class="list-group-item list-group-item-action py-2 coordinator-item @(isFirst ? "active" : "")"
-                               data-id="@coordinator.Id"
-                               data-modbusid="@coordinator.szModbusID"
-                               data-name="@coordinator.szName">
-                                <i class="fas fa-plug me-1 text-secondary"></i>
-                                <span class="small">@coordinator.szName</span>
-                            </a>
-                            isFirst = false;
+                            var modbusIds = coordinator.szModbusID.Split(',', StringSplitOptions.TrimEntries);
+                            var deviceNames = coordinator.szDeviceName.Split(',', StringSplitOptions.TrimEntries);
+                            var hasSubItems = modbusIds.Length > 1;
+
+                            if (hasSubItems)
+                            {
+                                <div class="coordinator-group">
+                                    <a href="#" class="list-group-item list-group-item-action py-2 coordinator-toggle"
+                                       data-id="@coordinator.Id"
+                                       data-modbusid="@coordinator.szModbusID"
+                                       data-name="@coordinator.szName">
+                                        <i class="fas fa-chevron-right me-1 toggle-icon text-secondary" style="font-size:.7rem;transition:transform .2s;"></i>
+                                        <i class="fas fa-plug me-1 text-secondary"></i>
+                                        <span class="small">@coordinator.szName</span>
+                                    </a>
+                                    <div class="sub-menu" style="display:none;">
+                                        @for (var j = 0; j < modbusIds.Length; j++)
+                                        {
+                                            var subName = j < deviceNames.Length ? deviceNames[j] : "";
+                                            var subModbusId = modbusIds[j];
+                                            <a href="#"
+                                               class="list-group-item list-group-item-action py-1 ps-4 sub-item"
+                                               data-id="@coordinator.Id"
+                                               data-modbusid="@subModbusId"
+                                               data-name="@(string.IsNullOrEmpty(subName) ? subModbusId : subName)">
+                                                <i class="fas fa-microchip me-1 text-muted" style="font-size:.75rem;"></i>
+                                                <span class="small">@(string.IsNullOrEmpty(subName) ? subModbusId : subName)</span>
+                                            </a>
+                                        }
+                                    </div>
+                                </div>
+                                isFirst = false;
+                            }
+                            else
+                            {
+                                <a href="#" class="list-group-item list-group-item-action py-2 coordinator-item @(isFirst ? "active" : "")"
+                                   data-id="@coordinator.Id"
+                                   data-modbusid="@coordinator.szModbusID"
+                                   data-name="@coordinator.szName">
+                                    <i class="fas fa-plug me-1 text-secondary"></i>
+                                    <span class="small">@coordinator.szName</span>
+                                </a>
+                                isFirst = false;
+                            }
                         }
                     }
                     else
@@ -270,6 +259,15 @@
         0% { background-color: rgba(40, 167, 69, 0.3); }
         100% { background-color: inherit; }
     }
+
+    .cell-updated {
+        animation: cell-flash 0.8s ease-out;
+    }
+
+    @@keyframes cell-flash {
+        0%   { background-color: rgba(255, 193, 7, 0.65); }
+        100% { background-color: transparent; }
+    }
     
     .card {
         border: none;
@@ -280,17 +278,36 @@
         border-radius: 10px 10px 0 0 !important;
     }
 
-    .coordinator-item {
+    .coordinator-item,
+    .coordinator-toggle {
         border-left: 3px solid transparent;
         transition: border-color 0.15s;
     }
-    .coordinator-item:hover {
+    .coordinator-item:hover,
+    .coordinator-toggle:hover {
         border-left-color: #0d6efd;
     }
-    .coordinator-item.active {
+    .coordinator-item.active,
+    .coordinator-toggle.active {
         border-left-color: #0d6efd;
         background-color: #e8f0fe !important;
         color: #0d6efd !important;
+    }
+    .sub-item {
+        border-left: 3px solid transparent;
+        background-color: #f8f9fa;
+        transition: border-color 0.15s;
+    }
+    .sub-item:hover {
+        border-left-color: #6ea8fe;
+    }
+    .sub-item.active {
+        border-left-color: #6ea8fe;
+        background-color: #dbe9fd !important;
+        color: #0d6efd !important;
+    }
+    .toggle-icon.open {
+        transform: rotate(90deg);
     }
 </style>
 
@@ -300,6 +317,8 @@
 
     // 目前選取的 Coordinator DB Id（0 = 不篩選）
     let currentCoordinatorDbId = @(firstCoordinator?.Id ?? 0);
+    // 子選單篩選：特定 ModbusID（null = 顯示整個 Coordinator）
+    let currentSubModbusId = null;
 
     // 排序狀態
     let sortColumn = null;
@@ -314,10 +333,7 @@
             sortDirection = 'asc';
         }
         updateSortIcons();
-        // 直接對現有資料重新排序（不需等下次 AJAX）
-        if (lastData.length > 0) {
-            updateTable(lastData);
-        }
+        updateTable();
     }
 
     // 更新欄位排序圖示
@@ -334,13 +350,22 @@
         });
     }
 
+    // 取得 SID 中 S 後的序號（e.g. "196865-S3" → 3）
+    function getSNumber(sid) {
+        if (!sid) return 0;
+        const m = sid.match(/-S(\d+)$/);
+        return m ? parseInt(m[1]) : 0;
+    }
+
     // 對資料陣列排序
     function applySorting(data) {
-        if (!sortColumn) return data;
+        if (!sortColumn) {
+            // 預設依 SID 的 S 序號由小到大
+            return [...data].sort((a, b) => getSNumber(a.sid) - getSNumber(b.sid));
+        }
         return [...data].sort((a, b) => {
             let va = a[sortColumn] ?? '';
             let vb = b[sortColumn] ?? '';
-            // 數值欄位嘗試數字排序（'--' 排到最後）
             if (sortColumn === 'value') {
                 const na = parseFloat(va);
                 const nb = parseFloat(vb);
@@ -356,40 +381,99 @@
         });
     }
 
-    // 快取最近一次資料供排序使用
-    let lastData = [];
+    // 快取全部點位資料（含未收到資料的點位），由 Razor 初始化
+    let lastData = @Html.Raw(initialDataJson);
+
+    // 記錄目前表格顯示的 subTopic 順序，用於判斷是否需要重建
+    let currentDisplayOrder = [];
 
     // 依目前選取的 Coordinator 篩選資料
-    // SID 格式: {nDatabaseId*65536 + nModbusId*256 + 1}-S{N}
-    // 同一 Coordinator 的 SID 數字落在 [Id*65536, (Id+1)*65536) 範圍內
     function filterByCoordinator(data) {
         if (!currentCoordinatorDbId) return data;
-        const rangeBase = currentCoordinatorDbId * 65536;
-        return data.filter(item => {
+
+        let rangeBase, rangeEnd;
+        if (currentSubModbusId !== null) {
+            // 子選單篩選：SID 範圍 = dbId*65536 + modbusId*256 ~ +256
+            const mid = parseInt(currentSubModbusId);
+            rangeBase = currentCoordinatorDbId * 65536 + mid * 256;
+            rangeEnd = rangeBase + 256;
+        } else {
+            // 整個 Coordinator 範圍
+            rangeBase = currentCoordinatorDbId * 65536;
+            rangeEnd = rangeBase + 65536;
+        }
+
+        const filtered = data.filter(item => {
             if (!item.sid) return false;
             const hyphen = item.sid.indexOf('-');
             if (hyphen < 0) return false;
             const sidNum = parseInt(item.sid.substring(0, hyphen));
-            return !isNaN(sidNum) && sidNum >= rangeBase && sidNum < rangeBase + 65536;
+            return !isNaN(sidNum) && sidNum >= rangeBase && sidNum < rangeEnd;
         });
+        console.log(`[篩選] CoordinatorId=${currentCoordinatorDbId}, SubModbusId=${currentSubModbusId}, 範圍=[${rangeBase}, ${rangeEnd}), 總資料=${data.length}, 篩選後=${filtered.length}`);
+        if (filtered.length === 0 && data.length > 0) {
+            const sample = data.slice(0, 5).map(d => d.sid);
+            console.warn('[篩選] 篩選結果為空！前 5 筆 SID:', sample);
+        }
+        return filtered;
+    }
+
+    // 建立單行 HTML
+    function buildRowHtml(item) {
+        const tsDisplay = item.timestamp === '--' ? '--' : item.timestamp.substring(5, 19);
+        return `<tr class="${item.cssClass}" data-subtopic="${item.subTopic}">
+            <td>${item.name}</td>
+            <td><small class="text-muted">${item.subTopic}</small></td>
+            <td class="text-end"><span class="fw-bold">${item.value}</span></td>
+            <td><span class="badge bg-light text-dark">${item.unit}</span></td>
+            <td><span class="badge ${item.badgeClass}">${item.quality}</span></td>
+            <td><small>${tsDisplay}</small></td>
+        </tr>`;
+    }
+
+    // 對單一 cell 觸發閃爍動畫
+    function flashCell(el) {
+        el.classList.remove('cell-updated');
+        void el.offsetWidth; // 強制 reflow，重新觸發動畫
+        el.classList.add('cell-updated');
+    }
+
+    // 比對單行資料，只更新有變化的欄位
+    function updateRowIfChanged(row, item) {
+        // value
+        const valueSpan = row.querySelector('td:nth-child(3) span.fw-bold');
+        if (valueSpan && valueSpan.textContent !== item.value) {
+            valueSpan.textContent = item.value;
+            flashCell(valueSpan);
+        }
+        // quality badge
+        const qualityBadge = row.querySelector('td:nth-child(5) span.badge');
+        const newQualityClass = `badge ${item.badgeClass}`;
+        if (qualityBadge) {
+            if (qualityBadge.textContent !== item.quality) qualityBadge.textContent = item.quality;
+            if (qualityBadge.className !== newQualityClass) qualityBadge.className = newQualityClass;
+        }
+        // timestamp
+        const tsSmall = row.querySelector('td:nth-child(6) small');
+        const newTs = item.timestamp === '--' ? '--' : item.timestamp.substring(5, 19);
+        if (tsSmall && tsSmall.textContent !== newTs) tsSmall.textContent = newTs;
+        // row class
+        if (row.className !== item.cssClass) row.className = item.cssClass;
     }
 
     // 自動更新函式
     async function refreshData() {
         if (isRefreshing) return;
-        
         try {
             isRefreshing = true;
             const refreshBtn = document.getElementById('refreshBtn');
             const refreshIcon = document.getElementById('refreshIcon');
-            
-            // 顯示載入動畫
             refreshIcon.classList.add('fa-spin');
             refreshBtn.disabled = true;
-            
+
             const response = await fetch('/api/realtime/latest');
             const result = await response.json();
-            
+
             if (result.success) {
                 updateTable(result.data);
                 updateConnectionStatus(result.connectionStatus);
@@ -398,7 +482,6 @@
                 console.error('更新資料失敗:', result.error);
                 showTemporaryAlert('更新資料失敗: ' + result.error, 'danger');
             }
-            
         } catch (error) {
             console.error('AJAX 請求失敗:', error);
             showTemporaryAlert('網路請求失敗，請檢查連線', 'danger');
@@ -406,12 +489,11 @@
             isRefreshing = false;
             const refreshBtn = document.getElementById('refreshBtn');
             const refreshIcon = document.getElementById('refreshIcon');
-            
             refreshIcon.classList.remove('fa-spin');
             refreshBtn.disabled = false;
         }
     }
-    
+
     // 更新連線狀態
     function updateConnectionStatus(isConnected) {
         const statusBadge = document.getElementById('connectionStatus');
@@ -423,60 +505,58 @@
             statusBadge.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>連線異常';
         }
     }
-    
-    // 依篩選後資料更新統計卡片
-    function updateFilteredStatistics(filtered) {
-        const total = filtered.length;
-        const active = filtered.filter(item => item.value !== '--').length;
-        const rate = total > 0 ? Math.round(active / total * 100) : 0;
-        document.getElementById('totalPoints').textContent = total;
-        document.getElementById('activePoints').textContent = active;
-        document.getElementById('updateRate').textContent = rate + '%';
-        document.getElementById('lastUpdateTime').textContent = new Date().toLocaleTimeString();
-    }
 
-    // 更新表格資料
+    // 更新表格：結構不變時 partial update，否則全部重建
     function updateTable(data) {
-        if (data !== undefined) {
-            lastData = data || [];
+        if (data !== undefined && data && data.length > 0) {
+            // 以 SID 為 key 合併：保留既有佔位項目，用新資料覆蓋已存在的
+            const merged = new Map();
+            lastData.forEach(item => merged.set(item.sid, item));
+            data.forEach(item => merged.set(item.sid, item));
+            lastData = Array.from(merged.values());
         }
         const filtered = filterByCoordinator(lastData);
         const tbody = document.getElementById('realtimeTableBody');
 
-        // 更新點位數量與統計卡片
         const pointCountEl = document.getElementById('pointCount');
         if (pointCountEl) pointCountEl.textContent = filtered.length;
-        updateFilteredStatistics(filtered);
-
         if (filtered.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="text-center text-muted py-4">
-                        <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
-                        尚無即時資料，請確認 MQTT 連線狀態
-                    </td>
-                </tr>
-            `;
+            tbody.innerHTML = `<tr>
+                <td colspan="6" class="text-center text-muted py-4">
+                    <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                    尚無即時資料，請確認 MQTT 連線狀態
+                </td></tr>`;
+            currentDisplayOrder = [];
             return;
         }
 
-        tbody.innerHTML = applySorting(filtered).map(item => `
-            <tr class="${item.cssClass}" data-subtopic="${item.subTopic}">
-                <td>${item.name}</td>
-                <td><small class="text-muted">${item.subTopic}</small></td>
-                <td class="text-end"><span class="fw-bold">${item.value}</span></td>
-                <td><span class="badge bg-light text-dark">${item.unit}</span></td>
-                <td><span class="badge ${item.badgeClass}">${item.quality}</span></td>
-                <td><small>${item.timestamp === '--' ? '--' : item.timestamp.substring(5, 19)}</small></td>
-            </tr>
-        `).join('');
+        const sorted = applySorting(filtered);
+        const newOrder = sorted.map(x => x.subTopic);
+
+        // 判斷列順序是否與現有表格一致
+        const sameStructure =
+            newOrder.length === currentDisplayOrder.length &&
+            newOrder.every((s, i) => s === currentDisplayOrder[i]);
+
+        if (!sameStructure) {
+            // 結構不同（切換設備、排序改變、初次載入）：全部重建
+            tbody.innerHTML = sorted.map(item => buildRowHtml(item)).join('');
+            currentDisplayOrder = newOrder;
+            return;
+        }
+
+        // 結構相同：逐行 partial update，只更新有變化的 cell
+        const rows = Array.from(tbody.querySelectorAll('tr[data-subtopic]'));
+        sorted.forEach((item, i) => {
+            if (rows[i]) updateRowIfChanged(rows[i], item);
+        });
     }
-    
+
     // 更新頁腳時間
     function updateFooterTime(timestamp) {
         document.getElementById('footerLastUpdate').textContent = '最後更新: ' + timestamp;
     }
-    
+
     // 顯示臨時提醒
     function showTemporaryAlert(message, type = 'info') {
         const alertHtml = `
@@ -484,49 +564,87 @@
                 <i class="fas fa-info-circle me-2"></i>
                 ${message}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        `;
-        
+            </div>`;
         const container = document.querySelector('.container-fluid');
         const alertDiv = document.createElement('div');
         alertDiv.innerHTML = alertHtml;
         container.insertBefore(alertDiv, container.firstChild);
-        
-        // 3秒後自動消失
         setTimeout(() => {
             const alert = document.querySelector('.alert');
-            if (alert) {
-                alert.remove();
-            }
+            if (alert) alert.remove();
         }, 3000);
     }
-    
-    // 頁面載入完成後啟動自動更新
+
+    // 頁面載入完成後啟動
     document.addEventListener('DOMContentLoaded', function() {
-        // 設備清單點擊事件
+        // 以 Razor 初始資料立即繪製表格（不等 AJAX）
+        updateTable();
+
+        function clearAllSidebarActive() {
+            document.querySelectorAll('.coordinator-item, .coordinator-toggle, .sub-item')
+                .forEach(el => el.classList.remove('active'));
+        }
+
+        // 單一設備點擊（無子選單）
         document.querySelectorAll('.coordinator-item').forEach(item => {
             item.addEventListener('click', function(e) {
                 e.preventDefault();
-                document.querySelectorAll('.coordinator-item').forEach(el => el.classList.remove('active'));
+                clearAllSidebarActive();
                 this.classList.add('active');
                 currentCoordinatorDbId = parseInt(this.dataset.id) || 0;
-                // 更新表格標頭顯示設備名稱
+                currentSubModbusId = null;
                 const nameEl = document.getElementById('currentCoordinatorName');
                 if (nameEl) nameEl.textContent = '— ' + (this.dataset.name || '');
-                // 用現有快取資料重新篩選，無需等下次 AJAX
                 updateTable();
             });
         });
 
-        // 立即執行一次更新
+        // 展開/收合子選單 + 顯示整個 Coordinator 資料
+        document.querySelectorAll('.coordinator-toggle').forEach(toggle => {
+            toggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                const subMenu = this.nextElementSibling;
+                const icon = this.querySelector('.toggle-icon');
+                if (subMenu.style.display === 'none') {
+                    subMenu.style.display = '';
+                    icon.classList.add('open');
+                } else {
+                    subMenu.style.display = 'none';
+                    icon.classList.remove('open');
+                }
+                clearAllSidebarActive();
+                this.classList.add('active');
+                currentCoordinatorDbId = parseInt(this.dataset.id) || 0;
+                currentSubModbusId = null;
+                const nameEl = document.getElementById('currentCoordinatorName');
+                if (nameEl) nameEl.textContent = '— ' + (this.dataset.name || '');
+                updateTable();
+            });
+        });
+
+        // 子項目點擊：篩選特定 ModbusID
+        document.querySelectorAll('.sub-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                clearAllSidebarActive();
+                this.classList.add('active');
+                currentCoordinatorDbId = parseInt(this.dataset.id) || 0;
+                currentSubModbusId = this.dataset.modbusid;
+                const nameEl = document.getElementById('currentCoordinatorName');
+                if (nameEl) nameEl.textContent = '— ' + (this.dataset.name || '');
+                updateTable();
+            });
+        });
+
+        // 1 秒後執行第一次 AJAX 更新
         setTimeout(refreshData, 1000);
 
-        // 每3秒自動更新
+        // 每 3 秒自動更新
         setInterval(refreshData, 3000);
 
         console.log('SCADA 即時監控儀表板已啟動，自動更新週期: 3秒');
     });
-    
+
     // 手動重新整理按鈕
     function manualRefresh() {
         refreshData();

@@ -212,6 +212,17 @@
     .w-table tr:last-child td { border-bottom: none; }
     .w-table tr:nth-child(even) td { background: #f8f9fa; }
 
+    .w-table td.selected-cell,
+    .w-table th.selected-cell {
+        outline: 2px solid #0d6efd;
+        outline-offset: -2px;
+        background: rgba(13,110,253,.08) !important;
+    }
+    .w-table td:hover,
+    .w-table th:hover {
+        background: rgba(13,110,253,.05) !important;
+    }
+
     /* ========== 屬性面板（右側） ========== */
     .property-panel {
         width: 210px;
@@ -461,6 +472,93 @@
     .icon-pick-item i { font-size: 18px; }
     .icon-pick-item:hover  { background: #37373d; color: #c8c8c8; }
     .icon-pick-item.selected { background: #0a3a5c; border-color: #1a6090; color: #7ecfff; }
+
+    /* ========== 文字 Widget ========== */
+    .canvas-widget[data-type="text"] {
+        background: transparent;
+        border: 1px dashed transparent;
+        box-shadow: none;
+        overflow: visible;
+        min-width: 40px;
+        min-height: 20px;
+    }
+    .canvas-widget[data-type="text"]:hover {
+        border-color: #888;
+    }
+    .canvas-widget[data-type="text"].selected {
+        border: 1px dashed #0d6efd;
+        box-shadow: 0 0 0 2px rgba(13,110,253,0.18);
+    }
+    .text-widget-body {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px 8px;
+        cursor: move;
+        user-select: none;
+        word-break: break-word;
+        text-align: center;
+        overflow: hidden;
+        line-height: 1.3;
+        box-sizing: border-box;
+    }
+    .text-del-btn {
+        position: absolute;
+        top: -9px;
+        right: -9px;
+        width: 18px;
+        height: 18px;
+        background: #555;
+        border: none;
+        border-radius: 50%;
+        color: #fff;
+        cursor: pointer;
+        font-size: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.1s;
+        z-index: 20;
+        padding: 0;
+        line-height: 1;
+    }
+    .canvas-widget[data-type="text"]:hover .text-del-btn,
+    .canvas-widget[data-type="text"].selected .text-del-btn {
+        opacity: 1;
+    }
+    .text-del-btn:hover { background: #dc3545; }
+    .canvas-widget[data-type="text"] .resize-knob {
+        opacity: 0;
+    }
+    .canvas-widget[data-type="text"]:hover .resize-knob,
+    .canvas-widget[data-type="text"].selected .resize-knob {
+        opacity: 1;
+    }
+
+    /* ========== 控制按鈕 Widget ========== */
+    .ctrl-btn-body {
+        width: 100%; height: 100%;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        gap: 6px; border-radius: 6px;
+    }
+    .ctrl-btn-main {
+        display: inline-flex; align-items: center; justify-content: center;
+        gap: 6px; padding: 8px 18px; border-radius: 8px;
+        font-size: 14px; font-weight: 600;
+        border: none; border-top: 1px solid rgba(255,255,255,.25);
+        color: #fff; min-width: 70px; cursor: default;
+        box-shadow: 0 3px 6px rgba(0,0,0,.25), 0 1px 2px rgba(0,0,0,.15),
+                    inset 0 1px 0 rgba(255,255,255,.2);
+        text-shadow: 0 1px 2px rgba(0,0,0,.25);
+        background-image: linear-gradient(to bottom, rgba(255,255,255,.12), rgba(0,0,0,.08));
+    }
+    .ctrl-btn-cid-label {
+        font-size: 10px; color: #888; text-align: center;
+    }
 </style>
 
 <!-- Designer 主容器 -->
@@ -546,6 +644,33 @@
                      title="拖曳至畫布以新增儀錶板">
                     <i class="fas fa-tachometer-alt text-warning"></i>
                     <span>儀錶板</span>
+                </div>
+
+                <!-- 文字 -->
+                <div class="widget-lib-item"
+                     draggable="true"
+                     data-widget-type="text"
+                     title="拖曳至畫布以新增文字標籤">
+                    <i class="fas fa-font" style="color:#a78bfa;"></i>
+                    <span>文字</span>
+                </div>
+
+                <!-- 控制按鈕 -->
+                <div class="widget-lib-item"
+                     draggable="true"
+                     data-widget-type="controlBtn"
+                     title="拖曳至畫布以新增控制按鈕（可綁定 CID）">
+                    <i class="fas fa-toggle-on" style="color:#20c997;"></i>
+                    <span>控制按鈕</span>
+                </div>
+
+                <!-- 即時數值 -->
+                <div class="widget-lib-item"
+                     draggable="true"
+                     data-widget-type="realtimeValue"
+                     title="拖曳至畫布以新增即時數值（可綁定 SID）">
+                    <i class="fas fa-digital-tachograph" style="color:#ff6b6b;"></i>
+                    <span>即時數值</span>
                 </div>
             </div>
 
@@ -702,7 +827,9 @@ const WIDGET_DEFS = {
             szTitle: '數據表格',
             nRows: 5,
             nCols: 3,
-            szHeaderColor: '#343a40'
+            szHeaderColor: '#343a40',
+            arrCells: null,
+            arrColDecimals: null
         }
     },
     gauge: {
@@ -714,11 +841,56 @@ const WIDGET_DEFS = {
             szTitle:     '溫度',
             szSid:       '',
             szPointName: '',
-            fValue:  65.5,
+            fValue:  50.0,
             fMin:    0.0,
             fMax:    100.0,
             szUnit:  '°C',
             szColor: '#0d6efd'
+        }
+    },
+    text: {
+        szLabel: '文字',
+        szIcon: 'fas fa-font',
+        nDefaultW: 160,
+        nDefaultH: 60,
+        defaultProps: {
+            szTitle:      '文字標籤',
+            szText:       '文字內容',
+            szFontFamily: 'inherit',
+            szFontColor:  '#212529',
+            nFontSize:    18,
+            szFontWeight: 'normal',
+            isItalic:     false,
+            szBgColor:    'transparent'
+        }
+    },
+    controlBtn: {
+        szLabel: '控制按鈕',
+        szIcon: 'fas fa-toggle-on',
+        nDefaultW: 180,
+        nDefaultH: 100,
+        defaultProps: {
+            szTitle:     '控制',
+            szCid:       '',
+            szPointName: '',
+            szBtnLabel:  '執行',
+            szBtnColor:  '#198754',
+            szBgColor:   'transparent'
+        }
+    },
+    realtimeValue: {
+        szLabel: '即時數值',
+        szIcon: 'fas fa-digital-tachograph',
+        nDefaultW: 200,
+        nDefaultH: 80,
+        defaultProps: {
+            szTitle:     '即時數值',
+            szSid:       '',
+            szPointName: '',
+            szUnit:      '',
+            nFontSize:   28,
+            szFontColor: '#212529',
+            szBgColor:   'transparent'
         }
     }
 };
@@ -769,9 +941,9 @@ canvas.addEventListener('drop', e => {
     x = Math.max(0, x);
     y = Math.max(0, y);
 
-    if (szType === 'gauge') {
-        // 儀錶板需先選擇綁定點位
-        openPointPicker(x, y);
+    if (szType === 'gauge' || szType === 'controlBtn' || szType === 'realtimeValue') {
+        // 儀錶板 / 控制按鈕 / 即時數值需先選擇綁定點位
+        openPointPicker(x, y, szType);
     } else {
         createWidget(szType, x, y);
     }
@@ -804,12 +976,17 @@ function createWidget(szType, x, y) {
 // ============================================================
 function renderWidget(el) {
     const szType = el.dataset.type;
+
+    // 文字 Widget 使用獨立渲染
+    if (szType === 'text') { renderTextWidget(el); return; }
+
     const def    = WIDGET_DEFS[szType];
     const props  = el.widgetProps;
 
-    const szContent = szType === 'table'
-        ? buildTableHtml(props)
-        : buildGaugeHtml(props);
+    const szContent = szType === 'table'          ? buildTableHtml(props)
+                    : szType === 'controlBtn'     ? buildControlBtnHtml(props)
+                    : szType === 'realtimeValue'  ? buildRealtimeValueHtml(props)
+                    : buildGaugeHtml(props);
 
     el.innerHTML = `
         <div class="widget-header">
@@ -824,6 +1001,63 @@ function renderWidget(el) {
     // 拖移（header）
     el.querySelector('.widget-header').addEventListener('mousedown', e => {
         if (e.target.classList.contains('widget-del')) return;
+        e.preventDefault();
+        startMove(e, el);
+    });
+
+    // 縮放（右下角）
+    el.querySelector('.resize-knob').addEventListener('mousedown', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        startResize(e, el);
+    });
+
+    // 點選選取
+    el.addEventListener('mousedown', () => selectWidget(el));
+
+    // 表格儲存格事件（點擊/右鍵）
+    if (szType === 'table') {
+        el.querySelectorAll('.w-table td, .w-table th').forEach(td => {
+            td.addEventListener('click', e => {
+                e.stopPropagation();
+                const nRow = parseInt(td.dataset.row);
+                const nCol = parseInt(td.dataset.col);
+                onTableCellClick(el, nRow, nCol);
+            });
+            td.addEventListener('contextmenu', e => {
+                e.preventDefault();
+                e.stopPropagation();
+                const nRow = parseInt(td.dataset.row);
+                const nCol = parseInt(td.dataset.col);
+                onTableCellCtxMenu(e, el, nRow, nCol);
+            });
+        });
+    }
+}
+
+// ============================================================
+// 文字 Widget 渲染
+// ============================================================
+function renderTextWidget(el) {
+    const props = el.widgetProps;
+    const szFontStyle = props.isItalic ? 'italic' : 'normal';
+    const szBg        = props.szBgColor || 'transparent';
+
+    el.innerHTML = `
+        <div class="text-widget-body" style="
+            font-family:${props.szFontFamily};
+            font-size:${props.nFontSize}px;
+            color:${props.szFontColor};
+            font-weight:${props.szFontWeight};
+            font-style:${szFontStyle};
+            background:${szBg};
+        ">${escHtml(props.szText)}</div>
+        <button class="text-del-btn" onclick="deleteWidget('${el.id}')" title="刪除文字">✕</button>
+        <div class="resize-knob" title="拖曳縮放"></div>
+    `;
+
+    // 拖移（整個文字主體）
+    el.querySelector('.text-widget-body').addEventListener('mousedown', e => {
         e.preventDefault();
         startMove(e, el);
     });
@@ -853,19 +1087,85 @@ const TABLE_SAMPLE = [
 
 const COL_HEADERS = ['名稱', '數值', '狀態', '時間戳'];
 
-function buildTableHtml(props) {
-    const nC = Math.max(1, Math.min(props.nCols, 4));
-    const nR = Math.max(1, props.nRows);
+// ── 儲存格預設值 ──
+function _defaultHeaderCell(ci) {
+    return { szText: '', szFontColor: '#fff', szFontWeight: '500', szAlign: 'left', nFontSize: 11 };
+}
+function _defaultDataCell(ri, ci) {
+    return { szText: '', szFontColor: '#444', szFontWeight: 'normal', szAlign: 'left', nFontSize: 12, szSid: '', szPointName: '' };
+}
 
-    const szHeaders = Array.from({ length: nC }, (_, i) =>
-        `<th style="background:${props.szHeaderColor}">${COL_HEADERS[i] ?? '欄' + (i+1)}</th>`
+// ── 初始化 arrCells（新建或舊資料遷移）──
+function initArrCells(props) {
+    const nC = Math.max(1, Math.min(props.nCols || 3, 4));
+    const nR = Math.max(1, props.nRows || 5);
+    if (!props.arrCells) {
+        props.arrCells = [];
+        // row 0 = 標題列
+        props.arrCells.push(Array.from({ length: nC }, (_, ci) => _defaultHeaderCell(ci)));
+        // row 1..nR = 資料列
+        for (let ri = 0; ri < nR; ri++) {
+            props.arrCells.push(Array.from({ length: nC }, (_, ci) => _defaultDataCell(ri, ci)));
+        }
+    }
+    if (!props.arrColDecimals) {
+        props.arrColDecimals = Array.from({ length: nC }, () => null);
+    }
+}
+
+// ── 當 nRows/nCols 改變時同步 arrCells 大小 ──
+function syncArrCellsSize(props) {
+    if (!props.arrCells) { initArrCells(props); return; }
+    const nC = Math.max(1, Math.min(props.nCols || 3, 4));
+    const nR = Math.max(1, props.nRows || 5);
+    const nTotalRows = nR + 1; // +1 for header
+    // 調整列數
+    while (props.arrCells.length < nTotalRows) {
+        const ri = props.arrCells.length - 1;
+        props.arrCells.push(Array.from({ length: nC }, (_, ci) => _defaultDataCell(ri, ci)));
+    }
+    while (props.arrCells.length > nTotalRows) props.arrCells.pop();
+    // 調整欄數
+    props.arrCells.forEach((row, ri) => {
+        while (row.length < nC) {
+            const ci = row.length;
+            row.push(ri === 0 ? _defaultHeaderCell(ci) : _defaultDataCell(ri - 1, ci));
+        }
+        while (row.length > nC) row.pop();
+    });
+    // 同步 arrColDecimals
+    while (props.arrColDecimals.length < nC) props.arrColDecimals.push(null);
+    while (props.arrColDecimals.length > nC) props.arrColDecimals.pop();
+}
+
+function buildTableHtml(props) {
+    initArrCells(props);
+    const nC = Math.max(1, Math.min(props.nCols || 3, 4));
+    const nR = Math.max(1, props.nRows || 5);
+    const arrCells = props.arrCells;
+
+    // 標題列 (row 0)
+    const szHeaders = arrCells[0].slice(0, nC).map((cell, ci) =>
+        `<th data-row="0" data-col="${ci}" style="background:${props.szHeaderColor};
+            color:${cell.szFontColor || '#fff'};font-weight:${cell.szFontWeight || '500'};
+            font-size:${cell.nFontSize || 11}px;text-align:${cell.szAlign || 'left'};
+            cursor:pointer;">${escHtml(cell.szText || '')}</th>`
     ).join('');
 
+    // 資料列 (row 1..nR)
     const szRows = Array.from({ length: nR }, (_, ri) => {
-        const row = TABLE_SAMPLE[ri % TABLE_SAMPLE.length];
-        const szCells = Array.from({ length: nC }, (_, ci) =>
-            `<td>${row[ci] ?? '-'}</td>`
-        ).join('');
+        const rowIdx = ri + 1;
+        if (rowIdx >= arrCells.length) return '';
+        const row = arrCells[rowIdx];
+        const szCells = row.slice(0, nC).map((cell, ci) => {
+            const szSidAttr = cell.szSid ? `data-sid="${escHtml(cell.szSid)}"` : '';
+            const szSidLabel = cell.szSid
+                ? `<span style="font-size:9px;color:#0d6efd;opacity:.7;margin-left:4px;white-space:nowrap;"><i class="fas fa-link" style="font-size:8px;margin-right:2px;"></i>${escHtml(cell.szPointName || cell.szSid)}</span>` : '';
+            return `<td data-row="${rowIdx}" data-col="${ci}" ${szSidAttr}
+                style="color:${cell.szFontColor || '#444'};font-weight:${cell.szFontWeight || 'normal'};
+                       font-size:${cell.nFontSize || 12}px;text-align:${cell.szAlign || 'left'};
+                       cursor:pointer;position:relative;">${escHtml(cell.szText || '')}${szSidLabel}</td>`;
+        }).join('');
         return `<tr>${szCells}</tr>`;
     }).join('');
 
@@ -926,6 +1226,44 @@ function buildGaugeHtml(props) {
 }
 
 // ============================================================
+// 控制按鈕 HTML
+// ============================================================
+function buildControlBtnHtml(props) {
+    const szCidLabel = props.szPointName
+        ? `<div class="ctrl-btn-cid-label"><i class="fas fa-link me-1" style="opacity:.5;"></i>${escHtml(props.szPointName)}</div>`
+        : `<div class="ctrl-btn-cid-label" style="color:#dc3545;"><i class="fas fa-unlink me-1"></i>未綁定 CID</div>`;
+    const szBg = (props.szBgColor && props.szBgColor !== 'transparent') ? props.szBgColor : 'transparent';
+    return `
+        <div class="ctrl-btn-body" style="background:${szBg};">
+            <button class="ctrl-btn-main" style="background:${props.szBtnColor || '#198754'};" disabled>
+                <i class="fas fa-hand-pointer" style="font-size:12px;"></i>
+                ${escHtml(props.szBtnLabel || '執行')}
+            </button>
+            ${szCidLabel}
+        </div>`;
+}
+
+// ============================================================
+// 即時數值 HTML（Designer 預覽）
+// ============================================================
+function buildRealtimeValueHtml(props) {
+    const szSidLabel = props.szPointName
+        ? `<div style="font-size:10px;color:#888;margin-top:2px;"><i class="fas fa-link me-1" style="opacity:.5;"></i>${escHtml(props.szPointName)}</div>`
+        : `<div style="font-size:10px;color:#dc3545;margin-top:2px;"><i class="fas fa-unlink me-1"></i>未綁定 SID</div>`;
+    const szBg = (props.szBgColor && props.szBgColor !== 'transparent') ? props.szBgColor : 'transparent';
+    return `
+        <div style="width:100%;height:100%;display:flex;flex-direction:column;
+                    align-items:center;justify-content:center;background:${szBg};border-radius:4px;">
+            <div style="font-size:${props.nFontSize || 28}px;font-weight:700;color:${props.szFontColor || '#212529'};
+                        font-family:'Segoe UI',sans-serif;line-height:1.2;">
+                --
+                <span style="font-size:${Math.max(12, (props.nFontSize || 28) * 0.45)}px;font-weight:400;color:#6c757d;margin-left:4px;">${escHtml(props.szUnit || '')}</span>
+            </div>
+            ${szSidLabel}
+        </div>`;
+}
+
+// ============================================================
 // 選取 Widget
 // ============================================================
 function selectWidget(el) {
@@ -948,12 +1286,28 @@ canvas.addEventListener('mousedown', e => {
     if (e.target === canvas) selectWidget(null);
 });
 
+// 畫布右鍵 → 新增文字選單
+canvas.addEventListener('contextmenu', e => {
+    if (e.target.closest('.canvas-widget')) return;  // 點到 widget 上不攔截
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const nX = Math.max(0, snapGrid(e.clientX - rect.left));
+    const nY = Math.max(0, snapGrid(e.clientY - rect.top));
+    showCanvasCtxMenu(e, nX, nY);
+});
+
 // ============================================================
 // 屬性面板
 // ============================================================
 function renderPropPanel(el) {
     const szType = el.dataset.type;
     const props  = el.widgetProps;
+
+    // 文字 Widget 使用獨立屬性面板
+    if (szType === 'text') {
+        document.getElementById('propBody').innerHTML = buildTextPropHtml(el, props);
+        return;
+    }
 
     // 共用欄位
     let szHtml = `
@@ -964,12 +1318,12 @@ function renderPropPanel(el) {
         </div>
         <div class="prop-group">
             <label>X 位置</label>
-            <input type="number" value="${parseInt(el.style.left)}" step="20"
+            <input type="number" id="pX" value="${parseInt(el.style.left)}" step="20"
                    oninput="setPos('left', +this.value)">
         </div>
         <div class="prop-group">
             <label>Y 位置</label>
-            <input type="number" value="${parseInt(el.style.top)}" step="20"
+            <input type="number" id="pY" value="${parseInt(el.style.top)}" step="20"
                    oninput="setPos('top', +this.value)">
         </div>
         <div class="prop-group">
@@ -1033,24 +1387,217 @@ function renderPropPanel(el) {
                    oninput="setProp('fMax', +this.value)">
         </div>
         <div class="prop-group">
-            <label>單位</label>
-            <input type="text" value="${escHtml(props.szUnit)}"
-                   oninput="setProp('szUnit', this.value)">
+            <label>單位（來自點位）</label>
+            <input type="text" value="${escHtml(props.szUnit)}" readonly
+                   style="background:#f0f0f0;color:#666;cursor:not-allowed;">
         </div>
         <div class="prop-group">
             <label>主色（正常範圍）</label>
             <input type="color" value="${props.szColor}"
                    oninput="setProp('szColor', this.value)">
         </div>`;
+    } else if (szType === 'controlBtn') {
+        const szCidLabel = props.szPointName
+            ? `<span style="font-size:12px;color:#c8c8c8;">${escHtml(props.szPointName)}</span>`
+            : `<span style="color:#888;font-size:11px;">（未綁定）</span>`;
+        const isBgTransparent = !props.szBgColor || props.szBgColor === 'transparent';
+        const szBgColorVal    = isBgTransparent ? '#ffffff' : props.szBgColor;
+        szHtml += `
+        <div class="prop-group">
+            <label>綁定 CID</label>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                ${szCidLabel}
+                <button class="btn btn-outline-success btn-sm py-0 px-2" style="font-size:11px;"
+                        onclick="rerouteControlBtnPoint()">
+                    <i class="fas fa-exchange-alt me-1"></i>重選
+                </button>
+            </div>
+        </div>
+        <div class="prop-group">
+            <label>按鈕文字</label>
+            <input type="text" value="${escHtml(props.szBtnLabel || '執行')}"
+                   oninput="setProp('szBtnLabel', this.value)">
+        </div>
+        <div class="prop-group">
+            <label>按鈕顏色</label>
+            <input type="color" value="${props.szBtnColor || '#198754'}"
+                   oninput="setProp('szBtnColor', this.value)">
+        </div>
+        <div class="prop-group">
+            <label>背景色</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:#9d9d9d;
+                          font-weight:normal;text-transform:none;letter-spacing:0;cursor:pointer;margin-top:4px;">
+                <input type="checkbox" style="cursor:pointer;"
+                       ${isBgTransparent ? 'checked' : ''}
+                       onchange="onCtrlBtnBgTransparentChange(this.checked)">
+                透明背景
+            </label>
+            <input type="color" id="ctrlBtnBgPicker" value="${szBgColorVal}"
+                   style="width:100%;margin-top:4px;${isBgTransparent ? 'display:none;' : ''}"
+                   oninput="setProp('szBgColor', this.value)">
+        </div>`;
+    } else if (szType === 'realtimeValue') {
+        const szSidLabel = props.szPointName
+            ? `<span style="font-size:12px;color:#c8c8c8;">${escHtml(props.szPointName)}</span>`
+            : `<span style="color:#888;font-size:11px;">（未綁定）</span>`;
+        const isBgTransparent = !props.szBgColor || props.szBgColor === 'transparent';
+        const szBgColorVal    = isBgTransparent ? '#ffffff' : props.szBgColor;
+        szHtml += `
+        <div class="prop-group">
+            <label>綁定 SID</label>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                ${szSidLabel}
+                <button class="btn btn-outline-danger btn-sm py-0 px-2" style="font-size:11px;"
+                        onclick="rerouteRealtimeValuePoint()">
+                    <i class="fas fa-exchange-alt me-1"></i>重選
+                </button>
+            </div>
+        </div>
+        <div class="prop-group">
+            <label>字體大小</label>
+            <input type="number" value="${props.nFontSize || 28}" min="12" max="120" step="2"
+                   oninput="setProp('nFontSize', +this.value)">
+        </div>
+        <div class="prop-group">
+            <label>字色</label>
+            <input type="color" value="${props.szFontColor || '#212529'}"
+                   oninput="setProp('szFontColor', this.value)">
+        </div>
+        <div class="prop-group">
+            <label>單位</label>
+            <input type="text" value="${escHtml(props.szUnit || '')}"
+                   oninput="setProp('szUnit', this.value)">
+        </div>
+        <div class="prop-group">
+            <label>背景色</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:#9d9d9d;
+                          font-weight:normal;text-transform:none;letter-spacing:0;cursor:pointer;margin-top:4px;">
+                <input type="checkbox" style="cursor:pointer;"
+                       ${isBgTransparent ? 'checked' : ''}
+                       onchange="onRtValBgTransparentChange(this.checked)">
+                透明背景
+            </label>
+            <input type="color" id="rtValBgPicker" value="${szBgColorVal}"
+                   style="width:100%;margin-top:4px;${isBgTransparent ? 'display:none;' : ''}"
+                   oninput="setProp('szBgColor', this.value)">
+        </div>`;
     }
 
     document.getElementById('propBody').innerHTML = szHtml;
+}
+
+// ============================================================
+// 文字 Widget 屬性面板 HTML
+// ============================================================
+function buildTextPropHtml(el, props) {
+    const szFontFamilyOpts = [
+        { val: 'inherit',                             label: '預設' },
+        { val: "'Microsoft JhengHei', sans-serif",    label: '微軟正黑體' },
+        { val: "'Noto Sans TC', sans-serif",          label: 'Noto Sans TC' },
+        { val: "'Arial', sans-serif",                 label: 'Arial' },
+        { val: "'Times New Roman', serif",            label: 'Times New Roman' },
+        { val: "'Courier New', monospace",            label: 'Courier New' },
+    ].map(o => `<option value="${escHtml(o.val)}" ${props.szFontFamily === o.val ? 'selected' : ''}>${o.label}</option>`).join('');
+
+    const isBgTransparent = props.szBgColor === 'transparent';
+    const szBgColorVal    = isBgTransparent ? '#ffffff' : props.szBgColor;
+
+    return `
+        <div class="prop-group">
+            <label>文字內容</label>
+            <textarea rows="3" style="width:100%;background:#3c3c3c;border:1px solid #555;
+                      color:#d4d4d4;padding:4px 6px;font-size:12px;border-radius:3px;
+                      outline:none;resize:vertical;box-sizing:border-box;"
+                      oninput="setProp('szText', this.value)">${escHtml(props.szText)}</textarea>
+        </div>
+        <div class="prop-group">
+            <label>X 位置</label>
+            <input type="number" id="pX" value="${parseInt(el.style.left)}" step="20"
+                   oninput="setPos('left', +this.value)">
+        </div>
+        <div class="prop-group">
+            <label>Y 位置</label>
+            <input type="number" id="pY" value="${parseInt(el.style.top)}" step="20"
+                   oninput="setPos('top', +this.value)">
+        </div>
+        <div class="prop-group">
+            <label>寬度</label>
+            <input type="number" id="pW" value="${el.offsetWidth}" step="20"
+                   oninput="setSize('width', +this.value)">
+        </div>
+        <div class="prop-group">
+            <label>高度</label>
+            <input type="number" id="pH" value="${el.offsetHeight}" step="20"
+                   oninput="setSize('height', +this.value)">
+        </div>
+        <hr class="prop-divider">
+        <div class="prop-group">
+            <label>字體大小</label>
+            <input type="number" value="${props.nFontSize}" min="8" max="200" step="2"
+                   oninput="setProp('nFontSize', +this.value)">
+        </div>
+        <div class="prop-group">
+            <label>字色</label>
+            <input type="color" value="${props.szFontColor}"
+                   oninput="setProp('szFontColor', this.value)">
+        </div>
+        <div class="prop-group">
+            <label>字體</label>
+            <select oninput="setProp('szFontFamily', this.value)">${szFontFamilyOpts}</select>
+        </div>
+        <div class="prop-group">
+            <label>粗體</label>
+            <select oninput="setProp('szFontWeight', this.value)">
+                <option value="normal" ${props.szFontWeight === 'normal' ? 'selected' : ''}>正常</option>
+                <option value="bold"   ${props.szFontWeight === 'bold'   ? 'selected' : ''}>粗體</option>
+            </select>
+        </div>
+        <div class="prop-group">
+            <label>斜體</label>
+            <select onchange="setProp('isItalic', this.value === 'true')">
+                <option value="false" ${!props.isItalic ? 'selected' : ''}>否</option>
+                <option value="true"  ${props.isItalic  ? 'selected' : ''}>是</option>
+            </select>
+        </div>
+        <div class="prop-group">
+            <label>背景色</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:#9d9d9d;
+                          font-weight:normal;text-transform:none;letter-spacing:0;cursor:pointer;margin-top:4px;">
+                <input type="checkbox" style="cursor:pointer;"
+                       ${isBgTransparent ? 'checked' : ''}
+                       onchange="onTextBgTransparentChange(this.checked)">
+                透明背景
+            </label>
+            <input type="color" id="txtBgColorPicker" value="${szBgColorVal}"
+                   style="width:100%;margin-top:4px;${isBgTransparent ? 'display:none;' : ''}"
+                   oninput="setProp('szBgColor', this.value)">
+        </div>
+    `;
+}
+
+function onTextBgTransparentChange(isChecked) {
+    if (isChecked) {
+        setProp('szBgColor', 'transparent');
+        const picker = document.getElementById('txtBgColorPicker');
+        if (picker) picker.style.display = 'none';
+    } else {
+        const picker = document.getElementById('txtBgColorPicker');
+        const szColor = picker ? picker.value : '#ffffff';
+        setProp('szBgColor', szColor);
+        if (picker) picker.style.display = '';
+    }
 }
 
 // 更新 prop → 重新渲染 widget 內容
 function setProp(szKey, val) {
     if (!selectedEl) return;
     selectedEl.widgetProps[szKey] = val;
+    // 當列數/欄數改變時同步 arrCells
+    if (selectedEl.dataset.type === 'table' && (szKey === 'nRows' || szKey === 'nCols')) {
+        syncArrCellsSize(selectedEl.widgetProps);
+        nSelectedCellRow = -1;
+        nSelectedCellCol = -1;
+    }
     renderWidget(selectedEl);
 }
 
@@ -1062,6 +1609,144 @@ function setPos(szSide, nVal) {
 function setSize(szSide, nVal) {
     if (!selectedEl) return;
     selectedEl.style[szSide] = Math.max(60, nVal) + 'px';
+}
+
+// ============================================================
+// 表格儲存格選取與屬性面板
+// ============================================================
+let nSelectedCellRow = -1;
+let nSelectedCellCol = -1;
+
+function onTableCellClick(widgetEl, nRow, nCol) {
+    selectWidget(widgetEl);
+    nSelectedCellRow = nRow;
+    nSelectedCellCol = nCol;
+    // 高亮選中 cell
+    widgetEl.querySelectorAll('.w-table td, .w-table th').forEach(c => c.classList.remove('selected-cell'));
+    const sel = widgetEl.querySelector(`.w-table [data-row="${nRow}"][data-col="${nCol}"]`);
+    if (sel) sel.classList.add('selected-cell');
+    renderTableCellPropPanel(widgetEl, nRow, nCol);
+}
+
+function renderTableCellPropPanel(el, nRow, nCol) {
+    const props = el.widgetProps;
+    initArrCells(props);
+    if (nRow >= props.arrCells.length || nCol >= props.arrCells[nRow].length) return;
+    const cell = props.arrCells[nRow][nCol];
+    const isHeader = (nRow === 0);
+
+    let szHtml = `
+        <div style="font-size:11px;color:#0d6efd;margin-bottom:8px;cursor:pointer;"
+             onclick="renderPropPanel(selectedEl)">
+            <i class="fas fa-arrow-left me-1"></i>返回表格屬性
+        </div>
+        <div style="font-size:10px;color:#888;margin-bottom:6px;">
+            ${isHeader ? '標題列' : '資料列'} [${nRow}, ${nCol}]
+        </div>
+        <hr class="prop-divider">
+        <div class="prop-group">
+            <label>文字內容</label>
+            <input type="text" value="${escHtml(cell.szText || '')}"
+                   oninput="setCellProp('szText', this.value)">
+        </div>
+        <div class="prop-group">
+            <label>字體大小</label>
+            <input type="number" value="${cell.nFontSize || 12}" min="8" max="24"
+                   oninput="setCellProp('nFontSize', +this.value)">
+        </div>
+        <div class="prop-group">
+            <label>文字顏色</label>
+            <input type="color" value="${cell.szFontColor || (isHeader ? '#ffffff' : '#444444')}"
+                   oninput="setCellProp('szFontColor', this.value)">
+        </div>
+        <div class="prop-group">
+            <label>粗細</label>
+            <select onchange="setCellProp('szFontWeight', this.value)">
+                <option value="normal" ${(cell.szFontWeight||'normal')==='normal'?'selected':''}>一般</option>
+                <option value="bold" ${cell.szFontWeight==='bold'?'selected':''}>粗體</option>
+                <option value="500" ${cell.szFontWeight==='500'?'selected':''}>中粗</option>
+            </select>
+        </div>
+        <div class="prop-group">
+            <label>對齊</label>
+            <select onchange="setCellProp('szAlign', this.value)">
+                <option value="left" ${(cell.szAlign||'left')==='left'?'selected':''}>靠左</option>
+                <option value="center" ${cell.szAlign==='center'?'selected':''}>置中</option>
+                <option value="right" ${cell.szAlign==='right'?'selected':''}>靠右</option>
+            </select>
+        </div>`;
+
+    if (!isHeader) {
+        // 綁定點位
+        const szSidLabel = cell.szSid
+            ? `<span style="font-size:11px;color:#c8c8c8;">${escHtml(cell.szPointName || cell.szSid)}</span>`
+            : `<span style="color:#888;font-size:11px;">（未綁定）</span>`;
+        szHtml += `
+        <hr class="prop-divider">
+        <div class="prop-group">
+            <label>綁定點位</label>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                ${szSidLabel}
+                <button class="btn btn-outline-warning btn-sm py-0 px-2" style="font-size:11px;"
+                        onclick="openCellPointPicker(${nRow}, ${nCol})">
+                    <i class="fas fa-exchange-alt me-1"></i>${cell.szSid ? '重選' : '綁定'}
+                </button>
+                ${cell.szSid ? `<button class="btn btn-outline-danger btn-sm py-0 px-2" style="font-size:11px;"
+                        onclick="clearCellSid(${nRow}, ${nCol})">
+                    <i class="fas fa-unlink me-1"></i>清除
+                </button>` : ''}
+            </div>
+        </div>
+        <div class="prop-group">
+            <label>小數位數（整欄）</label>
+            <input type="number" value="${props.arrColDecimals[nCol] ?? ''}" min="0" max="6"
+                   placeholder="不限"
+                   oninput="setColDecimals(${nCol}, this.value)">
+        </div>`;
+    }
+
+    document.getElementById('propBody').innerHTML = szHtml;
+}
+
+function setCellProp(szKey, val) {
+    if (!selectedEl || nSelectedCellRow < 0) return;
+    const props = selectedEl.widgetProps;
+    if (!props.arrCells || nSelectedCellRow >= props.arrCells.length) return;
+    // 字體大小、對齊、粗細 → 整欄同步修改
+    const arrColWideKeys = ['nFontSize', 'szAlign', 'szFontWeight'];
+    if (arrColWideKeys.includes(szKey)) {
+        const nCol = nSelectedCellCol;
+        for (let ri = 0; ri < props.arrCells.length; ri++) {
+            if (props.arrCells[ri][nCol]) {
+                props.arrCells[ri][nCol][szKey] = val;
+            }
+        }
+    } else {
+        props.arrCells[nSelectedCellRow][nSelectedCellCol][szKey] = val;
+    }
+    renderWidget(selectedEl);
+    // 重新高亮
+    const sel = selectedEl.querySelector(`.w-table [data-row="${nSelectedCellRow}"][data-col="${nSelectedCellCol}"]`);
+    if (sel) sel.classList.add('selected-cell');
+}
+
+function setColDecimals(nCol, val) {
+    if (!selectedEl) return;
+    const props = selectedEl.widgetProps;
+    initArrCells(props);
+    props.arrColDecimals[nCol] = val === '' ? null : Math.max(0, Math.min(6, parseInt(val)));
+    // 不需重新渲染，小數位數僅影響 ScadaPage 即時顯示
+}
+
+function clearCellSid(nRow, nCol) {
+    if (!selectedEl) return;
+    const cell = selectedEl.widgetProps.arrCells[nRow][nCol];
+    cell.szSid = '';
+    cell.szPointName = '';
+    renderWidget(selectedEl);
+    const sel = selectedEl.querySelector(`.w-table [data-row="${nRow}"][data-col="${nCol}"]`);
+    if (sel) sel.classList.add('selected-cell');
+    renderTableCellPropPanel(selectedEl, nRow, nCol);
 }
 
 // ============================================================
@@ -1115,8 +1800,9 @@ function onDocMouseMove(e) {
     if (isResizing && resizingEl) {
         const dx = e.clientX - resizeStart.mx;
         const dy = e.clientY - resizeStart.my;
-        const nW = snapGrid(Math.max(120, resizeStart.w + dx));
-        const nH = snapGrid(Math.max(80,  resizeStart.h + dy));
+        const isText = resizingEl.dataset.type === 'text';
+        const nW = snapGrid(Math.max(isText ? 40 : 120, resizeStart.w + dx));
+        const nH = snapGrid(Math.max(isText ? 20 : 80,  resizeStart.h + dy));
         resizingEl.style.width  = nW + 'px';
         resizingEl.style.height = nH + 'px';
         syncSizeInputs(nW, nH);
@@ -1154,13 +1840,15 @@ document.addEventListener('keydown', e => {
 // ============================================================
 // 點位選擇器（兩步驟：先選設備，再選點位）
 // ============================================================
-let arrAllDevices     = null;   // 快取設備清單
-let arrAllPoints      = null;   // 快取所有點位
-let nPickedDevId      = -1;     // 已選設備的 DB Id（用於 SID 範圍比對）
-let szPickedSid       = null;   // 已選點位 SID
-let pendingGaugeX     = 0;
-let pendingGaugeY     = 0;
-let _pointPickerModal = null;
+let arrAllDevices      = null;   // 快取設備清單
+let arrAllPoints       = null;   // 快取所有點位
+let nPickedDevId       = -1;     // 已選設備的 DB Id（用於 SID 範圍比對）
+let nPickedModbusId    = null;   // 已選子項目的 ModbusID（精確過濾）
+let szPickedSid        = null;   // 已選點位 SID
+let pendingGaugeX      = 0;
+let pendingGaugeY      = 0;
+let szPickerWidgetType = 'gauge'; // 記錄是哪種 widget 開啟選擇器
+let _pointPickerModal  = null;
 
 // SID 格式: {coordinatorId*65536 + modbusId*256 + 1}-S{N}
 // 某設備所屬 SID 的數字前綴落在 [Id*65536, (Id+1)*65536-1] 範圍內
@@ -1174,11 +1862,12 @@ function isPointOfDevice(szSid, nDevId) {
     return nPfx >= nDevId * 65536 && nPfx < (nDevId + 1) * 65536;
 }
 
-async function openPointPicker(x, y) {
-    pendingGaugeX = x;
-    pendingGaugeY = y;
-    szPickedSid   = null;
-    nPickedDevId  = -1;
+async function openPointPicker(x, y, szWidgetType) {
+    pendingGaugeX      = x;
+    pendingGaugeY      = y;
+    szPickerWidgetType = szWidgetType || 'gauge';
+    szPickedSid        = null;
+    nPickedDevId       = -1;
     await _ensurePickerData();
     _showPickerStep1();
 }
@@ -1221,8 +1910,40 @@ function renderDeviceList() {
     }
     container.innerHTML = arrAllDevices.map(d => {
         const nPts = (arrAllPoints || []).filter(p => isPointOfDevice(p.szSid, d.nId)).length;
+        const modbusIds = (d.szModbusID || '').split(',').map(s => s.trim()).filter(Boolean);
+        const deviceNames = (d.szDeviceName || '').split(',').map(s => s.trim());
+
+        if (modbusIds.length > 1) {
+            // 多 ModbusID：可展開的群組
+            const subHtml = modbusIds.map((mid, j) => {
+                const subName = j < deviceNames.length ? deviceNames[j] : '';
+                const label = subName || mid;
+                return `
+                <div class="point-list-item" style="padding-left:28px;background:#1e1e1e;"
+                     onclick="selectDeviceItem(this,${d.nId},'${escHtml(label)}',${mid})">
+                    <i class="fas fa-microchip" style="font-size:12px;color:#6ea8fe;flex-shrink:0;"></i>
+                    <div style="flex:1;min-width:0;">
+                        <div class="point-name">${escHtml(label)}</div>
+                    </div>
+                    <i class="fas fa-chevron-right" style="color:#555;font-size:11px;"></i>
+                </div>`;
+            }).join('');
+
+            return `
+            <div class="point-list-item" style="cursor:pointer;"
+                 onclick="toggleDeviceSub(this)">
+                <i class="fas fa-server" style="font-size:14px;color:#7ecfff;flex-shrink:0;"></i>
+                <div style="flex:1;min-width:0;">
+                    <div class="point-name">${escHtml(d.szName)}</div>
+                    <div class="point-sid">${nPts} 個點位</div>
+                </div>
+                <i class="fas fa-chevron-down toggle-dev-icon" style="color:#555;font-size:11px;transition:transform .2s;"></i>
+            </div>
+            <div class="dev-sub-menu" style="display:none;">${subHtml}</div>`;
+        }
+
         return `
-        <div class="point-list-item" onclick="selectDeviceItem(this,${d.nId})">
+        <div class="point-list-item" onclick="selectDeviceItem(this,${d.nId},'${escHtml(d.szName)}')">
             <i class="fas fa-server" style="font-size:14px;color:#7ecfff;flex-shrink:0;"></i>
             <div style="flex:1;min-width:0;">
                 <div class="point-name">${escHtml(d.szName)}</div>
@@ -1233,10 +1954,22 @@ function renderDeviceList() {
     }).join('');
 }
 
-function selectDeviceItem(el, nDevId) {
+function toggleDeviceSub(el) {
+    const subMenu = el.nextElementSibling;
+    const icon = el.querySelector('.toggle-dev-icon');
+    if (subMenu.style.display === 'none') {
+        subMenu.style.display = '';
+        icon.style.transform = 'rotate(180deg)';
+    } else {
+        subMenu.style.display = 'none';
+        icon.style.transform = '';
+    }
+}
+
+function selectDeviceItem(el, nDevId, szLabel, nModbusId) {
     nPickedDevId = nDevId;
-    const dev = arrAllDevices.find(d => d.nId === nDevId);
-    document.getElementById('ppDeviceName').textContent = dev ? dev.szName : String(nDevId);
+    nPickedModbusId = nModbusId != null ? nModbusId : null;
+    document.getElementById('ppDeviceName').textContent = szLabel || String(nDevId);
     document.getElementById('ppStep1').style.display = 'none';
     document.getElementById('ppStep2').style.display = '';
     document.getElementById('ppModalTitle').textContent = '選擇點位';
@@ -1263,7 +1996,13 @@ function filterPointList(szKeyword) {
 function _renderFilteredPoints(szKeyword) {
     const szQ = szKeyword.trim().toLowerCase();
     const filtered = (arrAllPoints || []).filter(p => {
-        if (!isPointOfDevice(p.szSid, nPickedDevId)) return false;
+        if (nPickedModbusId != null) {
+            const nPfx = getSidNumericPrefix(p.szSid);
+            const base = nPickedDevId * 65536 + nPickedModbusId * 256;
+            if (nPfx < base || nPfx >= base + 256) return false;
+        } else {
+            if (!isPointOfDevice(p.szSid, nPickedDevId)) return false;
+        }
         return !szQ || p.szName.toLowerCase().includes(szQ);
     });
     const container = document.getElementById('pointListContainer');
@@ -1298,29 +2037,94 @@ function confirmPointPick() {
     if (!point) return;
     _pointPickerModal.hide();
 
-    if (pendingGaugeX === -1) {
-        // 重選模式：更新目前選取的 gauge
-        if (!selectedEl || selectedEl.dataset.type !== 'gauge') return;
-        selectedEl.widgetProps.szSid       = point.szSid;
-        selectedEl.widgetProps.szPointName = point.szName;
-        selectedEl.widgetProps.szTitle     = point.szName;
-        selectedEl.widgetProps.szUnit  = point.szUnit || '°C';
-        selectedEl.widgetProps.fMin    = point.fMin   ?? 0;
-        selectedEl.widgetProps.fMax    = point.fMax   ?? 100;
+    if (szPickerWidgetType === 'tableCell') {
+        // 表格儲存格綁定點位
+        if (!selectedEl || nSelectedCellRow < 0) return;
+        const props = selectedEl.widgetProps;
+        initArrCells(props);
+        const cell = props.arrCells[nSelectedCellRow]?.[nSelectedCellCol];
+        if (cell) {
+            cell.szSid = point.szSid;
+            cell.szPointName = point.szName;
+        }
+        renderWidget(selectedEl);
+        // 重新高亮並顯示 cell 屬性面板
+        const sel = selectedEl.querySelector(`.w-table [data-row="${nSelectedCellRow}"][data-col="${nSelectedCellCol}"]`);
+        if (sel) sel.classList.add('selected-cell');
+        renderTableCellPropPanel(selectedEl, nSelectedCellRow, nSelectedCellCol);
+    } else if (pendingGaugeX === -1) {
+        // 重選模式：更新目前選取的 widget
+        if (!selectedEl) return;
+        const szType = selectedEl.dataset.type;
+        if (szType === 'gauge') {
+            const fNewMin = point.fMin ?? 0;
+            const fNewMax = point.fMax ?? 100;
+            selectedEl.widgetProps.szSid       = point.szSid;
+            selectedEl.widgetProps.szPointName = point.szName;
+            selectedEl.widgetProps.szTitle     = point.szName;
+            selectedEl.widgetProps.szUnit      = point.szUnit || '';
+            selectedEl.widgetProps.fMin        = fNewMin;
+            selectedEl.widgetProps.fMax        = fNewMax;
+            selectedEl.widgetProps.fValue      = (fNewMin + fNewMax) / 2;
+        } else if (szType === 'controlBtn') {
+            selectedEl.widgetProps.szCid       = point.szSid;
+            selectedEl.widgetProps.szPointName = point.szName;
+            selectedEl.widgetProps.szTitle     = point.szName;
+        } else if (szType === 'realtimeValue') {
+            selectedEl.widgetProps.szSid       = point.szSid;
+            selectedEl.widgetProps.szPointName = point.szName;
+            selectedEl.widgetProps.szTitle     = point.szName;
+            selectedEl.widgetProps.szUnit      = point.szUnit || '';
+        }
         renderWidget(selectedEl);
         renderPropPanel(selectedEl);
     } else {
-        createGaugeWithPoint(point, pendingGaugeX, pendingGaugeY);
+        if (szPickerWidgetType === 'controlBtn') {
+            createControlBtnWithPoint(point, pendingGaugeX, pendingGaugeY);
+        } else if (szPickerWidgetType === 'realtimeValue') {
+            createRealtimeValueWithPoint(point, pendingGaugeX, pendingGaugeY);
+        } else {
+            createGaugeWithPoint(point, pendingGaugeX, pendingGaugeY);
+        }
     }
 }
 
-// 從屬性面板「重選」呼叫
+// 從屬性面板「重選」呼叫（gauge）
 async function rerouteGaugePoint() {
     if (!selectedEl || selectedEl.dataset.type !== 'gauge') return;
-    pendingGaugeX = -1;
-    pendingGaugeY = -1;
-    szPickedSid   = null;
-    nPickedDevId  = -1;
+    pendingGaugeX      = -1;
+    pendingGaugeY      = -1;
+    szPickerWidgetType = 'gauge';
+    szPickedSid        = null;
+    nPickedDevId       = -1;
+    try {
+        await _ensurePickerData();
+        _showPickerStep1();
+    } catch (_) { /* 已在 _ensurePickerData 顯示 alert */ }
+}
+
+// 從屬性面板「重選」呼叫（controlBtn）
+async function rerouteControlBtnPoint() {
+    if (!selectedEl || selectedEl.dataset.type !== 'controlBtn') return;
+    pendingGaugeX      = -1;
+    pendingGaugeY      = -1;
+    szPickerWidgetType = 'controlBtn';
+    szPickedSid        = null;
+    nPickedDevId       = -1;
+    try {
+        await _ensurePickerData();
+        _showPickerStep1();
+    } catch (_) { /* 已在 _ensurePickerData 顯示 alert */ }
+}
+
+// 從屬性面板「重選」呼叫（realtimeValue）
+async function rerouteRealtimeValuePoint() {
+    if (!selectedEl || selectedEl.dataset.type !== 'realtimeValue') return;
+    pendingGaugeX      = -1;
+    pendingGaugeY      = -1;
+    szPickerWidgetType = 'realtimeValue';
+    szPickedSid        = null;
+    nPickedDevId       = -1;
     try {
         await _ensurePickerData();
         _showPickerStep1();
@@ -1339,19 +2143,97 @@ function createGaugeWithPoint(point, x, y) {
     el.style.top    = y + 'px';
     el.style.width  = def.nDefaultW + 'px';
     el.style.height = def.nDefaultH + 'px';
+    const fNewMin = point.fMin ?? 0;
+    const fNewMax = point.fMax ?? 100;
     el.widgetProps  = {
         ...def.defaultProps,
         szSid:       point.szSid,
         szPointName: point.szName,
         szTitle:     point.szName,
-        szUnit:  point.szUnit || '°C',
-        fMin:    point.fMin   ?? 0,
-        fMax:    point.fMax   ?? 100
+        szUnit:  point.szUnit || '',
+        fMin:    fNewMin,
+        fMax:    fNewMax,
+        fValue:  (fNewMin + fNewMax) / 2
     };
 
     renderWidget(el);
     canvas.appendChild(el);
     selectWidget(el);
+}
+
+function createControlBtnWithPoint(point, x, y) {
+    const def  = WIDGET_DEFS['controlBtn'];
+    const szId = 'w' + (++nWidgetCounter);
+
+    const el = document.createElement('div');
+    el.id           = szId;
+    el.className    = 'canvas-widget';
+    el.dataset.type = 'controlBtn';
+    el.style.left   = x + 'px';
+    el.style.top    = y + 'px';
+    el.style.width  = def.nDefaultW + 'px';
+    el.style.height = def.nDefaultH + 'px';
+    el.widgetProps  = {
+        ...def.defaultProps,
+        szCid:       point.szSid,
+        szPointName: point.szName,
+        szTitle:     point.szName
+    };
+
+    renderWidget(el);
+    canvas.appendChild(el);
+    selectWidget(el);
+}
+
+function createRealtimeValueWithPoint(point, x, y) {
+    const def  = WIDGET_DEFS['realtimeValue'];
+    const szId = 'w' + (++nWidgetCounter);
+
+    const el = document.createElement('div');
+    el.id           = szId;
+    el.className    = 'canvas-widget';
+    el.dataset.type = 'realtimeValue';
+    el.style.left   = x + 'px';
+    el.style.top    = y + 'px';
+    el.style.width  = def.nDefaultW + 'px';
+    el.style.height = def.nDefaultH + 'px';
+    el.widgetProps  = {
+        ...def.defaultProps,
+        szSid:       point.szSid,
+        szPointName: point.szName,
+        szTitle:     point.szName,
+        szUnit:      point.szUnit || ''
+    };
+
+    renderWidget(el);
+    canvas.appendChild(el);
+    selectWidget(el);
+}
+
+function onCtrlBtnBgTransparentChange(isChecked) {
+    if (isChecked) {
+        setProp('szBgColor', 'transparent');
+        const picker = document.getElementById('ctrlBtnBgPicker');
+        if (picker) picker.style.display = 'none';
+    } else {
+        const picker = document.getElementById('ctrlBtnBgPicker');
+        const szColor = picker ? picker.value : '#ffffff';
+        setProp('szBgColor', szColor);
+        if (picker) picker.style.display = '';
+    }
+}
+
+function onRtValBgTransparentChange(isChecked) {
+    if (isChecked) {
+        setProp('szBgColor', 'transparent');
+        const picker = document.getElementById('rtValBgPicker');
+        if (picker) picker.style.display = 'none';
+    } else {
+        const picker = document.getElementById('rtValBgPicker');
+        const szColor = picker ? picker.value : '#ffffff';
+        setProp('szBgColor', szColor);
+        if (picker) picker.style.display = '';
+    }
 }
 
 // ============================================================
@@ -1466,12 +2348,10 @@ function escHtml(s) {
 }
 
 function syncPosInputs(x, y) {
-    const pbs = document.getElementById('propBody');
-    if (!pbs) return;
-    const inputs = pbs.querySelectorAll('input[type=number]');
-    // X=inputs[1], Y=inputs[2]（index 0 是標題 text）
-    if (inputs[1]) inputs[1].value = x;
-    if (inputs[2]) inputs[2].value = y;
+    const pX = document.getElementById('pX');
+    const pY = document.getElementById('pY');
+    if (pX) pX.value = x;
+    if (pY) pY.value = y;
 }
 
 function syncSizeInputs(w, h) {
@@ -1743,6 +2623,86 @@ function hideCtxMenu() { ctxMenu.style.display = 'none'; }
 
 document.addEventListener('click',   hideCtxMenu);
 document.addEventListener('keydown', e => { if (e.key === 'Escape') hideCtxMenu(); });
+
+// 畫布右鍵選單（新增文字）
+// 表格儲存格右鍵選單
+function onTableCellCtxMenu(e, widgetEl, nRow, nCol) {
+    selectWidget(widgetEl);
+    nSelectedCellRow = nRow;
+    nSelectedCellCol = nCol;
+    const isHeader = (nRow === 0);
+    const props = widgetEl.widgetProps;
+    initArrCells(props);
+    const cell = props.arrCells[nRow]?.[nCol];
+    if (!cell) return;
+
+    const items = [];
+    items.push({ szIcon: 'fa-pen', szLabel: '編輯儲存格', fn: () => {
+        onTableCellClick(widgetEl, nRow, nCol);
+    }});
+    if (!isHeader) {
+        items.push({ szIcon: 'fa-link', szLabel: '綁定點位', fn: () => {
+            openCellPointPicker(nRow, nCol);
+        }});
+        if (cell.szSid) {
+            items.push({ szIcon: 'fa-unlink', szLabel: '清除綁定', fn: () => {
+                clearCellSid(nRow, nCol);
+            }});
+        }
+    }
+
+    arrCtxActions = items.map(i => i.fn);
+    ctxMenu.innerHTML = items.map((item, idx) => `
+        <div class="ctx-item" data-idx="${idx}">
+            <i class="fas ${item.szIcon}" style="width:14px;opacity:.7;"></i>${item.szLabel}
+        </div>
+    `).join('');
+    ctxMenu.style.display = 'block';
+    ctxMenu.style.left = '0px';
+    ctxMenu.style.top  = '0px';
+    const nMenuW = ctxMenu.offsetWidth;
+    const nMenuH = ctxMenu.offsetHeight;
+    let nLeft = e.clientX;
+    let nTop  = e.clientY;
+    if (nLeft + nMenuW > window.innerWidth)  nLeft = e.clientX - nMenuW;
+    if (nTop  + nMenuH > window.innerHeight) nTop  = e.clientY - nMenuH;
+    ctxMenu.style.left = nLeft + 'px';
+    ctxMenu.style.top  = nTop  + 'px';
+}
+
+// 開啟點位選擇器（表格儲存格）
+async function openCellPointPicker(nRow, nCol) {
+    nSelectedCellRow = nRow;
+    nSelectedCellCol = nCol;
+    szPickerWidgetType = 'tableCell';
+    pendingGaugeX = -1;
+    pendingGaugeY = -1;
+    await _ensurePickerData();
+    _showPickerStep1();
+}
+
+function showCanvasCtxMenu(e, nX, nY) {
+    const items = [
+        { szIcon: 'fa-font', szLabel: '新增文字', fn: () => createWidget('text', nX, nY) }
+    ];
+    arrCtxActions = items.map(i => i.fn);
+    ctxMenu.innerHTML = items.map((item, idx) => `
+        <div class="ctx-item" data-idx="${idx}">
+            <i class="fas ${item.szIcon}" style="width:14px;opacity:.7;"></i>${item.szLabel}
+        </div>
+    `).join('');
+    ctxMenu.style.display = 'block';
+    ctxMenu.style.left = '0px';
+    ctxMenu.style.top  = '0px';
+    const nMenuW = ctxMenu.offsetWidth;
+    const nMenuH = ctxMenu.offsetHeight;
+    let nLeft = e.clientX;
+    let nTop  = e.clientY;
+    if (nLeft + nMenuW > window.innerWidth)  nLeft = e.clientX - nMenuW;
+    if (nTop  + nMenuH > window.innerHeight) nTop  = e.clientY - nMenuH;
+    ctxMenu.style.left = nLeft + 'px';
+    ctxMenu.style.top  = nTop  + 'px';
+}
 
 // ============================================================
 // 頁面編輯（名稱 + 圖示）

@@ -60,13 +60,47 @@
                         var isFirst = true;
                         @foreach (var c in Model.CoordinatorList)
                         {
-                            <a href="#"
-                               class="list-group-item list-group-item-action py-2 coordinator-item @(isFirst ? "active" : "")"
-                               data-id="@c.Id"
-                               data-name="@c.szName">
-                                <i class="fas fa-plug me-1 text-secondary"></i>
-                                <span class="small">@c.szName</span>
-                            </a>
+                            var modbusIds = c.szModbusID.Split(',', StringSplitOptions.TrimEntries);
+                            var deviceNames = c.szDeviceName.Split(',', StringSplitOptions.TrimEntries);
+                            var hasSubItems = modbusIds.Length > 1;
+
+                            if (hasSubItems)
+                            {
+                                <div class="coordinator-group">
+                                    <a href="#"
+                                       class="list-group-item list-group-item-action py-2 coordinator-toggle @(isFirst ? "active" : "")"
+                                       data-id="@c.Id"
+                                       data-name="@c.szName">
+                                        <i class="fas fa-chevron-right me-1 toggle-icon text-secondary" style="font-size:.7rem;transition:transform .2s;"></i>
+                                        <i class="fas fa-plug me-1 text-secondary"></i>
+                                        <span class="small">@c.szName</span>
+                                    </a>
+                                    <div class="sub-menu" style="display:none;">
+                                        @for (var j = 0; j < modbusIds.Length; j++)
+                                        {
+                                            var subName = j < deviceNames.Length ? deviceNames[j] : "";
+                                            <a href="#"
+                                               class="list-group-item list-group-item-action py-1 ps-4 sub-item"
+                                               data-id="@c.Id"
+                                               data-modbusid="@modbusIds[j]"
+                                               data-name="@(string.IsNullOrEmpty(subName) ? modbusIds[j] : subName)">
+                                                <i class="fas fa-microchip me-1 text-muted" style="font-size:.75rem;"></i>
+                                                <span class="small">@(string.IsNullOrEmpty(subName) ? modbusIds[j] : subName)</span>
+                                            </a>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <a href="#"
+                                   class="list-group-item list-group-item-action py-2 coordinator-item @(isFirst ? "active" : "")"
+                                   data-id="@c.Id"
+                                   data-name="@c.szName">
+                                    <i class="fas fa-plug me-1 text-secondary"></i>
+                                    <span class="small">@c.szName</span>
+                                </a>
+                            }
                             isFirst = false;
                         }
                     }
@@ -307,16 +341,31 @@
 </div>
 
 <style>
-    .coordinator-item {
+    .coordinator-item,
+    .coordinator-toggle {
         border-left: 3px solid transparent;
         transition: border-color 0.15s;
     }
-    .coordinator-item:hover { border-left-color: #0d6efd; }
-    .coordinator-item.active {
+    .coordinator-item:hover,
+    .coordinator-toggle:hover { border-left-color: #0d6efd; }
+    .coordinator-item.active,
+    .coordinator-toggle.active {
         border-left-color: #0d6efd;
         background-color: #e8f0fe !important;
         color: #0d6efd !important;
     }
+    .sub-item {
+        border-left: 3px solid transparent;
+        background-color: #f8f9fa;
+        transition: border-color 0.15s;
+    }
+    .sub-item:hover { border-left-color: #6ea8fe; }
+    .sub-item.active {
+        border-left-color: #6ea8fe;
+        background-color: #dbe9fd !important;
+        color: #0d6efd !important;
+    }
+    .toggle-icon.open { transform: rotate(90deg); }
     .btn-xs {
         padding: 0.15rem 0.55rem;
         font-size: 0.75rem;
@@ -370,13 +419,14 @@
 </style>
 
 @section Scripts {
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="~/lib/chartjs/chart.umd.min.js"></script>
+<script src="~/lib/chartjs/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script src="~/lib/xlsx/xlsx.full.min.js"></script>
 <script>
 // ── 資料 ─────────────────────────────────────────────────────────────────
 const allPoints = @Html.Raw(pointJson);
 let currentCoordinatorId = @initialCoordId;
+let currentModbusId = null;
 
 const CHART_COLORS = [
     { border: 'rgba(13,110,253,0.9)',  bg: 'rgba(13,110,253,0.12)'  },
@@ -412,14 +462,19 @@ const btnToggleTable     = document.getElementById('btnToggleTable');
 // ── 點位選取清單 ──────────────────────────────────────────────────────────
 const getN = sid => { const m = sid.match(/-S(\d+)$/); return m ? parseInt(m[1]) : Infinity; };
 
-function renderPointList(nDbId) {
+function renderPointList(nDbId, nModbusId) {
     const pts = nDbId <= 0
         ? [...allPoints]
         : allPoints.filter(p => {
             const h = p.sid.indexOf('-');
             if (h < 0) return false;
             const num = parseInt(p.sid.substring(0, h));
-            return !isNaN(num) && num >= nDbId * 65536 && num < (nDbId + 1) * 65536;
+            if (isNaN(num)) return false;
+            if (nModbusId != null) {
+                const base = nDbId * 65536 + nModbusId * 256;
+                return num >= base && num < base + 256;
+            }
+            return num >= nDbId * 65536 && num < (nDbId + 1) * 65536;
         });
     pts.sort((a, b) => getN(a.sid) - getN(b.sid));
 
@@ -834,17 +889,56 @@ async function doQuery() {
 // ── 事件 ──────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function () {
 
-    renderPointList(currentCoordinatorId);
+    renderPointList(currentCoordinatorId, currentModbusId);
     renderBasket();
 
-    // 設備清單切換
+    function clearAllCoordinatorActive() {
+        document.querySelectorAll('.coordinator-item, .coordinator-toggle, .sub-item')
+            .forEach(el => el.classList.remove('active'));
+    }
+
+    // 單一設備點擊
     document.querySelectorAll('.coordinator-item').forEach(item => {
         item.addEventListener('click', function (e) {
             e.preventDefault();
-            document.querySelectorAll('.coordinator-item').forEach(el => el.classList.remove('active'));
+            clearAllCoordinatorActive();
             this.classList.add('active');
             currentCoordinatorId = parseInt(this.dataset.id) || 0;
+            currentModbusId = null;
             renderPointList(currentCoordinatorId);
+        });
+    });
+
+    // 展開/收合子選單
+    document.querySelectorAll('.coordinator-toggle').forEach(toggle => {
+        toggle.addEventListener('click', function (e) {
+            e.preventDefault();
+            const subMenu = this.nextElementSibling;
+            const icon = this.querySelector('.toggle-icon');
+            if (subMenu.style.display === 'none') {
+                subMenu.style.display = '';
+                icon.classList.add('open');
+            } else {
+                subMenu.style.display = 'none';
+                icon.classList.remove('open');
+            }
+            clearAllCoordinatorActive();
+            this.classList.add('active');
+            currentCoordinatorId = parseInt(this.dataset.id) || 0;
+            currentModbusId = null;
+            renderPointList(currentCoordinatorId);
+        });
+    });
+
+    // 子項目點擊
+    document.querySelectorAll('.sub-item').forEach(item => {
+        item.addEventListener('click', function (e) {
+            e.preventDefault();
+            clearAllCoordinatorActive();
+            this.classList.add('active');
+            currentCoordinatorId = parseInt(this.dataset.id) || 0;
+            currentModbusId = parseInt(this.dataset.modbusid) || null;
+            renderPointList(currentCoordinatorId, currentModbusId);
         });
     });
 

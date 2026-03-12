@@ -14,11 +14,12 @@ public static class ModbusDataExtensions
     /// <param name="fRawValue">原始讀取數值</param>
     /// <param name="szQuality">資料品質狀態</param>
     /// <returns>即時資料實例</returns>
-    public static RealtimeDataModel CreateFromModbusTag(Models.ModbusTagModel tagModel, float fRawValue, string szQuality = "Good")
+    public static RealtimeDataModel CreateFromModbusTag(Models.ModbusTagModel tagModel, float fRawValue, string szCoordinatorName, string szQuality = "Good")
     {
         return new RealtimeDataModel
         {
             szSID = tagModel.szSID,
+            szCoordinatorName = szCoordinatorName,
             szTagName = tagModel.szName,
             fValue = fRawValue * tagModel.fRatio, // 套用縮放比例
             szUnit = tagModel.szUnit,

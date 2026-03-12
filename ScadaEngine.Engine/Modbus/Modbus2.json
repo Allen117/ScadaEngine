@@ -1,7 +1,7 @@
 {
   "IP": "127.0.0.1",
   "Port": 502,
-  "ModbusId": "3",
+  "ModbusId": "3,4",
   "connectTimeout": 100,
   "Tags": [
     {

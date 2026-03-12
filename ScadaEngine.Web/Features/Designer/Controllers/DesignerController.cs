@@ -50,8 +50,10 @@ public class DesignerController : Controller
         var devices = await _repository.GetAllCoordinatorsAsync();
         return Json(devices.Select(d => new
         {
-            nId    = d.Id,
-            szName = d.szName
+            nId            = d.Id,
+            szName         = d.szName,
+            szModbusID     = d.szModbusID,
+            szDeviceName   = d.szDeviceName
         }));
     }
 

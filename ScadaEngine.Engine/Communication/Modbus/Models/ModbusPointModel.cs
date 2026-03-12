@@ -76,7 +76,7 @@ public class ModbusPointModel
             return false;
 
         // 檢查數據型態是否支援
-        var supportedTypes = new[] { "INTEGER", "UINTEGER", "FLOATINGPT", "SWAPPEDFP", "DOUBLE", "SWAPPEDDOUBLE" };
+        var supportedTypes = new[] { "INTEGER", "UINTEGER", "FLOATINGPT", "SWAPPEDFP", "DOUBLE", "SWAPPEDDOUBLE", "UINT32BE" };
         if (!supportedTypes.Contains(szDataType))
             return false;
 
