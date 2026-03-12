@@ -1,0 +1,1967 @@
+@{
+    ViewData["Title"] = "畫面設計";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    /* ========== 隱藏 footer、重設 main padding（設計器全螢幕） ========== */
+    footer.footer { display: none !important; }
+    main { padding: 0 !important; min-height: 0 !important; }
+
+    /* ========== Designer 外層佈局 ========== */
+    .designer-outer {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background: #1e1e1e;
+    }
+
+    .designer-toolbar {
+        background: #2d2d2d;
+        border-bottom: 1px solid #444;
+        padding: 6px 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    .designer-body {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+    }
+
+    /* ========== 元件庫（左側） ========== */
+    .component-panel {
+        width: 140px;
+        background: #252526;
+        border-right: 1px solid #444;
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+        overflow-y: auto;
+    }
+
+    .panel-header {
+        padding: 7px 10px;
+        color: #9d9d9d;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-bottom: 1px solid #3a3a3a;
+        background: #2d2d2d;
+        flex-shrink: 0;
+    }
+
+    .widget-lib-item {
+        padding: 14px 8px;
+        color: #c8c8c8;
+        cursor: grab;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        border-bottom: 1px solid #2e2e2e;
+        transition: background 0.12s;
+        user-select: none;
+    }
+
+    .widget-lib-item:hover {
+        background: #37373d;
+        color: #fff;
+    }
+
+    .widget-lib-item:active {
+        cursor: grabbing;
+        background: #444;
+    }
+
+    .widget-lib-item i { font-size: 22px; }
+    .widget-lib-item span { font-size: 11px; }
+
+    /* ========== 畫布區（中間） ========== */
+    .canvas-wrapper {
+        flex: 1;
+        overflow: auto;
+        background: #1a1a1a;
+        padding: 24px;
+    }
+
+    #canvas {
+        position: relative;
+        width: 1200px;
+        height: 800px;
+        background-color: #ffffff;
+        background-image:
+            linear-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 0, 0, 0.06) 1px, transparent 1px);
+        background-size: 20px 20px;
+        border: 1px solid #555;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+    }
+
+    #canvas.drag-over {
+        outline: 2px dashed #4da6ff;
+        outline-offset: -2px;
+    }
+
+    /* ========== 畫布上的 Widget ========== */
+    .canvas-widget {
+        position: absolute;
+        border: 1px solid #ced4da;
+        background: #fff;
+        border-radius: 4px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        min-width: 120px;
+        min-height: 80px;
+        z-index: 1;
+    }
+
+    .canvas-widget.selected {
+        border: 2px solid #0d6efd;
+        box-shadow: 0 0 0 3px rgba(13,110,253,0.25);
+        z-index: 10;
+    }
+
+    .widget-header {
+        background: #343a40;
+        color: #e0e0e0;
+        padding: 4px 8px;
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        cursor: move;
+        user-select: none;
+        flex-shrink: 0;
+        gap: 4px;
+    }
+
+    .widget-header .wh-title {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .widget-del {
+        background: none;
+        border: none;
+        color: #888;
+        cursor: pointer;
+        padding: 0 2px;
+        font-size: 13px;
+        line-height: 1;
+        flex-shrink: 0;
+        transition: color 0.1s;
+    }
+
+    .widget-del:hover { color: #f86; }
+
+    .widget-body {
+        flex: 1;
+        overflow: auto;
+        padding: 4px;
+        font-size: 12px;
+    }
+
+    /* Resize 拖把 */
+    .resize-knob {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 16px;
+        height: 16px;
+        cursor: se-resize;
+        opacity: 0;
+        transition: opacity 0.12s;
+        background: linear-gradient(135deg, transparent 40%, #0d6efd 40%);
+        border-radius: 0 0 4px 0;
+        z-index: 20;
+    }
+
+    .canvas-widget:hover .resize-knob,
+    .canvas-widget.selected .resize-knob {
+        opacity: 1;
+    }
+
+    /* ========== 表格 Widget ========== */
+    .w-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+    }
+
+    .w-table th {
+        padding: 5px 8px;
+        text-align: left;
+        font-weight: 500;
+        color: #fff;
+        font-size: 11px;
+    }
+
+    .w-table td {
+        padding: 4px 8px;
+        border-bottom: 1px solid #f0f0f0;
+        color: #444;
+    }
+
+    .w-table tr:last-child td { border-bottom: none; }
+    .w-table tr:nth-child(even) td { background: #f8f9fa; }
+
+    /* ========== 屬性面板（右側） ========== */
+    .property-panel {
+        width: 210px;
+        background: #252526;
+        border-left: 1px solid #444;
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+        color: #c8c8c8;
+    }
+
+    .prop-body {
+        flex: 1;
+        padding: 6px 10px;
+        overflow-y: auto;
+    }
+
+    .prop-group {
+        margin-bottom: 0;
+    }
+
+    .prop-group label {
+        display: block;
+        font-size: 10px;
+        color: #888;
+        margin-top: 10px;
+        margin-bottom: 2px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .prop-group input,
+    .prop-group select {
+        width: 100%;
+        background: #3c3c3c;
+        border: 1px solid #555;
+        color: #d4d4d4;
+        padding: 4px 6px;
+        font-size: 12px;
+        border-radius: 3px;
+        outline: none;
+    }
+
+    .prop-group input:focus,
+    .prop-group select:focus {
+        border-color: #0d6efd;
+    }
+
+    .prop-group input[type=color] {
+        padding: 1px 2px;
+        height: 28px;
+        cursor: pointer;
+    }
+
+    .prop-divider {
+        border: none;
+        border-top: 1px solid #3a3a3a;
+        margin: 10px 0 0;
+    }
+
+    .no-sel-hint {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #555;
+        font-size: 12px;
+        text-align: center;
+        padding: 20px;
+    }
+
+    .no-sel-hint i { font-size: 28px; margin-bottom: 8px; }
+
+    /* ========== 頁面清單面板 ========== */
+    .page-panel {
+        width: 165px;
+        background: #1e1e1e;
+        border-right: 1px solid #444;
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+        overflow: hidden;
+    }
+
+    .page-panel-header {
+        padding: 5px 8px;
+        color: #9d9d9d;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-bottom: 1px solid #3a3a3a;
+        background: #2d2d2d;
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+        gap: 4px;
+    }
+
+    .page-panel-header .btn-add-root {
+        margin-left: auto;
+        background: none;
+        border: none;
+        color: #6c9;
+        cursor: pointer;
+        padding: 0 2px;
+        font-size: 13px;
+        line-height: 1;
+        opacity: 0.7;
+        transition: opacity 0.1s;
+    }
+    .page-panel-header .btn-add-root:hover { opacity: 1; }
+
+    .page-tree-wrap {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .page-node {
+        padding: 6px 8px;
+        font-size: 12px;
+        color: #c0c0c0;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        border-bottom: 1px solid #262626;
+        transition: background 0.1s;
+        white-space: nowrap;
+        overflow: hidden;
+        user-select: none;
+    }
+
+    .page-node:hover { background: #2e2e3a; }
+    .page-node.active { background: #0a3a5c; color: #7ecfff; }
+    .page-node .pn-icon { flex-shrink: 0; font-size: 10px; opacity: 0.55; }
+    .page-node .pn-name { overflow: hidden; text-overflow: ellipsis; flex: 1; }
+
+    /* 空白可右鍵區域 */
+    .page-blank-zone {
+        flex: 1;
+        min-height: 50px;
+    }
+
+    /* ========== 右鍵選單 ========== */
+    #ctxMenu {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        background: #2a2a2a;
+        border: 1px solid #555;
+        border-radius: 5px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.55);
+        min-width: 140px;
+        overflow: hidden;
+        padding: 3px 0;
+    }
+
+    .ctx-item {
+        padding: 7px 16px;
+        font-size: 12px;
+        color: #d0d0d0;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        transition: background 0.1s;
+    }
+    .ctx-item:hover { background: #094771; color: #fff; }
+    .ctx-item.ctx-danger { color: #f88; }
+    .ctx-item.ctx-danger:hover { background: #6e1a1a; color: #fdd; }
+    .ctx-divider { height: 1px; background: #3a3a3a; margin: 3px 0; }
+
+    /* ========== 點位選擇器 Modal ========== */
+    #pointPickerModal .modal-content {
+        background: #2d2d2d;
+        border: 1px solid #555;
+        color: #c8c8c8;
+    }
+    #pointPickerModal .modal-header { border-bottom: 1px solid #444; padding: 10px 16px; }
+    #pointPickerModal .modal-footer { border-top: 1px solid #444; padding: 8px 16px; }
+
+    .point-list-item {
+        padding: 8px 10px;
+        cursor: pointer;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 2px;
+        transition: background 0.1s;
+    }
+    .point-list-item:hover    { background: #37373d; }
+    .point-list-item.selected { background: #0a3a5c; }
+
+    .point-name { font-size: 12px; color: #c8c8c8; }
+    .point-sid  { font-size: 10px; color: #777; font-family: monospace; }
+    .point-unit { font-size: 11px; color: #ffc107; margin-left: auto; white-space: nowrap; }
+
+    .prop-sid-badge {
+        display: inline-block;
+        background: #0a3a5c;
+        border: 1px solid #1a6090;
+        border-radius: 3px;
+        padding: 2px 6px;
+        font-size: 10px;
+        color: #7ecfff;
+        font-family: monospace;
+        word-break: break-all;
+    }
+
+    /* ========== 點位選擇器步驟 ========== */
+    .pp-back-btn {
+        background: none;
+        border: none;
+        color: #7ecfff;
+        font-size: 12px;
+        cursor: pointer;
+        padding: 0 6px 0 0;
+    }
+    .pp-back-btn:hover { color: #fff; }
+    .pp-device-tag {
+        font-size: 12px;
+        color: #ffc107;
+    }
+
+    /* ========== 頁面圖示選擇器 ========== */
+    .icon-picker-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 4px;
+    }
+    .icon-pick-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 8px 4px;
+        border-radius: 4px;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: background 0.1s;
+        font-size: 10px;
+        color: #9d9d9d;
+        gap: 4px;
+    }
+    .icon-pick-item i { font-size: 18px; }
+    .icon-pick-item:hover  { background: #37373d; color: #c8c8c8; }
+    .icon-pick-item.selected { background: #0a3a5c; border-color: #1a6090; color: #7ecfff; }
+</style>
+
+<!-- Designer 主容器 -->
+<div class="designer-outer" id="designerOuter">
+
+        <!-- ===== 工具列 ===== -->
+        <div class="designer-toolbar">
+            <i class="fas fa-paint-brush text-primary me-1"></i>
+            <span class="text-white fw-semibold" style="font-size:13px;">畫面設計</span>
+
+            <div style="width:1px;height:16px;background:#555;margin:0 4px;"></div>
+
+            <button class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size:12px;"
+                    onclick="clearCanvas()" title="清除所有元件">
+                <i class="fas fa-trash-alt me-1"></i>清除
+            </button>
+
+            <button class="btn btn-sm btn-outline-warning py-0 px-2" style="font-size:12px;"
+                    onclick="triggerImportImage()" title="匯入圖檔作為畫布背景">
+                <i class="fas fa-file-image me-1"></i>匯入圖片
+            </button>
+
+            <!-- 隱藏的 file input，僅接受圖片格式 -->
+            <input type="file" id="imgFileInput" accept="image/*" style="display:none"
+                   onchange="onImageFileSelected(this)">
+
+            <!-- 已匯入圖片時顯示的資訊列 -->
+            <span id="bgImgBadge" style="display:none;align-items:center;gap:6px;
+                  background:#3a3a1a;border:1px solid #665500;border-radius:4px;
+                  padding:2px 8px;font-size:11px;color:#ffc107;">
+                <i class="fas fa-image"></i>
+                <span id="bgImgName"></span>
+                <span id="bgImgSize" style="color:#aaa;"></span>
+                <button onclick="clearBgImage()" style="background:none;border:none;
+                        color:#ff8888;cursor:pointer;padding:0 2px;font-size:12px;"
+                        title="移除背景圖">✕</button>
+            </span>
+
+            <button id="btnSave" class="btn btn-sm btn-success py-0 px-2" style="font-size:12px;"
+                    onclick="saveDesign()" title="儲存所有頁面至資料庫">
+                <i class="fas fa-save me-1"></i>儲存
+            </button>
+
+            <span class="ms-auto text-secondary" style="font-size:11px;">
+                <i class="fas fa-info-circle me-1"></i>
+                從左側拖曳元件至畫布 &bull; 點選元件可調整屬性 &bull; Del 鍵刪除
+            </span>
+        </div>
+
+        <!-- ===== 主體區域 ===== -->
+        <div class="designer-body">
+
+            <!-- 頁面清單 -->
+            <div class="page-panel">
+                <div class="page-panel-header">
+                    <i class="fas fa-sitemap me-1"></i> 頁面
+                    <button class="btn-add-root" onclick="addPage(null)" title="新增根頁面">＋</button>
+                </div>
+                <div class="page-tree-wrap" id="pageTreeWrap">
+                    <!-- 由 JS 動態產生 -->
+                </div>
+            </div>
+
+            <!-- 元件庫 -->
+            <div class="component-panel">
+                <div class="panel-header">
+                    <i class="fas fa-th-large me-1"></i> 元件庫
+                </div>
+
+                <!-- 表格 -->
+                <div class="widget-lib-item"
+                     draggable="true"
+                     data-widget-type="table"
+                     title="拖曳至畫布以新增資料表格">
+                    <i class="fas fa-table text-info"></i>
+                    <span>表格</span>
+                </div>
+
+                <!-- 儀錶板 -->
+                <div class="widget-lib-item"
+                     draggable="true"
+                     data-widget-type="gauge"
+                     title="拖曳至畫布以新增儀錶板">
+                    <i class="fas fa-tachometer-alt text-warning"></i>
+                    <span>儀錶板</span>
+                </div>
+            </div>
+
+            <!-- 畫布 -->
+            <div class="canvas-wrapper" id="canvasWrapper">
+                <div id="canvas"></div>
+            </div>
+
+            <!-- 屬性面板 -->
+            <div class="property-panel">
+                <div class="panel-header">
+                    <i class="fas fa-sliders-h me-1"></i> 屬性
+                </div>
+                <div class="prop-body" id="propBody">
+                    <div class="no-sel-hint" id="noSelHint">
+                        <i class="fas fa-mouse-pointer"></i>
+                        點選元件<br>以編輯屬性
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /.designer-body -->
+    </div><!-- /.designer-outer -->
+
+<!-- 右鍵選單（fixed，掛在 body 層） -->
+<div id="ctxMenu"></div>
+
+<!-- ===== 點位選擇 Modal（兩步驟） ===== -->
+<div class="modal fade" id="pointPickerModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width:460px;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title" style="font-size:13px;display:flex;align-items:center;gap:4px;">
+                    <i class="fas fa-tachometer-alt text-warning"></i>
+                    <span id="ppModalTitle">選擇設備</span>
+                </h6>
+                <button type="button" class="btn-close btn-close-white btn-sm" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="padding:12px 16px;">
+
+                <!-- Step 1: 設備清單 -->
+                <div id="ppStep1">
+                    <div id="deviceListContainer" style="max-height:320px;overflow-y:auto;"></div>
+                </div>
+
+                <!-- Step 2: 點位清單 -->
+                <div id="ppStep2" style="display:none;">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                        <button class="pp-back-btn" onclick="goBackToDevices()" title="返回設備清單">
+                            <i class="fas fa-arrow-left"></i> 返回
+                        </button>
+                        <span class="pp-device-tag"><i class="fas fa-server me-1"></i><span id="ppDeviceName"></span></span>
+                    </div>
+                    <input type="text" id="ppPointSearch"
+                           class="form-control form-control-sm mb-2"
+                           placeholder="搜尋點位名稱…"
+                           style="background:#3c3c3c;border:1px solid #555;color:#c8c8c8;"
+                           oninput="filterPointList(this.value)">
+                    <div id="pointListContainer" style="max-height:270px;overflow-y:auto;"></div>
+                </div>
+
+            </div>
+            <div class="modal-footer" style="gap:8px;">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-warning btn-sm" id="btnConfirmPoint"
+                        onclick="confirmPointPick()" disabled>確認</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== 頁面編輯 Modal ===== -->
+<div class="modal fade" id="pageEditModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+        <div class="modal-content" style="background:#2d2d2d;border:1px solid #555;color:#c8c8c8;">
+            <div class="modal-header" style="border-bottom:1px solid #444;padding:10px 16px;">
+                <h6 class="modal-title" style="font-size:13px;">
+                    <i class="fas fa-pen text-info me-2"></i>編輯頁面
+                </h6>
+                <button type="button" class="btn-close btn-close-white btn-sm" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="padding:12px 16px;">
+                <div style="margin-bottom:12px;">
+                    <div style="color:#9d9d9d;font-size:11px;margin-bottom:4px;">頁面名稱</div>
+                    <input type="text" id="editPageNameInput"
+                           class="form-control form-control-sm"
+                           style="background:#3c3c3c;border:1px solid #555;color:#c8c8c8;"
+                           placeholder="輸入頁面名稱">
+                </div>
+                <div>
+                    <div style="color:#9d9d9d;font-size:11px;margin-bottom:6px;">頁面圖示</div>
+                    <div id="iconPickerGrid" class="icon-picker-grid"></div>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top:1px solid #444;padding:8px 16px;gap:8px;">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-info btn-sm" onclick="confirmPageEdit()">確認</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+// ============================================================
+// 狀態
+// ============================================================
+let nWidgetCounter = 0;
+let selectedEl = null;
+
+// 移動
+let isMoving = false;
+let moveOffset = { x: 0, y: 0 };
+
+// 縮放
+let isResizing = false;
+let resizingEl = null;
+let resizeStart = { mx: 0, my: 0, w: 0, h: 0 };
+
+// 目前背景圖追蹤（供頁面切換時儲存）
+let szCurrentBgDataUrl  = null;
+let szCurrentBgFileName = null;
+
+// ============================================================
+// 頁面樹資料結構
+// ============================================================
+let nPageIdCounter = 1;
+let szCurrentPageId = 'p1';
+
+let arrPageTree = [{
+    szId:           'p1',
+    szName:         '主頁面',
+    szIcon:         'fa-home',
+    arrChildren:    [],
+    szBgDataUrl:    null,
+    szBgFileName:   null,
+    nCanvasW:       1200,
+    nCanvasH:       800,
+    arrWidgetState: []
+}];
+
+const canvas = document.getElementById('canvas');
+
+// ============================================================
+// Widget 定義
+// ============================================================
+const WIDGET_DEFS = {
+    table: {
+        szLabel: '表格',
+        szIcon: 'fas fa-table',
+        nDefaultW: 360,
+        nDefaultH: 220,
+        defaultProps: {
+            szTitle: '數據表格',
+            nRows: 5,
+            nCols: 3,
+            szHeaderColor: '#343a40'
+        }
+    },
+    gauge: {
+        szLabel: '儀錶板',
+        szIcon: 'fas fa-tachometer-alt',
+        nDefaultW: 220,
+        nDefaultH: 175,
+        defaultProps: {
+            szTitle:     '溫度',
+            szSid:       '',
+            szPointName: '',
+            fValue:  65.5,
+            fMin:    0.0,
+            fMax:    100.0,
+            szUnit:  '°C',
+            szColor: '#0d6efd'
+        }
+    }
+};
+
+// ============================================================
+// 計算 Designer 高度（動態適應 navbar）
+// ============================================================
+function adjustHeight() {
+    const navbar = document.querySelector('.navbar');
+    const navH = navbar ? navbar.offsetHeight : 56;
+    document.getElementById('designerOuter').style.height = (window.innerHeight - navH) + 'px';
+}
+adjustHeight();
+window.addEventListener('resize', adjustHeight);
+
+// ============================================================
+// 元件庫拖曳
+// ============================================================
+document.querySelectorAll('.widget-lib-item').forEach(item => {
+    item.addEventListener('dragstart', e => {
+        e.dataTransfer.setData('widgetType', item.dataset.widgetType);
+        e.dataTransfer.effectAllowed = 'copy';
+    });
+});
+
+canvas.addEventListener('dragover', e => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    canvas.classList.add('drag-over');
+});
+
+canvas.addEventListener('dragleave', e => {
+    if (e.target === canvas) canvas.classList.remove('drag-over');
+});
+
+canvas.addEventListener('drop', e => {
+    e.preventDefault();
+    canvas.classList.remove('drag-over');
+
+    const szType = e.dataTransfer.getData('widgetType');
+    if (!szType || !WIDGET_DEFS[szType]) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const def = WIDGET_DEFS[szType];
+    // 置中於滑鼠落點，並貼齊 20px 格
+    let x = snapGrid(e.clientX - rect.left - def.nDefaultW / 2);
+    let y = snapGrid(e.clientY - rect.top - 20);
+    x = Math.max(0, x);
+    y = Math.max(0, y);
+
+    if (szType === 'gauge') {
+        // 儀錶板需先選擇綁定點位
+        openPointPicker(x, y);
+    } else {
+        createWidget(szType, x, y);
+    }
+});
+
+// ============================================================
+// 建立 Widget
+// ============================================================
+function createWidget(szType, x, y) {
+    const def = WIDGET_DEFS[szType];
+    const szId = 'w' + (++nWidgetCounter);
+
+    const el = document.createElement('div');
+    el.id = szId;
+    el.className = 'canvas-widget';
+    el.dataset.type = szType;
+    el.style.left = x + 'px';
+    el.style.top  = y + 'px';
+    el.style.width  = def.nDefaultW + 'px';
+    el.style.height = def.nDefaultH + 'px';
+    el.widgetProps = { ...def.defaultProps };
+
+    renderWidget(el);
+    canvas.appendChild(el);
+    selectWidget(el);
+}
+
+// ============================================================
+// 渲染 Widget 內容
+// ============================================================
+function renderWidget(el) {
+    const szType = el.dataset.type;
+    const def    = WIDGET_DEFS[szType];
+    const props  = el.widgetProps;
+
+    const szContent = szType === 'table'
+        ? buildTableHtml(props)
+        : buildGaugeHtml(props);
+
+    el.innerHTML = `
+        <div class="widget-header">
+            <i class="${def.szIcon} me-1" style="opacity:.7;font-size:10px;"></i>
+            <span class="wh-title">${props.szTitle}</span>
+            <button class="widget-del" onclick="deleteWidget('${el.id}')" title="刪除元件">✕</button>
+        </div>
+        <div class="widget-body">${szContent}</div>
+        <div class="resize-knob" title="拖曳縮放"></div>
+    `;
+
+    // 拖移（header）
+    el.querySelector('.widget-header').addEventListener('mousedown', e => {
+        if (e.target.classList.contains('widget-del')) return;
+        e.preventDefault();
+        startMove(e, el);
+    });
+
+    // 縮放（右下角）
+    el.querySelector('.resize-knob').addEventListener('mousedown', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        startResize(e, el);
+    });
+
+    // 點選選取
+    el.addEventListener('mousedown', () => selectWidget(el));
+}
+
+// ============================================================
+// 表格 HTML
+// ============================================================
+const TABLE_SAMPLE = [
+    ['溫度感測器', '85.3°C', '正常', '2026-03-05'],
+    ['壓力感測器', '2.40 bar', '正常', '2026-03-05'],
+    ['流量計',     '12.7 L/s', '警告', '2026-03-05'],
+    ['液位感測器', '67.2%',   '正常', '2026-03-05'],
+    ['電流感測器', '32.1 A',  '正常', '2026-03-05'],
+    ['電壓感測器', '220 V',   '正常', '2026-03-05'],
+];
+
+const COL_HEADERS = ['名稱', '數值', '狀態', '時間戳'];
+
+function buildTableHtml(props) {
+    const nC = Math.max(1, Math.min(props.nCols, 4));
+    const nR = Math.max(1, props.nRows);
+
+    const szHeaders = Array.from({ length: nC }, (_, i) =>
+        `<th style="background:${props.szHeaderColor}">${COL_HEADERS[i] ?? '欄' + (i+1)}</th>`
+    ).join('');
+
+    const szRows = Array.from({ length: nR }, (_, ri) => {
+        const row = TABLE_SAMPLE[ri % TABLE_SAMPLE.length];
+        const szCells = Array.from({ length: nC }, (_, ci) =>
+            `<td>${row[ci] ?? '-'}</td>`
+        ).join('');
+        return `<tr>${szCells}</tr>`;
+    }).join('');
+
+    return `<table class="w-table">
+        <thead><tr>${szHeaders}</tr></thead>
+        <tbody>${szRows}</tbody>
+    </table>`;
+}
+
+// ============================================================
+// 儀錶板 SVG
+// ============================================================
+function buildGaugeHtml(props) {
+    const cx = 100, cy = 110, r = 83;
+
+    const fRaw = (props.fValue - props.fMin) / ((props.fMax - props.fMin) || 1);
+    const fPct = Math.max(0.001, Math.min(0.999, fRaw));
+
+    // 計算終點（SVG 座標，順時針 sweep=1）
+    // 起始角 θ=180°（左端），終止角 = 180° + pct*180°
+    const thetaEnd = (180 + fPct * 180) * Math.PI / 180;
+    const ex = (cx + r * Math.cos(thetaEnd)).toFixed(2);
+    const ey = (cy + r * Math.sin(thetaEnd)).toFixed(2);
+
+    // 顏色閾值
+    const fPctClamped = Math.max(0, Math.min(1, fRaw));
+    const szColor = fPctClamped >= 0.85 ? '#dc3545'
+                  : fPctClamped >= 0.65 ? '#fd7e14'
+                  : props.szColor;
+
+    // 背景弧（完整半圓，sweep=1）
+    const szBg = `M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}`;
+    // 數值弧
+    const szVal = `M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${ex} ${ey}`;
+
+    const szDisplayVal = Number(props.fValue).toFixed(1);
+
+    return `<svg viewBox="0 0 200 145" xmlns="http://www.w3.org/2000/svg"
+                 style="width:100%;height:100%;display:block;">
+        <!-- 背景弧 -->
+        <path d="${szBg}" fill="none" stroke="#e9ecef" stroke-width="15" stroke-linecap="round"/>
+        <!-- 數值弧 -->
+        <path d="${szVal}" fill="none" stroke="${szColor}" stroke-width="15" stroke-linecap="round"/>
+        <!-- 主數值 -->
+        <text x="100" y="96" text-anchor="middle" font-size="26" font-weight="700"
+              fill="#212529" font-family="'Segoe UI',sans-serif">${szDisplayVal}</text>
+        <!-- 單位 -->
+        <text x="100" y="113" text-anchor="middle" font-size="13" fill="#6c757d"
+              font-family="'Segoe UI',sans-serif">${props.szUnit}</text>
+        <!-- 最小值 -->
+        <text x="${cx-r}" y="${cy+18}" text-anchor="middle" font-size="10" fill="#adb5bd">${props.fMin}</text>
+        <!-- 最大值 -->
+        <text x="${cx+r}" y="${cy+18}" text-anchor="middle" font-size="10" fill="#adb5bd">${props.fMax}</text>
+        <!-- 標題 -->
+        <text x="100" y="140" text-anchor="middle" font-size="11" fill="#868e96"
+              font-family="'Segoe UI',sans-serif">${props.szTitle}</text>
+    </svg>`;
+}
+
+// ============================================================
+// 選取 Widget
+// ============================================================
+function selectWidget(el) {
+    if (selectedEl) selectedEl.classList.remove('selected');
+    selectedEl = el;
+    if (el) {
+        el.classList.add('selected');
+        el.style.zIndex = ++nWidgetCounter + 10;
+        renderPropPanel(el);
+    } else {
+        document.getElementById('propBody').innerHTML =
+            `<div class="no-sel-hint" id="noSelHint">
+                <i class="fas fa-mouse-pointer"></i>點選元件<br>以編輯屬性
+            </div>`;
+    }
+}
+
+// 點擊畫布空白處 → 取消選取
+canvas.addEventListener('mousedown', e => {
+    if (e.target === canvas) selectWidget(null);
+});
+
+// ============================================================
+// 屬性面板
+// ============================================================
+function renderPropPanel(el) {
+    const szType = el.dataset.type;
+    const props  = el.widgetProps;
+
+    // 共用欄位
+    let szHtml = `
+        <div class="prop-group">
+            <label>標題</label>
+            <input type="text" value="${escHtml(props.szTitle)}"
+                   oninput="setProp('szTitle', this.value)">
+        </div>
+        <div class="prop-group">
+            <label>X 位置</label>
+            <input type="number" value="${parseInt(el.style.left)}" step="20"
+                   oninput="setPos('left', +this.value)">
+        </div>
+        <div class="prop-group">
+            <label>Y 位置</label>
+            <input type="number" value="${parseInt(el.style.top)}" step="20"
+                   oninput="setPos('top', +this.value)">
+        </div>
+        <div class="prop-group">
+            <label>寬度</label>
+            <input type="number" id="pW" value="${el.offsetWidth}" step="20"
+                   oninput="setSize('width', +this.value)">
+        </div>
+        <div class="prop-group">
+            <label>高度</label>
+            <input type="number" id="pH" value="${el.offsetHeight}" step="20"
+                   oninput="setSize('height', +this.value)">
+        </div>
+        <hr class="prop-divider">
+    `;
+
+    if (szType === 'table') {
+        szHtml += `
+        <div class="prop-group">
+            <label>列數</label>
+            <input type="number" value="${props.nRows}" min="1" max="20"
+                   oninput="setProp('nRows', +this.value)">
+        </div>
+        <div class="prop-group">
+            <label>欄數 (最多4)</label>
+            <input type="number" value="${props.nCols}" min="1" max="4"
+                   oninput="setProp('nCols', +this.value)">
+        </div>
+        <div class="prop-group">
+            <label>標題列顏色</label>
+            <input type="color" value="${props.szHeaderColor}"
+                   oninput="setProp('szHeaderColor', this.value)">
+        </div>`;
+    } else if (szType === 'gauge') {
+        const szSidLabel = props.szPointName
+            ? `<span style="font-size:12px;color:#c8c8c8;">${escHtml(props.szPointName)}</span>`
+            : `<span style="color:#888;font-size:11px;">（未綁定）</span>`;
+        szHtml += `
+        <div class="prop-group">
+            <label>綁定點位</label>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                ${szSidLabel}
+                <button class="btn btn-outline-warning btn-sm py-0 px-2" style="font-size:11px;"
+                        onclick="rerouteGaugePoint()">
+                    <i class="fas fa-exchange-alt me-1"></i>重選
+                </button>
+            </div>
+        </div>
+        <div class="prop-group">
+            <label>當前值</label>
+            <input type="number" value="${props.fValue}" step="0.1"
+                   oninput="setProp('fValue', +this.value)">
+        </div>
+        <div class="prop-group">
+            <label>最小值</label>
+            <input type="number" value="${props.fMin}"
+                   oninput="setProp('fMin', +this.value)">
+        </div>
+        <div class="prop-group">
+            <label>最大值</label>
+            <input type="number" value="${props.fMax}"
+                   oninput="setProp('fMax', +this.value)">
+        </div>
+        <div class="prop-group">
+            <label>單位</label>
+            <input type="text" value="${escHtml(props.szUnit)}"
+                   oninput="setProp('szUnit', this.value)">
+        </div>
+        <div class="prop-group">
+            <label>主色（正常範圍）</label>
+            <input type="color" value="${props.szColor}"
+                   oninput="setProp('szColor', this.value)">
+        </div>`;
+    }
+
+    document.getElementById('propBody').innerHTML = szHtml;
+}
+
+// 更新 prop → 重新渲染 widget 內容
+function setProp(szKey, val) {
+    if (!selectedEl) return;
+    selectedEl.widgetProps[szKey] = val;
+    renderWidget(selectedEl);
+}
+
+function setPos(szSide, nVal) {
+    if (!selectedEl) return;
+    selectedEl.style[szSide] = Math.max(0, nVal) + 'px';
+}
+
+function setSize(szSide, nVal) {
+    if (!selectedEl) return;
+    selectedEl.style[szSide] = Math.max(60, nVal) + 'px';
+}
+
+// ============================================================
+// 移動 Widget（拖移 header）
+// ============================================================
+function startMove(e, el) {
+    isMoving = true;
+    const rect = el.getBoundingClientRect();
+    moveOffset.x = e.clientX - rect.left;
+    moveOffset.y = e.clientY - rect.top;
+    document.addEventListener('mousemove', onDocMouseMove);
+    document.addEventListener('mouseup', onDocMouseUp);
+}
+
+// ============================================================
+// 縮放 Widget（右下角拖把）
+// ============================================================
+function startResize(e, el) {
+    isResizing  = true;
+    resizingEl  = el;
+    resizeStart = {
+        mx: e.clientX,
+        my: e.clientY,
+        w:  el.offsetWidth,
+        h:  el.offsetHeight
+    };
+    document.addEventListener('mousemove', onDocMouseMove);
+    document.addEventListener('mouseup', onDocMouseUp);
+}
+
+// ============================================================
+// 全域 mousemove / mouseup
+// ============================================================
+function onDocMouseMove(e) {
+    if (isMoving && selectedEl) {
+        const canvasRect = canvas.getBoundingClientRect();
+        let x = snapGrid(e.clientX - canvasRect.left - moveOffset.x);
+        let y = snapGrid(e.clientY - canvasRect.top  - moveOffset.y);
+
+        // 邊界限制
+        x = Math.max(0, Math.min(canvas.offsetWidth  - selectedEl.offsetWidth,  x));
+        y = Math.max(0, Math.min(canvas.offsetHeight - selectedEl.offsetHeight, y));
+
+        selectedEl.style.left = x + 'px';
+        selectedEl.style.top  = y + 'px';
+
+        // 同步屬性面板位置欄位
+        syncPosInputs(x, y);
+    }
+
+    if (isResizing && resizingEl) {
+        const dx = e.clientX - resizeStart.mx;
+        const dy = e.clientY - resizeStart.my;
+        const nW = snapGrid(Math.max(120, resizeStart.w + dx));
+        const nH = snapGrid(Math.max(80,  resizeStart.h + dy));
+        resizingEl.style.width  = nW + 'px';
+        resizingEl.style.height = nH + 'px';
+        syncSizeInputs(nW, nH);
+    }
+}
+
+function onDocMouseUp() {
+    isMoving   = false;
+    isResizing = false;
+    resizingEl = null;
+    document.removeEventListener('mousemove', onDocMouseMove);
+    document.removeEventListener('mouseup', onDocMouseUp);
+}
+
+// ============================================================
+// 刪除 Widget
+// ============================================================
+function deleteWidget(szId) {
+    const el = document.getElementById(szId);
+    if (!el) return;
+    if (selectedEl === el) selectWidget(null);
+    el.remove();
+}
+
+// Delete / Backspace 鍵刪除選取元件
+document.addEventListener('keydown', e => {
+    if ((e.key === 'Delete' || e.key === 'Backspace') && selectedEl) {
+        const tag = document.activeElement.tagName;
+        if (tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT') {
+            deleteWidget(selectedEl.id);
+        }
+    }
+});
+
+// ============================================================
+// 點位選擇器（兩步驟：先選設備，再選點位）
+// ============================================================
+let arrAllDevices     = null;   // 快取設備清單
+let arrAllPoints      = null;   // 快取所有點位
+let nPickedDevId      = -1;     // 已選設備的 DB Id（用於 SID 範圍比對）
+let szPickedSid       = null;   // 已選點位 SID
+let pendingGaugeX     = 0;
+let pendingGaugeY     = 0;
+let _pointPickerModal = null;
+
+// SID 格式: {coordinatorId*65536 + modbusId*256 + 1}-S{N}
+// 某設備所屬 SID 的數字前綴落在 [Id*65536, (Id+1)*65536-1] 範圍內
+function getSidNumericPrefix(szSid) {
+    const m = szSid.match(/^(\d+)-S\d+$/);
+    return m ? parseInt(m[1], 10) : -1;
+}
+
+function isPointOfDevice(szSid, nDevId) {
+    const nPfx = getSidNumericPrefix(szSid);
+    return nPfx >= nDevId * 65536 && nPfx < (nDevId + 1) * 65536;
+}
+
+async function openPointPicker(x, y) {
+    pendingGaugeX = x;
+    pendingGaugeY = y;
+    szPickedSid   = null;
+    nPickedDevId  = -1;
+    await _ensurePickerData();
+    _showPickerStep1();
+}
+
+async function _ensurePickerData() {
+    if (arrAllDevices && arrAllPoints) return;
+    try {
+        const [rDev, rPt] = await Promise.all([
+            fetch('/Designer/Devices'),
+            fetch('/Designer/Points')
+        ]);
+        if (!rDev.ok) throw new Error('Devices HTTP ' + rDev.status);
+        if (!rPt.ok)  throw new Error('Points HTTP '  + rPt.status);
+        arrAllDevices = await rDev.json();
+        arrAllPoints  = await rPt.json();
+    } catch (err) {
+        alert('無法載入設備/點位清單，請確認資料庫連線。\n' + err.message);
+        throw err;
+    }
+}
+
+function _showPickerStep1() {
+    document.getElementById('ppStep1').style.display = '';
+    document.getElementById('ppStep2').style.display = 'none';
+    document.getElementById('ppModalTitle').textContent = '選擇設備';
+    document.getElementById('btnConfirmPoint').disabled = true;
+    renderDeviceList();
+    if (!_pointPickerModal) {
+        _pointPickerModal = new bootstrap.Modal(document.getElementById('pointPickerModal'));
+    }
+    _pointPickerModal.show();
+}
+
+function renderDeviceList() {
+    const container = document.getElementById('deviceListContainer');
+    if (!arrAllDevices || arrAllDevices.length === 0) {
+        container.innerHTML = '<div style="color:#888;font-size:12px;text-align:center;padding:20px;">' +
+            '<i class="fas fa-plug" style="font-size:24px;display:block;margin-bottom:8px;"></i>尚無設備</div>';
+        return;
+    }
+    container.innerHTML = arrAllDevices.map(d => {
+        const nPts = (arrAllPoints || []).filter(p => isPointOfDevice(p.szSid, d.nId)).length;
+        return `
+        <div class="point-list-item" onclick="selectDeviceItem(this,${d.nId})">
+            <i class="fas fa-server" style="font-size:14px;color:#7ecfff;flex-shrink:0;"></i>
+            <div style="flex:1;min-width:0;">
+                <div class="point-name">${escHtml(d.szName)}</div>
+                <div class="point-sid">${nPts} 個點位</div>
+            </div>
+            <i class="fas fa-chevron-right" style="color:#555;font-size:11px;"></i>
+        </div>`;
+    }).join('');
+}
+
+function selectDeviceItem(el, nDevId) {
+    nPickedDevId = nDevId;
+    const dev = arrAllDevices.find(d => d.nId === nDevId);
+    document.getElementById('ppDeviceName').textContent = dev ? dev.szName : String(nDevId);
+    document.getElementById('ppStep1').style.display = 'none';
+    document.getElementById('ppStep2').style.display = '';
+    document.getElementById('ppModalTitle').textContent = '選擇點位';
+    document.getElementById('ppPointSearch').value = '';
+    szPickedSid = null;
+    document.getElementById('btnConfirmPoint').disabled = true;
+    _renderFilteredPoints('');
+}
+
+function goBackToDevices() {
+    document.getElementById('ppStep1').style.display = '';
+    document.getElementById('ppStep2').style.display = 'none';
+    document.getElementById('ppModalTitle').textContent = '選擇設備';
+    document.getElementById('btnConfirmPoint').disabled = true;
+    szPickedSid = null;
+}
+
+function filterPointList(szKeyword) {
+    _renderFilteredPoints(szKeyword);
+    szPickedSid = null;
+    document.getElementById('btnConfirmPoint').disabled = true;
+}
+
+function _renderFilteredPoints(szKeyword) {
+    const szQ = szKeyword.trim().toLowerCase();
+    const filtered = (arrAllPoints || []).filter(p => {
+        if (!isPointOfDevice(p.szSid, nPickedDevId)) return false;
+        return !szQ || p.szName.toLowerCase().includes(szQ);
+    });
+    const container = document.getElementById('pointListContainer');
+    if (filtered.length === 0) {
+        container.innerHTML = '<div style="color:#888;font-size:12px;text-align:center;padding:20px;">' +
+            '<i class="fas fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;"></i>無符合點位</div>';
+        return;
+    }
+    container.innerHTML = filtered.map(p => `
+        <div class="point-list-item" data-sid="${escHtml(p.szSid)}"
+             onclick="selectPointItem(this,'${escHtml(p.szSid)}')">
+            <i class="fas fa-circle" style="font-size:6px;color:#6c9;flex-shrink:0;"></i>
+            <div style="flex:1;min-width:0;">
+                <div class="point-name">${escHtml(p.szName)}</div>
+            </div>
+            <span class="point-unit">${escHtml(p.szUnit || '')}</span>
+        </div>
+    `).join('');
+}
+
+function selectPointItem(el, szSid) {
+    document.querySelectorAll('#pointListContainer .point-list-item')
+            .forEach(i => i.classList.remove('selected'));
+    el.classList.add('selected');
+    szPickedSid = szSid;
+    document.getElementById('btnConfirmPoint').disabled = false;
+}
+
+function confirmPointPick() {
+    if (!szPickedSid || !arrAllPoints) return;
+    const point = arrAllPoints.find(p => p.szSid === szPickedSid);
+    if (!point) return;
+    _pointPickerModal.hide();
+
+    if (pendingGaugeX === -1) {
+        // 重選模式：更新目前選取的 gauge
+        if (!selectedEl || selectedEl.dataset.type !== 'gauge') return;
+        selectedEl.widgetProps.szSid       = point.szSid;
+        selectedEl.widgetProps.szPointName = point.szName;
+        selectedEl.widgetProps.szTitle     = point.szName;
+        selectedEl.widgetProps.szUnit  = point.szUnit || '°C';
+        selectedEl.widgetProps.fMin    = point.fMin   ?? 0;
+        selectedEl.widgetProps.fMax    = point.fMax   ?? 100;
+        renderWidget(selectedEl);
+        renderPropPanel(selectedEl);
+    } else {
+        createGaugeWithPoint(point, pendingGaugeX, pendingGaugeY);
+    }
+}
+
+// 從屬性面板「重選」呼叫
+async function rerouteGaugePoint() {
+    if (!selectedEl || selectedEl.dataset.type !== 'gauge') return;
+    pendingGaugeX = -1;
+    pendingGaugeY = -1;
+    szPickedSid   = null;
+    nPickedDevId  = -1;
+    try {
+        await _ensurePickerData();
+        _showPickerStep1();
+    } catch (_) { /* 已在 _ensurePickerData 顯示 alert */ }
+}
+
+function createGaugeWithPoint(point, x, y) {
+    const def  = WIDGET_DEFS['gauge'];
+    const szId = 'w' + (++nWidgetCounter);
+
+    const el = document.createElement('div');
+    el.id           = szId;
+    el.className    = 'canvas-widget';
+    el.dataset.type = 'gauge';
+    el.style.left   = x + 'px';
+    el.style.top    = y + 'px';
+    el.style.width  = def.nDefaultW + 'px';
+    el.style.height = def.nDefaultH + 'px';
+    el.widgetProps  = {
+        ...def.defaultProps,
+        szSid:       point.szSid,
+        szPointName: point.szName,
+        szTitle:     point.szName,
+        szUnit:  point.szUnit || '°C',
+        fMin:    point.fMin   ?? 0,
+        fMax:    point.fMax   ?? 100
+    };
+
+    renderWidget(el);
+    canvas.appendChild(el);
+    selectWidget(el);
+}
+
+// ============================================================
+// 清除畫布
+// ============================================================
+function clearCanvas() {
+    if (!canvas.hasChildNodes()) return;
+    if (confirm('確定要清除畫布上所有元件？')) {
+        canvas.innerHTML = '';
+        selectWidget(null);
+        nWidgetCounter = 0;
+        // 同步清空目前頁面的 widget 狀態
+        const page = findPage(szCurrentPageId);
+        if (page) page.arrWidgetState = [];
+    }
+}
+
+// ============================================================
+// 匯入圖片
+// ============================================================
+
+// 開啟檔案選擇器
+function triggerImportImage() {
+    document.getElementById('imgFileInput').click();
+}
+
+// 使用者選好檔案後觸發
+function onImageFileSelected(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    // 重設 input 讓相同檔案可再次選取
+    input.value = '';
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        applyCanvasBgImage(e.target.result, file.name);
+    };
+    reader.readAsDataURL(file);
+}
+
+// 將 dataUrl 套用為畫布背景，並依圖片原始尺寸調整畫布
+function applyCanvasBgImage(szDataUrl, szFileName) {
+    const img = new Image();
+    img.onload = function () {
+        const nImgW = img.naturalWidth;
+        const nImgH = img.naturalHeight;
+
+        // 畫布調整為圖片原始尺寸（最小 400×300）
+        const nCanvasW = Math.max(400, nImgW);
+        const nCanvasH = Math.max(300, nImgH);
+        canvas.style.width  = nCanvasW + 'px';
+        canvas.style.height = nCanvasH + 'px';
+
+        // 背景：圖片鋪底，格線疊在最上層形成分割網格
+        canvas.style.backgroundImage = [
+            'linear-gradient(rgba(0,0,0,0.08) 1px, transparent 1px)',
+            'linear-gradient(90deg, rgba(0,0,0,0.08) 1px, transparent 1px)',
+            `url('${szDataUrl}')`
+        ].join(', ');
+        canvas.style.backgroundSize     = '20px 20px, 20px 20px, 100% 100%';
+        canvas.style.backgroundPosition = '0 0, 0 0, 0 0';
+        canvas.style.backgroundRepeat   = 'repeat, repeat, no-repeat';
+        canvas.style.backgroundColor    = '#fff';
+
+        // 追蹤目前背景（供頁面切換儲存用）
+        szCurrentBgDataUrl  = szDataUrl;
+        szCurrentBgFileName = szFileName;
+
+        // 更新工具列徽章
+        document.getElementById('bgImgName').textContent = szFileName;
+        document.getElementById('bgImgSize').textContent =
+            `${nImgW} × ${nImgH} px`;
+        const badge = document.getElementById('bgImgBadge');
+        badge.style.display = 'flex';
+    };
+    img.src = szDataUrl;
+}
+
+// 移除背景圖，恢復預設格線白底
+function clearBgImage() {
+    canvas.style.backgroundImage = [
+        'linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px)',
+        'linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px)'
+    ].join(', ');
+    canvas.style.backgroundSize     = '20px 20px';
+    canvas.style.backgroundPosition = '0 0';
+    canvas.style.backgroundRepeat   = 'repeat';
+    canvas.style.backgroundColor    = '#ffffff';
+    canvas.style.width  = '1200px';
+    canvas.style.height = '800px';
+
+    szCurrentBgDataUrl  = null;
+    szCurrentBgFileName = null;
+    document.getElementById('bgImgBadge').style.display = 'none';
+    document.getElementById('bgImgName').textContent = '';
+}
+
+// ============================================================
+// 工具函式
+// ============================================================
+function snapGrid(n, nGrid = 20) {
+    return Math.round(n / nGrid) * nGrid;
+}
+
+function escHtml(s) {
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+function syncPosInputs(x, y) {
+    const pbs = document.getElementById('propBody');
+    if (!pbs) return;
+    const inputs = pbs.querySelectorAll('input[type=number]');
+    // X=inputs[1], Y=inputs[2]（index 0 是標題 text）
+    if (inputs[1]) inputs[1].value = x;
+    if (inputs[2]) inputs[2].value = y;
+}
+
+function syncSizeInputs(w, h) {
+    const pw = document.getElementById('pW');
+    const ph = document.getElementById('pH');
+    if (pw) pw.value = w;
+    if (ph) ph.value = h;
+}
+
+// ============================================================
+// 頁面樹 — 渲染
+// ============================================================
+function renderPageTree() {
+    const wrap = document.getElementById('pageTreeWrap');
+    wrap.innerHTML = '';
+    arrPageTree.forEach(p => renderPageNode(wrap, p, 0));
+
+    // 空白區域：右鍵 → 新增根頁面
+    const blankZone = document.createElement('div');
+    blankZone.className = 'page-blank-zone';
+    blankZone.addEventListener('contextmenu', e => {
+        e.preventDefault();
+        showCtxMenu(e, null);
+    });
+    wrap.appendChild(blankZone);
+}
+
+function renderPageNode(container, page, nDepth) {
+    const isActive   = page.szId === szCurrentPageId;
+    const hasChildren = page.arrChildren && page.arrChildren.length > 0;
+
+    const el = document.createElement('div');
+    el.className = 'page-node' + (isActive ? ' active' : '');
+    el.dataset.id = page.szId;
+    el.style.paddingLeft = (8 + nDepth * 14) + 'px';
+
+    const szIconClass = page.szIcon || (hasChildren ? 'fa-folder-open' : 'fa-file-alt');
+    el.innerHTML = `<i class="fas ${szIconClass} pn-icon"></i><span class="pn-name">${escHtml(page.szName)}</span>`;
+
+    el.addEventListener('click',        ()  => selectPage(page.szId));
+    el.addEventListener('contextmenu',  e  => { e.preventDefault(); e.stopPropagation(); showCtxMenu(e, page.szId); });
+
+    container.appendChild(el);
+
+    if (hasChildren) {
+        page.arrChildren.forEach(child => renderPageNode(container, child, nDepth + 1));
+    }
+}
+
+// ============================================================
+// 頁面樹 — 切換（儲存舊 / 載入新）
+// ============================================================
+function selectPage(szId) {
+    if (szId === szCurrentPageId) return;
+    saveCurrentPageState();
+    szCurrentPageId = szId;
+    const page = findPage(szId);
+    if (page) loadPageState(page);
+    renderPageTree();
+}
+
+function saveCurrentPageState() {
+    const page = findPage(szCurrentPageId);
+    if (!page) return;
+    page.szBgDataUrl    = szCurrentBgDataUrl;
+    page.szBgFileName   = szCurrentBgFileName;
+    page.nCanvasW       = parseInt(canvas.style.width)  || 1200;
+    page.nCanvasH       = parseInt(canvas.style.height) || 800;
+    page.arrWidgetState = [];
+    canvas.querySelectorAll('.canvas-widget').forEach(el => {
+        page.arrWidgetState.push({
+            szType: el.dataset.type,
+            nX:     parseInt(el.style.left) || 0,
+            nY:     parseInt(el.style.top)  || 0,
+            nW:     el.offsetWidth,
+            nH:     el.offsetHeight,
+            props:  { ...el.widgetProps }
+        });
+    });
+}
+
+function loadPageState(page) {
+    canvas.innerHTML = '';
+    selectWidget(null);
+    nWidgetCounter = 0;
+
+    canvas.style.width  = (page.nCanvasW || 1200) + 'px';
+    canvas.style.height = (page.nCanvasH || 800)  + 'px';
+
+    if (page.szBgDataUrl) {
+        applyCanvasBgImage(page.szBgDataUrl, page.szBgFileName || '');
+    } else {
+        clearBgImage();
+    }
+
+    (page.arrWidgetState || []).forEach(ws => restoreWidget(ws));
+}
+
+function restoreWidget(ws) {
+    const def = WIDGET_DEFS[ws.szType];
+    if (!def) return;
+    const szId = 'w' + (++nWidgetCounter);
+    const el   = document.createElement('div');
+    el.id           = szId;
+    el.className    = 'canvas-widget';
+    el.dataset.type = ws.szType;
+    el.style.left   = ws.nX + 'px';
+    el.style.top    = ws.nY + 'px';
+    el.style.width  = ws.nW + 'px';
+    el.style.height = ws.nH + 'px';
+    el.widgetProps  = { ...ws.props };
+    renderWidget(el);
+    canvas.appendChild(el);
+}
+
+// ============================================================
+// 頁面樹 — 新增 / 刪除
+// ============================================================
+function addPage(szParentId) {
+    const szName = prompt('請輸入頁面名稱：', '新頁面');
+    if (szName === null) return;
+
+    const newPage = {
+        szId:           'p' + (++nPageIdCounter),
+        szName:         szName.trim() || '新頁面',
+        szIcon:         'fa-file-alt',
+        arrChildren:    [],
+        szBgDataUrl:    null,
+        szBgFileName:   null,
+        nCanvasW:       1200,
+        nCanvasH:       800,
+        arrWidgetState: []
+    };
+
+    if (szParentId === null) {
+        arrPageTree.push(newPage);
+    } else {
+        const parent = findPage(szParentId);
+        if (parent) parent.arrChildren.push(newPage);
+    }
+    renderPageTree();
+}
+
+function deletePage(szId) {
+    const nTotal = countPages(arrPageTree);
+    if (nTotal <= 1) { alert('至少需要保留一個頁面。'); return; }
+
+    const page = findPage(szId);
+    const szMsg = (page && page.arrChildren.length > 0)
+        ? `確定要刪除「${page.szName}」及其所有子頁面？`
+        : `確定要刪除「${page?.szName}」？`;
+    if (!confirm(szMsg)) return;
+
+    // 若刪除目前頁面（或其祖先），先切換至其他頁面
+    if (szCurrentPageId === szId || isDescendantOf(szId, szCurrentPageId)) {
+        const szFallback = findFirstExcluding(szId, arrPageTree);
+        if (szFallback) {
+            saveCurrentPageState();
+            szCurrentPageId = szFallback;
+            const fb = findPage(szFallback);
+            if (fb) loadPageState(fb);
+        }
+    }
+
+    removeFromTree(szId, arrPageTree);
+    renderPageTree();
+}
+
+// ============================================================
+// 頁面樹 — 工具函式
+// ============================================================
+function findPage(szId, arr) {
+    arr = arr || arrPageTree;
+    for (const p of arr) {
+        if (p.szId === szId) return p;
+        const found = findPage(szId, p.arrChildren);
+        if (found) return found;
+    }
+    return null;
+}
+
+function removeFromTree(szId, arr) {
+    const idx = arr.findIndex(p => p.szId === szId);
+    if (idx >= 0) { arr.splice(idx, 1); return true; }
+    for (const p of arr) {
+        if (removeFromTree(szId, p.arrChildren)) return true;
+    }
+    return false;
+}
+
+function countPages(arr) {
+    return (arr || []).reduce((n, p) => n + 1 + countPages(p.arrChildren), 0);
+}
+
+// 判斷 szTargetId 是否在以 szAncestorId 為根的子樹內
+function isDescendantOf(szAncestorId, szTargetId) {
+    const ancestor = findPage(szAncestorId);
+    if (!ancestor) return false;
+    return !!findPage(szTargetId, ancestor.arrChildren);
+}
+
+// 找第一個不屬於 szExcludeId 子樹的頁面 id
+function findFirstExcluding(szExcludeId, arr) {
+    for (const p of arr) {
+        if (p.szId !== szExcludeId && !isDescendantOf(szExcludeId, p.szId)) return p.szId;
+        const found = findFirstExcluding(szExcludeId, p.arrChildren);
+        if (found) return found;
+    }
+    return null;
+}
+
+// ============================================================
+// 右鍵選單
+// ============================================================
+const ctxMenu    = document.getElementById('ctxMenu');
+let arrCtxActions = [];
+
+function showCtxMenu(e, szPageId) {
+    const items = [];
+
+    if (szPageId === null) {
+        // 空白區右鍵
+        items.push({ szIcon: 'fa-plus', szLabel: '新增頁面', fn: () => addPage(null) });
+    } else {
+        // 節點右鍵
+        items.push({ szIcon: 'fa-pen',  szLabel: '編輯',      fn: () => editPage(szPageId) });
+        items.push({ szIcon: 'fa-plus', szLabel: '新增子頁面', fn: () => addPage(szPageId) });
+        if (countPages(arrPageTree) > 1) {
+            items.push({ isDivider: true });
+            items.push({ szIcon: 'fa-trash-alt', szLabel: '刪除', fn: () => deletePage(szPageId), isDanger: true });
+        }
+    }
+
+    arrCtxActions = items.filter(i => !i.isDivider).map(i => i.fn);
+    let nActionIdx = 0;
+
+    ctxMenu.innerHTML = items.map(item => {
+        if (item.isDivider) return `<div class="ctx-divider"></div>`;
+        const szClass = 'ctx-item' + (item.isDanger ? ' ctx-danger' : '');
+        const idx = nActionIdx++;
+        return `<div class="${szClass}" data-idx="${idx}">
+                    <i class="fas ${item.szIcon}" style="width:14px;opacity:.7;"></i>${item.szLabel}
+                </div>`;
+    }).join('');
+
+    // 顯示後計算位置（避免超出視窗）
+    ctxMenu.style.display = 'block';
+    ctxMenu.style.left = '0px';
+    ctxMenu.style.top  = '0px';
+    const nMenuW = ctxMenu.offsetWidth;
+    const nMenuH = ctxMenu.offsetHeight;
+    let nLeft = e.clientX;
+    let nTop  = e.clientY;
+    if (nLeft + nMenuW > window.innerWidth)  nLeft = e.clientX - nMenuW;
+    if (nTop  + nMenuH > window.innerHeight) nTop  = e.clientY - nMenuH;
+    ctxMenu.style.left = nLeft + 'px';
+    ctxMenu.style.top  = nTop  + 'px';
+}
+
+ctxMenu.addEventListener('click', e => {
+    const item = e.target.closest('.ctx-item');
+    if (!item) return;
+    const fn = arrCtxActions[parseInt(item.dataset.idx)];
+    if (fn) fn();
+    hideCtxMenu();
+});
+
+function hideCtxMenu() { ctxMenu.style.display = 'none'; }
+
+document.addEventListener('click',   hideCtxMenu);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') hideCtxMenu(); });
+
+// ============================================================
+// 頁面編輯（名稱 + 圖示）
+// ============================================================
+const SCADA_ICONS = [
+    { szClass: 'fa-home',               szLabel: '首頁'   },
+    { szClass: 'fa-file-alt',           szLabel: '一般'   },
+    { szClass: 'fa-folder-open',        szLabel: '群組'   },
+    { szClass: 'fa-chart-line',         szLabel: '趨勢'   },
+    { szClass: 'fa-tachometer-alt',     szLabel: '儀錶板' },
+    { szClass: 'fa-thermometer-half',   szLabel: '溫度'   },
+    { szClass: 'fa-bolt',               szLabel: '電力'   },
+    { szClass: 'fa-water',              szLabel: '水流'   },
+    { szClass: 'fa-wind',               szLabel: '空調'   },
+    { szClass: 'fa-fire',               szLabel: '燃燒'   },
+    { szClass: 'fa-snowflake',          szLabel: '冷凍'   },
+    { szClass: 'fa-fan',                szLabel: '風機'   },
+    { szClass: 'fa-pump-soap',          szLabel: '幫浦'   },
+    { szClass: 'fa-cog',                szLabel: '設備'   },
+    { szClass: 'fa-industry',           szLabel: '工廠'   },
+    { szClass: 'fa-server',             szLabel: '伺服器' },
+    { szClass: 'fa-network-wired',      szLabel: '網路'   },
+    { szClass: 'fa-plug',               szLabel: '電源'   },
+    { szClass: 'fa-sun',                szLabel: '太陽能' },
+    { szClass: 'fa-map-marked-alt',     szLabel: '地圖'   },
+    { szClass: 'fa-exclamation-triangle', szLabel: '警報' },
+    { szClass: 'fa-bell',               szLabel: '通知'   },
+    { szClass: 'fa-eye',                szLabel: '監控'   },
+    { szClass: 'fa-database',           szLabel: '資料庫' },
+    { szClass: 'fa-tools',              szLabel: '維護'   },
+];
+
+let szEditingPageId    = null;
+let szEditingIconClass = null;
+let _pageEditModal     = null;
+
+function editPage(szId) {
+    const page = findPage(szId);
+    if (!page) return;
+    szEditingPageId    = szId;
+    szEditingIconClass = page.szIcon || 'fa-file-alt';
+    document.getElementById('editPageNameInput').value = page.szName;
+    renderIconPicker();
+    if (!_pageEditModal) {
+        _pageEditModal = new bootstrap.Modal(document.getElementById('pageEditModal'));
+    }
+    _pageEditModal.show();
+}
+
+function renderIconPicker() {
+    const grid = document.getElementById('iconPickerGrid');
+    grid.innerHTML = SCADA_ICONS.map(icon => `
+        <div class="icon-pick-item${szEditingIconClass === icon.szClass ? ' selected' : ''}"
+             title="${escHtml(icon.szLabel)}"
+             onclick="selectPickedIcon(this,'${icon.szClass}')">
+            <i class="fas ${icon.szClass}"></i>
+            <span>${escHtml(icon.szLabel)}</span>
+        </div>
+    `).join('');
+}
+
+function selectPickedIcon(el, szClass) {
+    document.querySelectorAll('#iconPickerGrid .icon-pick-item')
+            .forEach(i => i.classList.remove('selected'));
+    el.classList.add('selected');
+    szEditingIconClass = szClass;
+}
+
+function confirmPageEdit() {
+    const szName = document.getElementById('editPageNameInput').value.trim();
+    if (!szName) {
+        document.getElementById('editPageNameInput').focus();
+        return;
+    }
+    const page = findPage(szEditingPageId);
+    if (!page) return;
+    page.szName = szName;
+    page.szIcon = szEditingIconClass;
+    _pageEditModal.hide();
+    renderPageTree();
+}
+
+// ============================================================
+// 初始化頁面樹，並嘗試還原已發布設計
+// ============================================================
+renderPageTree();
+loadPublishedDesign();
+
+// ============================================================
+// 儲存設計至資料庫
+// ============================================================
+async function saveDesign() {
+    // 1. 先把目前畫布狀態同步回 arrPageTree
+    saveCurrentPageState();
+
+    // 2. 將遞迴樹展平為陣列（含 szParentPageSid + nSortOrder）
+    const arrPages = [];
+    function flattenTree(arr, szParentSid) {
+        arr.forEach((page, idx) => {
+            arrPages.push({
+                szPageSid:        page.szId,
+                szParentPageSid:  szParentSid,
+                nSortOrder:       idx,
+                szPageName:       page.szName,
+                szPageIcon:       page.szIcon  || null,
+                nCanvasW:         page.nCanvasW || 1200,
+                nCanvasH:         page.nCanvasH || 800,
+                szBgFileName:     page.szBgFileName  || null,
+                szBgDataUrl:      page.szBgDataUrl   || null,
+                szWidgetStateJson: (page.arrWidgetState && page.arrWidgetState.length)
+                                    ? JSON.stringify(page.arrWidgetState)
+                                    : null
+            });
+            if (page.arrChildren && page.arrChildren.length)
+                flattenTree(page.arrChildren, page.szId);
+        });
+    }
+    flattenTree(arrPageTree, null);
+
+    // 3. POST 至後端
+    const btnSave = document.getElementById('btnSave');
+    btnSave.disabled = true;
+    btnSave.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>儲存中…';
+
+    try {
+        const resp = await fetch('/Designer/Save', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ szName: '未命名設計', pages: arrPages })
+        });
+        const result = await resp.json();
+        if (result.success) {
+            showDesignToast('success', '<i class="fas fa-check-circle me-1"></i>已成功儲存至資料庫');
+        } else {
+            showDesignToast('danger', '<i class="fas fa-exclamation-circle me-1"></i>儲存失敗：' + (result.error || '未知錯誤'));
+        }
+    } catch (err) {
+        showDesignToast('danger', '<i class="fas fa-exclamation-circle me-1"></i>網路錯誤：' + err.message);
+    } finally {
+        btnSave.disabled = false;
+        btnSave.innerHTML = '<i class="fas fa-save me-1"></i>儲存';
+    }
+}
+
+// ============================================================
+// 啟動時從資料庫還原已發布設計
+// ============================================================
+async function loadPublishedDesign() {
+    try {
+        const resp = await fetch('/Designer/Load');
+        const result = await resp.json();
+        if (!result.hasData || !result.pages || !result.pages.length) return;
+
+        // 建立節點對照表
+        const nodeMap = {};
+        const sortMap = {};
+        result.pages.forEach(p => {
+            sortMap[p.szPageSid] = p.nSortOrder ?? 0;
+            nodeMap[p.szPageSid] = {
+                szId:           p.szPageSid,
+                szName:         p.szPageName,
+                szIcon:         p.szPageIcon  || null,
+                arrChildren:    [],
+                szBgDataUrl:    p.szBgDataUrl  || null,
+                szBgFileName:   p.szBgFileName || null,
+                nCanvasW:       p.nCanvasW     || 1200,
+                nCanvasH:       p.nCanvasH     || 800,
+                arrWidgetState: p.szWidgetStateJson
+                                    ? JSON.parse(p.szWidgetStateJson)
+                                    : []
+            };
+        });
+
+        // 重建樹狀結構（根節點另行收集）
+        const arrRoots = [];
+        result.pages.forEach(p => {
+            const node = nodeMap[p.szPageSid];
+            if (p.szParentPageSid && nodeMap[p.szParentPageSid]) {
+                nodeMap[p.szParentPageSid].arrChildren.push(node);
+            } else {
+                arrRoots.push(node);
+            }
+        });
+
+        // 依 nSortOrder 排序各層子節點
+        Object.values(nodeMap).forEach(node => {
+            node.arrChildren.sort((a, b) => (sortMap[a.szId] || 0) - (sortMap[b.szId] || 0));
+        });
+        arrRoots.sort((a, b) => (sortMap[a.szId] || 0) - (sortMap[b.szId] || 0));
+
+        // 更新全域計數器，避免新增頁面時 ID 衝突
+        let nMax = 0;
+        result.pages.forEach(p => {
+            const m = p.szPageSid.match(/^p(\d+)/);
+            if (m) nMax = Math.max(nMax, parseInt(m[1]));
+        });
+        nPageIdCounter = nMax;
+
+        // 取代預設頁面樹並導航至第一根頁面
+        arrPageTree.length = 0;
+        arrRoots.forEach(r => arrPageTree.push(r));
+        szCurrentPageId = arrPageTree[0].szId;
+        renderPageTree();
+        loadPageState(arrPageTree[0]);
+    } catch (err) {
+        console.warn('載入已發布設計失敗：', err.message);
+    }
+}
+
+function showDesignToast(szType, szHtml) {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;min-width:260px;';
+    wrap.innerHTML = `
+        <div class="alert alert-${szType} alert-dismissible fade show mb-0 shadow-sm" style="font-size:13px;">
+            ${szHtml}
+            <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert"></button>
+        </div>`;
+    document.body.appendChild(wrap);
+    setTimeout(() => { wrap.querySelector('.alert')?.classList.remove('show'); setTimeout(() => wrap.remove(), 300); }, 3500);
+}
+</script>
+}

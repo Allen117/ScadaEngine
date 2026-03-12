@@ -1,0 +1,983 @@
+@model ScadaEngine.Web.Features.History.Models.HistoryTrendViewModel
+@{
+    ViewData["Title"] = "歷史趨勢圖";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var szStartDefault = Model.dtStartTime.ToString("yyyy-MM-ddTHH:mm");
+    var szEndDefault   = Model.dtEndTime.ToString("yyyy-MM-ddTHH:mm");
+
+    var pointJson = System.Text.Json.JsonSerializer.Serialize(
+        Model.PointList.Select(p => new { sid = p.szSID, name = p.szName, unit = p.szUnit ?? "" })
+    );
+
+    var firstCoordinator = Model.CoordinatorList.FirstOrDefault();
+    int initialCoordId = firstCoordinator?.Id ?? 0;
+
+    static List<ScadaEngine.Engine.Communication.Modbus.Models.ModbusPointModel>
+        FilterPointsByCoord(
+            List<ScadaEngine.Engine.Communication.Modbus.Models.ModbusPointModel> list,
+            int coordId)
+    {
+        if (coordId <= 0) return list;
+        int rangeBase = coordId * 65536;
+        return list.Where(p => {
+            var h = p.szSID.IndexOf('-');
+            if (h < 0) return false;
+            return int.TryParse(p.szSID[..h], out var num) && num >= rangeBase && num < rangeBase + 65536;
+        }).ToList();
+    }
+
+    static int ExtractSN(string szSID)
+    {
+        var idx = szSID.IndexOf("-S", StringComparison.Ordinal);
+        return idx >= 0 && int.TryParse(szSID[(idx + 2)..], out var n) ? n : int.MaxValue;
+    }
+}
+
+<div class="container-fluid mt-4">
+
+    <!-- 頁面標題 -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">
+            <i class="fas fa-chart-line text-primary me-2"></i>歷史趨勢圖
+        </h2>
+        <span class="text-muted small">
+            <i class="fas fa-database me-1"></i>資料來源：HistoryData
+        </span>
+    </div>
+
+    <div class="row">
+
+        <!-- ── 左側 Coordinator 清單 ── -->
+        <div class="col-md-2 pe-0">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-dark text-white py-2">
+                    <h6 class="mb-0"><i class="fas fa-server me-1"></i>設備清單</h6>
+                </div>
+                <div class="list-group list-group-flush" id="coordinatorList">
+                    @if (Model.CoordinatorList.Any())
+                    {
+                        var isFirst = true;
+                        @foreach (var c in Model.CoordinatorList)
+                        {
+                            <a href="#"
+                               class="list-group-item list-group-item-action py-2 coordinator-item @(isFirst ? "active" : "")"
+                               data-id="@c.Id"
+                               data-name="@c.szName">
+                                <i class="fas fa-plug me-1 text-secondary"></i>
+                                <span class="small">@c.szName</span>
+                            </a>
+                            isFirst = false;
+                        }
+                    }
+                    else
+                    {
+                        <div class="list-group-item text-muted small py-3 text-center">
+                            <i class="fas fa-inbox d-block mb-1"></i>無設備資料
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- ── 右側主要內容 ── -->
+        <div class="col-md-10">
+
+            <!-- 查詢條件 -->
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-sliders-h text-primary me-2"></i>查詢條件
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+
+                        <!-- ① 點位選取區 -->
+                        <div class="col-md-4">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label small fw-semibold text-muted mb-0">
+                                    <i class="fas fa-list-ul me-1"></i>點位選取
+                                </label>
+                                <div class="d-flex gap-1">
+                                    <button class="btn btn-outline-secondary btn-xs" id="btnCheckAll">全選</button>
+                                    <button class="btn btn-outline-secondary btn-xs" id="btnUncheckAll">清除</button>
+                                </div>
+                            </div>
+                            <div id="pointListContainer"
+                                 class="border rounded bg-white"
+                                 style="height:148px; overflow-y:auto; padding:0.2rem 0.5rem;">
+                            </div>
+                            <button class="btn btn-primary btn-sm w-100 mt-2" id="btnAddToBasket">
+                                <i class="fas fa-plus me-1"></i>加入待查詢清單
+                            </button>
+                        </div>
+
+                        <!-- ② 待查詢清單 -->
+                        <div class="col-md-4">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label small fw-semibold text-muted mb-0">
+                                    <i class="fas fa-clipboard-list me-1"></i>待查詢清單
+                                    <span class="badge bg-primary ms-1" id="basketCount">0</span>
+                                </label>
+                                <button class="btn btn-outline-danger btn-xs" id="btnClearBasket">清除全部</button>
+                            </div>
+                            <div id="basketContainer"
+                                 class="border rounded bg-white"
+                                 style="height:148px; overflow-y:auto; padding:0.2rem 0.4rem;">
+                                <div id="basketEmpty" class="text-muted text-center small py-4">
+                                    <i class="fas fa-inbox d-block mb-1 opacity-50"></i>尚未加入任何點位
+                                </div>
+                            </div>
+                            <div class="mt-2 text-muted small" id="basketHint" style="display:none">
+                                <i class="fas fa-info-circle me-1"></i>可跨設備加入，最多 8 個點位
+                            </div>
+                        </div>
+
+                        <!-- ③ 時間範圍 + 查詢按鈕 -->
+                        <div class="col-md-4">
+                            <div class="row g-2">
+                                <div class="col-12">
+                                    <label class="form-label small fw-semibold text-muted">
+                                        <i class="fas fa-calendar-plus me-1"></i>開始時間
+                                    </label>
+                                    <input type="datetime-local" id="dtStart" class="form-control form-control-sm"
+                                           value="@szStartDefault" />
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small fw-semibold text-muted">
+                                        <i class="fas fa-calendar-check me-1"></i>結束時間
+                                    </label>
+                                    <input type="datetime-local" id="dtEnd" class="form-control form-control-sm"
+                                           value="@szEndDefault" />
+                                </div>
+                                <div class="col-12 d-flex gap-2">
+                                    <button id="btnQuery" class="btn btn-success btn-sm flex-fill">
+                                        <i class="fas fa-search me-1"></i>查詢
+                                    </button>
+                                    <button id="btnClear" class="btn btn-outline-secondary btn-sm" title="清除圖表">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- 快速時間範圍 -->
+                            <div class="mt-2 d-flex align-items-center gap-1 flex-wrap">
+                                <small class="text-muted me-1">快速：</small>
+                                <button class="btn btn-outline-secondary btn-xs quick-range" data-hours="1">1h</button>
+                                <button class="btn btn-outline-secondary btn-xs quick-range" data-hours="6">6h</button>
+                                <button class="btn btn-outline-secondary btn-xs quick-range" data-hours="24">24h</button>
+                                <button class="btn btn-outline-secondary btn-xs quick-range" data-hours="72">3天</button>
+                                <button class="btn btn-outline-secondary btn-xs quick-range" data-hours="168">7天</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- 圖表 -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0" id="chartTitle">
+                        <i class="fas fa-chart-area text-primary me-2"></i>請加入點位後按下查詢
+                    </h5>
+                    <div class="d-flex align-items-center gap-2">
+                        <span id="limitWarning" class="badge bg-warning text-dark d-none">
+                            <i class="fas fa-exclamation-triangle me-1"></i>部分點位超過 5000 筆上限
+                        </span>
+                        <button id="btnExportExcel" class="btn btn-outline-success btn-sm d-none" onclick="exportToExcel()">
+                            <i class="fas fa-file-excel me-1"></i>匯出 Excel
+                        </button>
+                        <div class="btn-group btn-group-sm" id="chartTypeGroup">
+                            <button class="btn btn-outline-primary active" data-type="line">
+                                <i class="fas fa-chart-line me-1"></i>折線
+                            </button>
+                            <button class="btn btn-outline-primary" data-type="bar">
+                                <i class="fas fa-chart-bar me-1"></i>柱狀
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div id="loadingSpinner" class="text-center py-5 d-none">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <div class="mt-2 text-muted small">查詢中...</div>
+                    </div>
+                    <div id="noDataMsg" class="text-center py-5 text-muted">
+                        <i class="fas fa-chart-line fa-3x mb-3 d-block opacity-25"></i>
+                        <div>請加入點位並設定時間範圍後按下查詢</div>
+                    </div>
+
+                    <!-- 統計卡片（單點查詢後才顯示） -->
+                    <div id="statsRow" style="display:none; padding:0.75rem 0.75rem 0;">
+                        <div class="row g-2">
+                            <div class="col-3">
+                                <div class="rounded p-2 text-white d-flex justify-content-between align-items-center" style="background:#198754;">
+                                    <div><div class="fw-bold" id="statMin">--</div><div style="font-size:0.75rem;">最小值</div></div>
+                                    <i class="fas fa-arrow-down opacity-50"></i>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="rounded p-2 text-white d-flex justify-content-between align-items-center" style="background:#dc3545;">
+                                    <div><div class="fw-bold" id="statMax">--</div><div style="font-size:0.75rem;">最大值</div></div>
+                                    <i class="fas fa-arrow-up opacity-50"></i>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="rounded p-2 text-dark d-flex justify-content-between align-items-center" style="background:#ffc107;">
+                                    <div><div class="fw-bold" id="statAvg">--</div><div style="font-size:0.75rem;">平均值</div></div>
+                                    <i class="fas fa-chart-bar opacity-50"></i>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="rounded p-2 text-white d-flex justify-content-between align-items-center" style="background:#0dcaf0;">
+                                    <div><div class="fw-bold" id="statStdDev">--</div><div style="font-size:0.75rem;">標準差</div></div>
+                                    <i class="fas fa-wave-square opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 多點位統計表（複選查詢後才顯示） -->
+                    <div id="multiStatsWrapper" style="display:none; padding:0.75rem 0.75rem 0;">
+                        <div class="table-responsive rounded border">
+                            <table class="table table-sm table-hover table-bordered mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>點位</th>
+                                        <th class="text-end">最小值</th>
+                                        <th class="text-end">最大值</th>
+                                        <th class="text-end">平均值</th>
+                                        <th class="text-end">標準差</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="multiStatsTbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="chartContainer" style="position:relative; height:380px; padding:0.75rem; display:none;">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+
+                    <!-- 堆疊小圖（3 個以上點位時動態產生） -->
+                    <div id="stackedChartsContainer" style="display:none;">
+                    </div>
+                </div>
+                <div class="card-footer bg-light text-muted">
+                    <div class="d-flex justify-content-between">
+                        <small>
+                            <i class="fas fa-info-circle me-1"></i>
+                            每個點位最多顯示 5000 筆；品質不良以紅色標示（單點模式）
+                        </small>
+                        <small id="footerQueryTime"></small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 資料明細表（單點模式） -->
+            <div class="card shadow-sm mt-3 d-none" id="dataTableCard">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
+                    <h6 class="mb-0">
+                        <i class="fas fa-table text-primary me-2"></i>
+                        資料明細 (<span id="tableCount">0</span> 筆)
+                    </h6>
+                    <button class="btn btn-outline-secondary btn-sm" id="btnToggleTable">
+                        <i class="fas fa-chevron-down me-1"></i>展開
+                    </button>
+                </div>
+                <div class="card-body p-0 d-none" id="tableBody">
+                    <div class="table-responsive" style="max-height:300px; overflow-y:auto;">
+                        <table class="table table-sm table-striped table-hover mb-0">
+                            <thead class="table-dark sticky-top">
+                                <tr>
+                                    <th>時間戳記</th>
+                                    <th class="text-end">數值</th>
+                                    <th>品質</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dataTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /col-md-10 -->
+    </div><!-- /row -->
+</div>
+
+<style>
+    .coordinator-item {
+        border-left: 3px solid transparent;
+        transition: border-color 0.15s;
+    }
+    .coordinator-item:hover { border-left-color: #0d6efd; }
+    .coordinator-item.active {
+        border-left-color: #0d6efd;
+        background-color: #e8f0fe !important;
+        color: #0d6efd !important;
+    }
+    .btn-xs {
+        padding: 0.15rem 0.55rem;
+        font-size: 0.75rem;
+        border-radius: 0.25rem;
+        line-height: 1.4;
+    }
+    .card { border: none; border-radius: 10px; }
+    .card-header { border-radius: 10px 10px 0 0 !important; }
+
+    /* 點位選取區 */
+    #pointListContainer .form-check {
+        border-bottom: 1px solid #f2f2f2;
+        margin-bottom: 0;
+    }
+    #pointListContainer .form-check:last-child { border-bottom: none; }
+    #pointListContainer .form-check-label { cursor: pointer; user-select: none; }
+    #pointListContainer .form-check-input:checked + .form-check-label {
+        font-weight: 600; color: #0d6efd;
+    }
+
+    /* 待查詢清單 */
+    .basket-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.3rem 0.25rem;
+        border-bottom: 1px solid #f2f2f2;
+        font-size: 0.82rem;
+    }
+    .basket-item:last-child { border-bottom: none; }
+    .basket-item:hover { background: #f8f9fa; }
+    .color-dot {
+        width: 10px; height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+        flex-shrink: 0;
+    }
+    .btn-remove {
+        background: none; border: none;
+        color: #adb5bd; padding: 0 2px;
+        line-height: 1; font-size: 0.8rem;
+        cursor: pointer;
+    }
+    .btn-remove:hover { color: #dc3545; }
+
+    /* 堆疊小圖 */
+    .mini-chart-wrapper {
+        border-bottom: 1px solid rgba(0,0,0,0.07);
+    }
+    .mini-chart-wrapper:last-child { border-bottom: none; }
+</style>
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+// ── 資料 ─────────────────────────────────────────────────────────────────
+const allPoints = @Html.Raw(pointJson);
+let currentCoordinatorId = @initialCoordId;
+
+const CHART_COLORS = [
+    { border: 'rgba(13,110,253,0.9)',  bg: 'rgba(13,110,253,0.12)'  },
+    { border: 'rgba(220,53,69,0.9)',   bg: 'rgba(220,53,69,0.12)'   },
+    { border: 'rgba(25,135,84,0.9)',   bg: 'rgba(25,135,84,0.12)'   },
+    { border: 'rgba(255,193,7,0.9)',   bg: 'rgba(255,193,7,0.12)'   },
+    { border: 'rgba(13,202,240,0.9)',  bg: 'rgba(13,202,240,0.12)'  },
+    { border: 'rgba(111,66,193,0.9)',  bg: 'rgba(111,66,193,0.12)'  },
+    { border: 'rgba(253,126,20,0.9)',  bg: 'rgba(253,126,20,0.12)'  },
+    { border: 'rgba(102,16,242,0.9)',  bg: 'rgba(102,16,242,0.12)'  },
+];
+const MAX_BASKET = 8;
+
+// ── DOM refs ──────────────────────────────────────────────────────────────
+const pointListContainer = document.getElementById('pointListContainer');
+const basketContainer    = document.getElementById('basketContainer');
+const dtStart            = document.getElementById('dtStart');
+const dtEnd              = document.getElementById('dtEnd');
+const btnQuery           = document.getElementById('btnQuery');
+const btnClear           = document.getElementById('btnClear');
+const chartContainer     = document.getElementById('chartContainer');
+const noDataMsg          = document.getElementById('noDataMsg');
+const loadingSpinner     = document.getElementById('loadingSpinner');
+const limitWarning       = document.getElementById('limitWarning');
+const statsRow           = document.getElementById('statsRow');
+const multiStatsWrapper  = document.getElementById('multiStatsWrapper');
+const chartTitle         = document.getElementById('chartTitle');
+const dataTableCard      = document.getElementById('dataTableCard');
+const tableBodyEl        = document.getElementById('tableBody');
+const dataTableBody      = document.getElementById('dataTableBody');
+const btnToggleTable     = document.getElementById('btnToggleTable');
+
+// ── 點位選取清單 ──────────────────────────────────────────────────────────
+const getN = sid => { const m = sid.match(/-S(\d+)$/); return m ? parseInt(m[1]) : Infinity; };
+
+function renderPointList(nDbId) {
+    const pts = nDbId <= 0
+        ? [...allPoints]
+        : allPoints.filter(p => {
+            const h = p.sid.indexOf('-');
+            if (h < 0) return false;
+            const num = parseInt(p.sid.substring(0, h));
+            return !isNaN(num) && num >= nDbId * 65536 && num < (nDbId + 1) * 65536;
+        });
+    pts.sort((a, b) => getN(a.sid) - getN(b.sid));
+
+    pointListContainer.innerHTML = pts.map((p, i) =>
+        `<div class="form-check py-1">
+            <input class="form-check-input point-checkbox" type="checkbox"
+                   value="${p.sid}" id="pt_${i}"
+                   data-name="${p.name.replace(/"/g, '&quot;')}"
+                   data-unit="${p.unit.replace(/"/g, '&quot;')}">
+            <label class="form-check-label small" for="pt_${i}">${p.name}</label>
+        </div>`
+    ).join('') || '<div class="text-muted small text-center py-3">無點位資料</div>';
+}
+
+// ── 待查詢清單（Basket）─────────────────────────────────────────────────
+let basket = [];  // [{ sid, name, unit }]
+
+function renderBasket() {
+    const empty = document.getElementById('basketEmpty');
+    const hint  = document.getElementById('basketHint');
+    document.getElementById('basketCount').textContent = basket.length;
+
+    if (basket.length === 0) {
+        basketContainer.innerHTML = '';
+        basketContainer.appendChild(
+            Object.assign(document.createElement('div'), {
+                id: 'basketEmpty',
+                className: 'text-muted text-center small py-4',
+                innerHTML: '<i class="fas fa-inbox d-block mb-1 opacity-50"></i>尚未加入任何點位'
+            })
+        );
+        hint.style.display = 'none';
+        return;
+    }
+
+    hint.style.display = '';
+    basketContainer.innerHTML = basket.map((p, i) => {
+        const c = CHART_COLORS[i % CHART_COLORS.length];
+        return `<div class="basket-item" data-sid="${p.sid}">
+            <div class="d-flex align-items-center gap-2 overflow-hidden">
+                <span class="color-dot" style="background:${c.border}"></span>
+                <span class="text-truncate">${p.name}</span>
+            </div>
+            <button class="btn-remove" onclick="removeFromBasket('${p.sid}')" title="移除">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>`;
+    }).join('');
+}
+
+function addToBasket(items) {
+    let added = 0;
+    for (const item of items) {
+        if (basket.some(b => b.sid === item.sid)) continue;
+        if (basket.length >= MAX_BASKET) {
+            showAlert(`最多只能加入 ${MAX_BASKET} 個點位`, 'warning');
+            break;
+        }
+        basket.push(item);
+        added++;
+    }
+    if (added > 0) renderBasket();
+    else if (items.length > 0 && added === 0) showAlert('選取的點位已全部在清單中', 'info');
+}
+
+function removeFromBasket(sid) {
+    basket = basket.filter(b => b.sid !== sid);
+    renderBasket();
+}
+
+// ── Chart ─────────────────────────────────────────────────────────────────
+let trendChart    = null;
+let stackedCharts = [];
+let currentChartType = 'line';
+let lastResults   = null;   // 最後一次查詢結果，供匯出 Excel 使用
+
+function destroyAllCharts() {
+    if (trendChart) { trendChart.destroy(); trendChart = null; }
+    stackedCharts.forEach(c => c.destroy());
+    stackedCharts = [];
+}
+
+function buildChart(datasets) {
+    destroyAllCharts();
+    const stackedContainer = document.getElementById('stackedChartsContainer');
+
+    // 3 個以上 → 堆疊小圖模式
+    if (datasets.length >= 3) {
+        chartContainer.style.display = 'none';
+        buildStackedCharts(datasets);
+        return;
+    }
+
+    // 1–2 個 → 單一圖表
+    stackedContainer.style.display = 'none';
+    chartContainer.style.display = 'block';
+    const ctx = document.getElementById('trendChart').getContext('2d');
+
+    const isSingle = datasets.length === 1;
+    const isDual   = datasets.length === 2;  // 2 條線 → 左右雙軸
+
+    // 計算軸範圍（留 10% 邊距，避免資料貼邊）
+    function niceRange(ds) {
+        const vals = ds.data.map(d => d.y).filter(v => v != null);
+        if (!vals.length) return {};
+        const lo = Math.min(...vals), hi = Math.max(...vals);
+        const pad = (hi - lo) * 0.1 || Math.abs(lo) * 0.1 || 1;
+        return { min: lo - pad, max: hi + pad };
+    }
+
+    const chartDatasets = datasets.map((ds, i) => {
+        const c = CHART_COLORS[i % CHART_COLORS.length];
+        const ptColors = ds.qualities.map(q =>
+            q === 'Good' ? c.border : 'rgba(220,53,69,0.85)'
+        );
+        return {
+            label:                ds.label + (ds.szUnit ? ` (${ds.szUnit})` : ''),
+            data:                 ds.data,
+            yAxisID:              isDual ? (i === 0 ? 'y' : 'y1') : 'y',
+            borderColor:          c.border,
+            backgroundColor:      c.bg,
+            pointBackgroundColor: isSingle ? ptColors : c.border,
+            pointBorderColor:     'transparent',
+            pointRadius:          ds.data.length > 500 ? 0 : 3,
+            pointHoverRadius:     6,
+            borderWidth:          2,
+            fill:                 currentChartType === 'line' && isSingle,
+            tension:              0.3
+        };
+    });
+
+    const maxLen = Math.max(...datasets.map(d => d.data.length));
+
+    const scaleX = {
+        type: 'time',
+        time: {
+            tooltipFormat: 'yyyy-MM-dd HH:mm:ss',
+            displayFormats: {
+                second: 'HH:mm:ss',
+                minute: 'MM-dd HH:mm',
+                hour:   'MM-dd HH:mm',
+                day:    'MM-dd'
+            }
+        },
+        ticks: { maxTicksLimit: 10, maxRotation: 20 },
+        grid:  { color: 'rgba(0,0,0,0.06)' }
+    };
+
+    const scaleY = {
+        position: 'left',
+        grid: { color: 'rgba(0,0,0,0.06)' },
+        title: isDual ? {
+            display: true,
+            text: datasets[0].szUnit || datasets[0].label,
+            color: CHART_COLORS[0].border,
+            font: { size: 11, weight: 'bold' }
+        } : { display: false },
+        ...(isDual ? niceRange(datasets[0]) : {})
+    };
+
+    const scales = { x: scaleX, y: scaleY };
+
+    if (isDual) {
+        scales.y1 = {
+            position: 'right',
+            grid: { drawOnChartArea: false },  // 右軸不畫格線，避免與左軸重疊
+            title: {
+                display: true,
+                text: datasets[1].szUnit || datasets[1].label,
+                color: CHART_COLORS[1].border,
+                font: { size: 11, weight: 'bold' }
+            },
+            ...niceRange(datasets[1])
+        };
+    }
+
+    trendChart = new Chart(ctx, {
+        type: currentChartType,
+        data: { datasets: chartDatasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: maxLen > 1000 ? 0 : 400 },
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: true, position: 'top' },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => {
+                            const val = ` ${ctx.dataset.label}: ${Number(ctx.parsed.y).toFixed(3)}`;
+                            if (isSingle) {
+                                const q = datasets[0].qualities[ctx.dataIndex];
+                                return val + `  [${q}]`;
+                            }
+                            return val;
+                        }
+                    }
+                }
+            },
+            scales
+        }
+    });
+}
+
+// ── 堆疊小圖（3 個以上點位）─────────────────────────────────────────────
+function buildStackedCharts(datasets) {
+    const container = document.getElementById('stackedChartsContainer');
+    container.innerHTML = '';
+    stackedCharts = [];
+
+    datasets.forEach((ds, i) => {
+        const c      = CHART_COLORS[i % CHART_COLORS.length];
+        const isLast = (i === datasets.length - 1);
+
+        // 計算 Y 軸範圍（留 10% 邊距）
+        const vals = ds.data.map(d => d.y).filter(v => v != null);
+        let yRange = {};
+        if (vals.length) {
+            const lo  = Math.min(...vals), hi = Math.max(...vals);
+            const pad = (hi - lo) * 0.1 || Math.abs(lo) * 0.1 || 1;
+            yRange = { min: lo - pad, max: hi + pad };
+        }
+
+        const unitLabel = ds.szUnit ? ` (${ds.szUnit})` : '';
+        const wrapper   = document.createElement('div');
+        wrapper.className = 'mini-chart-wrapper';
+        wrapper.innerHTML = `
+            <div class="d-flex align-items-center gap-2 px-3 pt-2 pb-1">
+                <span style="width:10px;height:10px;border-radius:50%;background:${c.border};flex-shrink:0;display:inline-block;"></span>
+                <span class="fw-semibold small">${ds.label}${unitLabel}</span>
+            </div>
+            <div style="position:relative; height:170px; padding:0 0.5rem ${isLast ? '0.5rem' : '0'};">
+                <canvas id="miniChart_${i}"></canvas>
+            </div>`;
+        container.appendChild(wrapper);
+
+        const canvas   = document.getElementById(`miniChart_${i}`);
+        const ptColors = ds.qualities.map(q =>
+            q === 'Good' ? c.border : 'rgba(220,53,69,0.85)'
+        );
+
+        const chart = new Chart(canvas.getContext('2d'), {
+            type: currentChartType,
+            data: {
+                datasets: [{
+                    data:                 ds.data,
+                    borderColor:          c.border,
+                    backgroundColor:      c.bg,
+                    pointBackgroundColor: ptColors,
+                    pointBorderColor:     'transparent',
+                    pointRadius:          ds.data.length > 500 ? 0 : 2,
+                    pointHoverRadius:     5,
+                    borderWidth:          1.5,
+                    fill:                 currentChartType === 'line',
+                    tension:              0.3
+                }]
+            },
+            options: {
+                responsive:          true,
+                maintainAspectRatio: false,
+                animation:           { duration: ds.data.length > 1000 ? 0 : 300 },
+                interaction:         { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => {
+                                const val = ` ${Number(ctx.parsed.y).toFixed(3)}${ds.szUnit ? ' ' + ds.szUnit : ''}`;
+                                const q   = ds.qualities[ctx.dataIndex];
+                                return val + `  [${q}]`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            tooltipFormat:  'yyyy-MM-dd HH:mm:ss',
+                            displayFormats: {
+                                second: 'HH:mm:ss',
+                                minute: 'MM-dd HH:mm',
+                                hour:   'MM-dd HH:mm',
+                                day:    'MM-dd'
+                            }
+                        },
+                        ticks: { maxTicksLimit: 6, maxRotation: 0, display: isLast },
+                        grid:  { color: 'rgba(0,0,0,0.06)' }
+                    },
+                    y: {
+                        position: 'left',
+                        grid:     { color: 'rgba(0,0,0,0.06)' },
+                        ticks:    { maxTicksLimit: 4 },
+                        ...yRange
+                    }
+                }
+            }
+        });
+        stackedCharts.push(chart);
+    });
+
+    container.style.display = '';
+}
+
+// ── 查詢 ──────────────────────────────────────────────────────────────────
+async function doQuery() {
+    const szStart = dtStart.value;
+    const szEnd   = dtEnd.value;
+
+    if (basket.length === 0) { showAlert('請先將點位加入待查詢清單', 'warning'); return; }
+    if (!szStart || !szEnd)  { showAlert('請設定查詢時間範圍', 'warning'); return; }
+    if (szStart >= szEnd)    { showAlert('開始時間必須早於結束時間', 'warning'); return; }
+
+    noDataMsg.classList.add('d-none');
+    chartContainer.style.display = 'none';
+    document.getElementById('stackedChartsContainer').style.display = 'none';
+    loadingSpinner.classList.remove('d-none');
+    statsRow.style.display = 'none';
+    multiStatsWrapper.style.display = 'none';
+    limitWarning.classList.add('d-none');
+    dataTableCard.classList.add('d-none');
+    btnQuery.disabled = true;
+
+    try {
+        const results = await Promise.all(basket.map(p =>
+            fetch(`/api/history/data?szSID=${encodeURIComponent(p.sid)}`
+                + `&szStart=${encodeURIComponent(szStart)}`
+                + `&szEnd=${encodeURIComponent(szEnd)}`)
+            .then(r => r.json())
+        ));
+
+        loadingSpinner.classList.add('d-none');
+        btnQuery.disabled = false;
+        lastResults = results;
+
+        const failed = results.find(r => !r.success);
+        if (failed) {
+            noDataMsg.innerHTML = `<i class="fas fa-exclamation-circle fa-3x mb-3 d-block text-danger opacity-50"></i><div>${failed.message}</div>`;
+            noDataMsg.classList.remove('d-none'); return;
+        }
+        if (!results.some(r => r.nCount > 0)) {
+            noDataMsg.innerHTML = `<i class="fas fa-inbox fa-3x mb-3 d-block opacity-25"></i><div>該時段內無歷史資料</div>`;
+            noDataMsg.classList.remove('d-none'); return;
+        }
+
+        if (results.some(r => r.isLimited)) limitWarning.classList.remove('d-none');
+
+        // 圖表標題
+        chartTitle.innerHTML = results.length === 1
+            ? `<i class="fas fa-chart-area text-primary me-2"></i>${results[0].szName}`
+            : `<i class="fas fa-chart-area text-primary me-2"></i>已查詢 ${results.length} 個點位`;
+
+        // 統計
+        if (results.length === 1) {
+            const json = results[0];
+            const fmt = v => v != null ? Number(v).toFixed(3) + (json.szUnit ? ' ' + json.szUnit : '') : '--';
+            document.getElementById('statMin').textContent    = fmt(json.dMin);
+            document.getElementById('statMax').textContent    = fmt(json.dMax);
+            document.getElementById('statAvg').textContent    = fmt(json.dAvg);
+            document.getElementById('statStdDev').textContent = fmt(json.dStdDev);
+            statsRow.style.display = '';
+        } else {
+            document.getElementById('multiStatsTbody').innerHTML = results
+                .filter(r => r.nCount > 0)
+                .map(json => {
+                    const fmt = v => v != null ? Number(v).toFixed(3) + (json.szUnit ? ' ' + json.szUnit : '') : '--';
+                    return `<tr>
+                        <td class="fw-semibold">${json.szName}</td>
+                        <td class="text-end">${fmt(json.dMin)}</td>
+                        <td class="text-end">${fmt(json.dMax)}</td>
+                        <td class="text-end">${fmt(json.dAvg)}</td>
+                        <td class="text-end">${fmt(json.dStdDev)}</td>
+                    </tr>`;
+                }).join('');
+            multiStatsWrapper.style.display = '';
+        }
+
+        // 圖表
+        buildChart(results.filter(r => r.nCount > 0).map(json => ({
+            label:     json.szName,
+            szUnit:    json.szUnit,
+            data:      json.data.map(d => ({ x: d.t, y: d.v })),
+            qualities: json.data.map(d => d.q)
+        })));
+
+        document.getElementById('btnExportExcel').classList.remove('d-none');
+        document.getElementById('footerQueryTime').textContent =
+            '查詢完成: ' + new Date().toLocaleTimeString();
+
+        // 資料明細表（單點）
+        if (results.length === 1) {
+            const json = results[0];
+            document.getElementById('tableCount').textContent = json.nCount.toLocaleString();
+            dataTableBody.innerHTML = json.data.map(d =>
+                `<tr>
+                    <td><small>${d.t.replace('T', ' ')}</small></td>
+                    <td class="text-end fw-bold">${Number(d.v).toFixed(3)}</td>
+                    <td><span class="${d.q === 'Good' ? 'text-success' : 'text-danger'}">${d.q}</span></td>
+                </tr>`
+            ).join('');
+            dataTableCard.classList.remove('d-none');
+        }
+
+    } catch (err) {
+        loadingSpinner.classList.add('d-none');
+        btnQuery.disabled = false;
+        noDataMsg.innerHTML = `<i class="fas fa-exclamation-circle fa-3x mb-3 d-block text-danger opacity-50"></i><div>查詢失敗：${err.message}</div>`;
+        noDataMsg.classList.remove('d-none');
+    }
+}
+
+// ── 事件 ──────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function () {
+
+    renderPointList(currentCoordinatorId);
+    renderBasket();
+
+    // 設備清單切換
+    document.querySelectorAll('.coordinator-item').forEach(item => {
+        item.addEventListener('click', function (e) {
+            e.preventDefault();
+            document.querySelectorAll('.coordinator-item').forEach(el => el.classList.remove('active'));
+            this.classList.add('active');
+            currentCoordinatorId = parseInt(this.dataset.id) || 0;
+            renderPointList(currentCoordinatorId);
+        });
+    });
+
+    // 全選 / 清除勾選
+    document.getElementById('btnCheckAll').addEventListener('click', () => {
+        pointListContainer.querySelectorAll('.point-checkbox').forEach(cb => cb.checked = true);
+    });
+    document.getElementById('btnUncheckAll').addEventListener('click', () => {
+        pointListContainer.querySelectorAll('.point-checkbox').forEach(cb => cb.checked = false);
+    });
+
+    // 加入待查詢清單
+    document.getElementById('btnAddToBasket').addEventListener('click', () => {
+        const checked = Array.from(pointListContainer.querySelectorAll('.point-checkbox:checked'));
+        if (checked.length === 0) { showAlert('請先勾選點位', 'warning'); return; }
+        addToBasket(checked.map(cb => ({ sid: cb.value, name: cb.dataset.name, unit: cb.dataset.unit })));
+        checked.forEach(cb => cb.checked = false);
+    });
+
+    // 清除整個 Basket
+    document.getElementById('btnClearBasket').addEventListener('click', () => {
+        basket = [];
+        renderBasket();
+    });
+
+    btnQuery.addEventListener('click', doQuery);
+
+    btnClear.addEventListener('click', () => {
+        destroyAllCharts();
+        lastResults = null;
+        document.getElementById('btnExportExcel').classList.add('d-none');
+        chartContainer.style.display = 'none';
+        document.getElementById('stackedChartsContainer').style.display = 'none';
+        noDataMsg.innerHTML = '<i class="fas fa-chart-line fa-3x mb-3 d-block opacity-25"></i><div>請加入點位並設定時間範圍後按下查詢</div>';
+        noDataMsg.classList.remove('d-none');
+        statsRow.style.display = 'none';
+        multiStatsWrapper.style.display = 'none';
+        dataTableCard.classList.add('d-none');
+        limitWarning.classList.add('d-none');
+        chartTitle.innerHTML = '<i class="fas fa-chart-area text-primary me-2"></i>請加入點位後按下查詢';
+        document.getElementById('footerQueryTime').textContent = '';
+    });
+
+    document.querySelectorAll('.quick-range').forEach(btn =>
+        btn.addEventListener('click', function () {
+            const h = parseInt(this.dataset.hours);
+            const now = new Date();
+            dtStart.value = fmtDtLocal(new Date(now - h * 3600000));
+            dtEnd.value   = fmtDtLocal(now);
+        })
+    );
+
+    document.querySelectorAll('#chartTypeGroup button').forEach(btn =>
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('#chartTypeGroup button').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentChartType = this.dataset.type;
+            if (trendChart || stackedCharts.length > 0) doQuery();
+        })
+    );
+
+    btnToggleTable.addEventListener('click', () => {
+        const hidden = tableBodyEl.classList.contains('d-none');
+        tableBodyEl.classList.toggle('d-none', !hidden);
+        btnToggleTable.innerHTML = hidden
+            ? '<i class="fas fa-chevron-up me-1"></i>收合'
+            : '<i class="fas fa-chevron-down me-1"></i>展開';
+    });
+});
+
+// ── 匯出 Excel ────────────────────────────────────────────────────────────
+function exportToExcel() {
+    if (!lastResults || !lastResults.some(r => r.nCount > 0)) {
+        showAlert('無可匯出的資料', 'warning');
+        return;
+    }
+
+    const wb = XLSX.utils.book_new();
+
+    // 每個點位各自一張工作表
+    lastResults.filter(r => r.nCount > 0).forEach(json => {
+        // 工作表名稱：限 31 字元，不含特殊字元
+        let sheetName = (json.szName || json.szSID)
+            .replace(/[[\]:*?/\\]/g, '_')
+            .substring(0, 31);
+        // 重複時加後綴
+        let finalName = sheetName;
+        let counter   = 1;
+        while (wb.SheetNames.includes(finalName)) {
+            finalName = sheetName.substring(0, 28) + `(${counter++})`;
+        }
+
+        const unitSuffix = json.szUnit ? ` (${json.szUnit})` : '';
+        const rows = [['時間戳記', `數值${unitSuffix}`, '品質']];
+        json.data.forEach(d => rows.push([d.t.replace('T', ' '), d.v, d.q]));
+
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        ws['!cols'] = [{ wch: 22 }, { wch: 15 }, { wch: 8 }];
+        XLSX.utils.book_append_sheet(wb, ws, finalName);
+    });
+
+    // 若有多個點位，加一張統計摘要表
+    if (lastResults.filter(r => r.nCount > 0).length > 1) {
+        const summaryRows = [['點位名稱', '單位', '筆數', '最小值', '最大值', '平均值', '標準差']];
+        lastResults.filter(r => r.nCount > 0).forEach(json => {
+            const f = v => v != null ? Number(v) : '';
+            summaryRows.push([json.szName, json.szUnit, json.nCount,
+                f(json.dMin), f(json.dMax), f(json.dAvg), f(json.dStdDev)]);
+        });
+        const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
+        wsSummary['!cols'] = [{ wch: 20 }, { wch: 8 }, { wch: 8 },
+                               { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }];
+        XLSX.utils.book_append_sheet(wb, wsSummary, '統計摘要');
+    }
+
+    const p     = n => String(n).padStart(2, '0');
+    const now   = new Date();
+    const fname = `歷史趨勢_${now.getFullYear()}${p(now.getMonth()+1)}${p(now.getDate())}_${p(now.getHours())}${p(now.getMinutes())}.xlsx`;
+    XLSX.writeFile(wb, fname);
+}
+
+function fmtDtLocal(dt) {
+    const p = n => String(n).padStart(2, '0');
+    return `${dt.getFullYear()}-${p(dt.getMonth()+1)}-${p(dt.getDate())}T${p(dt.getHours())}:${p(dt.getMinutes())}`;
+}
+
+function showAlert(msg, type = 'warning') {
+    const el = document.createElement('div');
+    el.className = `alert alert-${type} alert-dismissible fade show mt-2`;
+    el.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i>${msg}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+    const container = document.querySelector('.container-fluid');
+    container.insertBefore(el, container.firstChild);
+    setTimeout(() => el.remove(), 3000);
+}
+</script>
+}

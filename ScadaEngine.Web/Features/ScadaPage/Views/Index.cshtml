@@ -1,0 +1,299 @@
+@{
+    ViewData["Title"] = "即時監控";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-4">
+
+    <!-- 頁面標題 -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">
+            <i class="fas fa-desktop text-primary me-2"></i>
+            即時監控
+        </h2>
+        <div class="d-flex gap-2 align-items-center">
+            <span class="badge bg-secondary" id="scadaStatus">載入中…</span>
+            <a href="/Designer" class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-paint-brush me-1"></i>前往設計
+            </a>
+        </div>
+    </div>
+
+    <!-- 主體：頁面樹側欄 + 畫布區 -->
+    <div class="d-flex gap-3" style="min-height:680px;">
+
+        <!-- 頁面樹側欄 -->
+        <div style="width:160px;flex-shrink:0;background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:8px;overflow-y:auto;">
+            <div style="font-size:10px;color:#6c757d;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding:0 4px;">
+                <i class="fas fa-sitemap me-1"></i>頁面結構
+            </div>
+            <div id="scadaPageTree">
+                <p style="font-size:11px;color:#6c757d;text-align:center;margin-top:24px;">載入中…</p>
+            </div>
+        </div>
+
+        <!-- 畫布區 -->
+        <div style="flex:1;overflow:auto;background:#e9ecef;border-radius:8px;padding:12px;">
+            <div id="scadaCanvasWrap" style="display:inline-block;min-width:100%;">
+                <div id="scadaCanvas" style="position:relative;background:#fff;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.12);">
+                    <p id="scadaPlaceholder" style="padding:120px 20px;text-align:center;color:#6c757d;font-size:13px;margin:0;">
+                        <i class="fas fa-desktop fa-3x" style="display:block;margin-bottom:12px;opacity:.3;"></i>
+                        尚未建立畫面設計，請至「畫面設計」頁面製作後儲存
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div><!-- /container-fluid -->
+
+<script>
+    let scadaPageTree  = [];
+    let scadaCurrentId = null;
+    let lastData       = [];
+
+    // ── 初始化：頁面載入後立即執行 ──────────────────────────
+    document.addEventListener('DOMContentLoaded', async () => {
+        await initScadaViewer();
+
+        // 立即拉一次資料
+        await fetchAndUpdateGauges();
+
+        // 每 3 秒更新 gauge 數值
+        setInterval(fetchAndUpdateGauges, 3000);
+    });
+
+    // ── 從 /Designer/Load 載入已發布設計 ──────────────────
+    async function initScadaViewer() {
+        try {
+            const resp   = await fetch('/Designer/Load');
+            const result = await resp.json();
+
+            if (!result.hasData || !result.pages || !result.pages.length) {
+                document.getElementById('scadaPageTree').innerHTML =
+                    '<p style="font-size:11px;color:#6c757d;text-align:center;margin-top:20px;">尚無已發布設計</p>';
+                document.getElementById('scadaStatus').textContent  = '無設計';
+                document.getElementById('scadaStatus').className    = 'badge bg-warning text-dark';
+                return;
+            }
+
+            // 重建樹狀結構
+            const nodeMap = {}, sortMap = {};
+            result.pages.forEach(p => {
+                sortMap[p.szPageSid] = p.nSortOrder ?? 0;
+                nodeMap[p.szPageSid] = {
+                    szId:           p.szPageSid,
+                    szName:         p.szPageName,
+                    szIcon:         p.szPageIcon  || null,
+                    arrChildren:    [],
+                    szBgDataUrl:    p.szBgDataUrl  || null,
+                    szBgFileName:   p.szBgFileName || null,
+                    nCanvasW:       p.nCanvasW     || 1200,
+                    nCanvasH:       p.nCanvasH     || 800,
+                    arrWidgetState: p.szWidgetStateJson ? JSON.parse(p.szWidgetStateJson) : []
+                };
+            });
+
+            const arrRoots = [];
+            result.pages.forEach(p => {
+                const node = nodeMap[p.szPageSid];
+                if (p.szParentPageSid && nodeMap[p.szParentPageSid])
+                    nodeMap[p.szParentPageSid].arrChildren.push(node);
+                else
+                    arrRoots.push(node);
+            });
+            Object.values(nodeMap).forEach(n =>
+                n.arrChildren.sort((a, b) => (sortMap[a.szId] || 0) - (sortMap[b.szId] || 0)));
+            arrRoots.sort((a, b) => (sortMap[a.szId] || 0) - (sortMap[b.szId] || 0));
+
+            scadaPageTree = arrRoots;
+            renderScadaPageTree();
+
+            // 預設顯示第一頁
+            if (scadaPageTree.length > 0) selectScadaPage(scadaPageTree[0].szId);
+
+            document.getElementById('scadaStatus').textContent = '已載入';
+            document.getElementById('scadaStatus').className   = 'badge bg-success';
+
+        } catch (err) {
+            console.warn('SCADA Viewer 初始化失敗：', err.message);
+            document.getElementById('scadaPageTree').innerHTML =
+                '<p style="font-size:11px;color:#dc3545;text-align:center;margin-top:20px;">載入失敗</p>';
+            document.getElementById('scadaStatus').textContent = '載入失敗';
+            document.getElementById('scadaStatus').className   = 'badge bg-danger';
+        }
+    }
+
+    // ── 頁面樹渲染 ──────────────────────────────────────────
+    function renderScadaPageTree() {
+        const wrap = document.getElementById('scadaPageTree');
+        wrap.innerHTML = '';
+        function renderNodes(arr, depth) {
+            arr.forEach(page => {
+                const isActive = scadaCurrentId === page.szId;
+                const el = document.createElement('div');
+                el.style.cssText =
+                    `padding:6px 8px 6px ${depth * 10 + 6}px;cursor:pointer;border-radius:4px;` +
+                    `font-size:12px;margin-bottom:2px;` +
+                    `border-left:3px solid ${isActive ? '#0d6efd' : 'transparent'};` +
+                    `background:${isActive ? '#e8f0fe' : 'transparent'};` +
+                    `color:${isActive ? '#0d6efd' : '#444'};`;
+                el.innerHTML =
+                    `<i class="fas ${page.szIcon || 'fa-file'} me-1" style="font-size:10px;opacity:.65;"></i>${page.szName}`;
+                el.addEventListener('click', () => selectScadaPage(page.szId));
+                wrap.appendChild(el);
+                if (page.arrChildren.length) renderNodes(page.arrChildren, depth + 1);
+            });
+        }
+        renderNodes(scadaPageTree, 0);
+    }
+
+    function findScadaPage(szId, arr) {
+        arr = arr || scadaPageTree;
+        for (const p of arr) {
+            if (p.szId === szId) return p;
+            const f = findScadaPage(szId, p.arrChildren);
+            if (f) return f;
+        }
+        return null;
+    }
+
+    function selectScadaPage(szId) {
+        scadaCurrentId = szId;
+        renderScadaPageTree();
+        const page = findScadaPage(szId);
+        if (page) renderScadaCanvas(page);
+    }
+
+    // ── 畫布渲染 ────────────────────────────────────────────
+    function renderScadaCanvas(page) {
+        const canvas = document.getElementById('scadaCanvas');
+        canvas.style.width  = (page.nCanvasW || 1200) + 'px';
+        canvas.style.height = (page.nCanvasH || 800)  + 'px';
+
+        if (page.szBgDataUrl) {
+            canvas.style.backgroundImage    = `url(${page.szBgDataUrl})`;
+            canvas.style.backgroundSize     = 'cover';
+            canvas.style.backgroundPosition = 'center';
+        } else {
+            canvas.style.backgroundImage = '';
+            canvas.style.background      = '#ffffff';
+        }
+
+        canvas.innerHTML = '';
+        (page.arrWidgetState || []).forEach(ws => renderScadaWidget(canvas, ws));
+
+        // 用最後一次快取資料馬上填值
+        if (lastData.length > 0) updateScadaWidgets(lastData);
+    }
+
+    function renderScadaWidget(canvas, ws) {
+        const el = document.createElement('div');
+        el.style.cssText =
+            `position:absolute;left:${ws.nX}px;top:${ws.nY}px;` +
+            `width:${ws.nW}px;height:${ws.nH}px;overflow:hidden;`;
+        el.dataset.type = ws.szType;
+
+        if (ws.szType === 'gauge') {
+            const p = ws.props || {};
+            el.dataset.sid     = p.szSid    || '';
+            el.dataset.fMin    = p.fMin     ?? 0;
+            el.dataset.fMax    = p.fMax     ?? 100;
+            el.dataset.szUnit  = p.szUnit   || '';
+            el.dataset.szColor = p.szColor  || '#00c0ff';
+            el.dataset.szTitle = p.szTitle  || '';
+            el.classList.add('scada-gauge');
+            el.innerHTML = buildGaugeHtml(p);
+        } else if (ws.szType === 'table') {
+            el.innerHTML = buildTableHtml(ws.props || {});
+        }
+        canvas.appendChild(el);
+    }
+
+    // ── 半圓 SVG Gauge ──────────────────────────────────────
+    function buildGaugeHtml(props) {
+        const cx = 100, cy = 110, r = 83;
+        const fVal = props.fValue ?? 0;
+        const fMin = props.fMin   ?? 0;
+        const fMax = props.fMax   ?? 100;
+        const fRaw = (fVal - fMin) / ((fMax - fMin) || 1);
+        const fPct = Math.max(0.001, Math.min(0.999, fRaw));
+        const thetaEnd = (180 + fPct * 180) * Math.PI / 180;
+        const ex = (cx + r * Math.cos(thetaEnd)).toFixed(2);
+        const ey = (cy + r * Math.sin(thetaEnd)).toFixed(2);
+        const fPctC   = Math.max(0, Math.min(1, fRaw));
+        const szColor = fPctC >= 0.85 ? '#dc3545'
+                      : fPctC >= 0.65 ? '#fd7e14'
+                      : (props.szColor || '#00c0ff');
+        const szBg  = `M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`;
+        const szArc = `M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${ex} ${ey}`;
+        return `<svg viewBox="0 0 200 145" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block;">
+            <path d="${szBg}"  fill="none" stroke="#e9ecef" stroke-width="15" stroke-linecap="round"/>
+            <path d="${szArc}" fill="none" stroke="${szColor}" stroke-width="15" stroke-linecap="round"/>
+            <text x="100" y="96"  text-anchor="middle" font-size="26" font-weight="700" fill="#212529" font-family="'Segoe UI',sans-serif">${Number(fVal).toFixed(1)}</text>
+            <text x="100" y="113" text-anchor="middle" font-size="13" fill="#6c757d"   font-family="'Segoe UI',sans-serif">${props.szUnit || ''}</text>
+            <text x="${cx - r}" y="${cy + 18}" text-anchor="middle" font-size="10" fill="#adb5bd">${fMin}</text>
+            <text x="${cx + r}" y="${cy + 18}" text-anchor="middle" font-size="10" fill="#adb5bd">${fMax}</text>
+            <text x="100" y="140" text-anchor="middle" font-size="11" fill="#868e96"   font-family="'Segoe UI',sans-serif">${props.szTitle || ''}</text>
+        </svg>`;
+    }
+
+    // ── Table Widget ────────────────────────────────────────
+    function buildTableHtml(props) {
+        const nC = Math.max(1, Math.min(props.nCols || 3, 4));
+        const nR = Math.max(1, props.nRows || 5);
+        const HEADERS = ['名稱', '數值', '狀態', '時間戳'];
+        const SAMPLE  = [
+            ['溫度感測器', '85.3°C',  '正常', '--'],
+            ['壓力感測器', '2.40 bar','正常', '--'],
+            ['流量計',     '12.7 L/s','警告', '--'],
+            ['液位感測器', '67.2%',   '正常', '--'],
+            ['電流感測器', '32.1 A',  '正常', '--'],
+        ];
+        const hdrColor = props.szHeaderColor || '#343a40';
+        const szHdr = Array.from({length: nC}, (_, i) =>
+            `<th style="background:${hdrColor};color:#fff;padding:4px 6px;font-size:11px;">${HEADERS[i] ?? '欄' + (i + 1)}</th>`
+        ).join('');
+        const szRows = Array.from({length: nR}, (_, ri) => {
+            const row = SAMPLE[ri % SAMPLE.length];
+            return `<tr>${Array.from({length: nC}, (_, ci) =>
+                `<td style="padding:3px 6px;font-size:11px;border-bottom:1px solid #f0f0f0;">${row[ci] ?? '-'}</td>`
+            ).join('')}</tr>`;
+        }).join('');
+        return `<table style="width:100%;border-collapse:collapse;"><thead><tr>${szHdr}</tr></thead><tbody>${szRows}</tbody></table>`;
+    }
+
+    // ── 即時資料輪詢與 Gauge 更新 ──────────────────────────
+    async function fetchAndUpdateGauges() {
+        try {
+            const resp   = await fetch('/api/realtime/latest');
+            const result = await resp.json();
+            if (result.success && result.data) {
+                lastData = result.data;
+                updateScadaWidgets(result.data);
+            }
+        } catch (err) {
+            console.warn('即時資料取得失敗：', err.message);
+        }
+    }
+
+    function updateScadaWidgets(data) {
+        const sidMap = {};
+        data.forEach(item => {
+            if (item.sid && item.value !== '--') sidMap[item.sid] = parseFloat(item.value);
+        });
+        document.querySelectorAll('.scada-gauge[data-sid]').forEach(el => {
+            const sid = el.dataset.sid;
+            if (!sid || sidMap[sid] === undefined) return;
+            el.innerHTML = buildGaugeHtml({
+                fValue:  sidMap[sid],
+                fMin:    parseFloat(el.dataset.fMin)    || 0,
+                fMax:    parseFloat(el.dataset.fMax)    || 100,
+                szUnit:  el.dataset.szUnit  || '',
+                szColor: el.dataset.szColor || '#00c0ff',
+                szTitle: el.dataset.szTitle || ''
+            });
+        });
+    }
+</script>
