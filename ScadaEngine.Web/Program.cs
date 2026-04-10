@@ -17,7 +17,10 @@ builder.Host.UseSerilog((context, config) =>
 });
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(options =>
+{
+    options.Filters.Add<ScadaEngine.Web.Filters.PageAccessFilter>();
+});
 
 // 配置視圖引擎以支援 Features 資料夾結構
 builder.Services.Configure<Microsoft.AspNetCore.Mvc.Razor.RazorViewEngineOptions>(options =>
@@ -89,10 +92,19 @@ builder.Services.AddTransient<ModbusCollectionManager>();
 
 //註冊Web專用服務（用於登入功能與即時監控）
 builder.Services.AddScoped<ScadaEngine.Web.Services.WebDatabaseService>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.EventLogService>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.LogicFlowService>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.AlarmRuleService>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.AccountSettingService>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.CalcPointService>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.ScheduleSettingService>();
+
+// 註冊 C# 演算法服務（供 LogicFlow 前端預覽用）
+builder.Services.AddSingleton<ScadaEngine.Engine.Services.CSharpAlgorithmService>();
 
 // 註冊即時監控 MQTT 訂閱服務
 builder.Services.AddSingleton<ScadaEngine.Web.Services.MqttRealtimeSubscriberService>();
-builder.Services.AddHostedService<ScadaEngine.Web.Services.MqttRealtimeSubscriberService>(provider => 
+builder.Services.AddHostedService<ScadaEngine.Web.Services.MqttRealtimeSubscriberService>(provider =>
     provider.GetRequiredService<ScadaEngine.Web.Services.MqttRealtimeSubscriberService>());
 
 var app = builder.Build();

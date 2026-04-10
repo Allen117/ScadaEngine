@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ScadaEngine.Engine.Data.Interfaces;
+using ScadaEngine.Web.Features.CommSetting.Models;
 
 namespace ScadaEngine.Web.Features.CommSetting.Controllers;
 
@@ -35,9 +36,4 @@ public class CommSettingController : Controller
         return StatusCode(500, new { success = false, message = "更新失敗" });
     }
 
-    public class UpdateDeviceNameRequest
-    {
-        public int Id { get; set; }
-        public string? DeviceName { get; set; }
-    }
 }

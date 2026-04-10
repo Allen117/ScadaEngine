@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ScadaEngine.Engine.Data.Interfaces;
-using ScadaEngine.Engine.Models;
+using ScadaEngine.Web.Features.Designer.Models;
 
 namespace ScadaEngine.Web.Features.Designer.Controllers;
 
@@ -25,20 +25,33 @@ public class DesignerController : Controller
     }
 
     /// <summary>
-    /// 取得所有可綁定的 Modbus 點位清單（供儀錶板選擇）
+    /// 取得所有可綁定的點位清單（Modbus + 計算點位，供儀錶板選擇）
     /// </summary>
     [HttpGet("/Designer/Points")]
     public async Task<IActionResult> GetPoints()
     {
-        var points = await _repository.GetAllModbusPointsAsync();
-        return Json(points.Select(p => new
+        var modbusPoints = await _repository.GetAllModbusPointsAsync();
+        var calcPoints = await _repository.GetAllCalculatedPointsAsync();
+
+        var allPoints = modbusPoints.Select(p => new
         {
-            szSid  = p.szSID,
-            szName = p.szName,
-            szUnit = p.szUnit,
-            fMin   = p.fMin ?? 0f,
-            fMax   = p.fMax ?? 100f
+            szSid       = p.szSID,
+            szName      = p.szName,
+            szUnit      = p.szUnit,
+            fMin        = p.fMin ?? 0f,
+            fMax        = p.fMax ?? 100f,
+            szGroupName = ""
+        }).Concat(calcPoints.Where(c => c.isEnabled).Select(c => new
+        {
+            szSid       = c.szSID,
+            szName      = c.szName,
+            szUnit      = c.szUnit,
+            fMin        = 0f,
+            fMax        = 100f,
+            szGroupName = c.szGroupName
         }));
+
+        return Json(allPoints);
     }
 
     /// <summary>
@@ -85,11 +98,4 @@ public class DesignerController : Controller
             return Json(new { success = false, error = ex.Message });
         }
     }
-}
-
-/// <summary>POST /Designer/Save 的請求格式</summary>
-public class SaveDesignDto
-{
-    public string                    szName { get; set; } = "未命名設計";
-    public List<ScadaDesignPageModel> pages { get; set; } = new();
 }

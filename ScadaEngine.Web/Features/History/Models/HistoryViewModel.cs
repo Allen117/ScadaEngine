@@ -14,6 +14,12 @@ public class HistoryTrendViewModel
     /// <summary>所有點位清單（依 SID 排序）</summary>
     public List<ModbusPointModel> PointList { get; set; } = new();
 
+    /// <summary>計算點位的群組名稱清單（側欄分群用）</summary>
+    public List<string> CalcPointGroups { get; set; } = new();
+
+    /// <summary>計算點位 SID → GroupName 對照</summary>
+    public Dictionary<string, string> CalcGroupMap { get; set; } = new();
+
     /// <summary>預設查詢起始時間（24 小時前）</summary>
     public DateTime dtStartTime { get; set; } = DateTime.Now.AddHours(-24);
 

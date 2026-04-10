@@ -77,13 +77,13 @@
             </div>
         </form>
 
-        <!-- 預設帳密提示 (僅在 Users 資料表為空時顯示) -->
+        <!-- 預設帳密提示 (僅在無啟用的 Admin 帳號時顯示) -->
         @if (ViewBag.ShowDefaultHint ?? false)
         {
             <div class="test-account-info mt-3">
                 <small class="text-muted">
                     <i class="fas fa-info-circle"></i>
-                    預設帳號：ITRI &nbsp;／&nbsp; 密碼：ITRI
+                    預設帳號：admin &nbsp;／&nbsp; 密碼：admin
                 </small>
             </div>
         }

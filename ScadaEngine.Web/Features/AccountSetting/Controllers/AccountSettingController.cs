@@ -1,63 +1,83 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ScadaEngine.Common.Data.Models;
-using ScadaEngine.Engine.Data.Interfaces;
+using ScadaEngine.Web.Features.AccountSetting.Models;
+using ScadaEngine.Web.Services;
 
 namespace ScadaEngine.Web.Features.AccountSetting.Controllers;
 
 [Authorize]
 public class AccountSettingController : Controller
 {
-    private readonly IDataRepository _repository;
+    private readonly AccountSettingService _service;
 
-    public AccountSettingController(IDataRepository repository)
+    public AccountSettingController(AccountSettingService service)
     {
-        _repository = repository;
+        _service = service;
     }
 
     [HttpGet("/AccountSetting")]
     public async Task<IActionResult> Index()
     {
         ViewData["Title"] = "帳號管理";
-        var users = await _repository.GetAllUsersAsync();
-        return View(users.ToList());
+        ViewData["ScadaDesignPages"] = await _service.GetScadaDesignPagesJsonAsync();
+        ViewData["ConfigurablePages"] = _service.GetConfigurablePagesJson();
+
+        var users = await _service.GetAllUsersAsync();
+        return View(users);
     }
 
     [HttpPost("/AccountSetting/Create")]
     public async Task<IActionResult> Create([FromBody] CreateUserRequest request)
     {
-        if (request == null ||
-            string.IsNullOrWhiteSpace(request.Username) ||
-            string.IsNullOrWhiteSpace(request.Password) ||
-            string.IsNullOrWhiteSpace(request.Role))
-        {
-            return BadRequest(new { success = false, message = "帳號、密碼、角色為必填欄位" });
-        }
+        if (request == null)
+            return BadRequest(new { success = false, message = "無效的請求" });
 
-        var user = new UserModel
-        {
-            szUsername = request.Username.Trim(),
-            szRealName = request.RealName?.Trim() ?? "",
-            szPasswordHash = request.Password,  // CreateUserAsync 內部會做 SHA256
-            szRole = request.Role.Trim(),
-            szDepartment = request.Department?.Trim() ?? "",
-            isActive = request.IsActive
-        };
+        var (isSuccess, szMessage) = await _service.CreateUserAsync(
+            request.Username, request.RealName, request.Password,
+            request.Role, request.Department, request.IsActive);
 
-        var isSuccess = await _repository.CreateUserAsync(user);
-        if (isSuccess)
-            return Ok(new { success = true });
-
-        return StatusCode(500, new { success = false, message = "新增失敗，帳號可能已存在" });
+        return isSuccess
+            ? Ok(new { success = true })
+            : BadRequest(new { success = false, message = szMessage });
     }
 
-    public class CreateUserRequest
+    [HttpPost("/AccountSetting/Update")]
+    public async Task<IActionResult> Update([FromBody] UpdateUserRequest request)
     {
-        public string Username { get; set; } = "";
-        public string? RealName { get; set; }
-        public string Password { get; set; } = "";
-        public string Role { get; set; } = "";
-        public string? Department { get; set; }
-        public bool IsActive { get; set; } = true;
+        if (request == null)
+            return BadRequest(new { success = false, message = "無效的請求" });
+
+        var (isSuccess, szMessage) = await _service.UpdateUserAsync(
+            request.UserID, request.RealName, request.Role,
+            request.Department, request.IsActive, request.PermissionJson);
+
+        if (!isSuccess)
+            return StatusCode(500, new { success = false, message = szMessage });
+
+        // 若修改的是自己，重新發行認證 Cookie
+        await _service.RefreshAuthCookieIfSelfAsync(
+            HttpContext, User, request.UserID, request.Role, request.PermissionJson);
+
+        return Ok(new { success = true });
+    }
+
+    [HttpPost("/AccountSetting/Delete")]
+    public async Task<IActionResult> Delete([FromBody] DeleteUserRequest request)
+    {
+        if (request == null)
+            return BadRequest(new { success = false, message = "無效的請求" });
+
+        var (isSuccess, szMessage) = await _service.DeleteUserAsync(request.UserID);
+
+        return isSuccess
+            ? Ok(new { success = true })
+            : StatusCode(500, new { success = false, message = szMessage });
+    }
+
+    [HttpGet("/AccountSetting/GetPermissions/{nUserID}")]
+    public async Task<IActionResult> GetPermissions(int nUserID)
+    {
+        var szPermissionJson = await _service.GetPermissionJsonAsync(nUserID);
+        return Ok(new { permissionJson = szPermissionJson });
     }
 }

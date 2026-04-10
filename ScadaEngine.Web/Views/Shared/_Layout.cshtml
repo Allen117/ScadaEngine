@@ -1,3 +1,8 @@
+@using ScadaEngine.Web.Services
+@{
+    bool canAccess(string route) => PermissionService.CanAccessPage(User, route);
+    bool isAdmin = PermissionService.IsAdmin(User);
+}
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -13,6 +18,9 @@
     
     <!-- 自訂樣式 -->
     <style>
+        html, body {
+            overflow-x: hidden;
+        }
         body {
             background-color: #f8f9fa;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -25,7 +33,7 @@
         .footer {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 20px 0;
+            padding: 8px 0;
             margin-top: auto;
         }
         
@@ -71,47 +79,115 @@
                 
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav me-auto">
-                        <li class="nav-item">
-                            <a class="nav-link" href="/ScadaPage">
-                                <i class="fas fa-desktop me-1"></i>
-                                即時監控
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/RealTime">
-                                <i class="fas fa-tachometer-alt me-1"></i>
-                                即時數據
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/ControlAlgorithm">
-                                <i class="fas fa-microchip me-1"></i>
-                                控制邏輯
-                            </a>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-chart-line me-1"></i>
-                                歷史資料
-                            </a>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="/History/Trend">趨勢圖</a></li>
-                                <li><a class="dropdown-item" href="/History/Report">報表查詢</a></li>
-                            </ul>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-cogs me-1"></i>
-                                系統設定
-                            </a>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="/Designer"><i class="fas fa-paint-brush me-2"></i>畫面設計</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="/Config"><i class="fas fa-sliders-h me-2"></i>系統參數</a></li>
-                                <li><a class="dropdown-item" href="/CommSetting"><i class="fas fa-network-wired me-2"></i>通訊設定</a></li>
-                                <li><a class="dropdown-item" href="/AccountSetting"><i class="fas fa-users-cog me-2"></i>帳號管理</a></li>
-                            </ul>
-                        </li>
+                        @if (canAccess("/ScadaPage"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" href="/ScadaPage">
+                                    <i class="fas fa-desktop me-1"></i>
+                                    即時監控
+                                </a>
+                            </li>
+                        }
+                        @if (canAccess("/RealTime"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" href="/RealTime">
+                                    <i class="fas fa-tachometer-alt me-1"></i>
+                                    即時數據
+                                </a>
+                            </li>
+                        }
+                        @if (canAccess("/ConditionCtrl") || canAccess("/LogicFlow") || canAccess("/ScheduleSetting"))
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-microchip me-1"></i>
+                                    控制邏輯
+                                </a>
+                                <ul class="dropdown-menu">
+                                    @if (canAccess("/ConditionCtrl"))
+                                    {
+                                        <li><a class="dropdown-item" href="/ConditionCtrl"><i class="fas fa-code-branch me-2"></i>條件控制</a></li>
+                                    }
+                                    @if (canAccess("/LogicFlow"))
+                                    {
+                                        <li><a class="dropdown-item" href="/LogicFlow"><i class="fas fa-project-diagram me-2"></i>流程圖控制</a></li>
+                                    }
+                                    @if (canAccess("/ScheduleSetting"))
+                                    {
+                                        <li><a class="dropdown-item" href="/ScheduleSetting"><i class="fas fa-calendar-alt me-2"></i>排程設定</a></li>
+                                    }
+                                </ul>
+                            </li>
+                        }
+                        @if (canAccess("/History/Trend") || canAccess("/EventLog"))
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-chart-line me-1"></i>
+                                    歷史資料
+                                </a>
+                                <ul class="dropdown-menu">
+                                    @if (canAccess("/History/Trend"))
+                                    {
+                                        <li><a class="dropdown-item" href="/History/Trend"><i class="fas fa-chart-area me-2"></i>趨勢圖</a></li>
+                                    }
+                                    @if (canAccess("/EventLog"))
+                                    {
+                                        <li><a class="dropdown-item" href="/EventLog"><i class="fas fa-clipboard-list me-2"></i>事件記錄</a></li>
+                                    }
+                                </ul>
+                            </li>
+                        }
+                        @if (canAccess("/ChilledWaterSystem/Efficiency"))
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-leaf me-1"></i>
+                                    能源管理
+                                </a>
+                                <ul class="dropdown-menu">
+                                    @if (canAccess("/ChilledWaterSystem/Efficiency"))
+                                    {
+                                        <li><a class="dropdown-item" href="/ChilledWaterSystem/Efficiency"><i class="fas fa-tint me-2"></i>水系統效率管理</a></li>
+                                    }
+                                </ul>
+                            </li>
+                        }
+                        @{
+                            bool showSettings = canAccess("/Designer") || canAccess("/AlarmSetting") || canAccess("/CommSetting") || canAccess("/AccountSetting");
+                        }
+                        @if (showSettings)
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-cogs me-1"></i>
+                                    系統設定
+                                </a>
+                                <ul class="dropdown-menu">
+                                    @if (canAccess("/Designer"))
+                                    {
+                                        <li><a class="dropdown-item" href="/Designer"><i class="fas fa-paint-brush me-2"></i>畫面設計</a></li>
+                                    }
+                                    @if (canAccess("/AlarmSetting"))
+                                    {
+                                        <li><a class="dropdown-item" href="/AlarmSetting"><i class="fas fa-bell me-2"></i>警報設定</a></li>
+                                    }
+                                    @if (canAccess("/CommSetting"))
+                                    {
+                                        <li><a class="dropdown-item" href="/CommSetting"><i class="fas fa-network-wired me-2"></i>通訊設定</a></li>
+                                    }
+                                    @if (canAccess("/CalcPoint"))
+                                    {
+                                        <li><a class="dropdown-item" href="/CalcPoint"><i class="fas fa-calculator me-2"></i>計算點位</a></li>
+                                    }
+                                    @if (canAccess("/AccountSetting"))
+                                    {
+                                        <li><a class="dropdown-item" href="/AccountSetting"><i class="fas fa-users-cog me-2"></i>帳號管理</a></li>
+                                    }
+                                </ul>
+                            </li>
+                        }
                     </ul>
                     
                     <ul class="navbar-nav">
@@ -159,25 +235,19 @@
     {
         <footer class="footer mt-auto">
             <div class="container">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6><i class="fas fa-industry me-2"></i>SCADA 監控系統</h6>
-                        <p class="mb-0">工業監控與資料採集系統</p>
-                    </div>
-                    <div class="col-md-6 text-md-end">
-                        <p class="mb-1">
-                            <i class="fas fa-code me-1"></i>
-                            版本 1.0.0 | 
-                            <i class="fas fa-calendar me-1"></i>
-                            @DateTime.Now.Year 工研院
-                        </p>
-                        <p class="mb-0">
-                            <small>
-                                <i class="fas fa-server me-1"></i>
-                                伺服器時間: <span id="serverClock"></span>
-                            </small>
-                        </p>
-                    </div>
+                <div class="d-flex flex-wrap justify-content-between align-items-center">
+                    <span class="me-3">
+                        <i class="fas fa-industry me-1"></i>SCADA智慧控與能源管理系統
+                    </span>
+                    <span class="me-3">
+                        <i class="fas fa-code me-1"></i>版本 1.0.0 |
+                        <i class="fas fa-calendar me-1"></i>@DateTime.Now.Year 工研院
+                    </span>
+                    <span>
+                        <small>
+                            <i class="fas fa-server me-1"></i>伺服器時間: <span id="serverClock"></span>
+                        </small>
+                    </span>
                 </div>
             </div>
         </footer>

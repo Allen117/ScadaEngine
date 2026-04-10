@@ -118,6 +118,36 @@ public class RealtimeController : Controller
     }
 
     /// <summary>
+    /// API: 按 SID 集合取得即時資料（輕量，供 LogicFlow 等畫布使用）
+    /// </summary>
+    [HttpPost("~/api/realtime/by-sids")]
+    public IActionResult GetDataBySids([FromBody] List<string> sids)
+    {
+        try
+        {
+            if (sids == null || sids.Count == 0)
+                return Json(new { success = true, data = Array.Empty<object>() });
+
+            var items = _mqttService.GetRealtimeDataBySids(sids);
+            return Json(new
+            {
+                success = true,
+                data = items.Select(item => new
+                {
+                    sid = item.szSID,
+                    value = item.hasData ? Math.Round(item.dValue, 3).ToString() : "--",
+                    quality = item.szQuality
+                }).ToArray()
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "按 SID 查詢即時資料時發生錯誤");
+            return Json(new { success = false });
+        }
+    }
+
+    /// <summary>
     /// API: 取得連線狀態
     /// </summary>
     [HttpGet("~/api/realtime/status")]

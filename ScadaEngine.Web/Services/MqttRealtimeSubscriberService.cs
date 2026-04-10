@@ -23,8 +23,12 @@ public class MqttRealtimeSubscriberService : BackgroundService, IDisposable
     // 即時資料快取 (執行緒安全)
     private readonly ConcurrentDictionary<string, RealtimeDataItemModel> _realtimeDataCache = new();
 
+    // LogicFlow TP 計時器狀態快取 (key: "treeId-nodeId")
+    private readonly ConcurrentDictionary<string, TimerStateItem> _timerStateCache = new();
+
     // MQTT 即時資料主題 (格式: SCADA/Realtime/{coordinatorName}/{SID})
     private const string REALTIME_TOPIC = "SCADA/Realtime/+/+";
+    private const string TIMER_STATE_TOPIC = "SCADA/LogicFlow/TimerState";
 
     // 資料更新事件
     public event Action<RealtimeDataItemModel>? DataUpdated;
@@ -130,8 +134,9 @@ public class MqttRealtimeSubscriberService : BackgroundService, IDisposable
         try
         {
             await _mqttClient!.SubscribeAsync(REALTIME_TOPIC);
+            await _mqttClient!.SubscribeAsync(TIMER_STATE_TOPIC);
             _isConnected = true;
-            _logger.LogInformation("已訂閱即時資料主題: {Topic}", REALTIME_TOPIC);
+            _logger.LogInformation("已訂閱即時資料主題: {Topic}, {TimerTopic}", REALTIME_TOPIC, TIMER_STATE_TOPIC);
         }
         catch (Exception ex)
         {
@@ -162,6 +167,13 @@ public class MqttRealtimeSubscriberService : BackgroundService, IDisposable
         {
             var szTopic = e.ApplicationMessage.Topic;
             var szPayload = System.Text.Encoding.UTF8.GetString(e.ApplicationMessage.PayloadSegment);
+
+            // LogicFlow TP 計時器狀態
+            if (szTopic == TIMER_STATE_TOPIC)
+            {
+                ParseTimerStateMessage(szPayload);
+                return;
+            }
 
             // 解析子主題
             var subTopic = szTopic.Replace("SCADA/Realtime/", "");
@@ -214,6 +226,32 @@ public class MqttRealtimeSubscriberService : BackgroundService, IDisposable
         }
 
         await Task.CompletedTask;
+    }
+
+    /// <summary>解析 TP 計時器狀態 MQTT 訊息</summary>
+    private void ParseTimerStateMessage(string szPayload)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(szPayload);
+            var root = doc.RootElement;
+            if (!root.TryGetProperty("timers", out var timersEl)) return;
+
+            foreach (var prop in timersEl.EnumerateObject())
+            {
+                var item = new TimerStateItem
+                {
+                    Phase = prop.Value.TryGetProperty("phase", out var p) ? p.GetString() ?? "" : "",
+                    PhaseEndMs = prop.Value.TryGetProperty("phaseEndMs", out var pe) ? pe.GetInt64() : 0,
+                    HasHeld = prop.Value.TryGetProperty("hasHeld", out var hh) && hh.GetBoolean()
+                };
+                _timerStateCache[prop.Name] = item;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "解析 TP 計時器狀態訊息失敗");
+        }
     }
 
     private async Task ReconnectMqttAsync(object mqttConfig)
@@ -317,8 +355,47 @@ public class MqttRealtimeSubscriberService : BackgroundService, IDisposable
                 _realtimeDataCache.TryAdd(point.szSID, item);
             }
 
-            _logger.LogInformation("預填點位快取完成，共 {Count} 個點位，其中 {WithValue} 個有最新數值",
-                pointList.Count, nWithValue);
+            // 預填計算點位
+            var calcPoints = await repository.GetAllCalculatedPointsAsync();
+            var calcList = calcPoints.Where(c => c.isEnabled).ToList();
+            int nCalcWithValue = 0;
+            foreach (var cp in calcList)
+            {
+                RealtimeDataItemModel item;
+                if (latestDataMap.TryGetValue(cp.szSID, out var latestData))
+                {
+                    item = new RealtimeDataItemModel
+                    {
+                        szSubTopic = cp.szSID,
+                        szSID = cp.szSID,
+                        szName = cp.szName,
+                        szUnit = cp.szUnit,
+                        szQuality = latestData.nQuality == 1 ? "GOOD" : "BAD",
+                        dValue = latestData.fValue,
+                        dtTimestamp = latestData.dtTimestamp,
+                        hasData = true
+                    };
+                    nCalcWithValue++;
+                }
+                else
+                {
+                    item = new RealtimeDataItemModel
+                    {
+                        szSubTopic = cp.szSID,
+                        szSID = cp.szSID,
+                        szName = cp.szName,
+                        szUnit = cp.szUnit,
+                        szQuality = "NO_DATA",
+                        dValue = 0,
+                        dtTimestamp = DateTime.MinValue,
+                        hasData = false
+                    };
+                }
+                _realtimeDataCache.TryAdd(cp.szSID, item);
+            }
+
+            _logger.LogInformation("預填點位快取完成，共 {Count} 個點位（含 {CalcCount} 個計算點位），其中 {WithValue} 個有最新數值",
+                pointList.Count + calcList.Count, calcList.Count, nWithValue + nCalcWithValue);
         }
         catch (Exception ex)
         {
@@ -354,6 +431,20 @@ public class MqttRealtimeSubscriberService : BackgroundService, IDisposable
     }
 
     /// <summary>
+    /// 按 SID 集合取得即時資料（輕量查詢，避免回傳全部）
+    /// </summary>
+    public List<RealtimeDataItemModel> GetRealtimeDataBySids(IEnumerable<string> sids)
+    {
+        var result = new List<RealtimeDataItemModel>();
+        foreach (var sid in sids)
+        {
+            if (_realtimeDataCache.TryGetValue(sid, out var item))
+                result.Add(item);
+        }
+        return result;
+    }
+
+    /// <summary>
     /// 取得連線狀態
     /// </summary>
     public bool IsConnected => _isConnected && _mqttClient?.IsConnected == true;
@@ -368,6 +459,66 @@ public class MqttRealtimeSubscriberService : BackgroundService, IDisposable
         return (total, active);
     }
 
+    /// <summary>
+    /// 發布控制指令到 MQTT (供 ControlController 呼叫)
+    /// Topic: SCADA/Control/{CID}
+    /// </summary>
+    public async Task<bool> PublishControlCommandAsync(string szCid, double dValue)
+    {
+        if (_mqttClient?.IsConnected != true)
+        {
+            _logger.LogWarning("MQTT 未連線，無法發布控制指令 CID={Cid}", szCid);
+            return false;
+        }
+
+        try
+        {
+            var szTopic = $"SCADA/Control/{szCid}";
+            var payload = JsonSerializer.Serialize(new
+            {
+                mid = Guid.NewGuid().ToString(),
+                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                value = dValue.ToString(),
+                unit = ""
+            });
+
+            var message = new MqttApplicationMessageBuilder()
+                .WithTopic(szTopic)
+                .WithPayload(payload)
+                .WithQualityOfServiceLevel(MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce)
+                .WithRetainFlag(false)
+                .Build();
+
+            await _mqttClient.PublishAsync(message);
+            _logger.LogInformation("已發布控制指令: Topic={Topic}, Payload={Payload}", szTopic, payload);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "發布控制指令失敗: CID={Cid}", szCid);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 取得指定 TreeId 的所有 TP 計時器狀態
+    /// </summary>
+    public Dictionary<string, TimerStateItem> GetTimerStates(int nTreeId)
+    {
+        var szPrefix = $"{nTreeId}-";
+        return _timerStateCache
+            .Where(kv => kv.Key.StartsWith(szPrefix))
+            .ToDictionary(kv => kv.Key, kv => kv.Value);
+    }
+
+    /// <summary>
+    /// 取得所有 TP 計時器狀態
+    /// </summary>
+    public Dictionary<string, TimerStateItem> GetAllTimerStates()
+    {
+        return _timerStateCache.ToDictionary(kv => kv.Key, kv => kv.Value);
+    }
+
     public new void Dispose()
     {
         if (!_disposed)
@@ -377,4 +528,12 @@ public class MqttRealtimeSubscriberService : BackgroundService, IDisposable
         }
         base.Dispose();
     }
+}
+
+/// <summary>TP 計時器狀態項目</summary>
+public class TimerStateItem
+{
+    public string Phase { get; set; } = "";
+    public long PhaseEndMs { get; set; }
+    public bool HasHeld { get; set; }
 }
