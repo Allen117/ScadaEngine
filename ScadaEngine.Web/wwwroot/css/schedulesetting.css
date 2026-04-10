@@ -1,0 +1,159 @@
+/* ── 排程設定頁面樣式 ── */
+
+#scheduleTable thead th {
+    font-size: .85rem;
+    white-space: nowrap;
+}
+
+#scheduleTable tbody td {
+    vertical-align: middle;
+    font-size: .85rem;
+}
+
+/* 星期 badge */
+.day-badge {
+    display: inline-block;
+    min-width: 26px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: .75rem;
+    font-weight: 600;
+    text-align: center;
+    color: #fff;
+    background-color: #0d6efd;
+    margin-right: 2px;
+}
+
+.day-badge.day-off {
+    background-color: #6c757d;
+    opacity: 0.4;
+}
+
+/* 日期 badge（每月幾號） */
+.dom-badge {
+    display: inline-block;
+    min-width: 22px;
+    padding: 1px 4px;
+    border-radius: 4px;
+    font-size: .75rem;
+    font-weight: 600;
+    text-align: center;
+    color: #fff;
+    background-color: #198754;
+    margin: 0 1px;
+}
+
+/* 模式 badge */
+.type-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: .75rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.type-badge.type-0 { background-color: #0d6efd; }
+.type-badge.type-1 { background-color: #fd7e14; }
+.type-badge.type-2 { background-color: #198754; }
+.type-badge.type-3 { background-color: #6f42c1; }
+
+/* 狀態標籤 */
+.status-active {
+    color: #198754;
+    font-weight: 600;
+}
+
+.status-inactive {
+    color: #6c757d;
+}
+
+/* Modal 星期選擇器 */
+.day-check {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+}
+
+.day-check input[type="checkbox"] {
+    display: none;
+}
+
+.day-check span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid #dee2e6;
+    font-size: .85rem;
+    font-weight: 600;
+    color: #6c757d;
+    transition: all 0.2s ease;
+}
+
+.day-check input:checked + span {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: #fff;
+}
+
+.day-check:hover span {
+    border-color: #0d6efd;
+}
+
+/* Modal 日期選擇器（每月） */
+.dom-check {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+}
+
+.dom-check input[type="checkbox"] {
+    display: none;
+}
+
+.dom-check span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 2px solid #dee2e6;
+    font-size: .8rem;
+    font-weight: 600;
+    color: #6c757d;
+    transition: all 0.2s ease;
+}
+
+.dom-check input:checked + span {
+    background-color: #198754;
+    border-color: #198754;
+    color: #fff;
+}
+
+.dom-check:hover span {
+    border-color: #198754;
+}
+
+/* 快捷按鈕 */
+.btn-xs {
+    padding: 0.15rem 0.55rem;
+    font-size: .75rem;
+}
+
+/* 時間顯示 */
+.time-display {
+    font-family: monospace;
+    font-size: .85rem;
+}
+
+/* 週期資訊小字 */
+.cycle-info {
+    font-size: .75rem;
+    color: #6c757d;
+}

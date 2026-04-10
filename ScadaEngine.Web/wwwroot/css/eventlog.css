@@ -1,0 +1,97 @@
+.query-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+.result-table th {
+    background: #f1f3f5;
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    font-size: 0.85rem;
+}
+.result-table td {
+    font-size: 0.85rem;
+    vertical-align: middle;
+}
+.table-container {
+    max-height: 60vh;
+    overflow-y: auto;
+}
+.badge-severity-0 { background-color: #dc3545; }
+.badge-severity-1 { background-color: #fd7e14; }
+.badge-severity-2 { background-color: #ffc107; color: #333; }
+.badge-severity-3 { background-color: #6c757d; }
+.badge-event-0 { background-color: #dc3545; }
+.badge-event-1 { background-color: #6f42c1; }
+.badge-event-2 { background-color: #ffc107; color: #333; }
+.badge-event-3 { background-color: #0dcaf0; color: #333; }
+.badge-event-4 { background-color: #6c757d; }
+.stat-card {
+    border-radius: 8px;
+    padding: 12px 16px;
+    text-align: center;
+}
+.loading-overlay {
+    display: none;
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(255,255,255,0.7);
+    z-index: 10;
+    justify-content: center;
+    align-items: center;
+}
+.loading-overlay.active { display: flex; }
+.btn-xs {
+    padding: 0.15rem 0.55rem;
+    font-size: 0.75rem;
+    border-radius: 0.25rem;
+}
+/* 訊息欄 hover tooltip */
+.msg-tooltip-wrap { cursor: default; }
+.msg-tip {
+    display: none;
+    position: fixed;
+    background: #1e293b;
+    color: #f8f9fa;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    white-space: nowrap;
+    z-index: 25;
+    box-shadow: 0 2px 8px rgba(0,0,0,.18);
+    pointer-events: none;
+}
+.msg-tip::after {
+    content: '';
+    position: absolute;
+    left: 16px;
+    border: 5px solid transparent;
+}
+.msg-tip.tip-above::after { top: 100%; border-top-color: #1e293b; }
+.msg-tip.tip-below::after { bottom: 100%; border-bottom-color: #1e293b; }
+
+/* ── 點位選擇器 Modal ── */
+.pp-dev-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    transition: background 0.1s;
+}
+.pp-dev-item:hover { background: #f0f4ff; }
+.pp-sub-item { padding-left: 28px; }
+.pp-toggle-icon { font-size: .7rem; color: #999; transition: transform .2s; }
+.pp-point-item {
+    display: flex;
+    align-items: center;
+    padding: 6px 10px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 0.84rem;
+    transition: background 0.1s;
+}
+.pp-point-item:hover { background: #f0f4ff; }
+.pp-point-item.selected { background: #d0e3ff; }

@@ -1,0 +1,189 @@
+@{
+    ViewData["Title"] = "排程設定";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var schedules = ViewBag.Schedules as List<ScadaEngine.Web.Features.ScheduleSetting.Models.TimeScheduleModel>;
+
+    var schedulesJson = System.Text.Json.JsonSerializer.Serialize(
+        schedules!.Select(s => new {
+            id = s.nId, name = s.szName,
+            recurrenceType = s.nRecurrenceType,
+            runLength = s.nRunLength,
+            restLength = s.nRestLength,
+            anchorDateTime = s.dtAnchorDateTime?.ToString("yyyy-MM-ddTHH:mm"),
+            daysOfWeek = s.szDaysOfWeek ?? "",
+            daysOfMonth = s.szDaysOfMonth ?? "",
+            startTime = s.szStartTime, endTime = s.szEndTime,
+            isEnabled = s.isEnabled, remarks = s.szRemarks ?? ""
+        })
+    );
+}
+
+<link rel="stylesheet" href="~/css/schedulesetting.css" asp-append-version="true" />
+
+<div class="container-fluid mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>排程設定</h4>
+        <button class="btn btn-primary" onclick="window._schedule.showAddModal()">
+            <i class="fas fa-plus me-1"></i>新增排程
+        </button>
+    </div>
+
+    <!-- 排程列表 -->
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="scheduleTable">
+                    <thead class="table-dark">
+                        <tr>
+                            <th style="width:50px">啟用</th>
+                            <th>排程名稱</th>
+                            <th>模式</th>
+                            <th>日期條件</th>
+                            <th>時段</th>
+                            <th>目前狀態</th>
+                            <th>備註</th>
+                            <th style="width:120px">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scheduleBody"></tbody>
+                </table>
+            </div>
+            <div id="emptyMsg" class="text-center text-muted py-4 d-none">
+                <i class="fas fa-inbox fa-3x mb-2 d-block"></i>
+                <div>尚無排程，請點擊「新增排程」</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-body py-2 px-3">
+            <small class="text-muted">
+                <i class="fas fa-info-circle me-1"></i>排程建立後可在「流程圖控制」中的 A 接點選擇排程模式，當系統時間符合排程時段時接點將自動導通。
+            </small>
+        </div>
+    </div>
+</div>
+
+<!-- 新增/編輯 Modal -->
+<div class="modal fade" id="scheduleModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">新增排程</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editId" />
+
+                <!-- 名稱 + 模式 -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold"><i class="fas fa-tag me-1"></i>排程名稱</label>
+                        <input type="text" class="form-control" id="txtName" maxlength="100" placeholder="例如：上班時間" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold"><i class="fas fa-sync-alt me-1"></i>重複模式</label>
+                        <select class="form-select" id="selRecurrenceType" onchange="window._schedule.onTypeChange()">
+                            <option value="0">每週</option>
+                            <option value="1">N 週循環</option>
+                            <option value="2">每月</option>
+                            <option value="3">N 月循環</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 週期參數區（type 1,3 時顯示） -->
+                <div class="row mb-3 d-none" id="cycleSection">
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold"><i class="fas fa-play me-1"></i>跑</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="txtRunLength" min="1" max="52" value="1" />
+                            <span class="input-group-text" id="runUnit">週</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold"><i class="fas fa-pause me-1"></i>休</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="txtRestLength" min="1" max="52" value="1" />
+                            <span class="input-group-text" id="restUnit">週</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold"><i class="fas fa-calendar-day me-1"></i>週期起算時間</label>
+                        <input type="datetime-local" class="form-control" id="txtAnchorDateTime" />
+                        <small class="text-muted">從此時刻開始計算跑/休交替</small>
+                    </div>
+                </div>
+
+                <!-- 星期選擇（type 0,1 時顯示） -->
+                <div class="mb-3" id="daysOfWeekSection">
+                    <label class="form-label fw-semibold"><i class="fas fa-calendar-week me-1"></i>星期</label>
+                    <div class="d-flex gap-2 flex-wrap" id="dayCheckboxes">
+                        <label class="day-check"><input type="checkbox" value="1" /><span>一</span></label>
+                        <label class="day-check"><input type="checkbox" value="2" /><span>二</span></label>
+                        <label class="day-check"><input type="checkbox" value="3" /><span>三</span></label>
+                        <label class="day-check"><input type="checkbox" value="4" /><span>四</span></label>
+                        <label class="day-check"><input type="checkbox" value="5" /><span>五</span></label>
+                        <label class="day-check"><input type="checkbox" value="6" /><span>六</span></label>
+                        <label class="day-check"><input type="checkbox" value="7" /><span>日</span></label>
+                    </div>
+                    <div class="mt-1">
+                        <button type="button" class="btn btn-outline-secondary btn-xs" onclick="window._schedule.selectWeekdays()">週一至週五</button>
+                        <button type="button" class="btn btn-outline-secondary btn-xs" onclick="window._schedule.selectAll()">全選</button>
+                        <button type="button" class="btn btn-outline-secondary btn-xs" onclick="window._schedule.clearDays()">清除</button>
+                    </div>
+                </div>
+
+                <!-- 日期選擇（type 2,3 時顯示） -->
+                <div class="mb-3 d-none" id="daysOfMonthSection">
+                    <label class="form-label fw-semibold"><i class="fas fa-calendar me-1"></i>每月幾號</label>
+                    <div class="d-flex gap-1 flex-wrap" id="domCheckboxes"></div>
+                    <div class="mt-1">
+                        <button type="button" class="btn btn-outline-secondary btn-xs" onclick="window._schedule.selectAllDom()">全選</button>
+                        <button type="button" class="btn btn-outline-secondary btn-xs" onclick="window._schedule.clearDom()">清除</button>
+                    </div>
+                </div>
+
+                <hr />
+
+                <!-- 時段 -->
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold"><i class="fas fa-clock me-1"></i>開始時間</label>
+                        <input type="time" class="form-control" id="txtStartTime" value="08:00" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold"><i class="fas fa-clock me-1"></i>結束時間</label>
+                        <input type="time" class="form-control" id="txtEndTime" value="17:00" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold"><i class="fas fa-comment me-1"></i>備註</label>
+                        <input type="text" class="form-control" id="txtRemarks" maxlength="200" />
+                    </div>
+                </div>
+
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="chkEnabled" checked>
+                    <label class="form-check-label">啟用此排程</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="window._schedule.save()">
+                    <i class="fas fa-save me-1"></i>儲存
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        window._scheduleInitData = {
+            schedules: @Html.Raw(schedulesJson)
+        };
+    </script>
+    <script src="~/js/schedulesetting.js" asp-append-version="true"></script>
+}

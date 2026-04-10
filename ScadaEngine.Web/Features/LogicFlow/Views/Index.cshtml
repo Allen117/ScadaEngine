@@ -1,0 +1,282 @@
+@{
+    ViewData["Title"] = "流程圖控制";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-2">
+
+    <!-- 頁面標題 -->
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="mb-0">
+            <i class="fas fa-project-diagram text-primary me-2"></i>流程圖控制
+        </h2>
+        <span class="text-muted small">
+            <i class="fas fa-sitemap me-1"></i>LogicFlow 管理
+        </span>
+    </div>
+
+    <div class="row g-3">
+        <!-- 左側樹狀選單 -->
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-2">
+                    <span><i class="fas fa-folder-tree me-1"></i>邏輯清單</span>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-light dropdown-toggle py-0" data-bs-toggle="dropdown">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#" onclick="window._lf.addRoot('folder')"><i class="fas fa-folder-plus me-2 text-warning"></i>新增資料夾</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="window._lf.addRoot('logic')"><i class="fas fa-file-code me-2 text-info"></i>新增邏輯</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body p-2" style="height: calc(100vh - 250px); overflow-y: auto;">
+                    <div id="treeContainer">
+                        <div class="text-center mt-5"><div class="spinner-border spinner-border-sm text-primary"></div> 載入中...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右側內容區 -->
+        <div class="col-md-9">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
+                    <span id="contentTitle"><i class="fas fa-hand-pointer me-1"></i>請從左側選取邏輯項目</span>
+                    <button id="btnSaveDiagram" class="btn btn-sm btn-success" style="display:none;" onclick="window._lf.saveDiagram()">
+                        <i class="fas fa-save me-1"></i>儲存
+                    </button>
+                </div>
+                <div class="card-body p-0" style="height: calc(100vh - 250px); overflow: hidden;" id="contentArea">
+                    <div class="text-center text-muted mt-5">
+                        <i class="fas fa-project-diagram fa-4x mb-3 d-block" style="opacity:.3"></i>
+                        <p>選取左側的邏輯項目後，即可在此編輯流程圖</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 重新命名 Modal -->
+<div class="modal fade" id="renameModal" tabindex="-1">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title"><i class="fas fa-edit me-1"></i>重新命名</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="text" class="form-control form-control-sm" id="renameInput" placeholder="輸入新名稱"
+                       onkeydown="if(event.key==='Enter'){window._lf.confirmRename()}">
+            </div>
+            <div class="modal-footer py-1">
+                <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button class="btn btn-sm btn-primary" onclick="window._lf.confirmRename()">確認</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 畫布右鍵選單 -->
+<div id="ctxMenu" class="ctx-menu" style="display:none;">
+    <div class="ctx-menu-header">新增節點</div>
+    <div class="ctx-menu-item" data-type="input"><i class="fas fa-sign-in-alt text-primary me-2"></i>讀取點位</div>
+    <div class="ctx-menu-item" data-type="output"><i class="fas fa-sign-out-alt text-success me-2"></i>寫入點位</div>
+    <div class="ctx-menu-item" data-type="contact_no"><i class="fas fa-toggle-on text-orange me-2"></i>A接點</div>
+    <div class="ctx-menu-item" data-type="contact_nc"><i class="fas fa-toggle-off text-purple me-2"></i>B接點</div>
+    <div class="ctx-menu-divider"></div>
+    <div class="ctx-menu-item ctx-has-sub"><i class="fas fa-not-equal text-warning me-2"></i>比較 <i class="fas fa-caret-right ms-auto"></i>
+        <div class="ctx-submenu">
+            <div class="ctx-menu-item" data-type="compare" data-operator="lt"><span class="ctx-op-symbol">&lt;</span>小於</div>
+            <div class="ctx-menu-item" data-type="compare" data-operator="gt"><span class="ctx-op-symbol">&gt;</span>大於</div>
+            <div class="ctx-menu-item" data-type="compare" data-operator="lte"><span class="ctx-op-symbol">&le;</span>小於等於</div>
+            <div class="ctx-menu-item" data-type="compare" data-operator="gte"><span class="ctx-op-symbol">&ge;</span>大於等於</div>
+            <div class="ctx-menu-item" data-type="compare" data-operator="eq"><span class="ctx-op-symbol">=</span>等於</div>
+            <div class="ctx-menu-item" data-type="compare" data-operator="neq"><span class="ctx-op-symbol">&ne;</span>不等於</div>
+        </div>
+    </div>
+    <div class="ctx-menu-item ctx-has-sub"><i class="fas fa-calculator text-info me-2"></i>數學運算 <i class="fas fa-caret-right ms-auto"></i>
+        <div class="ctx-submenu">
+            <div class="ctx-menu-item" data-type="math" data-operator="add"><span class="ctx-op-symbol" style="color:#0dcaf0;">+</span>加法</div>
+            <div class="ctx-menu-item" data-type="math" data-operator="sub"><span class="ctx-op-symbol" style="color:#0dcaf0;">&minus;</span>減法</div>
+            <div class="ctx-menu-item" data-type="math" data-operator="mul"><span class="ctx-op-symbol" style="color:#0dcaf0;">&times;</span>乘法</div>
+            <div class="ctx-menu-item" data-type="math" data-operator="div"><span class="ctx-op-symbol" style="color:#0dcaf0;">&divide;</span>除法</div>
+            <div class="ctx-menu-item" data-type="math" data-operator="mod"><span class="ctx-op-symbol" style="color:#0dcaf0;">%</span>取餘數</div>
+            <div class="ctx-menu-item" data-type="math" data-operator="pow"><span class="ctx-op-symbol" style="color:#0dcaf0;">^</span>次方</div>
+            <div class="ctx-menu-divider"></div>
+            <div class="ctx-menu-item" data-type="math" data-operator="abs"><span class="ctx-op-symbol" style="color:#0dcaf0;">|x|</span>絕對值</div>
+            <div class="ctx-menu-item" data-type="math" data-operator="sqrt"><span class="ctx-op-symbol" style="color:#0dcaf0;">&radic;</span>平方根</div>
+            <div class="ctx-menu-item" data-type="math" data-operator="round"><span class="ctx-op-symbol" style="color:#0dcaf0;">&asymp;</span>四捨五入</div>
+        </div>
+    </div>
+    <div class="ctx-menu-item" data-type="constant"><i class="fas fa-hashtag text-dark me-2"></i>常數</div>
+    <div class="ctx-menu-divider"></div>
+    <div class="ctx-menu-item ctx-has-sub"><i class="fas fa-microchip text-danger me-2"></i>邏輯閘 <i class="fas fa-caret-right ms-auto"></i>
+        <div class="ctx-submenu">
+            <div class="ctx-menu-item" data-type="and"><i class="fas fa-grip-lines text-danger me-2"></i>AND</div>
+            <div class="ctx-menu-item" data-type="or"><i class="fas fa-grip-lines-vertical text-danger me-2"></i>OR</div>
+            <div class="ctx-menu-item" data-type="not"><i class="fas fa-exclamation text-danger me-2"></i>NOT</div>
+            <div class="ctx-menu-item" data-type="xor"><i class="fas fa-random text-danger me-2"></i>XOR</div>
+        </div>
+    </div>
+    <div class="ctx-menu-divider"></div>
+    <div class="ctx-menu-item ctx-has-sub"><i class="fas fa-clock text-secondary me-2"></i>計時器 <i class="fas fa-caret-right ms-auto"></i>
+        <div class="ctx-submenu">
+            <div class="ctx-menu-item" data-type="timer" data-operator="tp"><span class="ctx-op-symbol ctx-op-wide" style="color:#6c757d;">TP</span>脈衝</div>
+            <div class="ctx-menu-item" data-type="timer" data-operator="ton"><span class="ctx-op-symbol ctx-op-wide" style="color:#6c757d;">TON</span>延時開啟</div>
+        </div>
+    </div>
+    <div class="ctx-menu-divider"></div>
+    <div class="ctx-menu-item ctx-has-sub"><i class="fas fa-brain text-purple me-2"></i>演算法 <i class="fas fa-caret-right ms-auto"></i>
+        <div class="ctx-submenu" id="ctxAlgoSub">
+            <div class="ctx-menu-item text-muted" style="font-size:.75rem;">載入中...</div>
+        </div>
+    </div>
+</div>
+
+<!-- 節點右鍵選單 -->
+<div id="nodeCtxMenu" class="ctx-menu" style="display:none;">
+    <div class="ctx-menu-header">變更類型</div>
+    <div class="ctx-menu-item node-change-type" data-type="input"><i class="fas fa-sign-in-alt text-primary me-2"></i>讀取點位</div>
+    <div class="ctx-menu-item node-change-type" data-type="output"><i class="fas fa-sign-out-alt text-success me-2"></i>寫入點位</div>
+    <div class="ctx-menu-item node-change-type" data-type="contact_no"><i class="fas fa-toggle-on text-orange me-2"></i>A接點</div>
+    <div class="ctx-menu-item node-change-type" data-type="contact_nc"><i class="fas fa-toggle-off text-purple me-2"></i>B接點</div>
+    <div class="ctx-menu-divider"></div>
+    <div class="ctx-menu-item ctx-has-sub"><i class="fas fa-not-equal text-warning me-2"></i>比較 <i class="fas fa-caret-right ms-auto"></i>
+        <div class="ctx-submenu">
+            <div class="ctx-menu-item node-change-type" data-type="compare" data-operator="lt"><span class="ctx-op-symbol">&lt;</span>小於</div>
+            <div class="ctx-menu-item node-change-type" data-type="compare" data-operator="gt"><span class="ctx-op-symbol">&gt;</span>大於</div>
+            <div class="ctx-menu-item node-change-type" data-type="compare" data-operator="lte"><span class="ctx-op-symbol">&le;</span>小於等於</div>
+            <div class="ctx-menu-item node-change-type" data-type="compare" data-operator="gte"><span class="ctx-op-symbol">&ge;</span>大於等於</div>
+            <div class="ctx-menu-item node-change-type" data-type="compare" data-operator="eq"><span class="ctx-op-symbol">=</span>等於</div>
+            <div class="ctx-menu-item node-change-type" data-type="compare" data-operator="neq"><span class="ctx-op-symbol">&ne;</span>不等於</div>
+        </div>
+    </div>
+    <div class="ctx-menu-item ctx-has-sub"><i class="fas fa-calculator text-info me-2"></i>數學運算 <i class="fas fa-caret-right ms-auto"></i>
+        <div class="ctx-submenu">
+            <div class="ctx-menu-item node-change-type" data-type="math" data-operator="add"><span class="ctx-op-symbol" style="color:#0dcaf0;">+</span>加法</div>
+            <div class="ctx-menu-item node-change-type" data-type="math" data-operator="sub"><span class="ctx-op-symbol" style="color:#0dcaf0;">&minus;</span>減法</div>
+            <div class="ctx-menu-item node-change-type" data-type="math" data-operator="mul"><span class="ctx-op-symbol" style="color:#0dcaf0;">&times;</span>乘法</div>
+            <div class="ctx-menu-item node-change-type" data-type="math" data-operator="div"><span class="ctx-op-symbol" style="color:#0dcaf0;">&divide;</span>除法</div>
+            <div class="ctx-menu-item node-change-type" data-type="math" data-operator="mod"><span class="ctx-op-symbol" style="color:#0dcaf0;">%</span>取餘數</div>
+            <div class="ctx-menu-item node-change-type" data-type="math" data-operator="pow"><span class="ctx-op-symbol" style="color:#0dcaf0;">^</span>次方</div>
+            <div class="ctx-menu-divider"></div>
+            <div class="ctx-menu-item node-change-type" data-type="math" data-operator="abs"><span class="ctx-op-symbol" style="color:#0dcaf0;">|x|</span>絕對值</div>
+            <div class="ctx-menu-item node-change-type" data-type="math" data-operator="sqrt"><span class="ctx-op-symbol" style="color:#0dcaf0;">&radic;</span>平方根</div>
+            <div class="ctx-menu-item node-change-type" data-type="math" data-operator="round"><span class="ctx-op-symbol" style="color:#0dcaf0;">&asymp;</span>四捨五入</div>
+        </div>
+    </div>
+    <div class="ctx-menu-item node-change-type" data-type="constant"><i class="fas fa-hashtag text-dark me-2"></i>常數</div>
+    <div class="ctx-menu-divider"></div>
+    <div class="ctx-menu-item ctx-has-sub"><i class="fas fa-microchip text-danger me-2"></i>邏輯閘 <i class="fas fa-caret-right ms-auto"></i>
+        <div class="ctx-submenu">
+            <div class="ctx-menu-item node-change-type" data-type="and"><i class="fas fa-grip-lines text-danger me-2"></i>AND</div>
+            <div class="ctx-menu-item node-change-type" data-type="or"><i class="fas fa-grip-lines-vertical text-danger me-2"></i>OR</div>
+            <div class="ctx-menu-item node-change-type" data-type="not"><i class="fas fa-exclamation text-danger me-2"></i>NOT</div>
+            <div class="ctx-menu-item node-change-type" data-type="xor"><i class="fas fa-random text-danger me-2"></i>XOR</div>
+        </div>
+    </div>
+    <div class="ctx-menu-divider"></div>
+    <div class="ctx-menu-item ctx-has-sub"><i class="fas fa-clock text-secondary me-2"></i>計時器 <i class="fas fa-caret-right ms-auto"></i>
+        <div class="ctx-submenu">
+            <div class="ctx-menu-item node-change-type" data-type="timer" data-operator="tp"><span class="ctx-op-symbol ctx-op-wide" style="color:#6c757d;">TP</span>脈衝</div>
+            <div class="ctx-menu-item node-change-type" data-type="timer" data-operator="ton"><span class="ctx-op-symbol ctx-op-wide" style="color:#6c757d;">TON</span>延時開啟</div>
+        </div>
+    </div>
+    <div class="ctx-menu-divider"></div>
+    <div class="ctx-menu-item ctx-has-sub"><i class="fas fa-brain text-purple me-2"></i>演算法 <i class="fas fa-caret-right ms-auto"></i>
+        <div class="ctx-submenu" id="nodeCtxAlgoSub">
+            <div class="ctx-menu-item text-muted" style="font-size:.75rem;">載入中...</div>
+        </div>
+    </div>
+    <div class="ctx-menu-divider"></div>
+    <div class="ctx-menu-item node-delete-item" style="color:#dc3545;"><i class="fas fa-trash-alt me-2"></i>刪除節點</div>
+</div>
+
+<!-- 點位選擇 Modal（兩步驟：設備 → 點位） -->
+<div class="modal fade" id="pointPickerModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width:460px;">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title" style="font-size:13px;display:flex;align-items:center;gap:4px;">
+                    <i class="fas fa-tachometer-alt text-primary"></i>
+                    <span id="ppModalTitle">選擇設備</span>
+                </h6>
+                <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="padding:12px 16px;">
+                <!-- 來源類型切換（僅 contact 時顯示） -->
+                <div id="ppSourceToggle" class="d-none" style="margin-bottom:8px;">
+                    <div class="btn-group btn-group-sm w-100">
+                        <button class="btn btn-outline-primary active" id="ppBtnPoint"
+                                onclick="window._lf.ppSwitchSource('point')">
+                            <i class="fas fa-server me-1"></i>設備點位</button>
+                        <button class="btn btn-outline-primary" id="ppBtnSchedule"
+                                onclick="window._lf.ppSwitchSource('schedule')">
+                            <i class="fas fa-calendar-alt me-1"></i>排程</button>
+                    </div>
+                </div>
+                <!-- Step 0: 選擇來源類型 -->
+                <div id="ppStep0">
+                    <div style="display:flex;flex-direction:column;gap:8px;">
+                        <div class="pp-list-item" onclick="window._lf.ppShowDeviceStep()" style="cursor:pointer;padding:14px 16px;">
+                            <i class="fas fa-server text-primary" style="font-size:18px;"></i>
+                            <div style="flex:1;">
+                                <div class="pp-point-name" style="font-size:14px;">設備點位</div>
+                                <div class="pp-point-sid">從 Modbus 設備選擇原始點位</div>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted" style="font-size:12px;"></i>
+                        </div>
+                        <div id="ppStep0Calc" class="pp-list-item" onclick="window._lf.ppShowCalcStep()" style="cursor:pointer;padding:14px 16px;">
+                            <i class="fas fa-calculator text-warning" style="font-size:18px;"></i>
+                            <div style="flex:1;">
+                                <div class="pp-point-name" style="font-size:14px;">計算點位</div>
+                                <div class="pp-point-sid">從公式衍生的計算點位</div>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted" style="font-size:12px;"></i>
+                        </div>
+                    </div>
+                </div>
+                <!-- Step 1: 設備清單 -->
+                <div id="ppStep1" style="display:none;">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                        <button id="ppStep1Back" class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="window._lf.ppBackToStep0()" title="返回來源選擇">
+                            <i class="fas fa-arrow-left me-1"></i>返回
+                        </button>
+                        <span class="text-primary fw-bold small"><i class="fas fa-server me-1"></i>設備清單</span>
+                    </div>
+                    <div id="deviceListContainer" style="max-height:290px;overflow-y:auto;"></div>
+                </div>
+                <!-- Step 2: 點位清單 -->
+                <div id="ppStep2" style="display:none;">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="window._lf.ppGoBack()" title="返回">
+                            <i class="fas fa-arrow-left me-1"></i>返回
+                        </button>
+                        <span class="text-primary fw-bold small"><i class="fas fa-server me-1" id="ppDeviceIcon"></i><span id="ppDeviceName"></span></span>
+                    </div>
+                    <input type="text" id="ppPointSearch" class="form-control form-control-sm mb-2"
+                           placeholder="搜尋點位名稱…" oninput="window._lf.ppFilter(this.value)">
+                    <div id="pointListContainer" style="max-height:270px;overflow-y:auto;"></div>
+                </div>
+                <!-- Step 3: 排程清單 -->
+                <div id="ppStep3" style="display:none;">
+                    <div id="scheduleListContainer" style="max-height:320px;overflow-y:auto;"></div>
+                </div>
+            </div>
+            <div class="modal-footer py-1">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-sm btn-primary" id="btnConfirmPoint"
+                        onclick="window._lf.ppConfirm()" disabled>確認</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="~/css/logicflow.css" />
+
+@section Scripts {
+<script src="~/js/logicflow.js"></script>
+}

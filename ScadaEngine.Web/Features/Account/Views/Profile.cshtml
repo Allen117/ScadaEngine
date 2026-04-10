@@ -1,0 +1,117 @@
+@using ScadaEngine.Common.Data.Models
+@model UserModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "個人資料";
+}
+
+<div class="container mt-4" style="max-width:800px;">
+    <h4 class="mb-3"><i class="fas fa-id-card me-2"></i>個人資料</h4>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h6 class="mb-0"><i class="fas fa-user me-2"></i>@Model.szUsername</h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold text-muted">帳號</label>
+                    <div class="form-control-plaintext">@Model.szUsername</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold text-muted">姓名</label>
+                    <div class="form-control-plaintext">@(string.IsNullOrEmpty(Model.szRealName) ? "-" : Model.szRealName)</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold text-muted">角色</label>
+                    <div class="form-control-plaintext">
+                        @{
+                            var badgeClass = Model.szRole == "Admin" ? "bg-danger" : "bg-primary";
+                        }
+                        <span class="badge @badgeClass">@Model.szRole</span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold text-muted">部門</label>
+                    <div class="form-control-plaintext">@(string.IsNullOrEmpty(Model.szDepartment) ? "-" : Model.szDepartment)</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold text-muted">帳號狀態</label>
+                    <div class="form-control-plaintext">
+                        @if (Model.isActive)
+                        {
+                            <span class="badge bg-success">啟用</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">停用</span>
+                        }
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold text-muted">最後登入時間</label>
+                    <div class="form-control-plaintext small">
+                        @(Model.dtLastLoginAt.HasValue ? Model.dtLastLoginAt.Value.ToString("yyyy-MM-dd HH:mm:ss") : "尚未登入")
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold text-muted">建立時間</label>
+                    <div class="form-control-plaintext small">
+                        @(Model.dtCreatedAt.HasValue ? Model.dtCreatedAt.Value.ToString("yyyy-MM-dd HH:mm:ss") : "-")
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold text-muted">更新時間</label>
+                    <div class="form-control-plaintext small">
+                        @(Model.dtUpdatedAt.HasValue ? Model.dtUpdatedAt.Value.ToString("yyyy-MM-dd HH:mm:ss") : "-")
+                    </div>
+                </div>
+            </div>
+
+            @if (Model.szRole == "User")
+            {
+                <hr class="mt-4">
+                <h6 class="fw-bold"><i class="fas fa-shield-alt me-1"></i>頁面存取權限</h6>
+
+                <div class="card mb-3">
+                    <div class="card-header py-2 bg-light">
+                        <small class="fw-bold">主功能頁面</small>
+                    </div>
+                    <div class="card-body py-2" id="profileMainPages"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header py-2 bg-light">
+                        <small class="fw-bold">即時監控子頁面（ScadaPage）</small>
+                    </div>
+                    <div class="card-body py-2" id="profileScadaPages">
+                        <small class="text-muted">載入中...</small>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <hr class="mt-4">
+                <div class="text-muted small">
+                    <i class="fas fa-info-circle me-1"></i>Admin 角色擁有所有頁面的完整存取權限。
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@if (Model.szRole == "User")
+{
+    <script>
+        var _configurablePages = @Html.Raw(ViewData["ConfigurablePages"]);
+        var _scadaDesignPages  = @Html.Raw(ViewData["ScadaDesignPages"]);
+        var _permissionJson    = @Html.Raw(ViewData["PermissionJson"]);
+    </script>
+}
+
+@section Scripts {
+    @if (Model.szRole == "User")
+    {
+        <script src="~/js/profile.js"></script>
+    }
+}

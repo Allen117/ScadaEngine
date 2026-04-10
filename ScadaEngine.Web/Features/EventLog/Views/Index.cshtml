@@ -1,0 +1,205 @@
+@model ScadaEngine.Web.Features.EventLog.Models.EventLogQueryViewModel
+@{
+    ViewData["Title"] = "事件記錄查詢";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="stylesheet" href="~/css/eventlog.css" />
+
+<div class="container-fluid py-3">
+    <!-- 標題列 -->
+    <div class="d-flex align-items-center mb-3">
+        <h5 class="mb-0">
+            <i class="fas fa-clipboard-list text-primary me-2"></i>事件記錄查詢
+        </h5>
+    </div>
+
+    <!-- 查詢條件 -->
+    <div class="query-card p-3 mb-3">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-2">
+                <label class="form-label mb-1 small fw-bold">起始時間</label>
+                <input type="datetime-local" id="startTime" class="form-control form-control-sm"
+                       value="@Model.dtStartTime.ToString("yyyy-MM-ddTHH:mm")" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label mb-1 small fw-bold">結束時間</label>
+                <input type="datetime-local" id="endTime" class="form-control form-control-sm"
+                       value="@Model.dtEndTime.ToString("yyyy-MM-ddTHH:mm")" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label mb-1 small fw-bold">事件類型</label>
+                <select id="eventType" class="form-select form-select-sm">
+                    <option value="">全部</option>
+                    <option value="0">警報</option>
+                    <option value="2">警告</option>
+                    <option value="3">資訊</option>
+                    <option value="4">系統</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label mb-1 small fw-bold">嚴重程度</label>
+                <select id="severity" class="form-select form-select-sm">
+                    <option value="">全部</option>
+                    <option value="0">緊急</option>
+                    <option value="1">高</option>
+                    <option value="2">中</option>
+                    <option value="3">低</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label mb-1 small fw-bold">點位篩選</label>
+                <div class="input-group input-group-sm">
+                    <input type="text" id="sidFilter" class="form-control form-control-sm" placeholder="未選擇" readonly />
+                    <button class="btn btn-outline-primary" type="button" id="btnOpenPicker"
+                            onclick="window._eventLog.openPointPicker()">
+                        <i class="fas fa-crosshairs"></i>
+                    </button>
+                    <button class="btn btn-outline-secondary" type="button" id="btnClearPicker"
+                            onclick="window._eventLog.clearPointPicker()" style="display:none;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-1">
+                <label class="form-label mb-1 small fw-bold">確認狀態</label>
+                <select id="acknowledged" class="form-select form-select-sm">
+                    <option value="">全部</option>
+                    <option value="0">未確認</option>
+                    <option value="1">已確認</option>
+                </select>
+            </div>
+            <div class="col-md-1 d-flex gap-1">
+                <button id="btnQuery" class="btn btn-primary btn-sm flex-fill" onclick="window._eventLog.queryEvents()">
+                    <i class="fas fa-search me-1"></i>查詢
+                </button>
+            </div>
+        </div>
+        <!-- 快速時間範圍 -->
+        <div class="mt-2 d-flex align-items-center gap-1 flex-wrap">
+            <small class="text-muted me-1"><i class="fas fa-clock me-1"></i>快速：</small>
+            <button class="btn btn-outline-secondary btn-xs quick-range" data-hours="1">1h</button>
+            <button class="btn btn-outline-secondary btn-xs quick-range" data-hours="6">6h</button>
+            <button class="btn btn-outline-secondary btn-xs quick-range" data-hours="24">24h</button>
+            <button class="btn btn-outline-secondary btn-xs quick-range" data-hours="72">3天</button>
+            <button class="btn btn-outline-secondary btn-xs quick-range" data-hours="168">7天</button>
+            <button class="btn btn-outline-secondary btn-xs quick-range" data-hours="720">30天</button>
+        </div>
+    </div>
+
+    <!-- 統計摘要 -->
+    <div class="row g-2 mb-3" id="statsRow" style="display:none;">
+        <div class="col">
+            <div class="stat-card bg-light">
+                <div class="small text-muted">總筆數</div>
+                <div class="fw-bold fs-5" id="statTotal">0</div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="stat-card" style="background:#fde8e8;">
+                <div class="small text-muted">警報</div>
+                <div class="fw-bold fs-5 text-danger" id="statAlarm">0</div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="stat-card" style="background:#fff8e1;">
+                <div class="small text-muted">警告</div>
+                <div class="fw-bold fs-5 text-warning" id="statWarning">0</div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="stat-card" style="background:#e8f5e9;">
+                <div class="small text-muted">已恢復</div>
+                <div class="fw-bold fs-5 text-success" id="statCleared">0</div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="stat-card" style="background:#e3f2fd;">
+                <div class="small text-muted">未確認</div>
+                <div class="fw-bold fs-5 text-primary" id="statUnack">0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 結果表格 -->
+    <div class="query-card position-relative">
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">載入中...</span>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center p-3 pb-0">
+            <span class="text-muted small" id="resultInfo">請設定條件後點擊查詢</span>
+            <button class="btn btn-outline-success btn-sm" id="btnExport" onclick="window._eventLog.exportCSV()" style="display:none;">
+                <i class="fas fa-file-csv me-1"></i>匯出 CSV
+            </button>
+        </div>
+
+        <div class="table-container p-3">
+            <table class="table table-hover table-sm result-table mb-0" id="resultTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>發生時間</th>
+                        <th>事件類型</th>
+                        <th>嚴重程度</th>
+                        <th>訊息</th>
+                        <th>恢復時間</th>
+                        <th>確認狀態</th>
+                        <th>確認者</th>
+                    </tr>
+                </thead>
+                <tbody id="resultBody">
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-5">
+                            <i class="fas fa-search fa-2x mb-2 d-block"></i>
+                            請設定查詢條件後點擊「查詢」按鈕
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 點位選擇 Modal（兩步驟：設備 → 點位）-->
+<div class="modal fade" id="ppModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width:440px;">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title mb-0" id="ppTitle">
+                    <i class="fas fa-crosshairs text-primary me-1"></i>選擇設備
+                </h6>
+                <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="padding:10px 14px;">
+                <!-- Step 1: 設備清單 -->
+                <div id="ppStep1">
+                    <div id="ppDeviceList" style="max-height:320px;overflow-y:auto;"></div>
+                </div>
+                <!-- Step 2: 點位清單 -->
+                <div id="ppStep2" style="display:none;">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <button class="btn btn-link btn-sm text-primary p-0" onclick="window._eventLog.ppBack()">
+                            <i class="fas fa-arrow-left me-1"></i>返回
+                        </button>
+                        <span class="badge bg-secondary" id="ppDevName"></span>
+                    </div>
+                    <input type="text" id="ppSearch" class="form-control form-control-sm mb-2"
+                           placeholder="搜尋點位名稱..." oninput="window._eventLog.ppFilter(this.value)" />
+                    <div id="ppPointList" style="max-height:280px;overflow-y:auto;"></div>
+                </div>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary btn-sm" id="ppConfirmBtn"
+                        onclick="window._eventLog.ppConfirm()" disabled>確認</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/eventlog.js"></script>
+}

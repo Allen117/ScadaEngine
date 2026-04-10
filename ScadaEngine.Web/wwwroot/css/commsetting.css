@@ -1,0 +1,31 @@
+.coordinator-item,
+.coordinator-toggle {
+    border-left: 3px solid transparent;
+    transition: border-color 0.15s;
+}
+.coordinator-item:hover,
+.coordinator-toggle:hover {
+    border-left-color: #0d6efd;
+}
+.coordinator-item.active,
+.coordinator-toggle.active {
+    border-left-color: #0d6efd;
+    background-color: #e8f0fe !important;
+    color: #0d6efd !important;
+}
+.sub-item {
+    border-left: 3px solid transparent;
+    background-color: #f8f9fa;
+    transition: border-color 0.15s;
+}
+.sub-item:hover {
+    border-left-color: #6ea8fe;
+}
+.sub-item.active {
+    border-left-color: #6ea8fe;
+    background-color: #dbe9fd !important;
+    color: #0d6efd !important;
+}
+.toggle-icon.open {
+    transform: rotate(90deg);
+}

@@ -1,0 +1,234 @@
+@{
+    ViewData["Title"] = "警報設定";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var coordList = ViewBag.CoordinatorList as List<ScadaEngine.Engine.Models.CoordinatorModel>;
+    var pointList = ViewBag.PointList as List<ScadaEngine.Engine.Communication.Modbus.Models.ModbusPointModel>;
+    var rules     = ViewBag.Rules as List<ScadaEngine.Common.Data.Models.AlarmRuleModel>;
+
+    var coordJson = System.Text.Json.JsonSerializer.Serialize(
+        coordList!.Select(c => new { id = c.Id, name = c.szName, modbusId = c.szModbusID ?? "", deviceName = c.szDeviceName ?? "" })
+    );
+    var pointJson = System.Text.Json.JsonSerializer.Serialize(
+        pointList!.Select(p => new { sid = p.szSID, name = p.szName, unit = p.szUnit ?? "", dataType = p.szDataType ?? "" })
+    );
+    var rulesJson = System.Text.Json.JsonSerializer.Serialize(
+        rules!.Select(r => new {
+            id = r.nId, sid = r.szSID, pointName = r.szPointName ?? r.szSID,
+            isEnabled = r.isEnabled,
+            isAlarmHigh = r.isAlarmHigh, alarmHighValue = r.dAlarmHighValue,
+            deadbandHigh = r.dDeadbandHigh, alarmHighSeverity = r.nAlarmHighSeverity,
+            isAlarmLow = r.isAlarmLow, alarmLowValue = r.dAlarmLowValue,
+            deadbandLow = r.dDeadbandLow, alarmLowSeverity = r.nAlarmLowSeverity,
+            isDiAlarm = r.isDiAlarm, diTriggerState = r.szDiTriggerState,
+            diAlarmSeverity = r.nDiAlarmSeverity,
+            diOnLabel = r.szDiOnLabel ?? "", diOffLabel = r.szDiOffLabel ?? "",
+            remarks = r.szRemarks ?? ""
+        })
+    );
+}
+
+<link rel="stylesheet" href="~/css/alarmsetting.css" asp-append-version="true" />
+
+<div class="container-fluid mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0"><i class="fas fa-bell me-2"></i>警報設定</h4>
+        <button class="btn btn-primary" onclick="window._alarm.showAddModal()">
+            <i class="fas fa-plus me-1"></i>新增規則
+        </button>
+    </div>
+
+    <!-- 規則列表 -->
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="rulesTable">
+                    <thead class="table-dark">
+                        <tr>
+                            <th style="width:50px">啟用</th>
+                            <th>設備 / 點位</th>
+                            <th>上限警報</th>
+                            <th>下限警報</th>
+                            <th>DI 警報</th>
+                            <th>備註</th>
+                            <th style="width:120px">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rulesBody"></tbody>
+                </table>
+            </div>
+            <div id="emptyMsg" class="text-center text-muted py-4 d-none">
+                <i class="fas fa-info-circle me-1"></i>尚無警報規則，請點擊「新增規則」
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 新增/編輯 Modal -->
+<div class="modal fade" id="ruleModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ruleModalTitle">新增警報規則</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editId" />
+
+                <!-- 點位選擇 -->
+                <input type="hidden" id="txtSid" />
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label">設備</label>
+                        <select class="form-select" id="selCoord" onchange="window._alarm.onCoordChange()">
+                            <option value="">-- 請選擇 --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-none" id="subDeviceCol">
+                        <label class="form-label">子設備</label>
+                        <select class="form-select" id="selSubDevice" onchange="window._alarm.onSubDeviceChange()">
+                            <option value="">-- 請選擇子設備 --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4" id="pointCol">
+                        <label class="form-label">點位</label>
+                        <select class="form-select" id="selPoint" onchange="window._alarm.onPointChange()">
+                            <option value="">-- 請先選擇設備 --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <hr />
+
+                <!-- 上限警報 -->
+                <div class="row mb-3 align-items-center">
+                    <div class="col-md-2">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="chkAlarmHigh"
+                                   onchange="window._alarm.toggleSection('high')">
+                            <label class="form-check-label fw-bold">上限警報</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3" id="secHighValue">
+                        <label class="form-label">閾值</label>
+                        <input type="number" class="form-control" id="txtAlarmHighValue" step="any" />
+                    </div>
+                    <div class="col-md-3" id="secHighDeadband">
+                        <label class="form-label">死區</label>
+                        <input type="number" class="form-control" id="txtDeadbandHigh" step="any" value="0" />
+                    </div>
+                    <div class="col-md-3" id="secHighSeverity">
+                        <label class="form-label">嚴重程度</label>
+                        <select class="form-select" id="selHighSeverity">
+                            <option value="0">緊急</option>
+                            <option value="1" selected>高</option>
+                            <option value="2">中</option>
+                            <option value="3">低</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 下限警報 -->
+                <div class="row mb-3 align-items-center">
+                    <div class="col-md-2">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="chkAlarmLow"
+                                   onchange="window._alarm.toggleSection('low')">
+                            <label class="form-check-label fw-bold">下限警報</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3" id="secLowValue">
+                        <label class="form-label">閾值</label>
+                        <input type="number" class="form-control" id="txtAlarmLowValue" step="any" />
+                    </div>
+                    <div class="col-md-3" id="secLowDeadband">
+                        <label class="form-label">死區</label>
+                        <input type="number" class="form-control" id="txtDeadbandLow" step="any" value="0" />
+                    </div>
+                    <div class="col-md-3" id="secLowSeverity">
+                        <label class="form-label">嚴重程度</label>
+                        <select class="form-select" id="selLowSeverity">
+                            <option value="0">緊急</option>
+                            <option value="1" selected>高</option>
+                            <option value="2">中</option>
+                            <option value="3">低</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- DI 警報 -->
+                <div class="row mb-3 align-items-center">
+                    <div class="col-md-2">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="chkDiAlarm"
+                                   onchange="window._alarm.toggleSection('di')">
+                            <label class="form-check-label fw-bold">DI 警報</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3" id="secDiTrigger">
+                        <label class="form-label">觸發狀態</label>
+                        <select class="form-select" id="selDiTrigger">
+                            <option value="ON">ON</option>
+                            <option value="OFF">OFF</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3" id="secDiSeverity">
+                        <label class="form-label">嚴重程度</label>
+                        <select class="form-select" id="selDiSeverity">
+                            <option value="0">緊急</option>
+                            <option value="1" selected>高</option>
+                            <option value="2">中</option>
+                            <option value="3">低</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row mb-3" id="secDiLabels" style="display:none;">
+                    <div class="col-md-2"></div>
+                    <div class="col-md-3">
+                        <label class="form-label">ON 標籤</label>
+                        <input type="text" class="form-control" id="txtDiOnLabel" placeholder="ON" maxlength="50" readonly />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">OFF 標籤</label>
+                        <input type="text" class="form-control" id="txtDiOffLabel" placeholder="OFF" maxlength="50" readonly />
+                    </div>
+                </div>
+
+                <hr />
+
+                <div class="row mb-3">
+                    <div class="col-md-8">
+                        <label class="form-label">備註</label>
+                        <input type="text" class="form-control" id="txtRemarks" maxlength="200" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">啟用</label>
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" id="chkEnabled" checked>
+                            <label class="form-check-label">啟用此規則</label>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="window._alarm.save()">
+                    <i class="fas fa-save me-1"></i>儲存
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        window._alarmInitData = {
+            coordinators: @Html.Raw(coordJson),
+            points: @Html.Raw(pointJson),
+            rules: @Html.Raw(rulesJson)
+        };
+    </script>
+    <script src="~/js/alarmsetting.js" asp-append-version="true"></script>
+}

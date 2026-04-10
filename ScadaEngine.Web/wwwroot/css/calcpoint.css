@@ -1,0 +1,88 @@
+/* 計算點位設定頁面樣式 */
+
+#calcPointTable th,
+#calcPointTable td {
+    vertical-align: middle;
+    font-size: 0.85rem;
+}
+
+#calcPointTable .font-monospace {
+    font-size: 0.80rem;
+}
+
+#calcPointTable .btn-sm {
+    padding: 0.15rem 0.55rem;
+    font-size: 0.75rem;
+}
+
+/* 變數對應表 */
+#variableTableBody .form-control,
+#variableTableBody .form-select {
+    font-size: 0.85rem;
+}
+
+#variableTableBody .btn-sm {
+    padding: 0.15rem 0.4rem;
+}
+
+/* 公式輸入框 */
+#inputFormula {
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+}
+
+/* 預覽結果 */
+#previewResult {
+    font-size: 0.95rem;
+    min-width: 150px;
+}
+
+/* 表格截斷 */
+.text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Badge 狀態 */
+.badge {
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* ========== 點位選擇器（Picker） ========== */
+#cpPointPickerModal .modal-header { border-bottom: 1px solid #dee2e6; }
+#cpPointPickerModal .modal-footer { border-top: 1px solid #dee2e6; }
+
+.cpPk-list-item {
+    padding: 8px 10px;
+    cursor: pointer;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 2px;
+    transition: background 0.15s;
+    border: 1px solid transparent;
+}
+.cpPk-list-item:hover { background: #e9ecef; }
+.cpPk-list-item.selected {
+    background: #cfe2ff;
+    border-color: #0d6efd;
+}
+
+.cpPk-source-item { padding: 14px 16px; }
+
+.cpPk-sub-item { padding-left: 28px; background: #f8f9fa; }
+.cpPk-sub-item:hover { background: #e9ecef; }
+
+.cpPk-item-name { font-size: 12px; color: #212529; }
+.cpPk-item-sub  { font-size: 10px; color: #6c757d; }
+.cpPk-item-unit { font-size: 11px; color: #fd7e14; margin-left: auto; white-space: nowrap; }
+
+/* 變數列點位顯示 */
+.var-point-label {
+    font-size: 0.85rem;
+    min-height: 1.4em;
+    line-height: 1.4;
+}

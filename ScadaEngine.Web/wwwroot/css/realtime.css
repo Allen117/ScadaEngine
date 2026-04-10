@@ -1,0 +1,84 @@
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.1) !important;
+}
+
+.row-recent {
+    animation: pulse-green 1s ease-in-out;
+}
+
+.row-outdated {
+    opacity: 0.7;
+}
+
+.row-nodata {
+    opacity: 0.5;
+    color: #6c757d;
+}
+
+thead th .sort-icon {
+    font-size: 0.75em;
+    opacity: 0.5;
+    margin-left: 4px;
+}
+
+thead th.sort-asc .sort-icon::before { content: '\25B2'; }
+thead th.sort-desc .sort-icon::before { content: '\25BC'; }
+thead th.sort-asc .sort-icon,
+thead th.sort-desc .sort-icon { opacity: 1; font-size: 0.8em; }
+thead th.sort-asc span,
+thead th.sort-desc span { display: inline; }
+
+@keyframes pulse-green {
+    0% { background-color: rgba(40, 167, 69, 0.3); }
+    100% { background-color: inherit; }
+}
+
+.cell-updated {
+    animation: cell-flash 0.8s ease-out;
+}
+
+@keyframes cell-flash {
+    0%   { background-color: rgba(255, 193, 7, 0.65); }
+    100% { background-color: transparent; }
+}
+
+.card {
+    border: none;
+    border-radius: 10px;
+}
+
+.card-header {
+    border-radius: 10px 10px 0 0 !important;
+}
+
+.coordinator-item,
+.coordinator-toggle {
+    border-left: 3px solid transparent;
+    transition: border-color 0.15s;
+}
+.coordinator-item:hover,
+.coordinator-toggle:hover {
+    border-left-color: #0d6efd;
+}
+.coordinator-item.active,
+.coordinator-toggle.active {
+    border-left-color: #0d6efd;
+    background-color: #e8f0fe !important;
+    color: #0d6efd !important;
+}
+.sub-item {
+    border-left: 3px solid transparent;
+    background-color: #f8f9fa;
+    transition: border-color 0.15s;
+}
+.sub-item:hover {
+    border-left-color: #6ea8fe;
+}
+.sub-item.active {
+    border-left-color: #6ea8fe;
+    background-color: #dbe9fd !important;
+    color: #0d6efd !important;
+}
+.toggle-icon.open {
+    transform: rotate(90deg);
+}

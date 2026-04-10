@@ -1,0 +1,71 @@
+.scada-gauge:hover .scada-hover-label,
+.scada-rt-value:hover .scada-hover-label,
+.scada-ctrl-btn:hover .scada-hover-label,
+.scada-di-point:hover .scada-hover-label,
+.scada-ao-point:hover .scada-hover-label,
+.scada-do-point:hover .scada-hover-label,
+.scada-pump:hover .scada-hover-label {
+    display: block !important;
+}
+
+@keyframes di-alarm-pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: .4; }
+}
+
+@keyframes pump-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+/* 控制按鈕 3D 浮起 + 點擊回饋 */
+.ctrl-btn-exec {
+    border-radius: 8px !important;
+    border: none !important;
+    border-top: 1px solid rgba(255,255,255,.25) !important;
+    box-shadow: 0 3px 6px rgba(0,0,0,.25), 0 1px 2px rgba(0,0,0,.15),
+                inset 0 1px 0 rgba(255,255,255,.2) !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,.25);
+    background-image: linear-gradient(to bottom, rgba(255,255,255,.12), rgba(0,0,0,.08));
+    transition: box-shadow .12s ease, transform .1s ease;
+}
+.ctrl-btn-exec:hover:not(:disabled) {
+    box-shadow: 0 4px 10px rgba(0,0,0,.3), 0 2px 4px rgba(0,0,0,.18),
+                inset 0 1px 0 rgba(255,255,255,.25) !important;
+    transform: translateY(-1px);
+}
+.ctrl-btn-exec:active:not(:disabled) {
+    box-shadow: 0 1px 2px rgba(0,0,0,.2),
+                inset 0 2px 4px rgba(0,0,0,.15) !important;
+    transform: translateY(1px);
+}
+
+/* AO 點位浮動按鈕 */
+.ao-point-label-btn {
+    box-shadow: 0 2px 4px rgba(0,0,0,.15);
+    transition: box-shadow .12s ease, transform .1s ease;
+}
+.ao-point-label-btn:hover {
+    box-shadow: 0 4px 10px rgba(0,0,0,.25);
+    transform: translateY(-1px);
+}
+.ao-point-label-btn:active {
+    box-shadow: 0 1px 2px rgba(0,0,0,.15),
+                inset 0 1px 3px rgba(0,0,0,.1) !important;
+    transform: translateY(1px);
+}
+
+/* DO 點位浮動按鈕 */
+.do-point-label-btn {
+    box-shadow: 0 2px 4px rgba(0,0,0,.15);
+    transition: box-shadow .12s ease, transform .1s ease;
+}
+.do-point-label-btn:hover {
+    box-shadow: 0 4px 10px rgba(0,0,0,.25);
+    transform: translateY(-1px);
+}
+.do-point-label-btn:active {
+    box-shadow: 0 1px 2px rgba(0,0,0,.15),
+                inset 0 1px 3px rgba(0,0,0,.1) !important;
+    transform: translateY(1px);
+}

@@ -1,0 +1,106 @@
+/* ── History / Trend 頁面樣式 ── */
+
+.coordinator-item,
+.coordinator-toggle {
+    border-left: 3px solid transparent;
+    transition: border-color 0.15s;
+}
+.coordinator-item:hover,
+.coordinator-toggle:hover { border-left-color: #0d6efd; }
+.coordinator-item.active,
+.coordinator-toggle.active {
+    border-left-color: #0d6efd;
+    background-color: #e8f0fe !important;
+    color: #0d6efd !important;
+}
+
+.sub-item {
+    border-left: 3px solid transparent;
+    background-color: #f8f9fa;
+    transition: border-color 0.15s;
+}
+.sub-item:hover { border-left-color: #6ea8fe; }
+.sub-item.active {
+    border-left-color: #6ea8fe;
+    background-color: #dbe9fd !important;
+    color: #0d6efd !important;
+}
+
+.toggle-icon.open { transform: rotate(90deg); }
+
+.btn-xs {
+    padding: 0.15rem 0.55rem;
+    font-size: 0.75rem;
+    border-radius: 0.25rem;
+    line-height: 1.4;
+}
+
+.card { border: none; border-radius: 10px; }
+.card-header { border-radius: 10px 10px 0 0 !important; }
+
+/* 點位選取區 */
+#pointListContainer .form-check {
+    border-bottom: 1px solid #f2f2f2;
+    margin-bottom: 0;
+}
+#pointListContainer .form-check:last-child { border-bottom: none; }
+#pointListContainer .form-check-label { cursor: pointer; user-select: none; }
+#pointListContainer .form-check-input:checked + .form-check-label {
+    font-weight: 600; color: #0d6efd;
+}
+
+/* 待查詢清單 */
+.basket-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.3rem 0.25rem;
+    border-bottom: 1px solid #f2f2f2;
+    font-size: 0.82rem;
+}
+.basket-item:last-child { border-bottom: none; }
+.basket-item:hover { background: #f8f9fa; }
+
+.color-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.btn-remove {
+    background: none; border: none;
+    color: #adb5bd; padding: 0 2px;
+    line-height: 1; font-size: 0.8rem;
+    cursor: pointer;
+}
+.btn-remove:hover { color: #dc3545; }
+
+/* 單軸/雙軸切換按鈕 */
+.axis-toggle-btn {
+    transition: all 0.15s ease;
+    box-shadow: 1px 2px 4px rgba(0,0,0,0.15);
+    position: relative;
+    top: 0;
+}
+.axis-toggle-btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+.axis-toggle-btn.pressed {
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    color: #fff !important;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+    top: 1px;
+}
+.axis-toggle-btn.pressed:hover {
+    background-color: #0b5ed7 !important;
+    border-color: #0a58ca !important;
+}
+
+/* 堆疊小圖 */
+.mini-chart-wrapper {
+    border-bottom: 1px solid rgba(0,0,0,0.07);
+}
+.mini-chart-wrapper:last-child { border-bottom: none; }

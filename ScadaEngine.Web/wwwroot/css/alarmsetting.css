@@ -1,0 +1,24 @@
+#rulesTable th {
+    font-size: .85rem;
+    white-space: nowrap;
+}
+#rulesTable td {
+    vertical-align: middle;
+    font-size: .85rem;
+}
+.badge-severity-0 { background-color: #dc3545; }
+.badge-severity-1 { background-color: #fd7e14; }
+.badge-severity-2 { background-color: #ffc107; color: #333; }
+.badge-severity-3 { background-color: #6c757d; }
+
+.alarm-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: .8rem;
+    margin-right: 4px;
+}
+.alarm-tag-high { background-color: #f8d7da; color: #842029; }
+.alarm-tag-low  { background-color: #fff3cd; color: #664d03; }
+.alarm-tag-di   { background-color: #d1e7dd; color: #0f5132; }
+.alarm-tag-off  { background-color: #e9ecef; color: #6c757d; }
