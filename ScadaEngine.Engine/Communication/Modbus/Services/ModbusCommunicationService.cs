@@ -70,6 +70,17 @@ public class ModbusCommunicationService : IDisposable
     private readonly ConcurrentDictionary<string, string> _lastPublishedQuality = new();
 
     /// <summary>
+    /// 上一次發布的時間快取，用於定期重新發布未變化的資料點 (SID -> DateTime)
+    /// 避免 Web 端因長時間未收到更新而標記為 STALE
+    /// </summary>
+    private readonly ConcurrentDictionary<string, DateTime> _lastPublishedTime = new();
+
+    /// <summary>
+    /// 定期重新發布的間隔（分鐘），需小於 Web 端 STALE 門檻（5 分鐘）
+    /// </summary>
+    private const int REPUBLISH_INTERVAL_MINUTES = 3;
+
+    /// <summary>
     /// 設備連線狀態
     /// </summary>
     public bool IsConnected { get; private set; } = false;
@@ -221,123 +232,83 @@ public async Task<bool> ConnectAsync()
     {
         var resultList = new List<RealtimeDataModel>();
 
-        _logger.LogInformation("[DEBUG] ReadAllTagsAsync 開始: IsConnected={IsConnected}, Client={Client}", 
+        _logger.LogDebug("ReadAllTagsAsync 開始: IsConnected={IsConnected}, Client={Client}",
                               IsConnected, _modbusClient != null ? "存在" : "null");
-
-        // 即使未連線也要嘗試讀取，以產生 Bad Quality 資料
-        // if (!IsConnected || _modbusClient == null)
-        // {
-        //     _logger.LogWarning("Modbus 未連線，無法讀取資料: {IP}", _deviceConfig.szIP);
-        //     return resultList;
-        // }
 
         try
         {
             var modbusIds = _deviceConfig.GetModbusIdArray();
-            _logger.LogInformation("開始並行處理 {Count} 個 ModbusId: {ModbusIds}", modbusIds.Length, string.Join(",", modbusIds));
+            _logger.LogDebug("開始循序處理 {Count} 個 ModbusId: {ModbusIds}", modbusIds.Length, string.Join(",", modbusIds));
 
-            // 建立並行任務清單，為每個 ModbusId 建立獨立的執行緒
-            var parallelTasks = modbusIds.Select(async (nModbusId, index) =>
+            // 循序處理每個 ModbusId（Modbus TCP 為 request-response 協定，共用同一個 TCP 連線不可並行）
+            for (int index = 0; index < modbusIds.Length; index++)
             {
+                var nModbusId = modbusIds[index];
                 try
                 {
-                    _logger.LogInformation("啟動執行緒輪詢 ModbusId: {ModbusId} (執行緒 {ThreadId}/{Total})", 
+                    _logger.LogDebug("輪詢 ModbusId: {ModbusId} ({Index}/{Total})",
                         nModbusId, index + 1, modbusIds.Length);
 
-                    // 在背景執行緒中讀取當前 ModbusId 的資料
-                    var tagDataList = await Task.Run(() => ReadTagsForModbusId(nModbusId));
+                    var tagDataList = await ReadTagsForModbusIdAsync(nModbusId);
 
                     if (tagDataList?.Count > 0)
                     {
-                        _logger.LogDebug("執行緒 ModbusId {ModbusId} 讀取完成: {TagCount} 個點位", nModbusId, tagDataList.Count);
+                        _logger.LogDebug("ModbusId {ModbusId} 讀取完成: {TagCount} 個點位", nModbusId, tagDataList.Count);
 
-                        // 偵測值變化並立即發布該 ModbusId 的變化資料到 MQTT Broker
+                        // 偵測值變化並發布至 MQTT Broker
                         if (_mqttPublishService != null && _mqttPublishService.IsConnected)
                         {
                             var changedDataList = DetectValueChanges(tagDataList);
-                            
+
                             if (changedDataList.Count > 0)
                             {
                                 var nPublishedCount = await _mqttPublishService.PublishBatchRealtimeDataAsync(changedDataList);
-                                _logger.LogDebug("執行緒 ModbusId {ModbusId} 已發布 {PublishedCount}/{ChangeCount} 筆變化資料至 MQTT (原始總數: {TotalCount})", 
+                                _logger.LogDebug("ModbusId {ModbusId} 已發布 {PublishedCount}/{ChangeCount} 筆變化資料至 MQTT (原始總數: {TotalCount})",
                                                nModbusId, nPublishedCount, changedDataList.Count, tagDataList.Count);
                             }
-                            else
-                            {
-                                _logger.LogTrace("執行緒 ModbusId {ModbusId}: 沒有值變化，跳過 MQTT 發布", nModbusId);
-                            }
-                        }
-                        else
-                        {
-                            _logger.LogDebug("執行緒 ModbusId {ModbusId}: MQTT 服務未啟用或未連線，跳過發布", nModbusId);
                         }
 
-                        return tagDataList;
+                        resultList.AddRange(tagDataList);
                     }
                     else
                     {
-                        _logger.LogWarning("執行緒 ModbusId {ModbusId} 未讀取到任何資料", nModbusId);
-                        return new List<RealtimeDataModel>();
+                        _logger.LogDebug("ModbusId {ModbusId} 未讀取到任何資料", nModbusId);
                     }
                 }
                 catch (Exception ex)
                 {
-                    // 檢查是否為連線相關錯誤
                     if (IsConnectionRelatedError(ex))
                     {
-                        _logger.LogError(ex, "執行緒 ModbusId {ModbusId} 連線失敗，標記為斷線狀態", nModbusId);
-                        IsConnected = false; // 標記連線狀態為斷線
-                        RecordConnectionFailure(); // 記錄連線失敗時間（僅第一次）
+                        _logger.LogError(ex, "ModbusId {ModbusId} 連線失敗，標記為斷線狀態", nModbusId);
+                        IsConnected = false;
+                        RecordConnectionFailure();
                     }
                     else
                     {
-                        _logger.LogError(ex, "執行緒輪詢 ModbusId {ModbusId} 時發生錯誤", nModbusId);
+                        _logger.LogError(ex, "輪詢 ModbusId {ModbusId} 時發生錯誤", nModbusId);
                     }
-                    return new List<RealtimeDataModel>();
-                }
-            }).ToArray();
-
-            // 等待所有並行任務完成
-            var allResults = await Task.WhenAll(parallelTasks);
-
-            // 合併所有執行緒的結果
-            foreach (var taskResults in allResults)
-            {
-                if (taskResults?.Count > 0)
-                {
-                    resultList.AddRange(taskResults);
                 }
             }
 
-            // 在 ReadAllTagsAsync 方法的最後：
-            // 原代碼：
-            // if (resultList.Count > 0)
-            // {
-            //     _dtLastSuccessfulRead = DateTime.Now;
-            // }
-
-            // 🔥 修正為：只統計真正成功讀取的資料（排除 Bad Quality）
+            // 只統計真正成功讀取的資料（排除 Bad Quality）
             var nSuccessCount = resultList.Count(r => r.IsReadSuccess);
             if (nSuccessCount > 0)
             {
                 _dtLastSuccessfulRead = DateTime.Now;
-                _dtFirstConnectionFailure = DateTime.MinValue; // 🔥 重置失敗追蹤
-                _logger.LogDebug("成功讀取 {SuccessCount} 個點位，更新最後成功時間: {Time}", 
+                _dtFirstConnectionFailure = DateTime.MinValue;
+                _logger.LogDebug("成功讀取 {SuccessCount} 個點位，更新最後成功時間: {Time}",
                             nSuccessCount, _dtLastSuccessfulRead.ToString("HH:mm:ss.fff"));
             }
             else if (resultList.Count > 0)
             {
-                // 有資料但都是 Bad Quality
                 _logger.LogWarning("讀取到 {Count} 個點位但全部為 Bad Quality，不更新成功時間", resultList.Count);
             }
 
-            _logger.LogTrace("完成並行輪詢所有 ModbusId，總計讀取 {Count} 個點位資料", resultList.Count);
+            _logger.LogTrace("完成循序輪詢所有 ModbusId，總計讀取 {Count} 個點位資料", resultList.Count);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "讀取 Modbus 資料時發生錯誤: {IP}", _deviceConfig.szIP);
-            
-            // 連線可能已斷開，標記為未連線
             IsConnected = false;
         }
 
@@ -345,14 +316,14 @@ public async Task<bool> ConnectAsync()
     }
 
     /// <summary>
-    /// 讀取指定 ModbusId 的所有點位資料 - 使用智慧批量讀取
+    /// 讀取指定 ModbusId 的所有點位資料 - 使用智慧批量讀取（循序，批次間加延遲）
     /// </summary>
     /// <param name="nModbusId">Modbus 站號</param>
     /// <returns>即時資料清單</returns>
-    private List<RealtimeDataModel> ReadTagsForModbusId(byte nModbusId)
+    private async Task<List<RealtimeDataModel>> ReadTagsForModbusIdAsync(byte nModbusId)
     {
         var resultList = new List<RealtimeDataModel>();
-        _logger.LogInformation("開始讀取 ModbusId {ModbusId} 的資料，總計 {TagCount} 個點位", nModbusId, _deviceConfig.tagList.Count);
+        _logger.LogDebug("開始讀取 ModbusId {ModbusId} 的資料，總計 {TagCount} 個點位", nModbusId, _deviceConfig.tagList.Count);
 
         try
         {
@@ -384,37 +355,42 @@ public async Task<bool> ConnectAsync()
             var batchGroups = OptimizeBatchReads(validTags, nModbusId);
             _logger.LogDebug("ModbusId {ModbusId} 分割為 {BatchCount} 個批次讀取", nModbusId, batchGroups.Count);
 
-            // 嘗試批量讀取
+            // 循序批量讀取，批次間加延遲避免對設備過度密集請求
             bool hasConnectionError = false;
-            foreach (var batchGroup in batchGroups)
+            for (int nBatchIndex = 0; nBatchIndex < batchGroups.Count; nBatchIndex++)
             {
+                var batchGroup = batchGroups[nBatchIndex];
                 try
                 {
                     var batchResults = ReadBatchGroup(batchGroup, nModbusId);
                     resultList.AddRange(batchResults);
-                    
+
                     // 檢查是否包含 Bad quality 資料（可能是連線失敗）
                     var badQualityCount = batchResults.Count(r => r.szQuality == "Bad");
                     if (badQualityCount > 0)
                     {
                         hasConnectionError = true;
-                        _logger.LogWarning("批次 {BatchIndex} 包含 {BadCount} 個 Bad 品質資料點", 
-                                         batchGroups.IndexOf(batchGroup) + 1, badQualityCount);
+                        _logger.LogWarning("批次 {BatchIndex} 包含 {BadCount} 個 Bad 品質資料點",
+                                         nBatchIndex + 1, badQualityCount);
                     }
                 }
                 catch (Exception ex)
                 {
-                    // 如果是連線錯誤，已在 ReadBatchGroup 中處理並返回 Bad quality 資料
                     if (IsConnectionRelatedError(ex))
                     {
                         hasConnectionError = true;
                         _logger.LogError(ex, "ModbusId {ModbusId} 批次讀取發生連線錯誤", nModbusId);
-                        // 不重新拋出，繼續處理其他批次
                     }
                     else
                     {
                         _logger.LogWarning(ex, "ModbusId {ModbusId} 批次讀取失敗，繼續下一個批次", nModbusId);
                     }
+                }
+
+                // 批次間延遲 20ms，讓 Modbus 設備有時間處理
+                if (nBatchIndex < batchGroups.Count - 1)
+                {
+                    await Task.Delay(20);
                 }
             }
 
@@ -422,13 +398,13 @@ public async Task<bool> ConnectAsync()
             if (resultList.Count == 0 && validTags.Count > 0 && !hasConnectionError)
             {
                 _logger.LogWarning("ModbusId {ModbusId} 批量讀取失敗，回退到單點位讀取模式", nModbusId);
-                
+
                 for (int i = 0; i < validTags.Count; i++)
                 {
                     var tag = validTags[i];
                     var nGlobalTagIndex = _deviceConfig.tagList.FindIndex(t => t.szName == tag.szName);
                     if (nGlobalTagIndex == -1) nGlobalTagIndex = i;
-                    
+
                     var singleResult = ReadSingleTag(tag, nModbusId, nGlobalTagIndex);
                     if (singleResult != null)
                     {
@@ -445,8 +421,8 @@ public async Task<bool> ConnectAsync()
             // 統計實際的成功和失敗數量
             var nSuccessCount = resultList.Count(r => r.IsReadSuccess);
             var nBadQualityCount = resultList.Count(r => !r.IsReadSuccess);
-            
-            _logger.LogInformation("ModbusId {ModbusId} 讀取完成: 成功 {SuccessCount}/{TotalCount} 個點位 (Bad Quality: {BadCount})", 
+
+            _logger.LogDebug("ModbusId {ModbusId} 讀取完成: 成功 {SuccessCount}/{TotalCount} 個點位 (Bad Quality: {BadCount})",
                                  nModbusId, nSuccessCount, validTags.Count, nBadQualityCount);
         }
         catch (Exception ex)
@@ -580,7 +556,7 @@ public async Task<bool> ConnectAsync()
 /// </summary>
 private List<RealtimeDataModel> ReadBatchGroup(ModbusBatchGroup batchGroup, byte nModbusId)
 {
-    _logger.LogInformation("[DEBUG] 開始 ReadBatchGroup: IP={IP}, FC={FC}, Addr={Addr}, Count={Count}", 
+    _logger.LogDebug("開始 ReadBatchGroup: IP={IP}, FC={FC}, Addr={Addr}, Count={Count}",
                           _deviceConfig.szIP, batchGroup.nFunctionCode, batchGroup.nStartAddress, batchGroup.nRegisterCount);
     var resultList = new List<RealtimeDataModel>();
 
@@ -603,7 +579,7 @@ private List<RealtimeDataModel> ReadBatchGroup(ModbusBatchGroup batchGroup, byte
         RecordConnectionFailure();
         // 🔥 關鍵：檢查是否超過延遲時間才產生 Bad Quality
         bool isTimeout = IsConnectionFailureTimeout();
-        _logger.LogInformation("[DEBUG] 檢查超時狀態: IsTimeout={IsTimeout}, FirstFailure={FirstFailure}, Now={Now}, Delay={Delay}ms", 
+        _logger.LogDebug("[DEBUG] 檢查超時狀態: IsTimeout={IsTimeout}, FirstFailure={FirstFailure}, Now={Now}, Delay={Delay}ms", 
                              isTimeout, _dtFirstConnectionFailure, DateTime.Now, ReconnectDelay.TotalMilliseconds);
         
         if (isTimeout)
@@ -776,10 +752,9 @@ private List<RealtimeDataModel> ReadBatchGroup(ModbusBatchGroup batchGroup, byte
     }
     catch (Exception ex)
     {
-        _logger.LogError("[DEBUG] ReadBatchGroup 發生異常: Type={Type}, Message={Message}", ex.GetType().Name, ex.Message);
-        
+        _logger.LogDebug("ReadBatchGroup 發生異常: Type={Type}, Message={Message}", ex.GetType().Name, ex.Message);
+
         bool isConnectionError = IsConnectionRelatedError(ex);
-        _logger.LogInformation("[DEBUG] 異常類型檢查: IsConnectionError={IsConnectionError}", isConnectionError);
         
         if (isConnectionError)
         {
@@ -793,7 +768,7 @@ private List<RealtimeDataModel> ReadBatchGroup(ModbusBatchGroup batchGroup, byte
             
             // 🔥 關鍵：檢查是否超過延遲時間
             bool isTimeout = IsConnectionFailureTimeout();
-            _logger.LogInformation("[DEBUG] Catch 區塊檢查超時: IsTimeout={IsTimeout}, FirstFailure={FirstFailure}, Delay={Delay}ms", 
+            _logger.LogDebug("[DEBUG] Catch 區塊檢查超時: IsTimeout={IsTimeout}, FirstFailure={FirstFailure}, Delay={Delay}ms", 
                                 isTimeout, _dtFirstConnectionFailure, ReconnectDelay.TotalMilliseconds);
             
             if (isTimeout)
@@ -863,7 +838,7 @@ private List<RealtimeDataModel> ReadBatchGroup(ModbusBatchGroup batchGroup, byte
         }
         else
         {
-            _logger.LogError(ex, "讀取批次組資料時發生錯誤: FunctionCode={FunctionCode}, StartAddress={StartAddress}, Count={RegisterCount}", 
+            _logger.LogWarning(ex, "讀取批次組資料時發生非連線錯誤（可能為啟動時序問題，下次輪詢將重試）: FunctionCode={FunctionCode}, StartAddress={StartAddress}, Count={RegisterCount}",
                         batchGroup.nFunctionCode, batchGroup.nStartAddress, batchGroup.nRegisterCount);
         }
     }
@@ -878,7 +853,7 @@ private List<RealtimeDataModel> ReadBatchGroup(ModbusBatchGroup batchGroup, byte
     // /// <returns>即時資料清單</returns>
     // private List<RealtimeDataModel> ReadBatchGroup(ModbusBatchGroup batchGroup, byte nModbusId)
     // {
-    //     _logger.LogInformation("[DEBUG] 開始 ReadBatchGroup: IP={IP}, FC={FC}, Addr={Addr}, Count={Count}", 
+    //     _logger.LogDebug("[DEBUG] 開始 ReadBatchGroup: IP={IP}, FC={FC}, Addr={Addr}, Count={Count}", 
     //                           _deviceConfig.szIP, batchGroup.nFunctionCode, batchGroup.nStartAddress, batchGroup.nRegisterCount);
     //     var resultList = new List<RealtimeDataModel>();
 
@@ -1000,7 +975,7 @@ private List<RealtimeDataModel> ReadBatchGroup(ModbusBatchGroup batchGroup, byte
     //         _logger.LogError("[DEBUG] ReadBatchGroup 發生異常: Type={Type}, Message={Message}", ex.GetType().Name, ex.Message);
     //         // 檢查是否為連線相關錯誤
     //         bool isConnectionError = IsConnectionRelatedError(ex);
-    //         _logger.LogInformation("[DEBUG] 異常類型檢查: IsConnectionError={IsConnectionError}", isConnectionError);
+    //         _logger.LogDebug("[DEBUG] 異常類型檢查: IsConnectionError={IsConnectionError}", isConnectionError);
             
     //         if (isConnectionError)
     //         {
@@ -1013,7 +988,7 @@ private List<RealtimeDataModel> ReadBatchGroup(ModbusBatchGroup batchGroup, byte
                 
     //             // 檢查是否已超過延遲時間才標記為 Bad quality
     //             bool isTimeout = IsConnectionFailureTimeout();
-    //             _logger.LogInformation("[DEBUG] 檢查超時: IsTimeout={IsTimeout}, FirstFailure={FirstFailure}, Now={Now}, Delay={Delay}ms", 
+    //             _logger.LogDebug("[DEBUG] 檢查超時: IsTimeout={IsTimeout}, FirstFailure={FirstFailure}, Now={Now}, Delay={Delay}ms", 
     //                                  isTimeout, _dtFirstConnectionFailure, DateTime.Now, ReconnectDelay.TotalMilliseconds);
                 
     //             if (isTimeout)
@@ -1473,19 +1448,32 @@ public bool ShouldReconnect()
                 hasQualityChanged = true;
             }
 
-            bool hasChanged = hasValueChanged || hasQualityChanged;
+            // 檢查是否超過定期重新發布間隔（防止 Web 端標記為 STALE）
+            bool isRepublishDue = false;
+            if (_lastPublishedTime.TryGetValue(currentData.szSID, out var dtLastPublished))
+            {
+                if (DateTime.Now.Subtract(dtLastPublished).TotalMinutes >= REPUBLISH_INTERVAL_MINUTES)
+                {
+                    isRepublishDue = true;
+                }
+            }
+
+            bool hasChanged = hasValueChanged || hasQualityChanged || isRepublishDue;
 
             if (hasChanged)
             {
                 // 更新值快取
                 _lastPublishedValues.AddOrUpdate(currentData.szSID, currentData.fValue, (szKey, szOldValue) => currentData.fValue);
-                
+
                 // 更新品質快取
                 _lastPublishedQuality.AddOrUpdate(currentData.szSID, currentData.szQuality, (szKey, szOldQuality) => currentData.szQuality);
-                
+
+                // 更新發布時間快取
+                _lastPublishedTime.AddOrUpdate(currentData.szSID, DateTime.Now, (szKey, _) => DateTime.Now);
+
                 // 添加到變化清單
                 changedDataList.Add(currentData);
-                
+
                 // 記錄變化詳情
                 var szChangeReason = "";
                 if (hasValueChanged && hasQualityChanged)
@@ -1500,8 +1488,12 @@ public bool ShouldReconnect()
                 {
                     szChangeReason = "品質變化";
                 }
-                
-                _logger.LogTrace("偵測到變化: SID={SID}, 原因={Reason}, 值={NewValue}, 品質={NewQuality}", 
+                else if (isRepublishDue)
+                {
+                    szChangeReason = "定期重新發布";
+                }
+
+                _logger.LogTrace("偵測到變化: SID={SID}, 原因={Reason}, 值={NewValue}, 品質={NewQuality}",
                                currentData.szSID, szChangeReason, currentData.fValue.ToString("F4"), currentData.szQuality);
             }
         }
@@ -1538,15 +1530,15 @@ public bool ShouldReconnect()
         if (!_isDisposed)
         {
             _isDisposed = true;
-            
-            Task.Run(async () =>
-            {
-                await DisconnectAsync();
-                _connectionSemaphore.Dispose();
-                
-                // 清理值變化快取
-                _lastPublishedValues.Clear();
-            });
+
+            // 同步等待斷線完成，確保 TCP 連線確實關閉
+            DisconnectInternal();
+            _connectionSemaphore.Dispose();
+
+            // 清理值變化快取
+            _lastPublishedValues.Clear();
+            _lastPublishedQuality.Clear();
+            _lastPublishedTime.Clear();
         }
     }
 }

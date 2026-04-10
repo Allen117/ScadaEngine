@@ -16,27 +16,6 @@ public interface IDataRepository
     Task<bool> TestConnectionAsync();
 
     /// <summary>
-    /// 儲存即時資料至資料庫
-    /// </summary>
-    /// <param name="realtimeDataList">即時資料清單</param>
-    /// <returns>成功儲存的資料筆數</returns>
-    Task<int> SaveRealtimeDataAsync(IEnumerable<RealtimeDataModel> realtimeDataList);
-
-    /// <summary>
-    /// 儲存單筆即時資料至資料庫
-    /// </summary>
-    /// <param name="realtimeData">即時資料</param>
-    /// <returns>儲存成功回傳 true，失敗回傳 false</returns>
-    Task<bool> SaveRealtimeDataAsync(RealtimeDataModel realtimeData);
-
-    /// <summary>
-    /// 儲存設備配置至資料庫
-    /// </summary>
-    /// <param name="deviceConfig">設備配置</param>
-    /// <returns>儲存成功回傳 true，失敗回傳 false</returns>
-    Task<bool> SaveConfigAsync(ModbusDeviceConfigModel deviceConfig);
-
-    /// <summary>
     /// 查詢指定時間範圍的歷史資料
     /// </summary>
     /// <param name="szSID">點位識別碼</param>
@@ -44,12 +23,6 @@ public interface IDataRepository
     /// <param name="dtEndTime">結束時間</param>
     /// <returns>歷史資料清單</returns>
     Task<IEnumerable<RealtimeDataModel>> GetHistoryDataAsync(string szSID, DateTime dtStartTime, DateTime dtEndTime);
-
-    /// <summary>
-    /// 取得所有設備配置
-    /// </summary>
-    /// <returns>設備配置清單</returns>
-    Task<IEnumerable<ModbusDeviceConfigModel>> GetDeviceConfigsAsync();
 
     /// <summary>
     /// 儲存歷史資料至 HistoryData 資料表
@@ -103,6 +76,12 @@ public interface IDataRepository
     /// </summary>
     /// <returns>使用者總數</returns>
     Task<int> GetUserCountAsync();
+
+    /// <summary>
+    /// 取得 Users 資料表中 Admin 角色的使用者數量
+    /// </summary>
+    /// <returns>Admin 角色使用者總數</returns>
+    Task<int> GetAdminCountAsync();
 
     /// <summary>
     /// 驗證使用者帳號密碼 (密碼以 SHA256 hex 儲存於 PasswordHash 欄位)
@@ -175,11 +154,99 @@ public interface IDataRepository
     Task<IEnumerable<UserModel>> GetAllUsersAsync();
 
     /// <summary>
+    /// 依帳號名稱取得單一使用者（含 Role），登入時用
+    /// </summary>
+    Task<UserModel?> GetUserByUsernameAsync(string szUsername);
+
+    /// <summary>
     /// 新增使用者帳號（密碼以 SHA256 hex 儲存）
     /// </summary>
     /// <param name="user">使用者資料（szPasswordHash 欄位傳入明文密碼，方法內自動雜湊）</param>
     /// <returns>新增成功回傳 true</returns>
     Task<bool> CreateUserAsync(UserModel user);
+
+    /// <summary>
+    /// 更新使用者帳號（不含密碼）
+    /// </summary>
+    Task<bool> UpdateUserAsync(UserModel user);
+
+    /// <summary>
+    /// 刪除使用者帳號（同時刪除 UserPermissions）
+    /// </summary>
+    Task<bool> DeleteUserAsync(int nUserID);
+
+    /// <summary>
+    /// 取得使用者權限 JSON
+    /// </summary>
+    Task<UserPermissionModel?> GetUserPermissionsAsync(int nUserID);
+
+    /// <summary>
+    /// 儲存使用者權限 JSON（UPSERT）
+    /// </summary>
+    Task<bool> SaveUserPermissionsAsync(int nUserID, string szPermissionJson);
+
+    /// <summary>
+    /// 更新使用者最後登入時間
+    /// </summary>
+    /// <param name="szUsername">使用者名稱</param>
+    /// <returns>更新成功回傳 true</returns>
+    Task<bool> UpdateLastLoginAsync(string szUsername);
+
+    /// <summary>
+    /// 儲存手動控制值（UPSERT ManualControlValue，IsAuto=0）
+    /// </summary>
+    /// <param name="szSid">點位 SID</param>
+    /// <param name="dValue">手動控制值</param>
+    /// <returns>儲存成功回傳 true</returns>
+    Task<bool> SaveManualControlValueAsync(string szSid, double dValue);
+
+    /// <summary>
+    /// 將點位標記為自動控制（UPSERT ManualControlValue，IsAuto=1）
+    /// </summary>
+    /// <param name="szSid">點位 SID</param>
+    /// <returns>儲存成功回傳 true</returns>
+    Task<bool> SetAutoControlAsync(string szSid);
+
+    /// <summary>
+    /// 確保 ManualControlValue 存在該 SID 的記錄（不存在時 INSERT IsAuto=1, Value=0）
+    /// 已存在的記錄不會被覆蓋。
+    /// </summary>
+    Task EnsureManualControlEntryExistsAsync(string szSid);
+
+    /// <summary>
+    /// 讀取所有手動控制值與自動模式狀態
+    /// </summary>
+    /// <returns>SID → (Value, IsAuto) 字典</returns>
+    Task<Dictionary<string, (double dValue, bool isAuto)>> LoadManualControlValuesAsync();
+
+    #region CalculatedPoints 計算點位
+
+    /// <summary>
+    /// 取得所有計算點位設定
+    /// </summary>
+    Task<IEnumerable<CalculatedPointModel>> GetAllCalculatedPointsAsync();
+
+    /// <summary>
+    /// 新增計算點位
+    /// </summary>
+    Task<bool> CreateCalculatedPointAsync(CalculatedPointModel model);
+
+    /// <summary>
+    /// 更新計算點位
+    /// </summary>
+    Task<bool> UpdateCalculatedPointAsync(CalculatedPointModel model);
+
+    /// <summary>
+    /// 刪除計算點位
+    /// </summary>
+    Task<bool> DeleteCalculatedPointAsync(string szSID);
+
+    /// <summary>
+    /// 取得計算點位數量（用於產生下一個 SID）
+    /// </summary>
+    Task<int> GetCalculatedPointMaxIndexAsync();
+
+    #endregion
 
     /// <summary>
     /// 釋放資源

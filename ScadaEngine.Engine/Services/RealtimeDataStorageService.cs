@@ -14,6 +14,7 @@ public class RealtimeDataStorageService : IDisposable
     private readonly IDataRepository _dataRepository;
     private readonly Timer _timer;
     private readonly ConcurrentDictionary<string, LatestDataModel> _latestDataCache;
+    private readonly ConcurrentDictionary<string, LatestDataModel> _persistentCache = new();
     private readonly object _lockObject = new();
     private bool _isDisposed = false;
 
@@ -57,6 +58,8 @@ public class RealtimeDataStorageService : IDisposable
             
             // 使用 SID 作為鍵，每個點位只保留最新的數值
             _latestDataCache.AddOrUpdate(realtimeData.szSID, latestData, (szKey, szOldValue) => latestData);
+            // 持久快取（不會被 Save 清空），供 LogicFlow 等服務即時讀取
+            _persistentCache.AddOrUpdate(realtimeData.szSID, latestData, (szKey, szOldValue) => latestData);
             
             _logger.LogTrace("已添加即時資料到最新資料暫存: SID={SID}, Value={Value}", 
                 realtimeData.szSID, realtimeData.fValue);
@@ -164,6 +167,14 @@ public class RealtimeDataStorageService : IDisposable
     public int GetCachedDataCount()
     {
         return _latestDataCache.Count;
+    }
+
+    /// <summary>
+    /// 取得持久快取的所有最新值（不受 Save 清空影響），供 LogicFlow 等服務即時讀取
+    /// </summary>
+    public IReadOnlyDictionary<string, LatestDataModel> GetAllLatestValues()
+    {
+        return _persistentCache;
     }
 
     /// <summary>

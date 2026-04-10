@@ -2,7 +2,7 @@
   "IP": "127.0.0.1",
   "Port": 502,
   "ModbusId": "3,4",
-  "connectTimeout": 100,
+  "ConnectTimeout": 500,
   "Tags": [
     {
       "Name": "Single1-1",
@@ -15,8 +15,8 @@
     },
     {
       "Name": "Single1-2",
-      "Address": "1002",
-      "DataType": "UINTEGER",
+      "Address": "40001",
+      "DataType": "INTEGER",
       "Ratio": "1",
       "Unit": "",
       "Min": "0",

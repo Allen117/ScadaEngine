@@ -311,6 +311,11 @@ public class ModbusDeviceConfigModel
     public string szCoordinatorName { get; set; } = string.Empty;
 
     /// <summary>
+    /// 採集週期 (毫秒)，從資料庫 ModbusCoordinator.DelayTime 讀取
+    /// </summary>
+    public int nCollectionIntervalMs { get; set; } = 1000;
+
+    /// <summary>
     /// 點位標籤清單
     /// </summary>
     public List<ModbusTagModel> tagList { get; set; } = new();

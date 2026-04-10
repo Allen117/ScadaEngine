@@ -108,6 +108,174 @@
         { "Name": "WidgetStateJson","Type": "nvarchar", "Length": -1,         "Nullable": true,
           "_comment": "該頁 widget 陣列 JSON，格式: [{szType,nX,nY,nW,nH,props:{...}}]" }
       ]
+    },
+    {
+      "_comment": "事件/警報記錄表 — 記錄警報觸發、恢復、確認的完整生命週期",
+      "TableName": "EventLog",
+      "Columns": [
+        { "Name": "Id",             "Type": "bigint",    "IsPrimaryKey": true, "IsIdentity": true, "Nullable": false,
+          "_comment": "自動遞增流水號，用 bigint 因為事件量大" },
+        { "Name": "SID",            "Type": "nvarchar",  "Length": 100,  "Nullable": false,
+          "_comment": "觸發事件的測點 SID，例如 196865-S1" },
+        { "Name": "EventType",      "Type": "tinyint",                   "Nullable": false,
+          "_comment": "0=警報(Alarm) 1=故障(Fault) 2=警告(Warning) 3=資訊(Info) 4=系統(System)" },
+        { "Name": "Severity",       "Type": "tinyint",                   "Nullable": false, "Default": 1,
+          "_comment": "嚴重程度: 0=緊急 1=高 2=中 3=低" },
+        { "Name": "TriggerValue",   "Type": "float",                     "Nullable": true,
+          "_comment": "觸發當下的測點數值" },
+        { "Name": "ThresholdValue", "Type": "float",                     "Nullable": true,
+          "_comment": "被違反的門檻值（上限/下限）" },
+        { "Name": "Operator",       "Type": "tinyint",                   "Nullable": true,
+          "_comment": "比較運算子: 0=> 1=< 2=>= 3=<= 4=== 5=!=，與 ConditionControlRules 一致" },
+        { "Name": "Message",        "Type": "nvarchar",  "Length": 500,  "Nullable": false,
+          "_comment": "事件描述文字，例如 '溫度超過上限 85°C'" },
+        { "Name": "OccurredAt",     "Type": "datetime",                  "Nullable": false, "Default": "getdate()",
+          "_comment": "事件發生時間" },
+        { "Name": "ClearedAt",      "Type": "datetime",                  "Nullable": true,
+          "_comment": "事件恢復/解除時間，NULL 表示仍在發生中" },
+        { "Name": "IsAcknowledged", "Type": "bit",                       "Nullable": false, "Default": 0,
+          "_comment": "是否已被操作人員確認" },
+        { "Name": "AcknowledgedBy", "Type": "nvarchar",  "Length": 50,   "Nullable": true,
+          "_comment": "確認人員的 Username" },
+        { "Name": "AcknowledgedAt", "Type": "datetime",                  "Nullable": true,
+          "_comment": "確認時間" },
+        { "Name": "Remarks",        "Type": "nvarchar",  "Length": 500,  "Nullable": true,
+          "_comment": "操作人員備註" }
+      ],
+      "ClusteredIndex": ["OccurredAt", "SID"]
+    },
+    {
+      "_comment": "警報規則表 — 每個 SID 一筆規則，定義上限/下限/DI 警報條件",
+      "TableName": "AlarmRules",
+      "Columns": [
+        { "Name": "Id",                "Type": "int",      "IsPrimaryKey": true, "IsIdentity": true, "Nullable": false },
+        { "Name": "SID",               "Type": "nvarchar", "Length": 100, "Nullable": false,
+          "_comment": "測點 SID，例如 196865-S1" },
+        { "Name": "IsEnabled",         "Type": "bit",      "Nullable": false, "Default": 1,
+          "_comment": "總開關" },
+        { "Name": "IsAlarmHigh",       "Type": "bit",      "Nullable": false, "Default": 0 },
+        { "Name": "AlarmHighValue",    "Type": "float",    "Nullable": true },
+        { "Name": "DeadbandHigh",      "Type": "float",    "Nullable": true, "Default": 0 },
+        { "Name": "AlarmHighSeverity", "Type": "tinyint",  "Nullable": false, "Default": 1,
+          "_comment": "0=緊急 1=高 2=中 3=低" },
+        { "Name": "IsAlarmLow",        "Type": "bit",      "Nullable": false, "Default": 0 },
+        { "Name": "AlarmLowValue",     "Type": "float",    "Nullable": true },
+        { "Name": "DeadbandLow",       "Type": "float",    "Nullable": true, "Default": 0 },
+        { "Name": "AlarmLowSeverity",  "Type": "tinyint",  "Nullable": false, "Default": 1 },
+        { "Name": "IsDiAlarm",         "Type": "bit",      "Nullable": false, "Default": 0,
+          "_comment": "DI 點位專用" },
+        { "Name": "DiTriggerState",    "Type": "nvarchar", "Length": 10,  "Nullable": true,
+          "_comment": "'ON' 或 'OFF'" },
+        { "Name": "DiAlarmSeverity",   "Type": "tinyint",  "Nullable": false, "Default": 1 },
+        { "Name": "DiOnLabel",         "Type": "nvarchar", "Length": 50,  "Nullable": true,
+          "_comment": "DI ON 狀態的顯示名稱，例如 '運轉'" },
+        { "Name": "DiOffLabel",        "Type": "nvarchar", "Length": 50,  "Nullable": true,
+          "_comment": "DI OFF 狀態的顯示名稱，例如 '停止'" },
+        { "Name": "Remarks",           "Type": "nvarchar", "Length": 200, "Nullable": true },
+        { "Name": "CreatedAt",         "Type": "datetime", "Nullable": false, "Default": "getdate()" },
+        { "Name": "UpdatedAt",         "Type": "datetime", "Nullable": true }
+      ]
+    },
+    {
+      "_comment": "AO 手動控制上次輸出值 — 以 SID 為主鍵，UPSERT 最新一筆",
+      "TableName": "ManualControlValue",
+      "Columns": [
+        { "Name": "SID",       "Type": "nvarchar", "Length": 100, "IsPrimaryKey": true, "Nullable": false },
+        { "Name": "Value",     "Type": "float",                   "Nullable": false },
+        { "Name": "IsAuto",    "Type": "bit",                     "Nullable": false, "Default": 0,
+          "_comment": "1=目前為自動控制, 0=手動控制" },
+        { "Name": "UpdatedAt", "Type": "datetime",                "Nullable": false, "Default": "getdate()" }
+      ]
+    },
+    {
+      "_comment": "流程圖控制 — 樹狀結構（資料夾與邏輯節點）",
+      "TableName": "LogicFlowTree",
+      "Columns": [
+        { "Name": "Id",        "Type": "int",      "IsPrimaryKey": true, "IsIdentity": true, "Nullable": false },
+        { "Name": "ParentId",  "Type": "int",                            "Nullable": true,
+          "_comment": "父節點 Id；NULL 表示根層級" },
+        { "Name": "Name",      "Type": "nvarchar", "Length": 100,        "Nullable": false },
+        { "Name": "NodeType",  "Type": "nvarchar", "Length": 10,         "Nullable": false,
+          "_comment": "'folder' 或 'logic'" },
+        { "Name": "SortOrder", "Type": "int",                            "Nullable": false, "Default": 0,
+          "_comment": "同層排序（由 0 起算）" },
+        { "Name": "IsEnabled", "Type": "bit",                            "Nullable": false, "Default": 1,
+          "_comment": "啟用/停用邏輯（僅 logic 類型有意義）" },
+        { "Name": "CreatedAt", "Type": "datetime",                       "Nullable": false, "Default": "getdate()" },
+        { "Name": "UpdatedAt", "Type": "datetime",                       "Nullable": false, "Default": "getdate()" }
+      ]
+    },
+    {
+      "_comment": "流程圖控制 — 圖形內容（一個邏輯節點對應一筆）",
+      "TableName": "LogicFlowDiagram",
+      "Columns": [
+        { "Name": "TreeId",      "Type": "int",      "IsPrimaryKey": true, "Nullable": false,
+          "_comment": "FK → LogicFlowTree.Id（由應用程式保證一致性）" },
+        { "Name": "DiagramJson", "Type": "nvarchar", "Length": -1,         "Nullable": true,
+          "_comment": "完整流程圖 JSON（nodes + edges）；nvarchar(MAX)" },
+        { "Name": "Version",     "Type": "int",                            "Nullable": false, "Default": 1,
+          "_comment": "樂觀鎖版本號" },
+        { "Name": "UpdatedAt",   "Type": "datetime",                       "Nullable": false, "Default": "getdate()" }
+      ]
+    },
+    {
+      "_comment": "使用者權限設定 — 每個 User 角色帳號對應一筆，Admin 不需要（全權限）",
+      "TableName": "UserPermissions",
+      "Columns": [
+        { "Name": "UserID",         "Type": "int",      "IsPrimaryKey": true, "Nullable": false,
+          "_comment": "FK → Users.UserID（由應用程式保證一致性）" },
+        { "Name": "PermissionJson", "Type": "nvarchar", "Length": -1,         "Nullable": false, "Default": "{}",
+          "_comment": "JSON 格式權限設定：{pages:[...], scadaPages:{pageSid:{canView,canControl}}}" },
+        { "Name": "UpdatedAt",      "Type": "datetime",                       "Nullable": false, "Default": "getdate()" }
+      ]
+    },
+    {
+      "_comment": "時間排程表 — 供 LogicFlow A接點排程模式使用，每筆為一個時段",
+      "TableName": "TimeSchedules",
+      "Columns": [
+        { "Name": "Id",              "Type": "int",      "IsPrimaryKey": true, "IsIdentity": true, "Nullable": false },
+        { "Name": "Name",            "Type": "nvarchar", "Length": 100,  "Nullable": false,
+          "_comment": "排程名稱，例如 '上班時間'" },
+        { "Name": "RecurrenceType",  "Type": "tinyint",                  "Nullable": false, "Default": 0,
+          "_comment": "0=每週 1=N週循環 2=每月 3=N月循環" },
+        { "Name": "RunLength",       "Type": "int",                      "Nullable": true,
+          "_comment": "跑幾週/月（type 1,3 時必填），例如 1=跑1週/月" },
+        { "Name": "RestLength",      "Type": "int",                      "Nullable": true,
+          "_comment": "休幾週/月（type 1,3 時必填），例如 1=休1週/月" },
+        { "Name": "AnchorDateTime",  "Type": "datetime",                 "Nullable": true,
+          "_comment": "週期起算時刻，精確到分鐘，決定交替切換點（type 1,3 時必填）" },
+        { "Name": "DaysOfWeek",      "Type": "nvarchar", "Length": 50,   "Nullable": true,
+          "_comment": "星期幾，逗號分隔: 1=週一...7=週日，例如 '1,2,3,4,5'（type 0,1 時使用）" },
+        { "Name": "DaysOfMonth",     "Type": "nvarchar", "Length": 100,  "Nullable": true,
+          "_comment": "每月幾號，逗號分隔，例如 '1,15'（type 2,3 時使用）" },
+        { "Name": "StartTime",       "Type": "nvarchar", "Length": 10,   "Nullable": false,
+          "_comment": "開始時間，24小時制 HH:mm，例如 '08:00'" },
+        { "Name": "EndTime",         "Type": "nvarchar", "Length": 10,   "Nullable": false,
+          "_comment": "結束時間，24小時制 HH:mm，例如 '17:00'" },
+        { "Name": "IsEnabled",       "Type": "bit",                      "Nullable": false, "Default": 1 },
+        { "Name": "Remarks",         "Type": "nvarchar", "Length": 200,  "Nullable": true },
+        { "Name": "CreatedAt",       "Type": "datetime",                 "Nullable": false, "Default": "getdate()" },
+        { "Name": "UpdatedAt",       "Type": "datetime",                 "Nullable": true }
+      ]
+    },
+    {
+      "_comment": "計算點位設定 — 使用者自訂公式，從多個原始點位衍生計算值",
+      "TableName": "CalculatedPoints",
+      "Columns": [
+        { "Name": "SID",             "Type": "nvarchar", "Length": 100, "IsPrimaryKey": true, "Nullable": false,
+          "_comment": "計算點位 SID，格式: CALC-S{N}" },
+        { "Name": "Name",            "Type": "nvarchar", "Length": 100, "Nullable": false },
+        { "Name": "Unit",            "Type": "nvarchar", "Length": 50,  "Nullable": true },
+        { "Name": "GroupName", "Type": "nvarchar", "Length": 100, "Nullable": true,
+          "_comment": "歸屬群組，用於 MQTT 主題分類" },
+        { "Name": "Formula",         "Type": "nvarchar", "Length": 500, "Nullable": false,
+          "_comment": "計算公式，變數名對應 InputMappings 的 key" },
+        { "Name": "InputMappings",   "Type": "nvarchar", "Length": -1,  "Nullable": false,
+          "_comment": "JSON: {\"變數名\":\"SID\", ...}；nvarchar(MAX)" },
+        { "Name": "IsEnabled",       "Type": "bit",      "Nullable": false, "Default": 1 },
+        { "Name": "CreatedAt",       "Type": "datetime", "Nullable": false, "Default": "getdate()" },
+        { "Name": "UpdatedAt",       "Type": "datetime", "Nullable": true }
+      ]
     }
   ]
 }

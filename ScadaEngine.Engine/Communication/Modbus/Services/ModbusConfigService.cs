@@ -154,7 +154,7 @@ public class ModbusConfigService
             config.szIP = jsonObj.IP ?? string.Empty;
             config.nPort = jsonObj.Port ?? 502;
             config.szModbusId = jsonObj.ModbusId ?? "1";
-            config.nConnectTimeout = jsonObj.connectTimeout ?? 1000;
+            config.nConnectTimeout = jsonObj.ConnectTimeout ?? 1000;
 
             // 映射點位清單
             if (jsonObj.Tags != null)
@@ -201,17 +201,20 @@ public class ModbusConfigService
     {
         try
         {
-            // 將配置儲存到資料庫並取得真實 ID
-            var nDatabaseId = await GetConfigDatabaseIdAsync(config, szFilePath);
-            
+            // 將配置儲存到資料庫並取得真實 ID 與採集週期
+            var (nDatabaseId, nDelayTime) = await GetConfigDatabaseIdAsync(config, szFilePath);
+
             // 將 DatabaseId 儲存到配置中，供後續動態 SID 生成使用
             config.nDatabaseId = nDatabaseId;
+
+            // 從 DB 讀取採集週期（DelayTime），若為 0 則使用預設 1000ms
+            config.nCollectionIntervalMs = nDelayTime > 0 ? nDelayTime : 1000;
 
             // 將 Coordinator 名稱 (JSON 檔名) 儲存到配置中，供發布 MQTT 時附帶
             config.szCoordinatorName = Path.GetFileNameWithoutExtension(szFilePath);
 
-            _logger.LogInformation("設備配置 DatabaseId 已設定: {DatabaseId}, IP: {IP}, ModbusId: {ModbusId}, CoordinatorName: {CoordinatorName}, 點位數量: {TagCount}",
-                                 nDatabaseId, config.szIP, config.szModbusId, config.szCoordinatorName, config.tagList.Count);
+            _logger.LogInformation("設備配置已設定: DatabaseId={DatabaseId}, IP={IP}, ModbusId={ModbusId}, CoordinatorName={CoordinatorName}, 採集週期={IntervalMs}ms, 點位數量={TagCount}",
+                                 nDatabaseId, config.szIP, config.szModbusId, config.szCoordinatorName, config.nCollectionIntervalMs, config.tagList.Count);
 
             // 將所有點位插入 ModbusPoints 表
             await InsertTagsToModbusPointsAsync(config, nDatabaseId);
@@ -293,13 +296,13 @@ public class ModbusConfigService
     /// </summary>
     /// <param name="config">設備配置</param>
     /// <param name="szFilePath">設定檔路徑</param>
-    /// <returns>資料庫 ID</returns>
-    private async Task<int> GetConfigDatabaseIdAsync(ModbusDeviceConfigModel config, string szFilePath)
+    /// <returns>(資料庫 ID, DB 中的 DelayTime)</returns>
+    private async Task<(int nId, int nDelayTime)> GetConfigDatabaseIdAsync(ModbusDeviceConfigModel config, string szFilePath)
     {
         try
         {
             var szFileName = Path.GetFileNameWithoutExtension(szFilePath);
-            
+
             // 建立 Coordinator 模型
             var coordinator = new CoordinatorModel
             {
@@ -309,22 +312,22 @@ public class ModbusConfigService
                 isMonitorEnabled = true
             };
 
-            // 儲存或更新到資料庫並取得 ID
-            var nDatabaseId = await _dataRepository.SaveCoordinatorAsync(coordinator);
-            
-            _logger.LogInformation("Coordinator 配置已儲存到資料庫: ID={Id}, Name={Name}, ModbusID={ModbusID}", 
-                                 nDatabaseId, coordinator.szName, coordinator.szModbusID);
-            
-            return nDatabaseId;
+            // 儲存或更新到資料庫並取得 ID 與 DelayTime
+            var (nDatabaseId, nDelayTime) = await _dataRepository.SaveCoordinatorAsync(coordinator);
+
+            _logger.LogInformation("Coordinator 配置已儲存到資料庫: ID={Id}, Name={Name}, ModbusID={ModbusID}, DelayTime={DelayTime}ms",
+                                 nDatabaseId, coordinator.szName, coordinator.szModbusID, nDelayTime);
+
+            return (nDatabaseId, nDelayTime);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "儲存 Coordinator 配置到資料庫時發生錯誤: {FilePath}", szFilePath);
-            
+
             // 發生錯誤時使用檔案名稱 Hash 作為備用方案
             var szFileName = Path.GetFileNameWithoutExtension(szFilePath);
             var nHashCode = Math.Abs(szFileName.GetHashCode());
-            return nHashCode % 1000 + 1;
+            return (nHashCode % 1000 + 1, 1000);
         }
     }
 

@@ -201,6 +201,19 @@ public static class DataServiceExtensions
         services.AddSingleton<HistoryDataStorageService>();
         services.AddSingleton<RealtimeDataStorageService>();
 
+        // 註冊警報監控服務為單例
+        services.AddSingleton<AlarmEventLogRepository>();
+        services.AddSingleton<AlarmMonitorService>();
+
+        // 註冊 LogicFlow 資料存取服務為單例
+        services.AddSingleton<LogicFlowRepository>();
+
+        // 註冊 C# 演算法動態編譯服務為單例
+        services.AddSingleton<CSharpAlgorithmService>();
+
+        // 註冊計算點位服務為單例
+        services.AddSingleton<CalculatedPointService>();
+
         return services;
     }
 
@@ -256,6 +269,16 @@ public static class DataServiceExtensions
             var historyService = serviceProvider.GetRequiredService<HistoryDataStorageService>();
             var realtimeService = serviceProvider.GetRequiredService<RealtimeDataStorageService>();
             logger.LogInformation("資料儲存服務已初始化: 歷史資料服務(每分鐘)和即時資料服務(每5秒)");
+
+            // 4. 初始化警報監控服務（載入規則 + 還原活躍警報狀態）
+            var alarmMonitorService = serviceProvider.GetRequiredService<AlarmMonitorService>();
+            await alarmMonitorService.InitializeAsync();
+            logger.LogInformation("警報監控服務已初始化");
+
+            // 5. 初始化計算點位服務（載入公式設定）
+            var calculatedPointService = serviceProvider.GetRequiredService<CalculatedPointService>();
+            await calculatedPointService.InitializeAsync();
+            logger.LogInformation("計算點位服務已初始化");
         }
         catch (Exception ex)
         {

@@ -98,6 +98,9 @@ public class DatabaseInitializationService
                 }
             }
 
+            // 執行欄位遷移（既有表格的欄位改名）
+            await MigrateColumnsAsync(connection);
+
             _logger.LogInformation("資料庫結構初始化完成: 新建={Created}, 已存在={Existing}", nCreatedTables, nExistingTables);
             return true;
         }
@@ -155,6 +158,31 @@ public class DatabaseInitializationService
             Console.WriteLine($"詳細錯誤: {ex}");
             _logger.LogError(ex, "建立表格 {TableName} 時發生 SQL 錯誤: {ErrorMessage}", table.szTableName, ex.Message);
             return false;
+        }
+    }
+
+    /// <summary>
+    /// 執行欄位遷移 — 處理既有表格的欄位改名
+    /// </summary>
+    private async Task MigrateColumnsAsync(SqlConnection connection)
+    {
+        try
+        {
+            // CalculatedPoints: CoordinatorName → GroupName
+            var nHasOldColumn = await connection.QuerySingleAsync<int>(
+                @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+                  WHERE TABLE_NAME = 'CalculatedPoints' AND COLUMN_NAME = 'CoordinatorName'");
+
+            if (nHasOldColumn > 0)
+            {
+                await connection.ExecuteAsync(
+                    "EXEC sp_rename 'CalculatedPoints.CoordinatorName', 'GroupName', 'COLUMN'");
+                _logger.LogInformation("欄位遷移完成: CalculatedPoints.CoordinatorName → GroupName");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "欄位遷移時發生錯誤（可忽略若欄位已正確）");
         }
     }
 

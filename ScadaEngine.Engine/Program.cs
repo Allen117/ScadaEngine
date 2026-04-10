@@ -71,6 +71,9 @@ try
     // 註冊條件控制服務
     builder.Services.AddHostedService<ConditionControlService>();
 
+    // 註冊 LogicFlow 後端執行服務
+    builder.Services.AddHostedService<LogicFlowExecutionService>();
+
     var host = builder.Build();
 
     // 初始化資料庫服務

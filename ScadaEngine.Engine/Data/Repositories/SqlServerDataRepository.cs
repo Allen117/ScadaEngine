@@ -80,123 +80,6 @@ public class SqlServerDataRepository : IDataRepository, IDisposable
     }
 
     /// <summary>
-    /// 儲存即時資料至資料庫 (批量處理)
-    /// </summary>
-    /// <param name="realtimeDataList">即時資料清單</param>
-    /// <returns>成功儲存的資料筆數</returns>
-    public async Task<int> SaveRealtimeDataAsync(IEnumerable<RealtimeDataModel> realtimeDataList)
-    {
-        if (string.IsNullOrEmpty(_szConnectionString))
-        {
-            await InitializeAsync();
-        }
-
-        var nSuccessCount = 0;
-
-        try
-        {
-            using var connection = new SqlConnection(_szConnectionString);
-            await connection.OpenAsync();
-
-            // SQL 插入語句 (假設有對應的資料表)
-            const string szSql = @"
-                INSERT INTO RealtimeData (SID, TagName, Value, Unit, Quality, DeviceIP, Timestamp, Address)
-                VALUES (@SID, @TagName, @Value, @Unit, @Quality, @DeviceIP, @Timestamp, @Address)";
-
-            foreach (var data in realtimeDataList)
-            {
-                try
-                {
-                    var parameters = new
-                    {
-                        SID = data.szSID,
-                        TagName = data.szTagName,
-                        Value = data.fValue,
-                        Unit = data.szUnit,
-                        Quality = data.szQuality,
-                        DeviceIP = data.szDeviceIP,
-                        Timestamp = data.dtTimestamp,
-                        Address = data.nAddress
-                    };
-
-                    var nRowsAffected = await connection.ExecuteAsync(szSql, parameters);
-                    if (nRowsAffected > 0)
-                    {
-                        nSuccessCount++;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "儲存即時資料失敗: SID={SID}", data.szSID);
-                }
-            }
-
-            _logger.LogInformation("批量儲存即時資料完成: 成功={SuccessCount}, 總計={TotalCount}", nSuccessCount, realtimeDataList.Count());
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "批量儲存即時資料時發生錯誤");
-        }
-
-        return nSuccessCount;
-    }
-
-    /// <summary>
-    /// 儲存單筆即時資料至資料庫
-    /// </summary>
-    /// <param name="realtimeData">即時資料</param>
-    /// <returns>儲存成功回傳 true，失敗回傳 false</returns>
-    public async Task<bool> SaveRealtimeDataAsync(RealtimeDataModel realtimeData)
-    {
-        var result = await SaveRealtimeDataAsync(new[] { realtimeData });
-        return result > 0;
-    }
-
-    /// <summary>
-    /// 儲存設備配置至資料庫
-    /// </summary>
-    /// <param name="deviceConfig">設備配置</param>
-    /// <returns>儲存成功回傳 true，失敗回傳 false</returns>
-    public async Task<bool> SaveConfigAsync(ModbusDeviceConfigModel deviceConfig)
-    {
-        if (string.IsNullOrEmpty(_szConnectionString))
-        {
-            await InitializeAsync();
-        }
-
-        try
-        {
-            using var connection = new SqlConnection(_szConnectionString);
-            await connection.OpenAsync();
-
-            // SQL 插入語句 (假設有對應的設備配置資料表)
-            const string szSql = @"
-                INSERT INTO DeviceConfig (TypeId, IP, Port, ModbusId, ConnectTimeout)
-                VALUES (@TypeId, @IP, @Port, @ModbusId, @ConnectTimeout)
-                ON DUPLICATE KEY UPDATE 
-                Port=@Port, ModbusId=@ModbusId, ConnectTimeout=@ConnectTimeout";
-
-            var parameters = new
-            {
-                IP = deviceConfig.szIP,
-                Port = deviceConfig.nPort,
-                ModbusId = deviceConfig.szModbusId,
-                ConnectTimeout = deviceConfig.nConnectTimeout
-            };
-
-            var nRowsAffected = await connection.ExecuteAsync(szSql, parameters);
-            
-            _logger.LogInformation("設備配置儲存完成: IP={IP}, 影響行數={RowsAffected}", deviceConfig.szIP, nRowsAffected);
-            return nRowsAffected > 0;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "儲存設備配置時發生錯誤: IP={IP}", deviceConfig.szIP);
-            return false;
-        }
-    }
-
-    /// <summary>
     /// 查詢指定時間範圍的歷史資料
     /// </summary>
     /// <param name="szSID">點位識別碼</param>
@@ -240,35 +123,6 @@ public class SqlServerDataRepository : IDataRepository, IDisposable
         }
     }
 
-    /// <summary>
-    /// 取得所有設備配置
-    /// </summary>
-    /// <returns>設備配置清單</returns>
-    public async Task<IEnumerable<ModbusDeviceConfigModel>> GetDeviceConfigsAsync()
-    {
-        if (string.IsNullOrEmpty(_szConnectionString))
-        {
-            await InitializeAsync();
-        }
-
-        try
-        {
-            using var connection = new SqlConnection(_szConnectionString);
-            await connection.OpenAsync();
-
-            const string szSql = "SELECT TypeId, IP, Port, ModbusId, ConnectTimeout FROM DeviceConfig";
-
-            var result = await connection.QueryAsync<ModbusDeviceConfigModel>(szSql);
-            
-            _logger.LogDebug("查詢設備配置完成: 筆數={Count}", result.Count());
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "查詢設備配置時發生錯誤");
-            return Enumerable.Empty<ModbusDeviceConfigModel>();
-        }
-    }
 
     #region Coordinator 相關方法
 
@@ -276,8 +130,8 @@ public class SqlServerDataRepository : IDataRepository, IDisposable
     /// 新增或更新 Coordinator 配置
     /// </summary>
     /// <param name="coordinator">Coordinator 模型</param>
-    /// <returns>資料庫 ID</returns>
-    public async Task<int> SaveCoordinatorAsync(CoordinatorModel coordinator)
+    /// <returns>(資料庫 ID, DB 中的 DelayTime)</returns>
+    public async Task<(int nId, int nDelayTime)> SaveCoordinatorAsync(CoordinatorModel coordinator)
     {
         try
         {
@@ -285,45 +139,47 @@ public class SqlServerDataRepository : IDataRepository, IDisposable
             await connection.OpenAsync();
 
             // 檢查是否已存在相同的 Name 配置
-            const string szCheckSql = "SELECT Id FROM ModbusCoordinator WHERE Name = @Name";
-            var existingId = await connection.QuerySingleOrDefaultAsync<int?>(szCheckSql, new { Name = coordinator.szName });
+            const string szCheckSql = "SELECT Id, DelayTime FROM ModbusCoordinator WHERE Name = @Name";
+            var existing = await connection.QuerySingleOrDefaultAsync<(int Id, int DelayTime)?>(szCheckSql, new { Name = coordinator.szName });
 
-            if (existingId.HasValue)
+            if (existing.HasValue)
             {
-                // 更新現有記錄的 ModbusID 和 DelayTime
+                // 更新現有記錄的 ModbusID（不覆蓋 DelayTime，由 DB 管理採集週期）
                 const string szUpdateSql = @"
-                    UPDATE ModbusCoordinator 
-                    SET ModbusID = @ModbusID, DelayTime = @DelayTime
+                    UPDATE ModbusCoordinator
+                    SET ModbusID = @ModbusID
                     WHERE Id = @Id";
 
-                await connection.ExecuteAsync(szUpdateSql, new 
-                { 
+                await connection.ExecuteAsync(szUpdateSql, new
+                {
                     ModbusID = coordinator.szModbusID,
-                    DelayTime = coordinator.nDelayTime,
-                    Id = existingId.Value
+                    Id = existing.Value.Id
                 });
 
-                _logger.LogDebug("更新 Coordinator 配置: ID={Id}, Name={Name}, ModbusID={ModbusID}", existingId.Value, coordinator.szName, coordinator.szModbusID);
-                return existingId.Value;
+                _logger.LogDebug("更新 Coordinator 配置: ID={Id}, Name={Name}, ModbusID={ModbusID}, DelayTime={DelayTime}ms",
+                    existing.Value.Id, coordinator.szName, coordinator.szModbusID, existing.Value.DelayTime);
+                return (existing.Value.Id, existing.Value.DelayTime);
             }
             else
             {
-                // 新增記錄
+                // 新增記錄（DelayTime 預設 1000ms）
+                var nDefaultDelay = coordinator.nDelayTime > 0 ? coordinator.nDelayTime : 1000;
                 const string szInsertSql = @"
-                    INSERT INTO ModbusCoordinator (Name, ModbusID, DelayTime, MonitorEnabled) 
+                    INSERT INTO ModbusCoordinator (Name, ModbusID, DelayTime, MonitorEnabled)
                     VALUES (@Name, @ModbusID, @DelayTime, @MonitorEnabled);
                     SELECT SCOPE_IDENTITY();";
 
-                var newId = await connection.QuerySingleAsync<int>(szInsertSql, new 
-                { 
+                var newId = await connection.QuerySingleAsync<int>(szInsertSql, new
+                {
                     Name = coordinator.szName,
                     ModbusID = coordinator.szModbusID,
-                    DelayTime = coordinator.nDelayTime,
+                    DelayTime = nDefaultDelay,
                     MonitorEnabled = coordinator.isMonitorEnabled
                 });
 
-                _logger.LogDebug("新增 Coordinator 配置: ID={Id}, Name={Name}, ModbusID={ModbusID}", newId, coordinator.szName, coordinator.szModbusID);
-                return newId;
+                _logger.LogDebug("新增 Coordinator 配置: ID={Id}, Name={Name}, ModbusID={ModbusID}, DelayTime={DelayTime}ms",
+                    newId, coordinator.szName, coordinator.szModbusID, nDefaultDelay);
+                return (newId, nDefaultDelay);
             }
         }
         catch (Exception ex)
@@ -707,6 +563,34 @@ public class SqlServerDataRepository : IDataRepository, IDisposable
     }
 
     /// <summary>
+    /// 取得 Users 資料表中 Admin 角色的使用者數量
+    /// </summary>
+    public async Task<int> GetAdminCountAsync()
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+        {
+            await InitializeAsync();
+        }
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+
+            const string szSql = "SELECT COUNT(*) FROM Users WHERE Role = 'Admin' AND IsActive = 1";
+            var result = await connection.QuerySingleAsync<int>(szSql);
+
+            _logger.LogDebug("Users 表中共有 {AdminCount} 位啟用的 Admin 使用者", result);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "查詢 Admin 使用者數量時發生錯誤");
+            return 0;
+        }
+    }
+
+    /// <summary>
     /// 驗證使用者帳號密碼 (密碼以 SHA256 hex 儲存於 PasswordHash 欄位)
     /// </summary>
     public async Task<bool> ValidateUserAsync(string szUsername, string szPassword)
@@ -822,6 +706,217 @@ public class SqlServerDataRepository : IDataRepository, IDisposable
         catch (Exception ex)
         {
             _logger.LogError(ex, "新增使用者 {Username} 時發生錯誤", user.szUsername);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 依帳號名稱取得單一使用者（含 Role），登入時用
+    /// </summary>
+    public async Task<UserModel?> GetUserByUsernameAsync(string szUsername)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+
+            const string szSql = @"
+                SELECT UserID      AS nUserID,
+                       Username    AS szUsername,
+                       RealName    AS szRealName,
+                       PasswordHash AS szPasswordHash,
+                       Role        AS szRole,
+                       Department  AS szDepartment,
+                       IsActive    AS isActive,
+                       LastLoginAt AS dtLastLoginAt,
+                       CreatedAt   AS dtCreatedAt,
+                       UpdatedAt   AS dtUpdatedAt
+                FROM Users
+                WHERE Username = @Username";
+
+            return await connection.QuerySingleOrDefaultAsync<UserModel>(szSql, new { Username = szUsername });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "查詢使用者 {Username} 時發生錯誤", szUsername);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// 更新使用者最後登入時間
+    /// </summary>
+    public async Task<bool> UpdateLastLoginAsync(string szUsername)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+
+            const string szSql = @"
+                UPDATE Users SET LastLoginAt = GETDATE()
+                WHERE Username = @Username";
+
+            var nRows = await connection.ExecuteAsync(szSql, new { Username = szUsername });
+            return nRows > 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "更新使用者 {Username} 最後登入時間時發生錯誤", szUsername);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 更新使用者帳號（不含密碼）
+    /// </summary>
+    public async Task<bool> UpdateUserAsync(UserModel user)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+
+            const string szSql = @"
+                UPDATE Users SET
+                    RealName   = @RealName,
+                    Role       = @Role,
+                    Department = @Department,
+                    IsActive   = @IsActive,
+                    UpdatedAt  = GETDATE()
+                WHERE UserID = @UserID";
+
+            var nRows = await connection.ExecuteAsync(szSql, new
+            {
+                UserID     = user.nUserID,
+                RealName   = string.IsNullOrEmpty(user.szRealName) ? (string?)null : user.szRealName,
+                Role       = user.szRole,
+                Department = string.IsNullOrEmpty(user.szDepartment) ? (string?)null : user.szDepartment,
+                IsActive   = user.isActive
+            });
+
+            _logger.LogInformation("更新使用者 UserID={UserID} 成功", user.nUserID);
+            return nRows > 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "更新使用者 UserID={UserID} 時發生錯誤", user.nUserID);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 刪除使用者帳號（同時刪除 UserPermissions）
+    /// </summary>
+    public async Task<bool> DeleteUserAsync(int nUserID)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+            using var transaction = await connection.BeginTransactionAsync();
+
+            try
+            {
+                await connection.ExecuteAsync(
+                    "DELETE FROM UserPermissions WHERE UserID = @UserID",
+                    new { UserID = nUserID }, transaction: transaction);
+
+                var nRows = await connection.ExecuteAsync(
+                    "DELETE FROM Users WHERE UserID = @UserID",
+                    new { UserID = nUserID }, transaction: transaction);
+
+                await transaction.CommitAsync();
+                _logger.LogInformation("刪除使用者 UserID={UserID} 成功", nUserID);
+                return nRows > 0;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "刪除使用者 UserID={UserID} 時發生錯誤", nUserID);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 取得使用者權限 JSON
+    /// </summary>
+    public async Task<UserPermissionModel?> GetUserPermissionsAsync(int nUserID)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+
+            const string szSql = @"
+                SELECT UserID         AS nUserID,
+                       PermissionJson AS szPermissionJson,
+                       UpdatedAt      AS dtUpdatedAt
+                FROM UserPermissions
+                WHERE UserID = @UserID";
+
+            return await connection.QuerySingleOrDefaultAsync<UserPermissionModel>(
+                szSql, new { UserID = nUserID });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "查詢使用者權限 UserID={UserID} 時發生錯誤", nUserID);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// 儲存使用者權限 JSON（UPSERT）
+    /// </summary>
+    public async Task<bool> SaveUserPermissionsAsync(int nUserID, string szPermissionJson)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+
+            const string szSql = @"
+                MERGE UserPermissions AS tgt
+                USING (SELECT @UserID AS UserID) AS src ON tgt.UserID = src.UserID
+                WHEN MATCHED THEN UPDATE SET PermissionJson = @PermissionJson, UpdatedAt = GETDATE()
+                WHEN NOT MATCHED THEN INSERT (UserID, PermissionJson, UpdatedAt)
+                    VALUES (@UserID, @PermissionJson, GETDATE());";
+
+            await connection.ExecuteAsync(szSql, new
+            {
+                UserID = nUserID,
+                PermissionJson = szPermissionJson
+            });
+
+            _logger.LogInformation("儲存使用者權限 UserID={UserID} 成功", nUserID);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "儲存使用者權限 UserID={UserID} 時發生錯誤", nUserID);
             return false;
         }
     }
@@ -1290,6 +1385,266 @@ public class SqlServerDataRepository : IDataRepository, IDisposable
         {
             _logger.LogError(ex, "LoadPublishedDesignAsync 時發生錯誤");
             return Enumerable.Empty<ScadaDesignPageModel>();
+        }
+    }
+
+    #endregion
+
+    #region ManualControlValue
+
+    /// <inheritdoc/>
+    public async Task<bool> SaveManualControlValueAsync(string szSid, double dValue)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        const string sql = @"
+            MERGE ManualControlValue AS tgt
+            USING (SELECT @SID AS SID) AS src ON tgt.SID = src.SID
+            WHEN MATCHED THEN UPDATE SET Value = @Value, IsAuto = 0, UpdatedAt = GETDATE()
+            WHEN NOT MATCHED THEN INSERT (SID, Value, IsAuto, UpdatedAt) VALUES (@SID, @Value, 0, GETDATE());";
+        try
+        {
+            using var conn = new Microsoft.Data.SqlClient.SqlConnection(_szConnectionString);
+            await conn.OpenAsync();
+            await conn.ExecuteAsync(sql, new { SID = szSid, Value = dValue });
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "SaveManualControlValueAsync 失敗 SID={SID}", szSid);
+            return false;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> SetAutoControlAsync(string szSid)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        const string sql = @"
+            MERGE ManualControlValue AS tgt
+            USING (SELECT @SID AS SID) AS src ON tgt.SID = src.SID
+            WHEN MATCHED THEN UPDATE SET IsAuto = 1, UpdatedAt = GETDATE()
+            WHEN NOT MATCHED THEN INSERT (SID, Value, IsAuto, UpdatedAt) VALUES (@SID, 0, 1, GETDATE());";
+        try
+        {
+            using var conn = new Microsoft.Data.SqlClient.SqlConnection(_szConnectionString);
+            await conn.OpenAsync();
+            await conn.ExecuteAsync(sql, new { SID = szSid });
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "SetAutoControlAsync 失敗 SID={SID}", szSid);
+            return false;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task EnsureManualControlEntryExistsAsync(string szSid)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        const string sql = @"
+            IF NOT EXISTS (SELECT 1 FROM ManualControlValue WHERE SID = @SID)
+                INSERT INTO ManualControlValue (SID, Value, IsAuto, UpdatedAt) VALUES (@SID, 0, 1, GETDATE())";
+        try
+        {
+            using var conn = new Microsoft.Data.SqlClient.SqlConnection(_szConnectionString);
+            await conn.OpenAsync();
+            await conn.ExecuteAsync(sql, new { SID = szSid });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "EnsureManualControlEntryExistsAsync 失敗 SID={SID}", szSid);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<Dictionary<string, (double dValue, bool isAuto)>> LoadManualControlValuesAsync()
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        const string sql = "SELECT SID, Value, IsAuto FROM ManualControlValue";
+        try
+        {
+            using var conn = new Microsoft.Data.SqlClient.SqlConnection(_szConnectionString);
+            await conn.OpenAsync();
+            var rows = await conn.QueryAsync<(string SID, double Value, bool IsAuto)>(sql);
+            return rows.ToDictionary(r => r.SID, r => (r.Value, r.IsAuto));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "LoadManualControlValuesAsync 失敗");
+            return new Dictionary<string, (double, bool)>();
+        }
+    }
+
+    #endregion
+
+    #region CalculatedPoints 計算點位
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<CalculatedPointModel>> GetAllCalculatedPointsAsync()
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+
+            const string szSql = @"
+                SELECT
+                    SID             AS szSID,
+                    Name            AS szName,
+                    Unit            AS szUnit,
+                    GroupName       AS szGroupName,
+                    Formula         AS szFormula,
+                    InputMappings   AS szInputMappings,
+                    IsEnabled       AS isEnabled,
+                    CreatedAt       AS dtCreatedAt,
+                    UpdatedAt       AS dtUpdatedAt
+                FROM CalculatedPoints
+                ORDER BY SID";
+
+            var result = await connection.QueryAsync<CalculatedPointModel>(szSql);
+            _logger.LogDebug("查詢 CalculatedPoints 完成: {Count} 筆", result.Count());
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "查詢 CalculatedPoints 時發生錯誤");
+            return Enumerable.Empty<CalculatedPointModel>();
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> CreateCalculatedPointAsync(CalculatedPointModel model)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+
+            const string szSql = @"
+                INSERT INTO CalculatedPoints (SID, Name, Unit, GroupName, Formula, InputMappings, IsEnabled, CreatedAt)
+                VALUES (@SID, @Name, @Unit, @GroupName, @Formula, @InputMappings, @IsEnabled, GETDATE())";
+
+            await connection.ExecuteAsync(szSql, new
+            {
+                SID = model.szSID,
+                Name = model.szName,
+                Unit = model.szUnit,
+                GroupName = model.szGroupName,
+                Formula = model.szFormula,
+                InputMappings = model.szInputMappings,
+                IsEnabled = model.isEnabled
+            });
+
+            _logger.LogInformation("新增計算點位成功: SID={SID}, Name={Name}", model.szSID, model.szName);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "新增計算點位失敗: SID={SID}", model.szSID);
+            return false;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> UpdateCalculatedPointAsync(CalculatedPointModel model)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+
+            const string szSql = @"
+                UPDATE CalculatedPoints
+                SET Name = @Name, Unit = @Unit, GroupName = @GroupName,
+                    Formula = @Formula, InputMappings = @InputMappings,
+                    IsEnabled = @IsEnabled, UpdatedAt = GETDATE()
+                WHERE SID = @SID";
+
+            await connection.ExecuteAsync(szSql, new
+            {
+                SID = model.szSID,
+                Name = model.szName,
+                Unit = model.szUnit,
+                GroupName = model.szGroupName,
+                Formula = model.szFormula,
+                InputMappings = model.szInputMappings,
+                IsEnabled = model.isEnabled
+            });
+
+            _logger.LogInformation("更新計算點位成功: SID={SID}", model.szSID);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "更新計算點位失敗: SID={SID}", model.szSID);
+            return false;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> DeleteCalculatedPointAsync(string szSID)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+
+            await connection.ExecuteAsync("DELETE FROM CalculatedPoints WHERE SID = @SID", new { SID = szSID });
+            _logger.LogInformation("刪除計算點位成功: SID={SID}", szSID);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "刪除計算點位失敗: SID={SID}", szSID);
+            return false;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<int> GetCalculatedPointMaxIndexAsync()
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+
+            // 從現有 SID (CALC-S{N}) 中取最大的 N
+            const string szSql = @"
+                SELECT ISNULL(MAX(CAST(SUBSTRING(SID, 7, LEN(SID) - 6) AS INT)), 0)
+                FROM CalculatedPoints
+                WHERE SID LIKE 'CALC-S%'";
+
+            var nMaxIndex = await connection.QuerySingleAsync<int>(szSql);
+            return nMaxIndex;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "取得計算點位最大索引失敗");
+            return 0;
         }
     }
 

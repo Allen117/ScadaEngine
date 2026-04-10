@@ -1,6 +1,7 @@
 using ScadaEngine.Engine.Communication.Modbus.Services;
 using ScadaEngine.Engine.Communication.Mqtt;
 using ScadaEngine.Engine.Services;
+using System.Diagnostics;
 using System.Linq;
 
 namespace ScadaEngine.Engine;
@@ -14,17 +15,24 @@ public class Worker : BackgroundService
     private readonly ModbusCollectionManager _modbusCollectionManager;
     private readonly HistoryDataStorageService _historyDataStorageService;
     private readonly RealtimeDataStorageService _realtimeDataStorageService;
+    private readonly AlarmMonitorService _alarmMonitorService;
+    private readonly CalculatedPointService _calculatedPointService;
     private readonly IServiceProvider _serviceProvider;
+    private Process? _pythonProcess;
 
-    public Worker(ILogger<Worker> logger, ModbusCollectionManager modbusCollectionManager, 
+    public Worker(ILogger<Worker> logger, ModbusCollectionManager modbusCollectionManager,
                   HistoryDataStorageService historyDataStorageService,
                   RealtimeDataStorageService realtimeDataStorageService,
+                  AlarmMonitorService alarmMonitorService,
+                  CalculatedPointService calculatedPointService,
                   IServiceProvider serviceProvider)
     {
         _logger = logger;
         _modbusCollectionManager = modbusCollectionManager;
         _historyDataStorageService = historyDataStorageService;
         _realtimeDataStorageService = realtimeDataStorageService;
+        _alarmMonitorService = alarmMonitorService;
+        _calculatedPointService = calculatedPointService;
         _serviceProvider = serviceProvider;
     }
 
@@ -38,6 +46,9 @@ public class Worker : BackgroundService
 
         try
         {
+            // 啟動 Python 演算法服務
+            StartPythonAlgorithmService();
+
             // 訂閱 Modbus 資料採集事件
             _modbusCollectionManager.DataCollected += OnModbusDataCollected;
             _modbusCollectionManager.DeviceStatusChanged += OnModbusDeviceStatusChanged;
@@ -89,11 +100,11 @@ public class Worker : BackgroundService
     /// </summary>
     /// <param name="sender">事件來源</param>
     /// <param name="e">事件參數</param>
-    private void OnModbusDataCollected(object? sender, RealtimeDataCollectedEventArgs e)
+    private async void OnModbusDataCollected(object? sender, RealtimeDataCollectedEventArgs e)
     {
         try
         {
-            _logger.LogTrace("收到 Modbus 資料: 設備 {DeviceKey}, 點位數量 {TagCount}", 
+            _logger.LogTrace("收到 Modbus 資料: 設備 {DeviceKey}, 點位數量 {TagCount}",
                            e.DeviceKey, e.RealtimeDataList.Count);
 
             // 1. 添加資料到歷史資料儲存服務 (每分鐘自動儲存)
@@ -102,9 +113,15 @@ public class Worker : BackgroundService
             // 2. 添加資料到即時資料儲存服務 (每五秒自動儲存/覆蓋)
             _realtimeDataStorageService.AddRealtimeDataBatch(e.RealtimeDataList);
 
-            // 3. 現有的即時處理邏輯 (MQTT 發布等)
-            // TODO: 發布到 MQTT
-            // TODO: 觸發警報邏輯
+            // 3. 警報監控 — 比對 AlarmRules 規則，觸發/恢復時寫入 EventLog
+            await _alarmMonitorService.EvaluateBatchAsync(e.RealtimeDataList);
+
+            // 4. 計算點位 — 根據公式計算衍生值，發布至 MQTT 並儲存
+            var calcResults = _calculatedPointService.CalculateAndPublish(e.RealtimeDataList);
+
+            // 5. 計算點位也要進行警報檢查
+            if (calcResults.Count > 0)
+                await _alarmMonitorService.EvaluateBatchAsync(calcResults);
 
             foreach (var data in e.RealtimeDataList)
             {
@@ -194,12 +211,126 @@ public class Worker : BackgroundService
     }
 
     /// <summary>
+    /// 啟動 Python 演算法 FastAPI 服務
+    /// </summary>
+    private void StartPythonAlgorithmService()
+    {
+        try
+        {
+            // 尋找 Algorithms 資料夾（開發時用原始碼路徑，部署時用 output 路徑）
+            var szAlgoDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Algorithms");
+            if (!Directory.Exists(szAlgoDir))
+                szAlgoDir = Path.Combine(Directory.GetCurrentDirectory(), "Algorithms");
+            if (!Directory.Exists(szAlgoDir))
+            {
+                _logger.LogWarning("找不到 Algorithms 資料夾，Python 演算法服務未啟動");
+                return;
+            }
+
+            var szMainPy = Path.Combine(szAlgoDir, "main.py");
+            if (!File.Exists(szMainPy))
+            {
+                _logger.LogWarning("找不到 Algorithms/main.py，Python 演算法服務未啟動");
+                return;
+            }
+
+            // ★ 優先使用隨附的可攜式 Python（離線工廠環境不需安裝 Python）
+            var szPythonExe = ResolvePythonExe();
+            _logger.LogInformation("使用 Python: {PythonPath}", szPythonExe);
+
+            _pythonProcess = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = szPythonExe,
+                    Arguments = "-m uvicorn main:app --host 127.0.0.1 --port 8100",
+                    WorkingDirectory = szAlgoDir,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                },
+                EnableRaisingEvents = true
+            };
+
+            _pythonProcess.OutputDataReceived += (s, e) =>
+            {
+                if (!string.IsNullOrEmpty(e.Data))
+                    _logger.LogInformation("[Python] {Output}", e.Data);
+            };
+            _pythonProcess.ErrorDataReceived += (s, e) =>
+            {
+                if (!string.IsNullOrEmpty(e.Data))
+                    _logger.LogWarning("[Python] {Output}", e.Data);
+            };
+            _pythonProcess.Exited += (s, e) =>
+            {
+                _logger.LogWarning("Python 演算法服務已意外結束 (ExitCode={ExitCode})", _pythonProcess?.ExitCode);
+            };
+
+            _pythonProcess.Start();
+            _pythonProcess.BeginOutputReadLine();
+            _pythonProcess.BeginErrorReadLine();
+
+            _logger.LogInformation("Python 演算法服務已啟動 (PID={Pid}, Port=8100)", _pythonProcess.Id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "啟動 Python 演算法服務失敗（可能未安裝 Python），LogicFlow 演算法節點將無法使用");
+            _pythonProcess = null;
+        }
+    }
+
+    /// <summary>
+    /// 停止 Python 演算法服務
+    /// </summary>
+    private void StopPythonAlgorithmService()
+    {
+        if (_pythonProcess == null || _pythonProcess.HasExited) return;
+        try
+        {
+            _pythonProcess.Kill(entireProcessTree: true);
+            _pythonProcess.WaitForExit(3000);
+            _logger.LogInformation("Python 演算法服務已停止");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "停止 Python 演算法服務時發生錯誤");
+        }
+        finally
+        {
+            _pythonProcess.Dispose();
+            _pythonProcess = null;
+        }
+    }
+
+    /// <summary>
+    /// 解析 Python 執行檔路徑：PythonRuntime（可攜式）→ 系統 PATH
+    /// </summary>
+    private string ResolvePythonExe()
+    {
+        // 1. 隨附的可攜式 Python（部署包內 PythonRuntime/python.exe）
+        var szBaseDir = AppDomain.CurrentDomain.BaseDirectory;
+        var szBundled = Path.Combine(szBaseDir, "PythonRuntime", "python.exe");
+        if (File.Exists(szBundled)) return szBundled;
+
+        // 2. 開發環境：專案根目錄下的 PythonRuntime
+        var szDevBundled = Path.Combine(Directory.GetCurrentDirectory(), "PythonRuntime", "python.exe");
+        if (File.Exists(szDevBundled)) return szDevBundled;
+
+        // 3. 退回系統 PATH 中的 python
+        return "python";
+    }
+
+    /// <summary>
     /// 服務停止時的清理工作
     /// </summary>
     /// <param name="cancellationToken">取消令牌</param>
     public override async Task StopAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("SCADA 引擎工作服務正在停止");
+
+        StopPythonAlgorithmService();
 
         await base.StopAsync(cancellationToken);
 

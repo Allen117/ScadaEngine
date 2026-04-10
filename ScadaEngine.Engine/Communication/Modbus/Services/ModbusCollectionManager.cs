@@ -24,7 +24,7 @@ public class ModbusCollectionManager : IDisposable
     private bool _isDisposed = false;
 
     /// <summary>
-    /// 採集週期 (毫秒)
+    /// 預設採集週期 (毫秒)，當設備未設定時使用
     /// </summary>
     public int CollectionIntervalMs { get; set; } = 1000;
 
@@ -111,11 +111,12 @@ public class ModbusCollectionManager : IDisposable
             var cancellationTokenSource = new CancellationTokenSource();
             _collectionTokens[szDeviceKey] = cancellationTokenSource;
 
-            // 啟動採集任務
-            var collectionTask = RunDeviceCollectionLoopAsync(communicationService, cancellationTokenSource.Token);
+            // 啟動採集任務（使用設備自己的採集週期）
+            var nIntervalMs = deviceConfig.nCollectionIntervalMs > 0 ? deviceConfig.nCollectionIntervalMs : CollectionIntervalMs;
+            var collectionTask = RunDeviceCollectionLoopAsync(communicationService, nIntervalMs, cancellationTokenSource.Token);
             _collectionTasks[szDeviceKey] = collectionTask;
 
-            _logger.LogInformation("啟動設備採集執行緒: {DeviceIP}:{DevicePort}", deviceConfig.szIP, deviceConfig.nPort);
+            _logger.LogInformation("啟動設備採集執行緒: {DeviceIP}:{DevicePort}, 採集週期={IntervalMs}ms", deviceConfig.szIP, deviceConfig.nPort, nIntervalMs);
 
             // 觸發設備狀態事件
             OnDeviceStatusChanged(szDeviceKey, "Started", communicationService.GetDeviceStatus());
@@ -130,8 +131,9 @@ public class ModbusCollectionManager : IDisposable
     /// 執行設備採集迴圈
     /// </summary>
     /// <param name="communicationService">通訊服務</param>
+    /// <param name="nIntervalMs">該設備的採集週期 (毫秒)</param>
     /// <param name="cancellationToken">取消令牌</param>
-    private async Task RunDeviceCollectionLoopAsync(ModbusCommunicationService communicationService, CancellationToken cancellationToken)
+    private async Task RunDeviceCollectionLoopAsync(ModbusCommunicationService communicationService, int nIntervalMs, CancellationToken cancellationToken)
     {
         var szDeviceKey = GetDeviceKey(communicationService.DeviceIP, communicationService.DevicePort);
 
@@ -139,21 +141,28 @@ public class ModbusCollectionManager : IDisposable
 
         try
         {
+            // 首次連線
+            _logger.LogInformation("首次連線設備: {DeviceIP}:{DevicePort}", communicationService.DeviceIP, communicationService.DevicePort);
+            var isFirstConnected = await communicationService.ConnectAsync();
+            OnDeviceStatusChanged(szDeviceKey,
+                isFirstConnected ? "Connected" : "Disconnected",
+                communicationService.GetDeviceStatus());
+
             while (!cancellationToken.IsCancellationRequested)
             {
                 try
                 {
-                    // 檢查連線狀態
+                    // 檢查連線狀態，斷線時嘗試重連
                     if (!communicationService.IsConnected)
                     {
                         if (communicationService.ShouldReconnect())
                         {
                             _logger.LogInformation("嘗試重新連線設備: {DeviceIP}", communicationService.DeviceIP);
-                            
+
                             var isConnected = await communicationService.ConnectAsync();
-                            
-                            OnDeviceStatusChanged(szDeviceKey, 
-                                isConnected ? "Connected" : "Disconnected", 
+
+                            OnDeviceStatusChanged(szDeviceKey,
+                                isConnected ? "Connected" : "Disconnected",
                                 communicationService.GetDeviceStatus());
                         }
                     }
@@ -185,7 +194,7 @@ public class ModbusCollectionManager : IDisposable
                 // 等待下一次採集週期
                 try
                 {
-                    await Task.Delay(CollectionIntervalMs, cancellationToken);
+                    await Task.Delay(nIntervalMs, cancellationToken);
                 }
                 catch (OperationCanceledException)
                 {

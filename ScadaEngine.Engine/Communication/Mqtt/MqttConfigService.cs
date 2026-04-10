@@ -148,40 +148,4 @@ public class MqttConfigService
             }
         };
     }
-
-    /// <summary>
-    /// 儲存 MQTT 配置至檔案
-    /// </summary>
-    /// <param name="mqttSetting">MQTT 設定模型</param>
-    /// <returns>儲存成功回傳 true，失敗回傳 false</returns>
-    public async Task<bool> SaveConfigAsync(MqttSettingModel mqttSetting)
-    {
-        try
-        {
-            var options = new JsonSerializerOptions
-            {
-                WriteIndented = true,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            };
-
-            var szJsonContent = JsonSerializer.Serialize(mqttSetting, options);
-
-            // 確保目錄存在
-            var szDirectory = Path.GetDirectoryName(_szConfigPath);
-            if (!string.IsNullOrEmpty(szDirectory) && !Directory.Exists(szDirectory))
-            {
-                Directory.CreateDirectory(szDirectory);
-            }
-
-            await File.WriteAllTextAsync(_szConfigPath, szJsonContent);
-            
-            _logger.LogInformation("MQTT 配置已儲存至: {ConfigPath}", _szConfigPath);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "儲存 MQTT 配置時發生錯誤");
-            return false;
-        }
-    }
 }

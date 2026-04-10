@@ -24,18 +24,20 @@ echo 2. Uninstall Service
 echo 3. Start Service
 echo 4. Stop Service
 echo 5. Restart Service
-echo 6. Check Status
-echo 7. Exit
+echo 6. Update Service (Stop + Build + Deploy + Start)
+echo 7. Check Status
+echo 8. Exit
 echo.
-set /p choice="Enter your choice (1-7): "
+set /p choice="Enter your choice (1-8): "
 
 if "%choice%"=="1" goto INSTALL
 if "%choice%"=="2" goto UNINSTALL
 if "%choice%"=="3" goto START
 if "%choice%"=="4" goto STOP
 if "%choice%"=="5" goto RESTART
-if "%choice%"=="6" goto STATUS
-if "%choice%"=="7" goto EXIT
+if "%choice%"=="6" goto UPDATE
+if "%choice%"=="7" goto STATUS
+if "%choice%"=="8" goto EXIT
 
 echo Invalid choice. Please try again.
 echo.
@@ -69,6 +71,12 @@ goto CONTINUE
 echo.
 echo Restarting service...
 powershell.exe -ExecutionPolicy Bypass -File "%~dp0DeployService.ps1" -Action restart
+goto CONTINUE
+
+:UPDATE
+echo.
+echo Updating service (Stop + Build + Deploy + Start)...
+powershell.exe -ExecutionPolicy Bypass -File "%~dp0DeployService.ps1" -Action update
 goto CONTINUE
 
 :STATUS

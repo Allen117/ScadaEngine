@@ -37,6 +37,111 @@ function Get-ServiceStatus {
     }
 }
 
+# Function: Ensure PythonRuntime exists
+# Priority: Scripts\*.zip (offline USB) > TEMP cache > download (last resort)
+function Ensure-PythonRuntime {
+    $pythonDir = Join-Path $ProjectPath "PythonRuntime"
+    $pythonExe = Join-Path $pythonDir "python.exe"
+
+    if (Test-Path $pythonExe) {
+        Write-Host "PythonRuntime already exists, skipping." -ForegroundColor Green
+        return
+    }
+
+    Write-Host ""
+    Write-Host "======================================" -ForegroundColor Cyan
+    Write-Host "  Setting up portable Python Runtime"
+    Write-Host "======================================" -ForegroundColor Cyan
+
+    $pyVersion = "3.11.9"
+    $zipName = "python-$pyVersion-embed-amd64.zip"
+    $zipPath = $null
+
+    # --- Find zip: local first ---
+    $localExact = Join-Path $ScriptPath $zipName
+    $localAny = Get-ChildItem -Path $ScriptPath -Filter "python-*-embed-amd64.zip" -ErrorAction SilentlyContinue | Select-Object -First 1
+
+    if (Test-Path $localExact) {
+        $zipPath = $localExact
+        Write-Host "Found local zip: $zipPath" -ForegroundColor Green
+    } elseif ($localAny) {
+        $zipPath = $localAny.FullName
+        Write-Host "Found local zip: $zipPath" -ForegroundColor Green
+    } else {
+        $tempZip = Join-Path $env:TEMP $zipName
+        if (Test-Path $tempZip) {
+            $zipPath = $tempZip
+            Write-Host "Using cached: $zipPath" -ForegroundColor Green
+        } else {
+            Write-Host "No local zip found. Trying download..." -ForegroundColor Yellow
+            try {
+                Invoke-WebRequest -Uri "https://www.python.org/ftp/python/$pyVersion/$zipName" -OutFile $tempZip -UseBasicParsing
+                $zipPath = $tempZip
+                Write-Host "  Downloaded." -ForegroundColor Green
+            } catch {
+                Write-Host ""
+                Write-Host "  No zip and no internet. Python algorithms unavailable." -ForegroundColor Yellow
+                Write-Host "  C# algorithms still work." -ForegroundColor Green
+                Write-Host "  Fix: copy '$zipName' to Scripts\ folder, re-run install." -ForegroundColor Gray
+                Write-Host ""
+                return
+            }
+        }
+    }
+
+    # --- Extract ---
+    Write-Host "Extracting Python..." -ForegroundColor Yellow
+    Expand-Archive -Path $zipPath -DestinationPath $pythonDir -Force
+
+    # --- Enable import site (逐行處理，避免編碼問題) ---
+    $pthFile = Get-ChildItem -Path $pythonDir -Filter "python*._pth" | Select-Object -First 1
+    if ($pthFile) {
+        $lines = Get-Content $pthFile.FullName
+        $lines = $lines | ForEach-Object { if ($_ -eq '#import site') { 'import site' } else { $_ } }
+        $lines | Set-Content -Path $pthFile.FullName -Encoding ASCII
+        Write-Host "  Enabled import site in $($pthFile.Name)" -ForegroundColor Green
+    }
+
+    # --- Install pip (local first) ---
+    Write-Host "Installing pip..." -ForegroundColor Yellow
+    $getPipLocal = Join-Path $ScriptPath "get-pip.py"
+    $getPipPath = if (Test-Path $getPipLocal) { $getPipLocal } else { Join-Path $env:TEMP "get-pip.py" }
+    if (-not (Test-Path $getPipPath)) {
+        try {
+            Invoke-WebRequest -Uri "https://bootstrap.pypa.io/get-pip.py" -OutFile $getPipPath -UseBasicParsing
+        } catch {
+            Write-Host "  Cannot get pip. Copy 'get-pip.py' to Scripts\ to fix." -ForegroundColor Yellow
+            return
+        }
+    }
+    & $pythonExe $getPipPath --no-warn-script-location 2>&1 | Out-Null
+
+    # --- Install deps (local wheels first) ---
+    Write-Host "Installing dependencies..." -ForegroundColor Yellow
+    $wheelsDir = Join-Path $ScriptPath "python-wheels"
+    if (Test-Path $wheelsDir) {
+        & $pythonExe -m pip install --no-index --find-links $wheelsDir fastapi uvicorn --no-warn-script-location --quiet
+        Write-Host "  Installed from local wheels." -ForegroundColor Green
+    } else {
+        $reqFile = Join-Path $ProjectPath "Algorithms\requirements.txt"
+        try {
+            if (Test-Path $reqFile) {
+                & $pythonExe -m pip install -r $reqFile --no-warn-script-location --quiet
+            } else {
+                & $pythonExe -m pip install fastapi uvicorn --no-warn-script-location --quiet
+            }
+            Write-Host "  Installed from PyPI." -ForegroundColor Green
+        } catch {
+            Write-Host "  pip install failed." -ForegroundColor Yellow
+            return
+        }
+    }
+
+    $totalSize = [math]::Round(((Get-ChildItem $pythonDir -Recurse | Measure-Object -Property Length -Sum).Sum / 1MB), 1)
+    Write-Host "PythonRuntime ready (${totalSize} MB)" -ForegroundColor Green
+    Write-Host ""
+}
+
 # Function: Install service
 function Install-Service {
     Write-Host "Starting service installation..."
@@ -67,6 +172,9 @@ function Install-Service {
         } else {
             Write-Host "Self-contained build successful. No .NET Runtime installation required." -ForegroundColor Green
         }
+
+        # 自動準備可攜式 Python（首次安裝時下載，之後跳過）
+        Ensure-PythonRuntime
 
         # Create target directories and clean up locked files
         Write-Host "Creating target directory: $TargetPath"
@@ -101,7 +209,7 @@ function Install-Service {
             }
         }
 
-        $SubDirs = @("Setting", "Modbus", "Mqtt", "Log", "DatabaseSchema")
+        $SubDirs = @("Setting", "Modbus", "MqttSetting", "Log", "DatabaseSchema", "Algorithms", "PythonRuntime")
         foreach ($dir in $SubDirs) {
             $dirPath = Join-Path $TargetPath $dir
             if (-not (Test-Path $dirPath)) { New-Item -ItemType Directory -Path $dirPath -Force | Out-Null }
@@ -112,16 +220,15 @@ function Install-Service {
         $publishPath = "$ProjectPath\bin\Release\Publish"
         Get-ChildItem -Path $publishPath -File | ForEach-Object { Copy-Item -Path $_.FullName -Destination $TargetPath -Force }
 
-        # Copy configuration directories
-        $dirsToCopy = @("Setting","Modbus","Mqtt","DatabaseSchema")
+        # Copy configuration directories (遞迴複製，含子資料夾)
+        $dirsToCopy = @("Setting","Modbus","MqttSetting","DatabaseSchema","Algorithms","PythonRuntime")
         foreach ($d in $dirsToCopy) {
             $src = Join-Path $ProjectPath $d
             $dst = Join-Path $TargetPath $d
             if (Test-Path $src) {
-                Get-ChildItem -Path $src -File | ForEach-Object {
-                    Copy-Item -Path $_.FullName -Destination $dst -Force
-                    Write-Host "Copied: $d\$($_.Name)"
-                }
+                if (-not (Test-Path $dst)) { New-Item -ItemType Directory -Path $dst -Force | Out-Null }
+                Copy-Item -Path "$src\*" -Destination $dst -Recurse -Force
+                Write-Host "Copied: $d\ (recursive)"
             }
         }
 
@@ -191,24 +298,28 @@ function Uninstall-Service {
         }
         
         # 3. 等待檔案解鎖
-        Write-Host "Waiting for file locks to release..."
-        $maxWait = 15
-        $waited = 0
         $testFile = Join-Path $TargetPath "ScadaEngine.Engine.exe"
-        
-        while ($waited -lt $maxWait) {
-            try {
-                if (Test-Path $testFile) {
-                    # 嘗試訪問檔案
+        if (Test-Path $testFile) {
+            Write-Host "Waiting for file locks to release..."
+            $maxWait = 15
+            $waited = 0
+            while ($waited -lt $maxWait) {
+                try {
                     $stream = [System.IO.File]::Open($testFile, 'Open', 'Read', 'None')
                     $stream.Close()
+                    Write-Host "  File lock released." -ForegroundColor Green
                     break
+                } catch {
+                    Write-Host "  Files still locked, waiting... ($waited/$maxWait seconds)"
+                    Start-Sleep -Seconds 1
+                    $waited++
                 }
-            } catch {
-                Write-Host "  Files still locked, waiting... ($waited/$maxWait seconds)"
-                Start-Sleep -Seconds 1
-                $waited++
             }
+            if ($waited -ge $maxWait) {
+                Write-Host "  Warning: Timed out waiting for lock, continuing anyway..." -ForegroundColor Yellow
+            }
+        } else {
+            Write-Host "No deployed files found, skipping lock check." -ForegroundColor Green
         }
         
         # 4. 刪除服務
@@ -354,26 +465,57 @@ function Update-Service {
     try {
         $service = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
         $wasRunning = $false
-        if ($service -and $service.Status -eq 'Running') { $wasRunning=$true; Stop-Service -Name $ServiceName -Force; Start-Sleep 3 }
+        if ($service -and $service.Status -eq 'Running') {
+            $wasRunning = $true
+            Write-Host "Stopping service..."
+            Stop-Service -Name $ServiceName -Force
+            Start-Sleep 5
 
-        # Build & publish
+            # 確認進程已結束
+            $processes = Get-Process -Name "ScadaEngine*" -ErrorAction SilentlyContinue
+            if ($processes) {
+                Write-Host "Force killing remaining processes..."
+                $processes | ForEach-Object { try { $_.Kill() } catch { } }
+                Start-Sleep 3
+            }
+        }
+
+        # Build & publish (self-contained 與 Install 一致)
         Set-Location $ProjectPath
-        dotnet publish -c Release --self-contained false -o "$ProjectPath\bin\Release\Publish"
-        if ($LASTEXITCODE -ne 0) { Write-Host "Build failed. Exiting."; return $false }
+        if (Test-Path "$ProjectPath\bin\Release\Publish") {
+            Remove-Item "$ProjectPath\bin\Release\Publish" -Recurse -Force
+        }
+        Write-Host "Publishing self-contained application..."
+        dotnet publish -c Release --self-contained true --runtime win-x64 -o "$ProjectPath\bin\Release\Publish"
+        if ($LASTEXITCODE -ne 0) { Write-Host "Build failed. Exiting." -ForegroundColor Red; return $false }
 
-        # Update exe/dll only
+        # Update exe/dll — 修正: 路徑加 \* 讓 -Include 正常運作
         $publishPath = "$ProjectPath\bin\Release\Publish"
-        Get-ChildItem -Path $publishPath -File -Include "*.exe","*.dll" | ForEach-Object {
+        $copied = 0
+        Get-ChildItem -Path "$publishPath\*" -Include "*.exe","*.dll" | ForEach-Object {
             Copy-Item -Path $_.FullName -Destination $TargetPath -Force
-            Write-Host "Updated: $($_.Name)"
+            $copied++
+        }
+        Write-Host "Updated $copied files." -ForegroundColor Green
+
+        # 同步設定檔 (遞迴複製，含子資料夾，含 PythonRuntime)
+        $dirsToCopy = @("Setting","Modbus","MqttSetting","DatabaseSchema","Algorithms","PythonRuntime")
+        foreach ($d in $dirsToCopy) {
+            $src = Join-Path $ProjectPath $d
+            $dst = Join-Path $TargetPath $d
+            if (Test-Path $src) {
+                if (-not (Test-Path $dst)) { New-Item -ItemType Directory -Path $dst -Force | Out-Null }
+                Copy-Item -Path "$src\*" -Destination $dst -Recurse -Force
+                Write-Host "Config: $d\ (recursive)"
+            }
         }
 
         if ($wasRunning) { Start-Service -Name $ServiceName; Start-Sleep 2 }
 
         Get-ServiceStatus
-        Write-Host "Update completed!"
+        Write-Host "Update completed!" -ForegroundColor Green
         return $true
-    } catch { Write-Host "Update error: $($_.Exception.Message)"; return $false }
+    } catch { Write-Host "Update error: $($_.Exception.Message)" -ForegroundColor Red; return $false }
 }
 
 # Function: Show logs
