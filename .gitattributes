@@ -1,0 +1,4 @@
+# Exclude from GitHub language statistics
+ScadaEngine.Engine/Scripts/get-pip.py linguist-vendored
+.agents/** linguist-vendored
+.claude/skills/** linguist-vendored
