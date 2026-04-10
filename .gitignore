@@ -6,3 +6,20 @@ obj/
 *.log
 *.tmp
 *.map
+
+# Build output (case-insensitive: publish/ and Publish/)
+publish/
+Publish/
+**/publish/
+**/Publish/
+
+# Python virtual environment
+ScadaEngine.Engine/PythonRuntime/
+__pycache__/
+*.pyc
+
+# Claude Code (personal memory only)
+.claude/projects/
+
+# Sensitive config (uncomment if repo is public)
+# ScadaEngine.Engine/Setting/dbSetting.json
