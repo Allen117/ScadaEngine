@@ -105,42 +105,6 @@ public class DatabaseConfigService
     }
 
     /// <summary>
-    /// 儲存資料庫配置至檔案
-    /// </summary>
-    /// <param name="dbConfig">資料庫配置模型</param>
-    /// <returns>儲存成功回傳 true，失敗回傳 false</returns>
-    public async Task<bool> SaveConfigAsync(DatabaseConfigModel dbConfig)
-    {
-        try
-        {
-            var options = new JsonSerializerOptions
-            {
-                WriteIndented = true
-                // 使用 JsonPropertyName 屬性保持 JSON 格式一致性
-            };
-
-            var szJsonContent = JsonSerializer.Serialize(dbConfig, options);
-
-            // 確保目錄存在
-            var szDirectory = Path.GetDirectoryName(_szConfigPath);
-            if (!string.IsNullOrEmpty(szDirectory) && !Directory.Exists(szDirectory))
-            {
-                Directory.CreateDirectory(szDirectory);
-            }
-
-            await File.WriteAllTextAsync(_szConfigPath, szJsonContent);
-            
-            _logger.LogInformation("資料庫配置已儲存至: {ConfigPath}", _szConfigPath);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "儲存資料庫配置時發生錯誤");
-            return false;
-        }
-    }
-
-    /// <summary>
     /// 取得連線字串
     /// </summary>
     /// <returns>資料庫連線字串</returns>

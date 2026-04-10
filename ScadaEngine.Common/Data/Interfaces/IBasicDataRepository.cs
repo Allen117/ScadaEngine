@@ -9,20 +9,6 @@ namespace ScadaEngine.Common.Data.Interfaces;
 public interface IBasicDataRepository
 {
     /// <summary>
-    /// 儲存即時資料至資料庫（單筆）
-    /// </summary>
-    /// <param name="realtimeData">即時資料模型</param>
-    /// <returns>儲存成功回傳 true，失敗回傳 false</returns>
-    Task<bool> SaveRealtimeDataAsync(RealtimeDataModel realtimeData);
-
-    /// <summary>
-    /// 批量儲存即時資料至資料庫
-    /// </summary>
-    /// <param name="realtimeDataList">即時資料清單</param>
-    /// <returns>成功儲存的筆數</returns>
-    Task<int> SaveRealtimeDataAsync(IEnumerable<RealtimeDataModel> realtimeDataList);
-
-    /// <summary>
     /// 儲存歷史資料至資料庫（單筆）
     /// </summary>
     /// <param name="historyData">歷史資料模型</param>
