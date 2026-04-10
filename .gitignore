@@ -18,6 +18,9 @@ ScadaEngine.Engine/PythonRuntime/
 __pycache__/
 *.pyc
 
+# Node modules
+node_modules/
+
 # Claude Code (personal memory only)
 .claude/projects/
 

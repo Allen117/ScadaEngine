@@ -192,7 +192,7 @@
 
 ### 8.2 儲存介面定義 (Repository Interface)
 * **介面**：定義 `IDataRepository` 。
-* **方法**：`SaveRealtimeDataAsync(tagList)`, `SaveConfigAsync(deviceConfig)`。
+* **方法**：`SaveHistoryDataAsync(historyDataList)`, `SaveLatestDataAsync(latestDataList)` 等。
 * **開發策略**：初期實作採 Empty Implementation，待底層通訊穩定後再行實作 SQL 儲存邏輯 。
 
 ### 9. 程式碼品質與文件化 (Quality & Docs)
