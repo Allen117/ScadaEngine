@@ -662,6 +662,23 @@
         }
         // 即時求值比較節點
         evaluateNodes();
+        // ── 5. 更新 ctrl 埠驅動的接點 ON/OFF 狀態 ──
+        if (canvas) {
+            for (const nd of canvasNodes) {
+                if (nd.type !== 'contact_no' && nd.type !== 'contact_nc') continue;
+                var hasCtrl = canvasEdges.some(function(e) { return e.target === nd.id && e.targetPort === 'ctrl'; });
+                if (!hasCtrl) continue;
+                var nodeEl = canvas.querySelector('.flow-node[data-node-id="' + nd.id + '"]');
+                if (!nodeEl) continue;
+                var stateEl = nodeEl.querySelector('.contact-state');
+                if (!stateEl) continue;
+                var isOn = nd._contactOn !== undefined ? nd._contactOn : (nd._contactResult != null && nd._contactResult !== 0);
+                var evaluated = nd._contactOn !== undefined || nd._contactResult != null;
+                stateEl.textContent = evaluated ? (isOn ? '\u25cf ON' : '\u25cb OFF') : '--';
+                stateEl.classList.toggle('contact-on', isOn);
+                stateEl.classList.toggle('contact-off', evaluated && !isOn);
+            }
+        }
         // 永遠排下一次輪詢（不論成功或失敗）
         _realtimeTimer = setTimeout(fetchRealtimeValues, _pollInterval);
     }
@@ -724,7 +741,8 @@
         }
         if (nd.type === 'algorithm') {
             if (nd._algoResult != null) return nd._algoResult;
-            if (nd._algoReady) return 0;  // 輸入就緒但尚無計算結果，回傳 0 讓下游可接續
+            // 非同步等待期間：沿用上次快取值，避免輸出 0 導致下游閃爍
+            if (nd._algoCachedResult != null) return nd._algoCachedResult;
             return null;
         }
         return null;
@@ -921,64 +939,120 @@
                 nd._timerDone = true;
                 return true;
             }
-            // TP 脈衝：狀態機驅動，確保 ON(1) 與 OFF(0) 都確實送出
+            // TP 脈衝：質變觸發 — 輸入值改變 → delay → hold(輸出) → 閒置等待下次質變
             const inEdge = canvasEdges.find(e => e.target === nd.id && e.targetPort === 'in');
-            let passValue = 1; // 無輸入時預設透傳 1
+            let passValue = 1;
+
+            // ── 1. 取得當前輸入值 ──
+            let currentInput = null;
             if (inEdge) {
-                // 上游品質 Bad → 停止計時並重置
                 if (hasUpstreamBad(nd.id)) {
                     clearTimeout(nd._tpTimeout);
                     nd._tpPhase = null;
                     nd._tpPhaseEnd = null;
                     nd._tpHasHeld = false;
-                    nd._timerStartTime = null;
+                    nd._tpPrevInput = undefined;
                     nd._timerResult = null;
                     nd._timerDone = true;
                     return true;
                 }
                 const v = getNodeOutputValue(inEdge.source);
-                if (v == null) return false; // 上游尚未算出結果，等下一輪
-                passValue = v;
+                if (v != null) {
+                    currentInput = v;
+                    passValue = v;
+                } else {
+                    // v == null → 區分「上游尚未評估」vs「上游已評估但輸出 null」
+                    const srcNd = canvasNodes.find(n => n.id === inEdge.source);
+                    if (srcNd && srcNd.type !== 'input' && srcNd.type !== 'constant' && !srcNd._evalDone) {
+                        return false;  // 上游尚未完成本輪評估，等下一 pass
+                    }
+                    // 上游已完成但輸出 null → currentInput 保持 null
+                }
+            } else {
+                currentInput = 1;  // 無輸入連線 → 視為常數 1
             }
-            // 優先使用底部注入埠的值（變數/常數），否則用預設值
+
             const effDelay = getInputValue(nd.id, 'delay') ?? nd.timerDelay ?? 5;
             const effHold  = getInputValue(nd.id, 'hold')  ?? nd.timerHold  ?? 2;
             const delayMs = Math.max(effDelay * 1000, 500);
             const holdMs  = Math.max(effHold  * 1000, 500);
             const now = Date.now();
 
-            // 狀態機初始化：首次進入 delay 階段
-            if (!nd._tpPhase) {
-                nd._tpPhase = 'delay';
-                nd._tpPhaseEnd = now + delayMs;
-                nd._tpHasHeld = false;
-                nd._timerStartTime = now; // 保留供倒數顯示相容
+            // ── 2. 質變偵測：輸入值與上次不同時觸發新週期 ──
+            // _tpPrevInput 三態：undefined=首次載入(不觸發), null=上游曾 null(會觸發), 數值=比較用
+            if (currentInput != null) {
+                if (nd._tpPrevInput === undefined) {
+                    // 首次載入：只記錄當前值，不啟動計時（避免進頁面就倒數）
+                    nd._tpPrevInput = currentInput;
+                } else if (nd._tpPrevInput === null || nd._tpPrevInput !== currentInput) {
+                    // 真正質變：null→有值 或 值改變 → 啟動新週期
+                    nd._tpPrevInput = currentInput;
+                    clearTimeout(nd._tpTimeout);
+                    nd._tpPhase = 'delay';
+                    nd._tpPhaseEnd = now + delayMs;
+                    nd._tpHasHeld = false;
+                    nd._timerStartTime = now;
+                    nd._tpTimeout = setTimeout(() => evaluateNodes(), delayMs);
+                }
+            } else {
+                // 上游輸出 null → 標記為 null，下次有值時視為質變
+                nd._tpPrevInput = null;
             }
 
-            // 階段轉換：到達結束時間即切換
+            // ── 3. 閒置狀態：等待質變 ──
+            if (!nd._tpPhase) {
+                nd._timerResult = null;
+                nd._timerDone = true;
+                return true;
+            }
+
+            // ── 4. 階段轉換 ──
             if (now >= nd._tpPhaseEnd) {
                 if (nd._tpPhase === 'delay') {
                     nd._tpPhase = 'hold';
                     nd._tpPhaseEnd = now + holdMs;
                     nd._tpHasHeld = true;
+                    clearTimeout(nd._tpTimeout);
+                    nd._tpTimeout = setTimeout(() => evaluateNodes(), holdMs);
                 } else {
-                    nd._tpPhase = 'delay';
-                    nd._tpPhaseEnd = now + delayMs;
+                    // hold 結束 → 回到閒置
+                    nd._tpPhase = null;
+                    nd._tpPhaseEnd = null;
+                    clearTimeout(nd._tpTimeout);
+                    nd._timerResult = null;
+                    nd._timerDone = true;
+                    return true;
                 }
-                // 精準排程下次轉換（不依賴 1s eval interval，短 hold 也不會漏掉）
-                clearTimeout(nd._tpTimeout);
-                const nextDuration = nd._tpPhase === 'hold' ? holdMs : delayMs;
-                nd._tpTimeout = setTimeout(() => evaluateNodes(), nextDuration);
             }
 
-            // 輸出值：hold 階段送 passValue，delay 階段（已歷過 hold 後）送 0
-            if (nd._tpPhase === 'hold') {
-                nd._timerResult = passValue;
-            } else {
-                nd._timerResult = nd._tpHasHeld ? 0 : null;
-            }
+            // ── 5. 輸出：hold 階段送 passValue，delay 階段 null ──
+            nd._timerResult = nd._tpPhase === 'hold' ? passValue : null;
             nd._timerDone = true;
             return true;
+        }
+        // ── A/B 接點 — ctrl 埠模式（邏輯閘控制導通，優先於排程/點位）──
+        if (nd.type === 'contact_no' || nd.type === 'contact_nc') {
+            var ctrlEdge = canvasEdges.find(function(e) { return e.target === nd.id && e.targetPort === 'ctrl'; });
+            if (ctrlEdge) {
+                nd._contactResult = null;
+                nd._contactOn = undefined;
+                var ctrlVal = getNodeOutputValue(ctrlEdge.source);
+                if (ctrlVal == null) return false;  // 上游未就緒
+                var isOnCtrl = nd.type === 'contact_no' ? (ctrlVal === 1) : (ctrlVal === 0);
+                nd._contactOn = isOnCtrl;
+                var inValCtrl = getInputValue(nd.id, 'in');
+                // 守衛：in 埠有連線但值為 null
+                var inEdgeCtrl = canvasEdges.find(function(e) { return e.target === nd.id && e.targetPort === 'in'; });
+                if (inEdgeCtrl && inValCtrl == null) {
+                    var srcCtrl = canvasNodes.find(function(n) { return n.id === inEdgeCtrl.source; });
+                    if (srcCtrl && srcCtrl.type !== 'input' && srcCtrl.type !== 'constant' && !srcCtrl._evalDone) return false;
+                    // 上游已完成但輸出 null → 傳遞 null（不用自己的 ON/OFF 預設值）
+                    nd._contactResult = null;
+                    return true;
+                }
+                nd._contactResult = isOnCtrl ? (inValCtrl != null ? inValCtrl : 1) : (inValCtrl != null ? null : 0);
+                return true;
+            }
         }
         // ── A/B 接點 — 排程模式 ──
         if ((nd.type === 'contact_no' || nd.type === 'contact_nc') && nd.scheduleId != null) {
@@ -986,10 +1060,18 @@
             var isOn = evalScheduleNow(nd.scheduleId, nd.type);
             if (isOn == null) return false;
             var inVal = getInputValue(nd.id, 'in');
+            // 守衛：in 埠有連線但值為 null
+            var inEdgeSch = canvasEdges.find(function(e) { return e.target === nd.id && e.targetPort === 'in'; });
+            if (inEdgeSch && inVal == null) {
+                var srcSch = canvasNodes.find(function(n) { return n.id === inEdgeSch.source; });
+                if (srcSch && srcSch.type !== 'input' && srcSch.type !== 'constant' && !srcSch._evalDone) return false;
+                nd._contactResult = null;
+                return true;
+            }
             if (isOn) {
                 nd._contactResult = inVal != null ? inVal : 1;
             } else {
-                nd._contactResult = inVal != null ? null : 0;  // 有左側注入值時，未導通不送值
+                nd._contactResult = inVal != null ? null : 0;  // 有 in 斷路不傳值，無 in 送 0
             }
             return true;
         }
@@ -1004,10 +1086,18 @@
             // A接點：值===1 導通；B接點：值===0 導通
             const isOn = nd.type === 'contact_no' ? (pointVal === 1) : (pointVal === 0);
             const inVal = getInputValue(nd.id, 'in');
+            // 守衛：in 埠有連線但值為 null
+            var inEdgePt = canvasEdges.find(function(e) { return e.target === nd.id && e.targetPort === 'in'; });
+            if (inEdgePt && inVal == null) {
+                var srcPt = canvasNodes.find(function(n) { return n.id === inEdgePt.source; });
+                if (srcPt && srcPt.type !== 'input' && srcPt.type !== 'constant' && !srcPt._evalDone) return false;
+                nd._contactResult = null;
+                return true;
+            }
             if (isOn) {
                 nd._contactResult = inVal != null ? inVal : 1;   // 導通：透傳輸入值，無輸入則 1
             } else {
-                nd._contactResult = inVal != null ? null : 0;    // 有左側注入值時，未導通不送值
+                nd._contactResult = inVal != null ? null : 0;    // 有 in 斷路不傳值，無 in 送 0
             }
             return true;
         }
@@ -1070,7 +1160,7 @@
         const EVAL_TYPES = ['math', 'compare', 'and', 'or', 'not', 'xor', 'timer', 'contact_no', 'contact_nc', 'algorithm'];
         const evalNodes = canvasNodes.filter(n => EVAL_TYPES.includes(n.type));
 
-        // 清除舊結果（_timerStartTime 不清除，保持連續循環計時）
+        // 清除舊結果（_timerStartTime、_tpPhase 等狀態機欄位不清除）
         for (const nd of evalNodes) {
             nd._mathResult = null;
             nd._compareResult = null;
@@ -1080,6 +1170,7 @@
             nd._contactResult = null;
             nd._algoResult = null;
             nd._algoReady = false;
+            nd._evalDone = false;  // 通用旗標：本輪是否已完成評估
         }
 
         // 多輪迭代：每輪嘗試求值所有未完成節點，直到沒有新結果產生
@@ -1087,13 +1178,11 @@
         for (let round = 0; round < maxRounds; round++) {
             let changed = false;
             for (const nd of evalNodes) {
-                // 已有結果的跳過
-                if (nd.type === 'math' && nd._mathResult != null) continue;
-                if (nd.type === 'compare' && nd._compareResult != null) continue;
-                if (['and','or','not','xor'].includes(nd.type) && nd._gateResult != null) continue;
-                if (nd.type === 'timer' && nd._timerDone) continue;
-                if (nd.type === 'algorithm' && nd._algoReady) continue;
-                if (evalOneNode(nd)) changed = true;
+                if (nd._evalDone) continue;
+                if (evalOneNode(nd)) {
+                    nd._evalDone = true;
+                    changed = true;
+                }
             }
             if (!changed) break;
         }
@@ -1258,6 +1347,11 @@
                 el.innerHTML = `<i class="${meta.icon}"></i><span>${escHtml(label)}</span>`
                     + `<span class="contact-state ${stateClass}">${contactState}</span>`
                     + `<div class="node-live-value${badClass}" data-sid="${escHtml(n.sid)}">${escHtml(valText)}${escHtml(unitText)}</div>`;
+            } else if ((n.type === 'contact_no' || n.type === 'contact_nc') && !n.sid && n.scheduleId == null) {
+                // 無 SID、無排程的接點（純邏輯控制或未設定）
+                el.innerHTML = `<i class="${meta.icon}"></i><span>${escHtml(label)}</span>`
+                    + `<span class="contact-state">--</span>`
+                    + `<div class="node-live-value"><i class="fas fa-project-diagram me-1"></i>\u908f\u8f2f\u63a7\u5236</div>`;
             } else if ((n.type === 'input' || n.type === 'output') && n.sid) {
                 const lv = _realtimeCache[n.sid];
                 const valText = lv ? fmtNum(lv.value) : '--';
@@ -1331,6 +1425,18 @@
                     bp.addEventListener('mousedown', onPortMouseDown);
                     el.appendChild(bp);
                 });
+            }
+
+            // A/B 接點底部控制埠：可接邏輯閘(0/1)控制導通
+            if (n.type === 'contact_no' || n.type === 'contact_nc') {
+                const hasBinding = !!(n.sid || n.scheduleId != null && n.scheduleId !== undefined);
+                const cp = document.createElement('div');
+                cp.className = 'flow-port flow-port-in flow-port-bottom' + (hasBinding ? ' port-disabled' : '');
+                cp.dataset.port = 'ctrl'; cp.dataset.nodeId = n.id; cp.dataset.dir = 'in';
+                cp.style.left = 'calc(50% - 5px)';
+                cp.title = hasBinding ? '\u5df2\u7d81\u5b9a\u9ede\u4f4d/\u6392\u7a0b\uff0c\u4e0d\u53ef\u4f7f\u7528' : '\u63a7\u5236';
+                cp.addEventListener('mousedown', onPortMouseDown);
+                el.appendChild(cp);
             }
 
             // 雙擊 input/output/contact_no 節點 → 編輯點位
@@ -1429,7 +1535,7 @@
             const from = getPortPos(edge.source, edge.sourcePort);
             const to = getPortPos(edge.target, edge.targetPort);
             if (!from || !to) continue;
-            const isBottomPort = edge.targetPort === 'val' || edge.targetPort === 'delay' || edge.targetPort === 'hold';
+            const isBottomPort = edge.targetPort === 'val' || edge.targetPort === 'delay' || edge.targetPort === 'hold' || edge.targetPort === 'ctrl';
             const d = isBottomPort
                 ? bezierPathToBottom(from.x, from.y, to.x, to.y)
                 : bezierPath(from.x, from.y, to.x, to.y);
@@ -1612,6 +1718,16 @@
                 const tId = parseInt(tgt.dataset.nodeId);
                 const tPort = tgt.dataset.port;
                 if (tId !== draggingEdge.sourceId) {
+                    // ctrl 埠防呆：已設定點位或排程的接點不可使用 ctrl 控制埠
+                    if (tPort === 'ctrl') {
+                        var tNode = canvasNodes.find(function(nn) { return nn.id === tId; });
+                        if (tNode && (tNode.sid || tNode.scheduleId != null)) {
+                            alert('\u6b64\u63a5\u9ede\u5df2\u8a2d\u5b9a\u9ede\u4f4d\u6216\u6392\u7a0b\uff0c\u4e0d\u53ef\u4f7f\u7528 ctrl \u63a7\u5236\u57e0\u3002\n\u8acb\u5148\u79fb\u9664\u9ede\u4f4d/\u6392\u7a0b\u8a2d\u5b9a\u518d\u9023\u7dda\u3002');
+                            draggingEdge = null;
+                            renderEdges();
+                            return;
+                        }
+                    }
                     // 每個 input port 只允許一條連線
                     const occupied = canvasEdges.some(e => e.target === tId && e.targetPort === tPort);
                     if (!occupied) {
@@ -1655,6 +1771,14 @@
                     item.style.opacity = item.dataset.type === node.type ? '.4' : '';
                     item.style.pointerEvents = item.dataset.type === node.type ? 'none' : '';
                 });
+
+                // 顯示/隱藏「清除綁定」：僅接點類型且已綁定 SID 或排程時顯示
+                const clearBtn = menu.querySelector('.node-clear-binding');
+                if (clearBtn) {
+                    const isContact = node.type === 'contact_no' || node.type === 'contact_nc';
+                    const hasBind = isContact && (node.sid || node.scheduleId != null);
+                    clearBtn.style.display = hasBind ? '' : 'none';
+                }
 
                 showMenuAt(menu, e.clientX, e.clientY);
             } else {
@@ -1830,12 +1954,19 @@
         const x = Math.round(ctxPos.x / 20) * 20;
         const y = Math.round(ctxPos.y / 20) * 20;
 
-        // 讀取/寫入點位/A接點 → 先彈出點位選擇器
-        if (type === 'input' || type === 'output' || type === 'contact_no' || type === 'contact_nc') {
+        // 讀取/寫入點位 → 先彈出點位選擇器
+        if (type === 'input' || type === 'output') {
             ppEditNodeId = null;
             ppPendingType = type;
             ppPendingPos = { x, y };
             openPointPicker();
+            return;
+        }
+
+        // A/B 接點 → 直接建立空白節點（可稍後雙擊設定點位/排程，或用 ctrl 埠控制）
+        if (type === 'contact_no' || type === 'contact_nc') {
+            canvasNodes.push({ id: nextNodeId++, type, x, y });
+            renderCanvasNodes();
             return;
         }
 
@@ -2307,6 +2438,8 @@
             if (ppEditNodeId != null) {
                 const existing = canvasNodes.find(n => n.id === ppEditNodeId);
                 if (existing) {
+                    // 設定排程時自動移除 ctrl 邊線（互斥）
+                    canvasEdges = canvasEdges.filter(e => !(e.target === existing.id && e.targetPort === 'ctrl'));
                     existing.scheduleId = ppPickedScheduleId;
                     existing.scheduleName = ppPickedScheduleName;
                     delete existing.sid;
@@ -2338,6 +2471,8 @@
         if (ppEditNodeId != null) {
             const existing = canvasNodes.find(n => n.id === ppEditNodeId);
             if (existing) {
+                // 設定點位時自動移除 ctrl 邊線（互斥）
+                canvasEdges = canvasEdges.filter(e => !(e.target === existing.id && e.targetPort === 'ctrl'));
                 existing.sid = point.szSid;
                 existing.pointName = fullName;
                 existing.unit = point.szUnit || '';
@@ -2553,6 +2688,20 @@
     document.querySelector('#nodeCtxMenu .node-delete-item').addEventListener('click', () => {
         hideCtxMenu();
         if (nodeCtxTargetId != null) deleteCanvasNode(nodeCtxTargetId);
+    });
+
+    // 清除綁定：移除接點的 SID/排程，恢復為空白接點
+    document.querySelector('#nodeCtxMenu .node-clear-binding').addEventListener('click', () => {
+        hideCtxMenu();
+        if (nodeCtxTargetId == null) return;
+        var nd = canvasNodes.find(function(n) { return n.id === nodeCtxTargetId; });
+        if (!nd) return;
+        delete nd.sid;
+        delete nd.pointName;
+        delete nd.unit;
+        delete nd.scheduleId;
+        delete nd.scheduleName;
+        renderCanvasNodes();
     });
 
     function clearContent() {

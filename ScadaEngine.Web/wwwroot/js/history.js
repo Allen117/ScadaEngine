@@ -597,6 +597,14 @@
         return dt.getFullYear() + '-' + p(dt.getMonth()+1) + '-' + p(dt.getDate()) + 'T' + p(dt.getHours()) + ':' + p(dt.getMinutes());
     }
 
+    function ceilToMinute(d) {
+        if (d.getSeconds() > 0 || d.getMilliseconds() > 0) {
+            return new Date(d.getFullYear(), d.getMonth(), d.getDate(),
+                            d.getHours(), d.getMinutes() + 1, 0, 0);
+        }
+        return d;
+    }
+
     function showAlert(msg, type) {
         type = type || 'warning';
         var el = document.createElement('div');
@@ -731,7 +739,7 @@
         document.querySelectorAll('.quick-range').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 var h = parseInt(this.dataset.hours);
-                var now = new Date();
+                var now = ceilToMinute(new Date());
                 dtStart.value = fmtDtLocal(new Date(now - h * 3600000));
                 dtEnd.value   = fmtDtLocal(now);
             });

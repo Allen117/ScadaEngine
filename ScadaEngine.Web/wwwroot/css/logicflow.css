@@ -178,6 +178,7 @@
 .flow-port-in { left: -5px; }
 .flow-port-out { right: -5px; }
 .flow-port.flow-port-bottom { left: calc(50% - 5px); top: auto; bottom: -5px; }
+.flow-port.port-disabled { opacity: .3; cursor: not-allowed; pointer-events: none; }
 
 /* ========== 連線 (Edge) ========== */
 .edge-line { transition: stroke .15s; }

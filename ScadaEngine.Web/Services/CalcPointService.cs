@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using NCalc;
 using ScadaEngine.Common.Data.Models;
 using ScadaEngine.Engine.Data.Interfaces;
@@ -127,7 +128,8 @@ public class CalcPointService
             var latestDataList = await _repository.GetLatestDataAsync(10000);
             var latestDict = latestDataList.ToDictionary(d => d.szSID, d => d.fValue);
 
-            var expression = new Expression(szFormula);
+            var szSafeFormula = WrapFormulaVariables(szFormula, mappings.Keys);
+            var expression = new Expression(szSafeFormula);
             foreach (var kvp in mappings)
             {
                 if (latestDict.TryGetValue(kvp.Value, out var fValue))
@@ -153,5 +155,20 @@ public class CalcPointService
             _logger.LogWarning(ex, "公式預覽失敗: {Formula}", szFormula);
             return (false, $"公式計算失敗: {ex.Message}", null);
         }
+    }
+
+    /// <summary>
+    /// 將公式中的變數名稱包裹為 NCalc bracket 語法 [varName]，
+    /// 解決變數名稱以數字開頭或含特殊字元時 NCalc 無法解析的問題
+    /// </summary>
+    private static string WrapFormulaVariables(string szFormula, IEnumerable<string> varNames)
+    {
+        var szResult = szFormula;
+        foreach (var szName in varNames.OrderByDescending(n => n.Length))
+        {
+            var szPattern = @"(?<!\[)\b" + Regex.Escape(szName) + @"\b(?!\])";
+            szResult = Regex.Replace(szResult, szPattern, "[" + szName + "]");
+        }
+        return szResult;
     }
 }

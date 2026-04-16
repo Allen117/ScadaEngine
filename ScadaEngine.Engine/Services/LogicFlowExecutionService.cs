@@ -55,6 +55,9 @@ public class LogicFlowExecutionService : BackgroundService
     };
     // 演算法結果快取：key = "{nodeId}-{inputHash}", value = result
     private readonly ConcurrentDictionary<string, double> _algoResultCache = new();
+    // 演算法首次呼叫時間戳（grace period 用，避免啟動瞬間輸出 null）
+    private readonly ConcurrentDictionary<string, DateTime> _algoPendingSince = new();
+    private static readonly TimeSpan ALGO_GRACE_PERIOD = TimeSpan.FromSeconds(5);
 
     private static readonly TimeSpan DIAGRAM_RELOAD_INTERVAL = TimeSpan.FromSeconds(15);
     private static readonly TimeSpan DEVICE_CONFIG_RELOAD_INTERVAL = TimeSpan.FromMinutes(10);
@@ -608,9 +611,12 @@ public class LogicFlowExecutionService : BackgroundService
     {
         if (nd.Operator == "ton") return EvalTimerTon(ctx, nd);
 
-        // TP 脈衝：狀態機驅動
+        // TP 脈衝：質變觸發 — 輸入值改變 → delay → hold(輸出) → 閒置等待下次質變
         var inEdge = ctx.Edges.Find(e => e.Target == nd.Id && e.TargetPort == "in");
-        double dPassValue = 1;
+        double dPassValue = nd.TpLastPassValue;
+
+        // ── 1. 取得當前輸入值 ──
+        double? dCurrentInput = null;
         if (inEdge != null)
         {
             if (HasUpstreamBad(ctx, nd.Id))
@@ -620,8 +626,21 @@ public class LogicFlowExecutionService : BackgroundService
                 return true;
             }
             var v = GetNodeOutputValue(ctx, inEdge.Source);
-            if (!v.HasValue) return false;
-            dPassValue = v.Value;
+            if (v.HasValue)
+            {
+                dCurrentInput = v.Value;
+                dPassValue = v.Value;
+                nd.TpLastPassValue = dPassValue;
+            }
+            else if (!IsSourceEvalDone(ctx, inEdge.Source))
+            {
+                return false;  // 上游尚未完成本輪評估
+            }
+            // else: 上游完成但 null → dCurrentInput 保持 null
+        }
+        else
+        {
+            dCurrentInput = 1;  // 無輸入連線 → 視為常數 1
         }
 
         double dEffDelay = GetInputValue(ctx, nd.Id, "delay") ?? nd.TimerDelay;
@@ -630,16 +649,36 @@ public class LogicFlowExecutionService : BackgroundService
         int nHoldMs = Math.Max((int)(dEffHold * 1000), 500);
         var now = DateTime.Now;
 
-        // 狀態機初始化
-        if (nd.TpPhase == null)
+        // ── 2. 質變偵測：輸入值與上次不同時觸發新週期 ──
+        if (dCurrentInput.HasValue)
         {
-            nd.TpPhase = "delay";
-            nd.TpPhaseEnd = now.AddMilliseconds(nDelayMs);
-            nd.TpHasHeld = false;
-            ScheduleTpTimer(ctx, nd, nDelayMs);
+            if (!nd.TpPrevInputValue.HasValue || nd.TpPrevInputValue.Value != dCurrentInput.Value)
+            {
+                // 值改變 → (重新)啟動 delay 階段
+                nd.TpPrevInputValue = dCurrentInput;
+                nd.TpTimer?.Dispose();
+                nd.TpTimer = null;
+                nd.TpPhase = "delay";
+                nd.TpPhaseEnd = now.AddMilliseconds(nDelayMs);
+                nd.TpHasHeld = false;
+                ScheduleTpTimer(ctx, nd, nDelayMs);
+            }
+        }
+        else
+        {
+            // 上游輸出 null（未導通等）→ 重置 prev，讓下次有值時視為質變
+            nd.TpPrevInputValue = null;
         }
 
-        // 階段轉換
+        // ── 3. 閒置狀態：等待質變 ──
+        if (nd.TpPhase == null)
+        {
+            nd.Result = null;
+            nd.IsDone = true;
+            return true;
+        }
+
+        // ── 4. 階段轉換 ──
         if (now >= nd.TpPhaseEnd)
         {
             if (nd.TpPhase == "delay")
@@ -651,14 +690,17 @@ public class LogicFlowExecutionService : BackgroundService
             }
             else
             {
-                nd.TpPhase = "delay";
-                nd.TpPhaseEnd = now.AddMilliseconds(nDelayMs);
-                ScheduleTpTimer(ctx, nd, nDelayMs);
+                // hold 結束 → 回到閒置（不再自動重啟 delay）
+                nd.TpPhase = null;
+                nd.TpPhaseEnd = DateTime.MinValue;
+                nd.Result = null;
+                nd.IsDone = true;
+                return true;
             }
         }
 
-        // 輸出值
-        nd.Result = nd.TpPhase == "hold" ? dPassValue : (nd.TpHasHeld ? 0 : null);
+        // ── 5. 輸出：hold 階段傳遞值，delay 階段輸出 null ──
+        nd.Result = nd.TpPhase == "hold" ? dPassValue : null;
         nd.IsDone = true;
         return true;
     }
@@ -719,6 +761,39 @@ public class LogicFlowExecutionService : BackgroundService
 
     private bool EvalContact(DiagramContext ctx, FlowNode nd)
     {
+        // ── ctrl 埠模式（邏輯閘控制導通）──
+        var ctrlEdge = ctx.Edges.Find(e => e.Target == nd.Id && e.TargetPort == "ctrl");
+        if (ctrlEdge != null)
+        {
+            var ctrlVal = GetNodeOutputValue(ctx, ctrlEdge.Source);
+            if (!ctrlVal.HasValue)
+            {
+                if (!IsSourceEvalDone(ctx, ctrlEdge.Source))
+                    return false;  // 上游尚未完成本輪評估
+                nd.Result = null;
+                nd.IsDone = true;
+                return true;
+            }
+            bool isOnCtrl = nd.Type == "contact_no" ? (ctrlVal.Value == 1) : (ctrlVal.Value == 0);
+
+            var hasInEdgeCtrl = ctx.Edges.Any(e => e.Target == nd.Id && e.TargetPort == "in");
+            var inValCtrl = hasInEdgeCtrl ? GetInputValue(ctx, nd.Id, "in") : null;
+
+            if (hasInEdgeCtrl && !inValCtrl.HasValue)
+            {
+                if (!IsPortSourceDone(ctx, nd.Id, "in"))
+                    return false;
+                nd.Result = null;
+                nd.IsDone = true;
+                return true;
+            }
+
+            nd.Result = isOnCtrl ? (inValCtrl ?? 1) : (inValCtrl.HasValue ? null : 0);
+            nd.IsDone = true;
+            return true;
+        }
+
+        // ── 排程/點位模式的上游品質檢查（ctrl 模式已獨立處理，不受此影響）──
         if (HasUpstreamBad(ctx, nd.Id)) return false;
 
         // ── 排程模式 ──
@@ -730,8 +805,23 @@ public class LogicFlowExecutionService : BackgroundService
             bool isActive = EvalScheduleIsActive(sch);
             bool isOn = nd.Type == "contact_no" ? isActive : !isActive;
 
-            var inVal = GetInputValue(ctx, nd.Id, "in");
-            nd.Result = isOn ? (inVal ?? 1) : (inVal.HasValue ? null : 0);  // 有左側注入值時，未導通不送值
+            // 檢查是否有連線到 in port（區分「沒有注入」vs「上游未就緒」）
+            var hasInEdgeSch = ctx.Edges.Any(e => e.Target == nd.Id && e.TargetPort == "in");
+            var inVal = hasInEdgeSch ? GetInputValue(ctx, nd.Id, "in") : null;
+
+            // 有連線但值為 null
+            if (hasInEdgeSch && !inVal.HasValue)
+            {
+                // 上游尚未完成本輪評估 → 等待下一 pass
+                if (!IsPortSourceDone(ctx, nd.Id, "in"))
+                    return false;
+                // 上游已完成但輸出 null（algo grace period 等）→ 傳遞 null，不預設 1
+                nd.Result = null;
+                nd.IsDone = true;
+                return true;
+            }
+
+            nd.Result = isOn ? (inVal ?? 1) : (inVal.HasValue ? null : 0);
             nd.IsDone = true;
             return true;
         }
@@ -744,12 +834,26 @@ public class LogicFlowExecutionService : BackgroundService
 
         bool isOnPt = nd.Type == "contact_no" ? (lv.dValue == 1) : (lv.dValue == 0);
 
-        var inValPt = GetInputValue(ctx, nd.Id, "in");
+        // 檢查是否有連線到 in port（區分「沒有注入」vs「上游未就緒」）
+        var hasInEdge = ctx.Edges.Any(e => e.Target == nd.Id && e.TargetPort == "in");
+        var inValPt = hasInEdge ? GetInputValue(ctx, nd.Id, "in") : null;
+
+        // 有連線但值為 null
+        if (hasInEdge && !inValPt.HasValue)
+        {
+            // 上游尚未完成本輪評估 → 等待下一 pass
+            if (!IsPortSourceDone(ctx, nd.Id, "in"))
+                return false;
+            // 上游已完成但輸出 null（algo grace period 等）→ 傳遞 null
+            nd.Result = null;  // 讓下游 TP 用 TpLastPassValue keep 住
+            nd.IsDone = true;
+            return true;
+        }
 
         if (isOnPt)
             nd.Result = inValPt.HasValue ? inValPt.Value : 1;
         else
-            nd.Result = inValPt.HasValue ? null : 0;  // 有左側注入值時，未導通不送值
+            nd.Result = inValPt.HasValue ? null : 0;
         nd.IsDone = true;
         return true;
     }
@@ -828,6 +932,7 @@ public class LogicFlowExecutionService : BackgroundService
                             _algoResultCache.TryRemove(key, out _);
                         _algoResultCache[szCacheKey] = dResult;
                         _algoResultCache[$"{ctx.TreeId}-{nd.Id}"] = dResult;  // 最新值快取
+                        _algoPendingSince.TryRemove($"{ctx.TreeId}-{nd.Id}", out _);
                     }
                 }
             }
@@ -838,14 +943,25 @@ public class LogicFlowExecutionService : BackgroundService
         });
 
         // 第一次呼叫尚無快取：嘗試用最新值快取
-        if (_algoResultCache.TryGetValue($"{ctx.TreeId}-{nd.Id}", out var lastResult))
+        var szNodeKey = $"{ctx.TreeId}-{nd.Id}";
+        if (_algoResultCache.TryGetValue(szNodeKey, out var lastResult))
         {
             nd.Result = lastResult;
             nd.IsDone = true;
             return true;
         }
 
-        return false;  // 尚無任何結果
+        // Grace period：首次呼叫後給 Python 一段緩衝時間，期間輸出 null（不觸發下游）
+        var dtNow = DateTime.UtcNow;
+        var dtPending = _algoPendingSince.GetOrAdd(szNodeKey, dtNow);
+        if (dtNow - dtPending < ALGO_GRACE_PERIOD)
+        {
+            nd.Result = null;
+            nd.IsDone = true;
+            return true;
+        }
+
+        return false;  // 超過 grace period 仍無結果
     }
 
     /// <summary>評估排程是否在有效時段內</summary>
@@ -942,6 +1058,23 @@ public class LogicFlowExecutionService : BackgroundService
         return GetNodeOutputValue(ctx, edge.Source);
     }
 
+    /// <summary>上游可評估節點是否已完成本輪評估（input/constant/output 視為永遠就緒）</summary>
+    private static bool IsSourceEvalDone(DiagramContext ctx, int nSourceId)
+    {
+        var srcNode = ctx.Nodes.Find(n => n.Id == nSourceId);
+        if (srcNode == null) return true;
+        if (srcNode.Type is "input" or "constant" or "output") return true;
+        return srcNode.IsDone;
+    }
+
+    /// <summary>檢查某節點的某 port 上游是否已完成評估</summary>
+    private static bool IsPortSourceDone(DiagramContext ctx, int nNodeId, string szPort)
+    {
+        var edge = ctx.Edges.Find(e => e.Target == nNodeId && e.TargetPort == szPort);
+        if (edge == null) return true;
+        return IsSourceEvalDone(ctx, edge.Source);
+    }
+
     private bool HasUpstreamBad(DiagramContext ctx, int nNodeId)
     {
         var inEdges = ctx.Edges.Where(e => e.Target == nNodeId).ToList();
@@ -970,6 +1103,7 @@ public class LogicFlowExecutionService : BackgroundService
         nd.TpPhase = null;
         nd.TpPhaseEnd = DateTime.MinValue;
         nd.TpHasHeld = false;
+        nd.TpPrevInputValue = null;
         nd.Result = null;
     }
 
@@ -1355,6 +1489,8 @@ public class LogicFlowExecutionService : BackgroundService
         public DateTime TpPhaseEnd { get; set; } = DateTime.MinValue;
         public bool TpHasHeld { get; set; }
         public Timer? TpTimer { get; set; }
+        public double TpLastPassValue { get; set; } = 1;  // 上次注入值（上游暫時無值時 keep）
+        public double? TpPrevInputValue { get; set; }      // 質變偵測：上次輸入值
 
         // TON 延時開啟狀態機
         public string? TonPhase { get; set; }

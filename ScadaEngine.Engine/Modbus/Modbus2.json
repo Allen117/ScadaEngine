@@ -16,7 +16,7 @@
     {
       "Name": "Single1-2",
       "Address": "40001",
-      "DataType": "INTEGER",
+      "DataType": "FLOATINGPT",
       "Ratio": "1",
       "Unit": "",
       "Min": "0",

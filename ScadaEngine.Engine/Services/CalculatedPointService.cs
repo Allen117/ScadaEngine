@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using NCalc;
 using ScadaEngine.Common.Data.Models;
 using ScadaEngine.Engine.Communication.Modbus.Models;
@@ -172,8 +173,9 @@ public class CalculatedPointService
     {
         var szQuality = "Good";
 
-        // 建立 NCalc 表達式
-        var expression = new Expression(config.szFormula);
+        // 建立 NCalc 表達式（包裹變數名稱為 bracket 語法，支援數字開頭的變數）
+        var szSafeFormula = WrapFormulaVariables(config.szFormula, config.InputMappings.Keys);
+        var expression = new Expression(szSafeFormula);
 
         // 綁定變數參數
         foreach (var kvp in config.InputMappings)
@@ -229,6 +231,21 @@ public class CalculatedPointService
             szCoordinatorName = string.IsNullOrEmpty(config.szGroupName) ? "Calculated" : config.szGroupName,
             IsReadSuccess = true
         };
+    }
+
+    /// <summary>
+    /// 將公式中的變數名稱包裹為 NCalc bracket 語法 [varName]，
+    /// 解決變數名稱以數字開頭或含特殊字元時 NCalc 無法解析的問題
+    /// </summary>
+    private static string WrapFormulaVariables(string szFormula, IEnumerable<string> varNames)
+    {
+        var szResult = szFormula;
+        foreach (var szName in varNames.OrderByDescending(n => n.Length))
+        {
+            var szPattern = @"(?<!\[)\b" + Regex.Escape(szName) + @"\b(?!\])";
+            szResult = Regex.Replace(szResult, szPattern, "[" + szName + "]");
+        }
+        return szResult;
     }
 
     /// <summary>

@@ -10,6 +10,12 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// 支援以 Windows Service 模式執行
+builder.Host.UseWindowsService();
+
+// 設定監聽 URL（部署時使用，launchSettings.json 只在開發時有效）
+builder.WebHost.UseUrls("http://0.0.0.0:5038");
+
 // 配置 Serilog 日誌
 builder.Host.UseSerilog((context, config) =>
 {
@@ -49,17 +55,20 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 builder.Services.AddSingleton<DatabaseConfigService>(serviceProvider =>
 {
     var logger = serviceProvider.GetRequiredService<ILogger<DatabaseConfigService>>();
-    // 指向 Engine 專案的資料庫設定檔
-    var engineDbConfigPath = Path.Combine("..", "ScadaEngine.Engine", "Setting", "dbSetting.json");
-    return new DatabaseConfigService(logger, engineDbConfigPath);
+    // 優先使用本地 Setting/，部署時由腳本複製；開發時 fallback 到 Engine 專案
+    var localDbConfig = Path.Combine(AppContext.BaseDirectory, "Setting", "dbSetting.json");
+    var engineDbConfig = Path.Combine("..", "ScadaEngine.Engine", "Setting", "dbSetting.json");
+    var dbConfigPath = File.Exists(localDbConfig) ? localDbConfig : engineDbConfig;
+    return new DatabaseConfigService(logger, dbConfigPath);
 });
 
 builder.Services.AddSingleton<DatabaseSchemaService>(serviceProvider =>
 {
     var logger = serviceProvider.GetRequiredService<ILogger<DatabaseSchemaService>>();
-    // 指向 Engine 專案的資料庫架構檔
-    var engineSchemaPath = Path.Combine("..", "ScadaEngine.Engine", "DatabaseSchema", "DatabaseSchema.json");
-    return new DatabaseSchemaService(logger, engineSchemaPath);
+    var localSchema = Path.Combine(AppContext.BaseDirectory, "DatabaseSchema", "DatabaseSchema.json");
+    var engineSchema = Path.Combine("..", "ScadaEngine.Engine", "DatabaseSchema", "DatabaseSchema.json");
+    var schemaPath = File.Exists(localSchema) ? localSchema : engineSchema;
+    return new DatabaseSchemaService(logger, schemaPath);
 });
 builder.Services.AddSingleton<DatabaseInitializationService>();
 builder.Services.AddScoped<IDataRepository, SqlServerDataRepository>();
@@ -68,9 +77,10 @@ builder.Services.AddScoped<IDataRepository, SqlServerDataRepository>();
 builder.Services.AddSingleton<MqttConfigService>(serviceProvider =>
 {
     var logger = serviceProvider.GetRequiredService<ILogger<MqttConfigService>>();
-    // 使用 Web 專案自己的 MQTT 設定檔
-    var webMqttConfigPath = Path.Combine("MqttSetting", "MqttSetting.json");
-    return new MqttConfigService(logger, webMqttConfigPath);
+    var localMqttConfig = Path.Combine(AppContext.BaseDirectory, "MqttSetting", "MqttSetting.json");
+    var devMqttConfig = Path.Combine("MqttSetting", "MqttSetting.json");
+    var mqttConfigPath = File.Exists(localMqttConfig) ? localMqttConfig : devMqttConfig;
+    return new MqttConfigService(logger, mqttConfigPath);
 });
 // Web 專案不需要 ModbusConfigService，僅訂閱 MQTT 即時資料
 // builder.Services.AddSingleton<ModbusConfigService>(...);

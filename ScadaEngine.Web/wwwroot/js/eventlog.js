@@ -201,10 +201,18 @@
                'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
     }
 
+    function ceilToMinute(d) {
+        if (d.getSeconds() > 0 || d.getMilliseconds() > 0) {
+            return new Date(d.getFullYear(), d.getMonth(), d.getDate(),
+                            d.getHours(), d.getMinutes() + 1, 0, 0);
+        }
+        return d;
+    }
+
     document.querySelectorAll('.quick-range').forEach(function (btn) {
         btn.addEventListener('click', function () {
             var h = parseInt(this.dataset.hours);
-            var now = new Date();
+            var now = ceilToMinute(new Date());
             document.getElementById('startTime').value = fmtDtLocal(new Date(now - h * 3600000));
             document.getElementById('endTime').value = fmtDtLocal(now);
         });

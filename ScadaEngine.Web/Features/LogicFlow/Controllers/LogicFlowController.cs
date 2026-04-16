@@ -145,12 +145,12 @@ public class LogicFlowController : Controller
 
     // ============ Algorithm API ============
 
-    /// <summary>掃描 Engine/Algorithms/ 資��夾及子資��夾，回傳可用的演算法清單（.py + .cs）</summary>
+    /// <summary>掃描 Engine/Algorithms/ 資料夾及子資料夾，回傳可用的演算法清單（.py + .cs）</summary>
     [HttpGet("api/algorithms")]
     public IActionResult GetAlgorithms()
     {
-        var szAlgoDir = Path.Combine(Directory.GetCurrentDirectory(), "..", "ScadaEngine.Engine", "Algorithms");
-        if (!Directory.Exists(szAlgoDir))
+        var szAlgoDir = ResolveAlgorithmsDir();
+        if (szAlgoDir == null)
             return Ok(Array.Empty<object>());
 
         var algorithms = new List<object>();
@@ -204,5 +204,27 @@ public class LogicFlowController : Controller
         }
 
         return new { name = szName, label = szLabel, group = szGroup, inputs, outputs, description = szDescription, language = szLanguage };
+    }
+
+    /// <summary>依序探測多個候選路徑，回傳第一個存在的 Algorithms 資料夾（開發 + 部署皆適用）</summary>
+    private static string? ResolveAlgorithmsDir()
+    {
+        var candidates = new[]
+        {
+            // 開發環境：Web 與 Engine 平行放在 solution 根目錄下
+            Path.Combine(Directory.GetCurrentDirectory(), "..", "ScadaEngine.Engine", "Algorithms"),
+            // 部署環境：Web 在 C:\SCADA\Web\App，Engine 在 C:\SCADA\Engine\App
+            Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "Engine", "App", "Algorithms"),
+            // 部署環境（同層）：Algorithms 直接放在 Web\App\Algorithms
+            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Algorithms"),
+        };
+
+        foreach (var szPath in candidates)
+        {
+            var szFull = Path.GetFullPath(szPath);
+            if (Directory.Exists(szFull))
+                return szFull;
+        }
+        return null;
     }
 }
