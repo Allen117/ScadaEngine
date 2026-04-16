@@ -21,6 +21,9 @@ __pycache__/
 # Node modules
 node_modules/
 
+# Release output
+Release/
+
 # Claude Code (personal memory only)
 .claude/projects/
 
