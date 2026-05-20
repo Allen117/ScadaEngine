@@ -116,18 +116,36 @@ public class LogicFlowController : Controller
     };
 
     [HttpPost("api/algo-eval/{szAlgoName}")]
-    public async Task<IActionResult> EvalAlgorithm(string szAlgoName, [FromBody] Dictionary<string, double> inputs)
+    public async Task<IActionResult> EvalAlgorithm(string szAlgoName, [FromBody] AlgoEvalRequest req)
     {
+        var inputs = req.Inputs ?? new Dictionary<string, double>();
+
         // ★ 優先嘗試 C# 演算法（同步 in-process，零延遲）
-        if (_csharpAlgoService.TryEvaluate(szAlgoName, inputs, out var csResult))
+        if (_csharpAlgoService.TryEvaluate(szAlgoName, inputs, out var csResult, out var csStatus, out var csPerOutput))
         {
-            return Ok(new { result = csResult, quality = "Good" });
+            var quality = csStatus.Severity == "Error" ? "Bad" : "Good";
+            // 把 perOutput 攤平成 JSON-friendly map
+            var perOutput = csPerOutput.ToDictionary(
+                kv => kv.Key,
+                kv => (object)new { statusCodeId = kv.Value.CodeId, statusCodeName = kv.Value.CodeName, severity = kv.Value.Severity });
+            return Ok(new
+            {
+                result = csResult,
+                statusCodeId = csStatus.CodeId,
+                statusCodeName = csStatus.CodeName,
+                severity = csStatus.Severity,
+                quality,
+                perOutput
+            });
         }
 
-        // ★ 退回 Python FastAPI
+        // ★ 退回 Python FastAPI（variadic 演算法須帶上 n）
         try
         {
-            var payload = System.Text.Json.JsonSerializer.Serialize(new { inputs });
+            var payloadObj = req.N.HasValue
+                ? (object)new { inputs, n = req.N.Value }
+                : (object)new { inputs };
+            var payload = System.Text.Json.JsonSerializer.Serialize(payloadObj);
             var content = new StringContent(payload, System.Text.Encoding.UTF8, "application/json");
             var response = await _algoHttpClient.PostAsync($"/algorithms/{szAlgoName}/evaluate", content);
             if (response.IsSuccessStatusCode)
@@ -160,26 +178,52 @@ public class LogicFlowController : Controller
         {
             var szFileName = Path.GetFileName(szFilePath);
             if (szFileName == "main.py" || szFileName.StartsWith("__")) continue;
-            algorithms.Add(ParseAlgorithmMetadata(szFilePath, szAlgoDir, "#", "python"));
+            algorithms.Add(ParseAlgorithmMetadata(szFilePath, szAlgoDir, "#", "python", _logger));
         }
 
         // 掃描 .cs
         foreach (var szFilePath in Directory.GetFiles(szAlgoDir, "*.cs", SearchOption.AllDirectories))
         {
-            algorithms.Add(ParseAlgorithmMetadata(szFilePath, szAlgoDir, "//", "csharp"));
+            algorithms.Add(ParseAlgorithmMetadata(szFilePath, szAlgoDir, "//", "csharp", _logger));
         }
 
         return Ok(algorithms);
     }
 
-    /// <summary>通用 metadata 解析：支援 # (Python) 和 // (C#) 前綴</summary>
-    private static object ParseAlgorithmMetadata(string szFilePath, string szAlgoDir, string szPrefix, string szLanguage)
+    /// <summary>解析 'key:label, key2:label2' 格式為 [{key, label}]，無冒號時 label 等於 key</summary>
+    private static List<object> ParseKeyLabelList(string raw)
+    {
+        var list = new List<object>();
+        foreach (var seg in raw.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+        {
+            var idx = seg.IndexOf(':');
+            if (idx >= 0)
+            {
+                var k = seg[..idx].Trim();
+                var lbl = seg[(idx + 1)..].Trim();
+                list.Add(new { key = k, label = string.IsNullOrEmpty(lbl) ? k : lbl });
+            }
+            else
+            {
+                list.Add(new { key = seg, label = seg });
+            }
+        }
+        return list;
+    }
+
+    /// <summary>通用 metadata 解析：支援 # (Python) 和 // (C#) 前綴。第一版 .cs 不支援 variadic（忽略並 log warning）。</summary>
+    private static object ParseAlgorithmMetadata(string szFilePath, string szAlgoDir, string szPrefix, string szLanguage, ILogger logger)
     {
         var szName = Path.GetFileNameWithoutExtension(szFilePath);
         var szLabel = szName;
         var inputs = new List<string> { "in" };
         var outputs = new List<string> { "out" };
         var szDescription = "";
+        var isVariadic = false;
+        var inputsRepeat = new List<object>();
+        var inputsFixed = new List<object>();
+        var outputsRepeat = new List<object>();
+        var outputsFixed = new List<object>();
 
         var szRelDir = Path.GetDirectoryName(szFilePath)!;
         var szGroup = szRelDir == szAlgoDir ? "" : Path.GetFileName(szRelDir);
@@ -189,21 +233,66 @@ public class LogicFlowController : Controller
         var szIn = $"{szPrefix} @inputs:";
         var szOut = $"{szPrefix} @outputs:";
         var szDesc = $"{szPrefix} @description:";
+        var szVariadic = $"{szPrefix} @variadic:";
+        var szInRepeat = $"{szPrefix} @inputs_repeat:";
+        var szInFixed = $"{szPrefix} @inputs_fixed:";
+        var szOutRepeat = $"{szPrefix} @outputs_repeat:";
+        var szOutFixed = $"{szPrefix} @outputs_fixed:";
 
         foreach (var line in lines)
         {
             var trimmed = line.Trim();
             if (trimmed.StartsWith(szAlgo))
                 szLabel = trimmed[szAlgo.Length..].Trim();
+            else if (trimmed.StartsWith(szInRepeat))
+                inputsRepeat = ParseKeyLabelList(trimmed[szInRepeat.Length..]);
+            else if (trimmed.StartsWith(szInFixed))
+                inputsFixed = ParseKeyLabelList(trimmed[szInFixed.Length..]);
+            else if (trimmed.StartsWith(szOutRepeat))
+                outputsRepeat = ParseKeyLabelList(trimmed[szOutRepeat.Length..]);
+            else if (trimmed.StartsWith(szOutFixed))
+                outputsFixed = ParseKeyLabelList(trimmed[szOutFixed.Length..]);
             else if (trimmed.StartsWith(szIn))
                 inputs = trimmed[szIn.Length..].Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList();
             else if (trimmed.StartsWith(szOut))
                 outputs = trimmed[szOut.Length..].Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList();
             else if (trimmed.StartsWith(szDesc))
                 szDescription = trimmed[szDesc.Length..].Trim();
+            else if (trimmed.StartsWith(szVariadic))
+            {
+                var v = trimmed[szVariadic.Length..].Trim().ToLowerInvariant();
+                isVariadic = v is "true" or "1" or "yes";
+            }
         }
 
-        return new { name = szName, label = szLabel, group = szGroup, inputs, outputs, description = szDescription, language = szLanguage };
+        // .cs 演算法第一版不支援 variadic：忽略標記並警告
+        if (szLanguage == "csharp" && isVariadic)
+        {
+            logger.LogWarning(
+                "C# 演算法 {Name} 標記了 @variadic: true，但第一版尚未支援 .cs variadic — 已忽略該標記，視為一般演算法",
+                szName);
+            isVariadic = false;
+            inputsRepeat = new List<object>();
+            inputsFixed = new List<object>();
+            outputsRepeat = new List<object>();
+            outputsFixed = new List<object>();
+        }
+
+        return new
+        {
+            name = szName,
+            label = szLabel,
+            group = szGroup,
+            inputs,
+            outputs,
+            description = szDescription,
+            language = szLanguage,
+            variadic = isVariadic,
+            inputsRepeat,
+            inputsFixed,
+            outputsRepeat,
+            outputsFixed,
+        };
     }
 
     /// <summary>依序探測多個候選路徑，回傳第一個存在的 Algorithms 資料夾（開發 + 部署皆適用）</summary>

@@ -170,6 +170,19 @@ DOMContentLoaded
 5. **權限篩選**：非 Admin 使用者只能看到 `canView=true` 的頁面
 6. 渲染左側頁面樹，自動選取第一頁
 
+### 頁面樹摺疊（Collapse / Expand）
+
+- 有子節點的父頁面在名稱左側顯示 caret 圖示（純視覺指示，不可點擊）：
+  - **展開時**：`fa-caret-down`（灰色）
+  - **摺疊時**：`fa-caret-right`（藍色加粗），同時 hover 提示「雙擊展開子項 (N)」，作為「下面還有子畫面」的視覺暗示
+- **互動方式**：
+  - **單擊**父節點 → 選取該頁面（與葉節點一致）
+  - **雙擊**父節點 → 切換摺疊／展開狀態
+  - 葉節點不接受雙擊
+- 葉節點以等寬空白佔位保持與父節點對齊
+- `user-select:none` 防止雙擊選字
+- 摺疊狀態以 localStorage key `scadaPage_collapsed_v1` 持久化（陣列形式存所有摺疊節點 ID），跨重新整理保留
+
 ### 頁面節點屬性
 
 | 屬性 | 說明 |
@@ -392,6 +405,33 @@ DOMContentLoaded
 - 初始化時載入 `_aoManualValueMap`
 - 每次手動/自動控制成功後立即更新快取
 - 右鍵選單中以藍色外框高亮當前模式
+
+### 控制行為審計（EventLog）
+
+所有人為觸發的控制動作（按鈕、AO 手動寫值、AO 切自動、DO ON/OFF、DO 切自動、泵浦啟停、頻率設定、泵浦切自動）在 **MQTT 發送成功**（或自動模式 DB 標記成功）後會寫入一筆 `EventLog`：
+
+| 欄位 | 內容 |
+|------|------|
+| `EventType` | `3`（資訊） |
+| `Severity` | `4`（無） — 專為審計性紀錄新增的一級，視覺以淡灰 badge 區分 |
+| `SID` | 控制點 CID |
+| `MessageKey` | `control.action.*`（10 種，由 `ControlActionType` 決定） |
+| `MessageArgs` | JSON `{ username, name, value? }` |
+| `Message` | 寫入時 culture 預先格式化的字串（fallback） |
+
+顯示時 EventLog 頁面透過 `AlarmMessageLocalizer` 依使用者當下 culture 翻譯。前端 `scadapage.js` 9 處 `/api/control/write` 呼叫各自帶 `actionType` 與 `displayName`（取 `el.dataset.szDisplayName || szTitle`），後端 `ControlController` 解析後委派 `ControlEventLogger.LogAsync` 寫入。
+
+**不會寫入的情境**：
+- MQTT 發送失敗（503）
+- 自動模式 DB 標記失敗
+- `mode=logicflow`（Engine/LogicFlow 自動觸發，非人類操作）
+- 前端未帶 `actionType`（相容舊版前端）
+
+**使用者識別**：取 `User.Identity?.Name`（cookie 失效不會走到這 — `[Authorize]` 已擋下）；空值 fallback `"anonymous"` 防呆。
+
+**EventLog 頁面顯示**：因控制動作為一次性操作、無「恢復」「確認」概念，`EventType=3` 的紀錄在 EventLog 頁面的「恢復時間 / 確認狀態 / 確認者」三欄統一顯示 `-`（`eventlog.js` `renderTable` / `exportCSV` 以 `eventType === 3` 為判定基準，未來其他 Info 來源也自動套用）。
+
+**已知限制**：每次控制都會寫一筆，工地高頻操作可能撐大 `EventLog` 表，目前無自動清檔策略。
 
 ---
 

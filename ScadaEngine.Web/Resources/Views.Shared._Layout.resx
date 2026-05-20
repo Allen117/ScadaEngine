@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="layout.brand" xml:space="preserve"><value>SCADA 監控系統</value></data>
+
+  <data name="layout.menu.scadapage" xml:space="preserve"><value>即時監控</value></data>
+  <data name="layout.menu.realtime" xml:space="preserve"><value>即時數據</value></data>
+
+  <data name="layout.menu.control" xml:space="preserve"><value>控制邏輯</value></data>
+  <data name="layout.menu.condition" xml:space="preserve"><value>條件控制</value></data>
+  <data name="layout.menu.logicflow" xml:space="preserve"><value>流程圖控制</value></data>
+  <data name="layout.menu.schedule" xml:space="preserve"><value>排程設定</value></data>
+
+  <data name="layout.menu.history" xml:space="preserve"><value>歷史資料</value></data>
+  <data name="layout.menu.trend" xml:space="preserve"><value>趨勢圖</value></data>
+  <data name="layout.menu.eventlog" xml:space="preserve"><value>事件記錄</value></data>
+
+  <data name="layout.menu.energy" xml:space="preserve"><value>能源管理</value></data>
+  <data name="layout.menu.energy_meter" xml:space="preserve"><value>電表/迴路設定</value></data>
+  <data name="layout.menu.energy_report" xml:space="preserve"><value>用電報表</value></data>
+  <data name="layout.menu.chilled_water" xml:space="preserve"><value>水系統效率管理</value></data>
+
+  <data name="layout.menu.system" xml:space="preserve"><value>系統設定</value></data>
+  <data name="layout.menu.designer" xml:space="preserve"><value>畫面設計</value></data>
+  <data name="layout.menu.alarm" xml:space="preserve"><value>警報設定</value></data>
+  <data name="layout.menu.points" xml:space="preserve"><value>點位設定</value></data>
+  <data name="layout.menu.commsetting" xml:space="preserve"><value>Modbus來源</value></data>
+  <data name="layout.menu.dbcoordinator" xml:space="preserve"><value>DB 來源</value></data>
+  <data name="layout.menu.calcpoint" xml:space="preserve"><value>計算點位</value></data>
+  <data name="layout.menu.account" xml:space="preserve"><value>帳號管理</value></data>
+
+  <data name="layout.user.profile" xml:space="preserve"><value>個人資料</value></data>
+  <data name="layout.user.logout" xml:space="preserve"><value>登出</value></data>
+  <data name="layout.user.login" xml:space="preserve"><value>登入</value></data>
+
+  <data name="layout.footer.platform" xml:space="preserve"><value>SCADA 智慧能源管理平台</value></data>
+  <data name="layout.footer.version" xml:space="preserve"><value>版本 {0}</value></data>
+  <data name="layout.footer.server_time" xml:space="preserve"><value>伺服器時間</value></data>
+
+  <data name="layout.logout.title" xml:space="preserve"><value>確認登出</value></data>
+  <data name="layout.logout.confirm" xml:space="preserve"><value>確定要登出嗎？</value></data>
+  <data name="layout.logout.notice" xml:space="preserve"><value>登出後需重新輸入帳號密碼</value></data>
+  <data name="layout.logout.cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="layout.logout.confirm_btn" xml:space="preserve"><value>確認登出</value></data>
+
+  <data name="layout.lang.label" xml:space="preserve"><value>語系</value></data>
+  <data name="layout.lang.zh" xml:space="preserve"><value>繁體中文</value></data>
+  <data name="layout.lang.en" xml:space="preserve"><value>English</value></data>
+</root>

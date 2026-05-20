@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using ScadaEngine.Common.Data.Models;
 using ScadaEngine.Web.Features.EventLog.Models;
 using ScadaEngine.Web.Services;
@@ -11,11 +12,19 @@ namespace ScadaEngine.Web.Features.EventLog.Controllers
     {
         private readonly ILogger<EventLogController> _logger;
         private readonly EventLogService _eventLogService;
+        private readonly IStringLocalizer<EventLogController> _l;
+        private readonly AlarmMessageLocalizer _alarmLocalizer;
 
-        public EventLogController(ILogger<EventLogController> logger, EventLogService eventLogService)
+        public EventLogController(
+            ILogger<EventLogController> logger,
+            EventLogService eventLogService,
+            IStringLocalizer<EventLogController> localizer,
+            AlarmMessageLocalizer alarmLocalizer)
         {
             _logger = logger;
             _eventLogService = eventLogService;
+            _l = localizer;
+            _alarmLocalizer = alarmLocalizer;
         }
 
         /// <summary>
@@ -43,14 +52,13 @@ namespace ScadaEngine.Web.Features.EventLog.Controllers
             if (!DateTime.TryParse(startTime, out var dtStart) ||
                 !DateTime.TryParse(endTime, out var dtEnd))
             {
-                return BadRequest(new { success = false, error = "時間格式不正確" });
+                return BadRequest(new { success = false, error = _l["error.invalid_time"].Value });
             }
 
             var events = await _eventLogService.QueryEventsAsync(
                 dtStart, dtEnd, eventType, severity, sid, acknowledged);
 
-            var szEventTypeNames = new[] { "警報", "故障", "警告", "資訊", "系統" };
-            var szSeverityNames = new[] { "緊急", "高", "中", "低" };
+            // 操作符是 ASCII 不需翻譯
             var szOperatorSymbols = new[] { ">", "<", ">=", "<=", "==", "!=" };
 
             return Ok(new
@@ -61,14 +69,15 @@ namespace ScadaEngine.Web.Features.EventLog.Controllers
                     id             = e.nId,
                     sid            = e.szSID,
                     eventType      = e.nEventType,
-                    eventTypeName  = e.nEventType < szEventTypeNames.Length ? szEventTypeNames[e.nEventType] : "未知",
+                    eventTypeName  = LocalizeEventType(e.nEventType),
                     severity       = e.nSeverity,
-                    severityName   = e.nSeverity < szSeverityNames.Length ? szSeverityNames[e.nSeverity] : "未知",
+                    severityName   = LocalizeSeverity(e.nSeverity),
                     triggerValue   = e.dTriggerValue,
                     thresholdValue = e.dThresholdValue,
                     operatorSymbol = e.nOperator.HasValue && e.nOperator.Value < szOperatorSymbols.Length
                                      ? szOperatorSymbols[e.nOperator.Value] : "",
-                    message        = e.szMessage,
+                    // 依當前 culture 翻譯警報訊息；舊資料 messageKey 為 null 時 fallback 用 szMessage
+                    message        = _alarmLocalizer.Localize(e.szMessageKey, e.szMessageArgs, e.szMessage),
                     occurredAt     = e.dtOccurredAt.ToString("yyyy-MM-dd HH:mm:ss"),
                     clearedAt      = e.dtClearedAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? "",
                     isCleared      = e.dtClearedAt.HasValue,
@@ -80,6 +89,18 @@ namespace ScadaEngine.Web.Features.EventLog.Controllers
             });
         }
 
+        private string LocalizeEventType(int n)
+        {
+            var ls = _l[$"event.type.{n}"];
+            return ls.ResourceNotFound ? _l["event.type.unknown"].Value : ls.Value;
+        }
+
+        private string LocalizeSeverity(int n)
+        {
+            var ls = _l[$"event.severity.{n}"];
+            return ls.ResourceNotFound ? _l["event.severity.unknown"].Value : ls.Value;
+        }
+
         /// <summary>
         /// 警報觸發 — 前端偵測到狀態轉變（正常→警報）時呼叫
         /// </summary>
@@ -87,10 +108,10 @@ namespace ScadaEngine.Web.Features.EventLog.Controllers
         public async Task<IActionResult> Trigger([FromBody] EventLogTriggerDto dto)
         {
             if (string.IsNullOrWhiteSpace(dto?.sid))
-                return BadRequest(new { success = false, error = "SID 不可為空" });
+                return BadRequest(new { success = false, error = _l["error.sid_required"].Value });
 
             if (string.IsNullOrWhiteSpace(dto.message))
-                return BadRequest(new { success = false, error = "Message 不可為空" });
+                return BadRequest(new { success = false, error = _l["error.message_required"].Value });
 
             var model = new EventLogModel
             {
@@ -107,7 +128,7 @@ namespace ScadaEngine.Web.Features.EventLog.Controllers
             var isSuccess = await _eventLogService.InsertEventAsync(model);
 
             if (!isSuccess)
-                return StatusCode(500, new { success = false, error = "寫入事件記錄失敗" });
+                return StatusCode(500, new { success = false, error = _l["error.insert_failed"].Value });
 
             _logger.LogInformation("警報觸發: SID={SID}, Message={Message}", dto.sid, dto.message);
             return Ok(new { success = true, sid = dto.sid });
@@ -120,7 +141,7 @@ namespace ScadaEngine.Web.Features.EventLog.Controllers
         public async Task<IActionResult> Clear([FromBody] EventLogClearDto dto)
         {
             if (string.IsNullOrWhiteSpace(dto?.sid))
-                return BadRequest(new { success = false, error = "SID 不可為空" });
+                return BadRequest(new { success = false, error = _l["error.sid_required"].Value });
 
             var isSuccess = await _eventLogService.ClearEventAsync(dto.sid);
 

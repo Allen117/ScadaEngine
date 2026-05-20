@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="account.title" xml:space="preserve"><value>Account Management</value></data>
+  <data name="account.list.title" xml:space="preserve"><value>User List</value></data>
+  <data name="account.list.count" xml:space="preserve"><value>{0} record(s)</value></data>
+  <data name="account.button.create" xml:space="preserve"><value>Add User</value></data>
+
+  <data name="account.col.username" xml:space="preserve"><value>Username</value></data>
+  <data name="account.col.realname" xml:space="preserve"><value>Name</value></data>
+  <data name="account.col.role" xml:space="preserve"><value>Role</value></data>
+  <data name="account.col.department" xml:space="preserve"><value>Department</value></data>
+  <data name="account.col.status" xml:space="preserve"><value>Status</value></data>
+  <data name="account.col.last_login" xml:space="preserve"><value>Last Login</value></data>
+  <data name="account.col.created_at" xml:space="preserve"><value>Created At</value></data>
+  <data name="account.col.actions" xml:space="preserve"><value>Actions</value></data>
+
+  <data name="account.status.active" xml:space="preserve"><value>Active</value></data>
+  <data name="account.status.inactive" xml:space="preserve"><value>Disabled</value></data>
+  <data name="account.status.never_login" xml:space="preserve"><value>Never logged in</value></data>
+  <data name="account.status.no_users" xml:space="preserve"><value>No user records</value></data>
+
+  <data name="account.button.edit" xml:space="preserve"><value>Edit</value></data>
+  <data name="account.button.delete" xml:space="preserve"><value>Delete</value></data>
+
+  <data name="account.modal.create_title" xml:space="preserve"><value>Add User</value></data>
+  <data name="account.modal.edit_title" xml:space="preserve"><value>Edit User</value></data>
+  <data name="account.modal.delete_title" xml:space="preserve"><value>Confirm Delete</value></data>
+
+  <data name="account.field.username" xml:space="preserve"><value>Username</value></data>
+  <data name="account.field.realname" xml:space="preserve"><value>Name</value></data>
+  <data name="account.field.password" xml:space="preserve"><value>Password</value></data>
+  <data name="account.field.password_confirm" xml:space="preserve"><value>Confirm Password</value></data>
+  <data name="account.field.role" xml:space="preserve"><value>Role</value></data>
+  <data name="account.field.department" xml:space="preserve"><value>Department</value></data>
+  <data name="account.field.is_active" xml:space="preserve"><value>Account active</value></data>
+
+  <data name="account.button.save" xml:space="preserve"><value>Save</value></data>
+  <data name="account.button.save_changes" xml:space="preserve"><value>Save Changes</value></data>
+  <data name="account.button.cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="account.button.confirm_delete" xml:space="preserve"><value>Delete</value></data>
+
+  <data name="account.permission.title" xml:space="preserve"><value>Page Access Permissions</value></data>
+  <data name="account.permission.main_pages" xml:space="preserve"><value>Main Pages</value></data>
+  <data name="account.permission.scada_pages" xml:space="preserve"><value>SCADA Page Subpages</value></data>
+  <data name="account.permission.select_all" xml:space="preserve"><value>Select all</value></data>
+  <data name="account.permission.col_page" xml:space="preserve"><value>Page</value></data>
+  <data name="account.permission.col_can_view" xml:space="preserve"><value>View</value></data>
+  <data name="account.permission.col_can_control" xml:space="preserve"><value>Control</value></data>
+  <data name="account.permission.no_pages" xml:space="preserve"><value>No published page designs</value></data>
+  <data name="account.permission.loading" xml:space="preserve"><value>Loading...</value></data>
+
+  <data name="account.delete.confirm_msg" xml:space="preserve"><value>Are you sure you want to delete user {0}?</value></data>
+  <data name="account.delete.warning" xml:space="preserve"><value>This action cannot be undone</value></data>
+
+  <data name="account.alert.input_username" xml:space="preserve"><value>Please enter username</value></data>
+  <data name="account.alert.input_password" xml:space="preserve"><value>Please enter password</value></data>
+  <data name="account.alert.password_mismatch" xml:space="preserve"><value>Passwords do not match</value></data>
+  <data name="account.alert.create_success" xml:space="preserve"><value>Created successfully, reloading…</value></data>
+  <data name="account.alert.create_failed" xml:space="preserve"><value>Create failed</value></data>
+  <data name="account.alert.create_failed_with" xml:space="preserve"><value>Create failed: {0}</value></data>
+  <data name="account.alert.update_success" xml:space="preserve"><value>Updated successfully, reloading…</value></data>
+  <data name="account.alert.update_failed" xml:space="preserve"><value>Update failed</value></data>
+  <data name="account.alert.update_failed_with" xml:space="preserve"><value>Update failed: {0}</value></data>
+  <data name="account.alert.delete_failed" xml:space="preserve"><value>Delete failed</value></data>
+  <data name="account.alert.delete_failed_with" xml:space="preserve"><value>Delete failed: {0}</value></data>
+  <data name="account.alert.saving" xml:space="preserve"><value>Saving...</value></data>
+
+  <data name="account.required" xml:space="preserve"><value>*</value></data>
+</root>

@@ -1,0 +1,12 @@
+.coordinator-item {
+    border-left: 3px solid transparent;
+    transition: border-color 0.15s;
+}
+.coordinator-item:hover {
+    border-left-color: #0d6efd;
+}
+.coordinator-item.active {
+    border-left-color: #0d6efd;
+    background-color: #e8f0fe !important;
+    color: #0d6efd !important;
+}

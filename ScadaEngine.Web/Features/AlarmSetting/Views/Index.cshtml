@@ -5,6 +5,9 @@
     var coordList = ViewBag.CoordinatorList as List<ScadaEngine.Engine.Models.CoordinatorModel>;
     var pointList = ViewBag.PointList as List<ScadaEngine.Engine.Communication.Modbus.Models.ModbusPointModel>;
     var rules     = ViewBag.Rules as List<ScadaEngine.Common.Data.Models.AlarmRuleModel>;
+    var lineTargets = ViewBag.LineTargets as List<ScadaEngine.Common.Data.Models.LineNotifyTargetModel>;
+    var diLabelMap = ViewBag.DiLabelMap as Dictionary<string, ScadaEngine.Web.Features.AlarmSetting.Models.DiLabelDto>
+                     ?? new Dictionary<string, ScadaEngine.Web.Features.AlarmSetting.Models.DiLabelDto>();
 
     var coordJson = System.Text.Json.JsonSerializer.Serialize(
         coordList!.Select(c => new { id = c.Id, name = c.szName, modbusId = c.szModbusID ?? "", deviceName = c.szDeviceName ?? "" })
@@ -26,6 +29,17 @@
             remarks = r.szRemarks ?? ""
         })
     );
+    var lineTargetsJson = System.Text.Json.JsonSerializer.Serialize(
+        (lineTargets ?? new List<ScadaEngine.Common.Data.Models.LineNotifyTargetModel>())
+            .Select(t => new {
+                id = t.nId,
+                groupId = t.szGroupId,
+                label = t.szLabel,
+                maxSeverity = (int)t.nMaxSeverity,
+                isEnabled = t.isEnabled
+            })
+    );
+    var diLabelMapJson = System.Text.Json.JsonSerializer.Serialize(diLabelMap);
 }
 
 <link rel="stylesheet" href="~/css/alarmsetting.css" asp-append-version="true" />
@@ -34,32 +48,90 @@
 
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h4 class="mb-0"><i class="fas fa-bell me-2"></i>警報設定</h4>
-        <button class="btn btn-primary" onclick="window._alarm.showAddModal()">
-            <i class="fas fa-plus me-1"></i>新增規則
-        </button>
+        <div id="tabActionBar">
+            <button class="btn btn-primary" id="btnAddRule" onclick="window._alarm.showAddModal()">
+                <i class="fas fa-plus me-1"></i>新增規則
+            </button>
+            <button class="btn btn-primary d-none" id="btnAddLineTarget" onclick="window._alarmSetting.showAddLineModal()">
+                <i class="fas fa-plus me-1"></i>新增 Line 群組
+            </button>
+        </div>
     </div>
 
-    <!-- 規則列表 -->
-    <div class="card">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0" id="rulesTable">
-                    <thead class="table-dark">
-                        <tr>
-                            <th style="width:50px">啟用</th>
-                            <th>設備 / 點位</th>
-                            <th>上限警報</th>
-                            <th>下限警報</th>
-                            <th>DI 警報</th>
-                            <th>備註</th>
-                            <th style="width:120px">操作</th>
-                        </tr>
-                    </thead>
-                    <tbody id="rulesBody"></tbody>
-                </table>
+    <!-- Nav Tabs -->
+    <ul class="nav nav-tabs alarm-tabs mb-3" id="alarmSettingTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="tab-rules-btn" data-bs-toggle="tab"
+                    data-bs-target="#tab-rules" type="button" role="tab">
+                <i class="fas fa-bell me-1"></i>警報規則
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-line-btn" data-bs-toggle="tab"
+                    data-bs-target="#tab-line" type="button" role="tab">
+                <i class="fab fa-line me-1"></i>Line 通知設定
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="alarmSettingTabContent">
+
+        <!-- ── 警報規則 Tab ── -->
+        <div class="tab-pane fade show active" id="tab-rules" role="tabpanel">
+            <div class="card">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="rulesTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th style="width:50px">啟用</th>
+                                    <th>設備 / 點位</th>
+                                    <th>上限警報</th>
+                                    <th>下限警報</th>
+                                    <th>DI 警報</th>
+                                    <th>備註</th>
+                                    <th style="width:120px">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rulesBody"></tbody>
+                        </table>
+                    </div>
+                    <div id="emptyMsg" class="text-center text-muted py-4 d-none">
+                        <i class="fas fa-info-circle me-1"></i>尚無警報規則，請點擊「新增規則」
+                    </div>
+                </div>
             </div>
-            <div id="emptyMsg" class="text-center text-muted py-4 d-none">
-                <i class="fas fa-info-circle me-1"></i>尚無警報規則，請點擊「新增規則」
+        </div>
+
+        <!-- ── Line 通知設定 Tab ── -->
+        <div class="tab-pane fade" id="tab-line" role="tabpanel">
+            <div class="alert alert-info py-2 mb-3 d-flex align-items-center">
+                <i class="fas fa-info-circle me-2"></i>
+                <div class="small">
+                    警報觸發時將推播至下列已啟用的 Line 群組。Critical（緊急）警報永遠單獨送、不受限流影響；其他嚴重度若每群組每分鐘超過 10 則，將自動合併為摘要訊息。
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="lineTargetsTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th style="width:50px">啟用</th>
+                                    <th>標籤</th>
+                                    <th>GroupID</th>
+                                    <th style="width:160px">接收嚴重度上限</th>
+                                    <th style="width:240px">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lineTargetsBody"></tbody>
+                        </table>
+                    </div>
+                    <div id="lineEmptyMsg" class="text-center text-muted py-4 d-none">
+                        <i class="fab fa-line fa-2x mb-2 d-block"></i>
+                        尚未設定 Line 通知群組，點擊上方「新增 Line 群組」建立第一筆。
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -193,6 +265,10 @@
                         <label class="form-label">OFF 標籤</label>
                         <input type="text" class="form-control" id="txtDiOffLabel" placeholder="OFF" maxlength="50" readonly />
                     </div>
+                    <div class="col-md-4">
+                        <label class="form-label d-block">&nbsp;</label>
+                        <small class="text-muted"><i class="fas fa-info-circle me-1"></i>由 Designer DI 點位設定自動帶入</small>
+                    </div>
                 </div>
 
                 <hr />
@@ -222,12 +298,63 @@
     </div>
 </div>
 
+<!-- Line 群組新增/編輯 Modal -->
+<div class="modal fade" id="lineTargetModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="lineTargetModalTitle">新增 Line 群組</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="lineTargetEditId" />
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold"><i class="fas fa-tag me-1"></i>標籤</label>
+                    <input type="text" class="form-control" id="txtLineLabel"
+                           maxlength="100" placeholder="例如：主管群、工程值班群" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold"><i class="fab fa-line me-1"></i>Line GroupID</label>
+                    <input type="text" class="form-control" id="txtLineGroupId"
+                           maxlength="64" placeholder="C 開頭 33 字元" />
+                    <div class="form-text">於 Line 群組加入 Bot 後，由 Webhook 取得。</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold"><i class="fas fa-filter me-1"></i>接收嚴重度上限</label>
+                    <select class="form-select" id="selLineMaxSeverity">
+                        <option value="0">只收 緊急（Critical）</option>
+                        <option value="1">收 緊急 + 高</option>
+                        <option value="2">收 緊急 + 高 + 中</option>
+                        <option value="3" selected>全收（緊急 / 高 / 中 / 低）</option>
+                    </select>
+                </div>
+
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="chkLineEnabled" checked />
+                    <label class="form-check-label" for="chkLineEnabled">啟用此群組</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="window._alarmSetting.saveLineTarget()">
+                    <i class="fas fa-save me-1"></i>儲存
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         window._alarmInitData = {
             coordinators: @Html.Raw(coordJson),
             points: @Html.Raw(pointJson),
-            rules: @Html.Raw(rulesJson)
+            rules: @Html.Raw(rulesJson),
+            lineTargets: @Html.Raw(lineTargetsJson),
+            diLabels: @Html.Raw(diLabelMapJson)
         };
     </script>
     <script src="~/js/alarmsetting.js" asp-append-version="true"></script>

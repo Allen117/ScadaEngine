@@ -13,6 +13,8 @@ public class ScheduleSaveDto
     public string? daysOfMonth { get; set; }
     public string startTime { get; set; } = string.Empty;
     public string endTime { get; set; } = string.Empty;
+    public string? excludeDates { get; set; }
+    public string? includeDates { get; set; }
     public bool isEnabled { get; set; } = true;
     public string? remarks { get; set; }
 }

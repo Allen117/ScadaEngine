@@ -23,6 +23,7 @@
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.4" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
     <PackageReference Include="MQTTnet" Version="4.3.7.1207" />
     <PackageReference Include="NCalcSync" Version="5.12.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
@@ -42,6 +43,12 @@
     <None Update="Setting\dbsetting.json">
     <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
   </None>
+    <None Update="Setting\LineSetting.json">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </None>
+    <None Update="Setting\LineSetting.example.json">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </None>
 
   <None Update="Modbus\modbus.json">
     <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -50,6 +57,9 @@
     <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
   </None>
     <None Update="DatabaseSchema\DatabaseSchema.json">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </None>
+    <None Update="DBPoint\*.json">
     <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
   </None>
 

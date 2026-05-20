@@ -25,12 +25,17 @@ public class HistoryController : Controller
     public async Task<IActionResult> Trend()
     {
         var coordinatorList = (await _dataRepository.GetAllCoordinatorsAsync()).ToList();
+        var dbCoordinatorList = (await _dataRepository.GetAllDbCoordinatorsAsync()).ToList();
         var pointList = (await _dataRepository.GetAllModbusPointsAsync()).ToList();
 
         // 合併計算點位
         var calcPointsAll = (await _dataRepository.GetAllCalculatedPointsAsync())
             .Where(c => c.isEnabled).ToList();
         pointList.AddRange(calcPointsAll.Select(c => new ModbusPointModel { szSID = c.szSID, szName = c.szName, szUnit = c.szUnit }));
+
+        // 合併 DB 來源點位
+        pointList.AddRange((await _dataRepository.GetAllDbPointsAsync())
+            .Select(p => new ModbusPointModel { szSID = p.szSID, szName = p.szName, szUnit = p.szUnit ?? string.Empty }));
 
         // 計算點位群組名稱（供側欄分群）
         var calcPointGroups = calcPointsAll
@@ -44,6 +49,7 @@ public class HistoryController : Controller
         var viewModel = new HistoryTrendViewModel
         {
             CoordinatorList = coordinatorList,
+            DbCoordinatorList = dbCoordinatorList,
             PointList = pointList,
             CalcPointGroups = calcPointGroups,
             CalcGroupMap = calcGroupMap,
@@ -82,7 +88,7 @@ public class HistoryController : Controller
             var historyData = (await _dataRepository.GetHistoryTableDataAsync(
                 szSID, dtStart, dtEnd, nMaxRecords)).ToList();
 
-            // 查詢點位名稱與單位（Modbus + 計算點位）
+            // 查詢點位名稱與單位（Modbus + 計算點位 + DB 來源）
             var allPoints = await _dataRepository.GetAllModbusPointsAsync();
             var point = allPoints.FirstOrDefault(p => p.szSID == szSID);
             if (point == null && szSID.StartsWith("CALC-"))
@@ -91,6 +97,13 @@ public class HistoryController : Controller
                 var cp = calcPoints.FirstOrDefault(c => c.szSID == szSID);
                 if (cp != null)
                     point = new ModbusPointModel { szSID = cp.szSID, szName = cp.szName, szUnit = cp.szUnit };
+            }
+            if (point == null && szSID.StartsWith("DB"))
+            {
+                var dbPoints = await _dataRepository.GetAllDbPointsAsync();
+                var dp = dbPoints.FirstOrDefault(p => p.szSID == szSID);
+                if (dp != null)
+                    point = new ModbusPointModel { szSID = dp.szSID, szName = dp.szName, szUnit = dp.szUnit ?? string.Empty };
             }
 
             // 計算標準差

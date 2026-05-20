@@ -11,6 +11,10 @@
         Model.CoordinatorList.Select(c => new { id = c.Id, name = c.szName, modbusId = c.szModbusID ?? "", deviceName = c.szDeviceName ?? "" })
     );
 
+    var dbCoordJson = System.Text.Json.JsonSerializer.Serialize(
+        Model.DbCoordinatorList.Select(c => new { id = c.Id, name = c.szName })
+    );
+
     // 把 DB 規則序列化為 JS 可用格式（operator 轉為符號字串）
     var existingRulesJson = System.Text.Json.JsonSerializer.Serialize(
         Model.ExistingRules.Select(r => new {
@@ -59,6 +63,11 @@
                         {
                             <option value="@c.Id">@c.szName</option>
                         }
+                        @foreach (var c in Model.DbCoordinatorList)
+                        {
+                            <option value="DB:@c.Id">@c.szName（DB 來源）</option>
+                        }
+                        <option value="CALC">計算點位</option>
                     </select>
                 </div>
 
@@ -128,6 +137,11 @@
                         {
                             <option value="@c.Id">@c.szName</option>
                         }
+                        @foreach (var c in Model.DbCoordinatorList)
+                        {
+                            <option value="DB:@c.Id">@c.szName（DB 來源）</option>
+                        }
+                        <option value="CALC">計算點位</option>
                     </select>
                 </div>
 
@@ -249,9 +263,10 @@
 
 <script>
     window._condCtrlData = {
-        allPoints: @Html.Raw(pointJson),
-        allCoords: @Html.Raw(coordJson),
-        dbRules:   @Html.Raw(existingRulesJson)
+        allPoints:   @Html.Raw(pointJson),
+        allCoords:   @Html.Raw(coordJson),
+        allDbCoords: @Html.Raw(dbCoordJson),
+        dbRules:     @Html.Raw(existingRulesJson)
     };
 </script>
 

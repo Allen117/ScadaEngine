@@ -34,3 +34,10 @@ public class SaveDiagramDto
     public string DiagramJson { get; set; } = "{}";
     public int Version { get; set; }
 }
+
+/// <summary>演算法預覽呼叫請求（variadic 演算法可帶 n）</summary>
+public class AlgoEvalRequest
+{
+    public Dictionary<string, double>? Inputs { get; set; }
+    public int? N { get; set; }
+}

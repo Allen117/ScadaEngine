@@ -283,7 +283,9 @@
         timer:    { icon: 'fas fa-clock text-secondary',            label: '計時器',   inputs: ['in'],     outputs: ['out'] },
         contact_no: { icon: 'fas fa-toggle-on text-orange',          label: 'A\u63a5\u9ede', inputs: ['in'],     outputs: ['out'] },
         contact_nc: { icon: 'fas fa-toggle-off text-purple',         label: 'B\u63a5\u9ede', inputs: ['in'],     outputs: ['out'] },
-        algorithm:  { icon: 'fas fa-brain text-purple',              label: '\u6f14\u7b97\u6cd5', inputs: ['in'],     outputs: ['out'] }
+        counter:    { icon: 'fas fa-sort-numeric-up text-teal',      label: '計數器', inputs: ['cu','reset','preset'], outputs: ['q','cv'],
+                      portLabels: { cu: '計數脈衝 (cu)', reset: '重置 (reset)', preset: '目標值 (preset)', q: '達標輸出 (q)', cv: '目前計數 (cv)' } },
+        algorithm:  { icon: 'fas fa-brain text-purple',              label:'\u6f14\u7b97\u6cd5', inputs: ['in'],     outputs: ['out'] }
     };
 
     const COMPARE_OPS = {
@@ -308,7 +310,8 @@
 
     const TIMER_OPS = {
         tp:  { symbol: 'TP',  label: '\u8108\u885d' },
-        ton: { symbol: 'TON', label: '\u5ef6\u6642\u958b\u555f' }
+        ton: { symbol: 'TON', label: '\u5ef6\u6642\u958b\u555f' },
+        tpr: { symbol: 'TPR', label: '\u91cd\u8907\u8108\u885d' }
     };
 
     // Python 演算法（動態從 API 載入）
@@ -328,11 +331,72 @@
                     inputs: a.inputs || ['in'],
                     outputs: a.outputs || ['out'],
                     description: a.description || '',
-                    language: a.language || 'python'
+                    language: a.language || 'python',
+                    variadic: !!a.variadic,
+                    inputsRepeat: a.inputsRepeat || [],
+                    inputsFixed: a.inputsFixed || [],
+                    outputsRepeat: a.outputsRepeat || [],
+                    outputsFixed: a.outputsFixed || []
                 };
             });
             buildAlgoSubmenu();
         } catch (e) { console.error('[LogicFlow] loadAlgorithms failed:', e); }
+    }
+
+    // ── 變動埠展開：將 fixed + repeat × N 展開為 [{key, label}, ...] ──
+    // repeat/fixed 為 [{key, label}, ...]
+    function expandAlgoPorts(repeat, fixedList, n) {
+        const out = [];
+        (fixedList || []).forEach(p => out.push({ key: p.key, label: p.label || p.key }));
+        const N = Math.max(1, parseInt(n, 10) || 1);
+        for (let i = 1; i <= N; i++) {
+            (repeat || []).forEach(p => out.push({
+                key: `${p.key}${i}`,
+                label: `${p.label || p.key} ${i}`
+            }));
+        }
+        return out;
+    }
+
+    // ── 取得演算法節點當前的輸入/輸出埠（依 variadic + inputCount 動態展開） ──
+    function getAlgoPorts(op, inputCount) {
+        if (!op) return { inputs: [], outputs: [{ key: 'out', label: 'out' }] };
+        if (op.variadic) {
+            return {
+                inputs: expandAlgoPorts(op.inputsRepeat, op.inputsFixed, inputCount),
+                outputs: expandAlgoPorts(op.outputsRepeat, op.outputsFixed, inputCount)
+            };
+        }
+        // 非 variadic：沿用 inputs/outputs 字串陣列，包成 {key, label} 對齊新格式
+        return {
+            inputs: (op.inputs || ['in']).map(k => ({ key: k, label: k })),
+            outputs: (op.outputs || ['out']).map(k => ({ key: k, label: k }))
+        };
+    }
+
+    // ── variadic 演算法：算出每組 (repeat #i) 在節點內的垂直 % 範圍，供畫外框 ──
+    // 回傳 [{ index, topPct, bottomPct }, ...]；N<2 或沒有 repeat 埠時回空陣列
+    function getAlgoGroupRanges(op, inputCount, inputs, outputs) {
+        if (!op || !op.variadic) return [];
+        const N = Math.max(1, parseInt(inputCount, 10) || 1);
+        if (N < 2) return [];
+        const fixedInLen = (op.inputsFixed || []).length;
+        const repeatInLen = (op.inputsRepeat || []).length;
+        const fixedOutLen = (op.outputsFixed || []).length;
+        const repeatOutLen = (op.outputsRepeat || []).length;
+        if (repeatInLen === 0 && repeatOutLen === 0) return [];
+        const totalIn = inputs.length;
+        const totalOut = outputs.length;
+        const pctAt = (i, total) => total === 1 ? 50 : (20 + i * (60 / (total - 1)));
+        const ranges = [];
+        for (let g = 0; g < N; g++) {
+            const pcts = [];
+            for (let k = 0; k < repeatInLen; k++) pcts.push(pctAt(fixedInLen + g * repeatInLen + k, totalIn));
+            for (let k = 0; k < repeatOutLen; k++) pcts.push(pctAt(fixedOutLen + g * repeatOutLen + k, totalOut));
+            if (pcts.length === 0) continue;
+            ranges.push({ index: g + 1, topPct: Math.min(...pcts), bottomPct: Math.max(...pcts) });
+        }
+        return ranges;
     }
 
     function _createAlgoMenuItem(key, op, isNodeMenu) {
@@ -552,7 +616,8 @@
     function startTimerEval() {
         stopTimerEval();
         var needInterval = canvasNodes.some(n => n.type === 'timer')
-            || canvasNodes.some(n => (n.type === 'contact_no' || n.type === 'contact_nc') && n.scheduleId != null);
+            || canvasNodes.some(n => (n.type === 'contact_no' || n.type === 'contact_nc') && n.scheduleId != null)
+            || canvasNodes.some(n => n.type === 'counter');
         if (needInterval) {
             _timerEvalInterval = setInterval(() => evaluateNodes(), 1000);
         }
@@ -710,10 +775,11 @@
         return false;
     }
 
-    // ── 取得某節點的輸出數值 ──
-    function getNodeOutputValue(nodeId) {
+    // ── 取得某節點的輸出數值（演算法節點支援多輸出，依 sourcePort 索引） ──
+    function getNodeOutputValue(nodeId, sourcePort) {
         const nd = canvasNodes.find(n => n.id === nodeId);
         if (!nd) return null;
+        const port = sourcePort || 'out';
         if (nd.type === 'input' && nd.sid) {
             if (nd._isBad) return null;
             const lv = _realtimeCache[nd.sid];
@@ -740,10 +806,19 @@
             return nd._contactResult != null ? nd._contactResult : null;
         }
         if (nd.type === 'algorithm') {
-            if (nd._algoResult != null) return nd._algoResult;
+            // 多輸出：以 dict 儲存（key 對應 sourcePort）；單輸出舊行為仍以 {out: value} 表示
+            const live = nd._algoResult;
+            if (live && typeof live === 'object' && live[port] != null) return live[port];
             // 非同步等待期間：沿用上次快取值，避免輸出 0 導致下游閃爍
-            if (nd._algoCachedResult != null) return nd._algoCachedResult;
+            const cached = nd._algoCachedResult;
+            if (cached && typeof cached === 'object' && cached[port] != null) return cached[port];
             return null;
+        }
+        if (nd.type === 'counter') {
+            // 多輸出：q（達 preset 為 1）/ cv（目前累加值）
+            if (port === 'cv') return nd._counterValue != null ? nd._counterValue : 0;
+            // q：跨 tick 保留以支援 q→reset 自回授
+            return nd._counterQ != null ? nd._counterQ : 0;
         }
         return null;
     }
@@ -752,7 +827,27 @@
     function getInputValue(nodeId, portName) {
         const edge = canvasEdges.find(e => e.target === nodeId && e.targetPort === portName);
         if (!edge) return null;
-        return getNodeOutputValue(edge.source);
+        return getNodeOutputValue(edge.source, edge.sourcePort);
+    }
+
+    // ── TPR 回饋偵測：從指定節點往下游找 output 節點，讀取其即時值 ──
+    function getTprFeedbackValue(startNodeId) {
+        var visited = new Set([startNodeId]);
+        var queue = [];
+        canvasEdges.filter(e => e.source === startNodeId).forEach(e => queue.push(e.target));
+        while (queue.length > 0) {
+            var nid = queue.shift();
+            if (visited.has(nid)) continue;
+            visited.add(nid);
+            var target = canvasNodes.find(n => n.id === nid);
+            if (!target) continue;
+            if (target.type === 'output' && target.sid) {
+                var lv = _realtimeCache[target.sid];
+                return lv ? parseFloat(lv.value) : null;
+            }
+            canvasEdges.filter(e => e.source === nid).forEach(e => queue.push(e.target));
+        }
+        return null;
     }
 
     // ── 排程即時評估（前端用，回傳 boolean | null） ──
@@ -902,7 +997,7 @@
                         nd._timerDone = true;
                         return true;
                     }
-                    inputVal = getNodeOutputValue(inEdge.source);
+                    inputVal = getNodeOutputValue(inEdge.source, inEdge.sourcePort);
                     if (inputVal == null) return false;
                 } else {
                     inputVal = 1; // 無輸入預設 ON
@@ -939,6 +1034,130 @@
                 nd._timerDone = true;
                 return true;
             }
+            // TPR 延遲導通 + 回饋重送：
+            // delay 倒數中輸出 null（值變會 debounce 重置）；
+            // 倒數結束輸出 passValue 並進入 confirmed（同時開始 settling 倒數）；
+            // confirmed 內若輸入值變或下游回饋偏離 → 回 delay。
+            // _tpPhaseEnd 雙語意：delay 階段=倒數結束時間；confirmed 階段=settling 結束時間。
+            if (nd.operator === 'tpr') {
+                const inEdge = canvasEdges.find(e => e.target === nd.id && e.targetPort === 'in');
+                let passValue = 1;
+                let currentInput = null;
+
+                if (inEdge) {
+                    if (hasUpstreamBad(nd.id)) {
+                        clearTimeout(nd._tpTimeout);
+                        nd._tpPhase = null; nd._tpPhaseEnd = null;
+                        nd._tprPrevInput = null; nd._tprLastSentValue = null;
+                        nd._timerResult = null; nd._timerDone = true;
+                        return true;
+                    }
+                    const v = getNodeOutputValue(inEdge.source, inEdge.sourcePort);
+                    if (v != null) { currentInput = v; passValue = v; }
+                    else {
+                        const srcNd = canvasNodes.find(n => n.id === inEdge.source);
+                        if (srcNd && srcNd.type !== 'input' && srcNd.type !== 'constant' && !srcNd._evalDone) return false;
+                    }
+                } else {
+                    currentInput = 1;
+                }
+
+                // 輸入 null → 中止
+                if (currentInput == null) {
+                    clearTimeout(nd._tpTimeout);
+                    nd._tpPhase = null; nd._tpPhaseEnd = null;
+                    nd._tprPrevInput = null; nd._tprLastSentValue = null;
+                    nd._timerResult = null; nd._timerDone = true;
+                    return true;
+                }
+
+                const feedback = getTprFeedbackValue(nd.id);
+                const effDelay = getInputValue(nd.id, 'delay') ?? nd.timerDelay ?? 5;
+                const delayMs = Math.max(effDelay * 1000, 500);
+                const now = Date.now();
+
+                // 初始：進入 delay 倒數，輸出 null
+                if (!nd._tpPhase) {
+                    nd._tpPhase = 'delay';
+                    nd._tpPhaseEnd = now + delayMs;
+                    nd._tprPrevInput = currentInput;
+                    clearTimeout(nd._tpTimeout);
+                    nd._tpTimeout = setTimeout(() => evaluateNodes(), delayMs);
+                    nd._timerResult = null;
+                    nd._timerDone = true;
+                    return true;
+                }
+
+                // confirmed：已輸出 passValue，視 settling 與回饋狀況決定是否回 delay
+                if (nd._tpPhase === 'confirmed') {
+                    // (a) 輸入值變化 → 回 delay 重啟倒數
+                    if (nd._tprLastSentValue != null
+                        && Math.abs(passValue - nd._tprLastSentValue) >= 0.001) {
+                        nd._tpPhase = 'delay';
+                        nd._tpPhaseEnd = now + delayMs;
+                        nd._tprPrevInput = currentInput;
+                        clearTimeout(nd._tpTimeout);
+                        nd._tpTimeout = setTimeout(() => evaluateNodes(), delayMs);
+                        nd._timerResult = null;
+                        nd._timerDone = true;
+                        return true;
+                    }
+
+                    // (b) settling 中（now < _tpPhaseEnd）→ 不檢查回饋，持續輸出 passValue
+                    if (nd._tpPhaseEnd != null && now < nd._tpPhaseEnd) {
+                        nd._timerResult = passValue;
+                        nd._timerDone = true;
+                        return true;
+                    }
+
+                    // (c) settling 已過 → 檢查回饋
+                    const isFeedbackMatch = feedback != null && Math.abs(feedback - passValue) < 0.001;
+                    if (isFeedbackMatch) {
+                        nd._timerResult = passValue;
+                        nd._timerDone = true;
+                        return true;
+                    }
+                    // 回饋偏離 → 回 delay 重新計時 + 重送
+                    nd._tpPhase = 'delay';
+                    nd._tpPhaseEnd = now + delayMs;
+                    nd._tprPrevInput = currentInput;
+                    clearTimeout(nd._tpTimeout);
+                    nd._tpTimeout = setTimeout(() => evaluateNodes(), delayMs);
+                    nd._timerResult = null;
+                    nd._timerDone = true;
+                    return true;
+                }
+
+                // delay：倒數中
+                // (a) 值變偵測 → debounce 重置倒數
+                if (nd._tprPrevInput != null
+                    && Math.abs(currentInput - nd._tprPrevInput) >= 0.001) {
+                    nd._tpPhaseEnd = now + delayMs;
+                    nd._tprPrevInput = currentInput;
+                    clearTimeout(nd._tpTimeout);
+                    nd._tpTimeout = setTimeout(() => evaluateNodes(), delayMs);
+                    nd._timerResult = null;
+                    nd._timerDone = true;
+                    return true;
+                }
+
+                // (b) 倒數結束 → 進入 confirmed、輸出 passValue、啟動 settling
+                if (now >= nd._tpPhaseEnd) {
+                    nd._tpPhase = 'confirmed';
+                    nd._tprLastSentValue = passValue;
+                    nd._tpPhaseEnd = now + delayMs;  // settling 結束時間
+                    clearTimeout(nd._tpTimeout);
+                    nd._tpTimeout = setTimeout(() => evaluateNodes(), delayMs);
+                    nd._timerResult = passValue;
+                    nd._timerDone = true;
+                    return true;
+                }
+
+                // (c) 倒數中且輸入未變 → 輸出 null
+                nd._timerResult = null;
+                nd._timerDone = true;
+                return true;
+            }
             // TP 脈衝：質變觸發 — 輸入值改變 → delay → hold(輸出) → 閒置等待下次質變
             const inEdge = canvasEdges.find(e => e.target === nd.id && e.targetPort === 'in');
             let passValue = 1;
@@ -956,7 +1175,7 @@
                     nd._timerDone = true;
                     return true;
                 }
-                const v = getNodeOutputValue(inEdge.source);
+                const v = getNodeOutputValue(inEdge.source, inEdge.sourcePort);
                 if (v != null) {
                     currentInput = v;
                     passValue = v;
@@ -995,8 +1214,14 @@
                     nd._tpTimeout = setTimeout(() => evaluateNodes(), delayMs);
                 }
             } else {
-                // 上游輸出 null → 標記為 null，下次有值時視為質變
+                // 上游輸出 null → 中止計時週期，等待下次有值時質變觸發
                 nd._tpPrevInput = null;
+                if (nd._tpPhase) {
+                    clearTimeout(nd._tpTimeout);
+                    nd._tpPhase = null;
+                    nd._tpPhaseEnd = null;
+                    nd._tpHasHeld = false;
+                }
             }
 
             // ── 3. 閒置狀態：等待質變 ──
@@ -1036,7 +1261,7 @@
             if (ctrlEdge) {
                 nd._contactResult = null;
                 nd._contactOn = undefined;
-                var ctrlVal = getNodeOutputValue(ctrlEdge.source);
+                var ctrlVal = getNodeOutputValue(ctrlEdge.source, ctrlEdge.sourcePort);
                 if (ctrlVal == null) return false;  // 上游未就緒
                 var isOnCtrl = nd.type === 'contact_no' ? (ctrlVal === 1) : (ctrlVal === 0);
                 nd._contactOn = isOnCtrl;
@@ -1057,8 +1282,10 @@
         // ── A/B 接點 — 排程模式 ──
         if ((nd.type === 'contact_no' || nd.type === 'contact_nc') && nd.scheduleId != null) {
             nd._contactResult = null;
+            nd._contactOn = undefined;
             var isOn = evalScheduleNow(nd.scheduleId, nd.type);
             if (isOn == null) return false;
+            nd._contactOn = isOn;
             var inVal = getInputValue(nd.id, 'in');
             // 守衛：in 埠有連線但值為 null
             var inEdgeSch = canvasEdges.find(function(e) { return e.target === nd.id && e.targetPort === 'in'; });
@@ -1078,6 +1305,7 @@
         // ── A接點（常開）/ B接點（常閉）— 點位模式 ──
         if ((nd.type === 'contact_no' || nd.type === 'contact_nc') && nd.sid) {
             nd._contactResult = null;
+            nd._contactOn = undefined;
             if (hasUpstreamBad(nd.id)) return false;
             const lv = _realtimeCache[nd.sid];
             if (!lv) return false;
@@ -1085,6 +1313,7 @@
             if (isNaN(pointVal)) return false;
             // A接點：值===1 導通；B接點：值===0 導通
             const isOn = nd.type === 'contact_no' ? (pointVal === 1) : (pointVal === 0);
+            nd._contactOn = isOn;
             const inVal = getInputValue(nd.id, 'in');
             // 守衛：in 埠有連線但值為 null
             var inEdgePt = canvasEdges.find(function(e) { return e.target === nd.id && e.targetPort === 'in'; });
@@ -1102,24 +1331,110 @@
             return true;
         }
 
+        // ── 計數器節點（CTU）──
+        if (nd.type === 'counter') {
+            // preset：優先輸入腳，其次節點設定
+            let preset = nd.presetValue != null ? nd.presetValue : 10;
+            const presetEdge = canvasEdges.find(e => e.target === nd.id && e.targetPort === 'preset');
+            if (presetEdge) {
+                const pv = getNodeOutputValue(presetEdge.source, presetEdge.sourcePort);
+                if (pv != null) preset = Math.max(1, Math.floor(pv));
+                else {
+                    const srcP = canvasNodes.find(n => n.id === presetEdge.source);
+                    if (srcP && srcP.type !== 'input' && srcP.type !== 'constant' && !srcP._evalDone) return false;
+                }
+            }
+            if (preset < 1) preset = 1;
+
+            // cu：標準等待，上游 Bad 保留 prevCu
+            const cuEdge = canvasEdges.find(e => e.target === nd.id && e.targetPort === 'cu');
+            let cuVal = null;
+            let isCuBad = false;
+            if (cuEdge) {
+                const srcCu = canvasNodes.find(n => n.id === cuEdge.source);
+                // 用 hasUpstreamBad(cuEdge.source) 檢查 cu 那條鏈
+                if (srcCu && hasUpstreamBad(cuEdge.source)) {
+                    isCuBad = true;
+                } else {
+                    const v = getNodeOutputValue(cuEdge.source, cuEdge.sourcePort);
+                    if (v != null) cuVal = v;
+                    else if (srcCu && srcCu.type !== 'input' && srcCu.type !== 'constant' && !srcCu._evalDone) return false;
+                }
+            }
+
+            // reset：自回授特例（直接讀 nd._counterQ 上一 tick 的 q），其餘走標準等待
+            const resetEdge = canvasEdges.find(e => e.target === nd.id && e.targetPort === 'reset');
+            let resetVal = null;
+            if (resetEdge) {
+                if (resetEdge.source === nd.id) {
+                    // 自回授：用上一 tick 的 q（不清除以保留）
+                    resetVal = nd._counterQ != null ? nd._counterQ : 0;
+                } else {
+                    const srcR = canvasNodes.find(n => n.id === resetEdge.source);
+                    if (srcR && hasUpstreamBad(resetEdge.source)) {
+                        resetVal = null; // Bad → 忽略 reset
+                    } else {
+                        const v = getNodeOutputValue(resetEdge.source, resetEdge.sourcePort);
+                        if (v != null) resetVal = v;
+                        else if (srcR && srcR.type !== 'input' && srcR.type !== 'constant' && !srcR._evalDone) return false;
+                    }
+                }
+            }
+
+            // 初始化狀態欄位
+            if (nd._counterValue == null) nd._counterValue = 0;
+            if (nd._counterLastEdgeAt == null) nd._counterLastEdgeAt = 0;
+
+            const isReset = resetVal != null && resetVal !== 0;
+            if (isReset) {
+                nd._counterValue = 0;
+                if (cuVal != null) nd._counterPrevCu = cuVal;
+            } else if (cuVal != null && !isCuBad) {
+                if (nd._counterPrevCu == null) {
+                    nd._counterPrevCu = cuVal;
+                } else {
+                    const isEdge = nd._counterPrevCu === 0 && cuVal !== 0;
+                    if (isEdge) {
+                        const minMs = Math.max(0, nd.cuMinIntervalMs != null ? nd.cuMinIntervalMs : 60000);
+                        const now = Date.now();
+                        const isFirstEdge = nd._counterLastEdgeAt === 0;
+                        if (isFirstEdge || (now - nd._counterLastEdgeAt) >= minMs) {
+                            if (nd._counterValue < preset) nd._counterValue++;
+                            nd._counterLastEdgeAt = now;
+                        }
+                    }
+                    nd._counterPrevCu = cuVal;
+                }
+            } else if (cuVal == null && !isCuBad && cuEdge) {
+                // 上游已完成但輸出 null → 視為 0
+                nd._counterPrevCu = 0;
+            }
+            // isCuBad：保留 _counterPrevCu
+
+            nd._counterQ = nd._counterValue >= preset ? 1 : 0;
+            return true;
+        }
+
         // ── 演算法節點：呼叫後端 API 取得實際計算結果 ──
         if (nd.type === 'algorithm' && nd.operator && ALGO_OPS[nd.operator]) {
             nd._algoResult = null;
             nd._algoReady = false;
             if (hasUpstreamBad(nd.id)) return false;
             var algo = ALGO_OPS[nd.operator];
-            var algoInputs = algo.inputs || ['in'];
+            var ports = getAlgoPorts(algo, nd.inputCount);
+            var algoInputs = ports.inputs;  // [{key, label}, ...]
             var inputValues = {};
             for (var i = 0; i < algoInputs.length; i++) {
-                var portName = algoInputs[i];
-                var v = getInputValue(nd.id, portName);
+                var portKey = algoInputs[i].key;
+                var v = getInputValue(nd.id, portKey);
                 if (v == null) return false;
-                inputValues[portName] = v;
+                inputValues[portKey] = v;
             }
             nd._algoReady = true;
 
-            // 快取機制：輸入值不變時直接用上次結果
-            var cacheKey = nd.operator + '|' + algoInputs.map(function(p) { return p + '=' + inputValues[p]; }).join('|');
+            // 快取機制：輸入值/N 不變時直接用上次結果
+            var nForCache = algo.variadic ? (nd.inputCount || 1) : '_';
+            var cacheKey = nd.operator + '|N' + nForCache + '|' + algoInputs.map(function(p) { return p.key + '=' + inputValues[p.key]; }).join('|');
             if (nd._algoCacheKey === cacheKey && nd._algoCachedResult != null) {
                 nd._algoResult = nd._algoCachedResult;
                 return true;
@@ -1128,19 +1443,57 @@
             // 非同步呼叫後端 API（不阻塞，結果回來後下一個 render 週期顯示）
             if (!nd._algoFetching) {
                 nd._algoFetching = true;
+                var payload = { inputs: inputValues };
+                if (algo.variadic) payload.n = nd.inputCount || 1;
                 fetch('/LogicFlow/api/algo-eval/' + encodeURIComponent(nd.operator), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(inputValues)
+                    body: JSON.stringify(payload)
                 })
                 .then(function(r) { return r.ok ? r.json() : Promise.reject(r.status); })
                 .then(function(data) {
                     var res = data.result || data;
-                    var val = res.out != null ? res.out : (typeof res === 'number' ? res : Object.values(res)[0]);
-                    nd._algoCachedResult = val;
+                    // 統一保留為 dict（多輸出用 sourcePort 索引）；若回傳純數字則包成 {out: value}
+                    var resDict = (typeof res === 'number') ? { out: res } : res;
+                    nd._algoCachedResult = resDict;
                     nd._algoCacheKey = cacheKey;
-                    nd._algoResult = val;
+                    nd._algoResult = resDict;
+                    // 演算法狀態：merged（codeId/codeName/severity）+ perOutput（每個輸出 port 各自 status）
+                    // 舊 response 缺 perOutput → fallback：所有 result key 套 merged，避免畫面崩
+                    var mergedCodeId = (data && data.statusCodeId != null) ? data.statusCodeId : 0;
+                    var mergedCodeName = (data && data.statusCodeName) ? data.statusCodeName : 'OK';
+                    var mergedSeverity = (data && data.severity) ? data.severity : 'Info';
+                    var perOutput = (data && data.perOutput && typeof data.perOutput === 'object') ? data.perOutput : null;
+                    if (!perOutput) {
+                        perOutput = {};
+                        Object.keys(resDict).forEach(function(k) {
+                            perOutput[k] = { statusCodeId: mergedCodeId, statusCodeName: mergedCodeName, severity: mergedSeverity };
+                        });
+                    }
+                    nd._algoStatus = {
+                        codeId: mergedCodeId,
+                        codeName: mergedCodeName,
+                        severity: mergedSeverity,
+                        perOutput: perOutput
+                    };
                     nd._algoFetching = false;
+                    // 節點本身只在「所有 perOutput 都 Error」時才整顆反灰；
+                    // 混合狀態下節點維持正常外觀，由邊線各自反灰／顯 tooltip。
+                    var algoEl = document.querySelector('.flow-node[data-node-id="' + nd.id + '"]');
+                    if (algoEl) {
+                        algoEl.classList.remove('algo-status-bad', 'algo-status-warning', 'algo-status-error');
+                        var poKeys = Object.keys(perOutput);
+                        var allError = poKeys.length > 0 && poKeys.every(function(k) {
+                            return perOutput[k] && perOutput[k].severity === 'Error';
+                        });
+                        if (allError) {
+                            algoEl.classList.add('algo-status-bad', 'algo-status-error');
+                            var algoLabel = (ALGO_OPS[nd.operator] && ALGO_OPS[nd.operator].label) || nd.operator;
+                            algoEl.title = algoLabel + ' : ' + mergedCodeName + ' (' + mergedSeverity + ')';
+                        } else {
+                            algoEl.removeAttribute('title');
+                        }
+                    }
                 })
                 .catch(function(err) {
                     console.error('algo-eval failed:', nd.operator, err);
@@ -1157,10 +1510,10 @@
     function evaluateNodes() {
         markBadInputs();
 
-        const EVAL_TYPES = ['math', 'compare', 'and', 'or', 'not', 'xor', 'timer', 'contact_no', 'contact_nc', 'algorithm'];
+        const EVAL_TYPES = ['math', 'compare', 'and', 'or', 'not', 'xor', 'timer', 'contact_no', 'contact_nc', 'algorithm', 'counter'];
         const evalNodes = canvasNodes.filter(n => EVAL_TYPES.includes(n.type));
 
-        // 清除舊結果（_timerStartTime、_tpPhase 等狀態機欄位不清除）
+        // 清除舊結果（_timerStartTime、_tpPhase、_counterValue 等狀態機欄位不清除）
         for (const nd of evalNodes) {
             nd._mathResult = null;
             nd._compareResult = null;
@@ -1170,6 +1523,7 @@
             nd._contactResult = null;
             nd._algoResult = null;
             nd._algoReady = false;
+            // counter._counterQ 跨 tick 保留以支援 q→reset 自回授；不清掉。
             nd._evalDone = false;  // 通用旗標：本輪是否已完成評估
         }
 
@@ -1227,10 +1581,20 @@
                 }
             }
 
+            // 更新計數器節點的 cv/q 即時顯示
+            for (const nd of canvasNodes) {
+                if (nd.type !== 'counter') continue;
+                const liveEl = cvs.querySelector(`.counter-live[data-node-id="${nd.id}"]`);
+                if (!liveEl) continue;
+                const cvText = nd._counterValue != null ? String(nd._counterValue) : '0';
+                const qText = nd._counterQ === 1 ? '1' : '0';
+                liveEl.textContent = `cv:${cvText} / q:${qText}`;
+            }
+
             // 更新計時器節點的注入值顯示
             for (const nd of canvasNodes) {
                 if (nd.type !== 'timer') continue;
-                const timerFields = nd.operator === 'ton' ? ['delay'] : ['delay', 'hold'];
+                const timerFields = (nd.operator === 'ton' || nd.operator === 'tpr') ? ['delay'] : ['delay', 'hold'];
                 for (const field of timerFields) {
                     const dispEl = cvs.querySelector(`.timer-value-display[data-node-id="${nd.id}"][data-field="${field}"]`);
                     if (!dispEl) continue;
@@ -1276,6 +1640,8 @@
             el.dataset.nodeId = n.id;
             el.style.left = n.x + 'px';
             el.style.top = n.y + 'px';
+            // 使用者手動調整過的高度（目前僅 variadic 演算法支援）
+            if (n.height) el.style.height = n.height + 'px';
             let label = n.pointName ? n.pointName : meta.label;
 
             // compare 節點：a值 運算子 b值（唯讀顯示）
@@ -1298,36 +1664,78 @@
                     html += `<span style="font-size:.75rem">${escHtml(mop.label)}</span>`;
                 }
                 el.innerHTML = html;
-            // timer 節點：TP 顯示延+持；TON 只顯示延
+            // timer 節點：TP 顯示延+持；TON/TPR 只顯示延
             } else if (n.type === 'timer') {
                 const delEdge = canvasEdges.find(e => e.target === n.id && e.targetPort === 'delay');
-                const del = delEdge ? (getNodeOutputValue(delEdge.source) ?? n.timerDelay ?? 5) : (n.timerDelay ?? 5);
+                const del = delEdge ? (getNodeOutputValue(delEdge.source, delEdge.sourcePort) ?? n.timerDelay ?? 5) : (n.timerDelay ?? 5);
+                const delHtml = delEdge
+                    ? `<span class="timer-value-display" data-node-id="${n.id}" data-field="delay">${fmtNum(del)}</span>`
+                    : `<input type="text" class="timer-value-input" value="${fmtNum(del)}" data-node-id="${n.id}" data-field="delay" data-raw="${del}">`;
                 const top = n.operator && TIMER_OPS[n.operator] ? TIMER_OPS[n.operator] : TIMER_OPS['tp'];
-                if (n.operator === 'ton') {
-                    // TON：只顯示「延」
+                if (n.operator === 'ton' || n.operator === 'tpr') {
+                    // TON/TPR：只顯示「延」
                     el.innerHTML = `<i class="${meta.icon}"></i>`
                         + `<span class="timer-type-badge">${escHtml(top.symbol)}</span>`
                         + `<span class="timer-label">\u5ef6</span>`
-                        + `<span class="timer-value-display" data-node-id="${n.id}" data-field="delay">${fmtNum(del)}</span>`
+                        + delHtml
                         + `<span class="timer-unit">\u79d2</span>`;
                 } else {
                     // TP：顯示延+持
                     const hldEdge = canvasEdges.find(e => e.target === n.id && e.targetPort === 'hold');
-                    const hld = hldEdge ? (getNodeOutputValue(hldEdge.source) ?? n.timerHold ?? 2) : (n.timerHold ?? 2);
+                    const hld = hldEdge ? (getNodeOutputValue(hldEdge.source, hldEdge.sourcePort) ?? n.timerHold ?? 2) : (n.timerHold ?? 2);
+                    const hldHtml = hldEdge
+                        ? `<span class="timer-value-display" data-node-id="${n.id}" data-field="hold">${fmtNum(hld)}</span>`
+                        : `<input type="text" class="timer-value-input" value="${fmtNum(hld)}" data-node-id="${n.id}" data-field="hold" data-raw="${hld}">`;
                     el.innerHTML = `<i class="${meta.icon}"></i>`
                         + `<span class="timer-type-badge">${escHtml(top.symbol)}</span>`
                         + `<span class="timer-label">\u5ef6</span>`
-                        + `<span class="timer-value-display" data-node-id="${n.id}" data-field="delay">${fmtNum(del)}</span>`
+                        + delHtml
                         + `<span class="timer-label">\u6301</span>`
-                        + `<span class="timer-value-display" data-node-id="${n.id}" data-field="hold">${fmtNum(hld)}</span>`
+                        + hldHtml
                         + `<span class="timer-unit">\u79d2</span>`;
                 }
+            // counter 節點：圖示 + CTU + preset 編輯 + cv 即時顯示
+            } else if (n.type === 'counter') {
+                const presetVal = n.presetValue != null ? n.presetValue : 10;
+                const intervalSec = Math.round(((n.cuMinIntervalMs != null ? n.cuMinIntervalMs : 60000)) / 1000);
+                const cvText = n._counterValue != null ? String(n._counterValue) : '0';
+                const qText = n._counterQ === 1 ? '1' : '0';
+                el.innerHTML = `<i class="${meta.icon}"></i>`
+                    + `<span class="counter-type-badge">CTU</span>`
+                    + `<span class="counter-label">≥</span>`
+                    + `<input type="text" class="counter-preset-input" value="${presetVal}" data-node-id="${n.id}" data-field="presetValue" data-raw="${presetVal}" title="達到這個數字後 q=1">`
+                    + `<span class="counter-label">間隔</span>`
+                    + `<input type="text" class="counter-interval-input" value="${intervalSec}" data-node-id="${n.id}" data-field="cuMinIntervalSec" data-raw="${intervalSec}" title="cu 邊緣最小間隔（秒）">`
+                    + `<span class="counter-unit">秒</span>`
+                    + `<div class="node-live-value counter-live" data-node-id="${n.id}">cv:${cvText} / q:${qText}</div>`;
             // algorithm 節點：演算法符號 + 名稱
             } else if (n.type === 'algorithm' && n.operator && ALGO_OPS[n.operator]) {
                 const aop = ALGO_OPS[n.operator];
                 const langIcon = aop.language === 'csharp' ? ' \u26a1' : '';
-                el.innerHTML = `<span class="algo-op-badge">${escHtml(aop.symbol)}</span>`
+                let aHtml = `<span class="algo-op-badge">${escHtml(aop.symbol)}</span>`
                     + `<span style="font-size:.75rem">${escHtml(aop.label)}${langIcon}</span>`;
+                if (aop.variadic) {
+                    const nVal = n.inputCount || 1;
+                    aHtml += `<input type="number" class="algo-n-input" min="1" value="${nVal}" data-node-id="${n.id}" title="數量">`;
+                }
+                // 節點反灰策略：僅當「所有 perOutput 都 Error」才整顆反灰，
+                // 混合狀態（部分 Error、部分 OK）下節點維持正常外觀，由邊線各自反灰 + tooltip。
+                el.classList.remove('algo-status-bad', 'algo-status-warning', 'algo-status-error');
+                if (n._algoStatus && n._algoStatus.perOutput) {
+                    const poKeys = Object.keys(n._algoStatus.perOutput);
+                    const allError = poKeys.length > 0 && poKeys.every(k =>
+                        n._algoStatus.perOutput[k] && n._algoStatus.perOutput[k].severity === 'Error');
+                    if (allError) {
+                        el.classList.add('algo-status-bad', 'algo-status-error');
+                        const nodeName = aop.label || n.operator;
+                        el.title = nodeName + ' : ' + n._algoStatus.codeName + ' (' + n._algoStatus.severity + ')';
+                    } else {
+                        el.removeAttribute('title');
+                    }
+                } else {
+                    el.removeAttribute('title');
+                }
+                el.innerHTML = aHtml;
             } else if ((n.type === 'contact_no' || n.type === 'contact_nc') && n.scheduleId != null) {
                 // 排程綁定的接點
                 const isOn = evalScheduleNow(n.scheduleId, n.type);
@@ -1373,30 +1781,52 @@
                 el.innerHTML = `<i class="${meta.icon}"></i><span>${escHtml(label)}</span>`;
             }
 
-            // 輸入埠（左側圓點）— algorithm 節點使用動態 inputs
-            const nodeInputs = (n.type === 'algorithm' && n.operator && ALGO_OPS[n.operator])
-                ? ALGO_OPS[n.operator].inputs
-                : (meta.inputs || []);
-            nodeInputs.forEach((pName, i, arr) => {
-                const p = document.createElement('div');
-                p.className = 'flow-port flow-port-in';
-                p.dataset.port = pName; p.dataset.nodeId = n.id; p.dataset.dir = 'in';
+            // 輸入埠（左側圓點）— algorithm 節點使用動態展開 inputs（含 variadic N 倍展開）
+            let nodeInputPorts;
+            let nodeOutputPorts;
+            if (n.type === 'algorithm' && n.operator && ALGO_OPS[n.operator]) {
+                const ports = getAlgoPorts(ALGO_OPS[n.operator], n.inputCount);
+                nodeInputPorts = ports.inputs;
+                nodeOutputPorts = ports.outputs;
+            } else {
+                const portLbl = meta.portLabels || {};
+                nodeInputPorts = (meta.inputs || []).map(k => ({ key: k, label: portLbl[k] || k }));
+                nodeOutputPorts = (meta.outputs || []).map(k => ({ key: k, label: portLbl[k] || k }));
+            }
+
+            // variadic 演算法：每組 repeat 埠用虛線框圍起來（N≥2 才顯示，hover 出 tooltip）
+            if (n.type === 'algorithm' && n.operator && ALGO_OPS[n.operator] && ALGO_OPS[n.operator].variadic) {
+                const ranges = getAlgoGroupRanges(ALGO_OPS[n.operator], n.inputCount, nodeInputPorts, nodeOutputPorts);
+                ranges.forEach(r => {
+                    const fr = document.createElement('div');
+                    fr.className = 'algo-group-frame';
+                    fr.style.top = `calc(${r.topPct}% - 10px)`;
+                    fr.style.height = `calc(${r.bottomPct - r.topPct}% + 20px)`;
+                    fr.title = `組 ${r.index}`;
+                    el.appendChild(fr);
+                });
+            }
+
+            nodeInputPorts.forEach((p, i, arr) => {
+                const pe = document.createElement('div');
+                pe.className = 'flow-port flow-port-in';
+                pe.dataset.port = p.key; pe.dataset.nodeId = n.id; pe.dataset.dir = 'in';
                 const pct = arr.length === 1 ? 50 : (20 + i * (60 / (arr.length - 1)));
-                p.style.top = `calc(${pct}% - 5px)`;
-                p.title = pName;
-                p.addEventListener('mousedown', onPortMouseDown);
-                el.appendChild(p);
+                pe.style.top = `calc(${pct}% - 5px)`;
+                pe.title = p.label;
+                pe.addEventListener('mousedown', onPortMouseDown);
+                el.appendChild(pe);
             });
 
             // 輸出埠（右側圓點）
-            (meta.outputs || []).forEach((pName, i, arr) => {
-                const p = document.createElement('div');
-                p.className = 'flow-port flow-port-out';
-                p.dataset.port = pName; p.dataset.nodeId = n.id; p.dataset.dir = 'out';
-                p.style.top = `calc(${arr.length === 1 ? 50 : 30 + i * 40}% - 5px)`;
-                p.title = pName;
-                p.addEventListener('mousedown', onPortMouseDown);
-                el.appendChild(p);
+            nodeOutputPorts.forEach((p, i, arr) => {
+                const pe = document.createElement('div');
+                pe.className = 'flow-port flow-port-out';
+                pe.dataset.port = p.key; pe.dataset.nodeId = n.id; pe.dataset.dir = 'out';
+                pe.style.top = `calc(${arr.length === 1 ? 50 : 20 + i * (60 / (arr.length - 1))}% - 5px)`;
+                pe.title = p.label;
+                pe.addEventListener('mousedown', onPortMouseDown);
+                el.appendChild(pe);
             });
 
             // 數學運算底部注入埠（val）
@@ -1409,9 +1839,9 @@
                 el.appendChild(bp);
             }
 
-            // 計時器底部注入埠：TON 只有 delay；TP 有 delay + hold
+            // 計時器底部注入埠：TON/TPR 只有 delay；TP 有 delay + hold
             if (n.type === 'timer') {
-                const timerPorts = n.operator === 'ton' ? ['delay'] : ['delay', 'hold'];
+                const timerPorts = (n.operator === 'ton' || n.operator === 'tpr') ? ['delay'] : ['delay', 'hold'];
                 timerPorts.forEach((pName, i) => {
                     const bp = document.createElement('div');
                     bp.className = 'flow-port flow-port-in flow-port-bottom';
@@ -1463,6 +1893,93 @@
                     if (nd) {
                         if (e.target.classList.contains('const-value-input')) nd.constValue = raw;
                     }
+                });
+            });
+
+            // counter preset / interval textbox：存值 + 阻止拖曳
+            el.querySelectorAll('.counter-preset-input, .counter-interval-input').forEach(inp => {
+                inp.addEventListener('mousedown', (e) => e.stopPropagation());
+                inp.addEventListener('focus', (e) => { e.target.value = e.target.dataset.raw ?? e.target.value; e.target.select(); });
+                inp.addEventListener('blur', (e) => {
+                    const raw = parseInt(e.target.value, 10);
+                    const field = e.target.dataset.field;
+                    const nid = parseInt(e.target.dataset.nodeId);
+                    const ndRef = canvasNodes.find(x => x.id === nid);
+                    if (!ndRef) return;
+                    if (field === 'presetValue') {
+                        const val = (isNaN(raw) || raw < 1) ? 1 : raw;
+                        ndRef.presetValue = val;
+                        e.target.dataset.raw = val;
+                        e.target.value = String(val);
+                    } else if (field === 'cuMinIntervalSec') {
+                        const valSec = (isNaN(raw) || raw < 0) ? 0 : raw;
+                        ndRef.cuMinIntervalMs = valSec * 1000;
+                        e.target.dataset.raw = valSec;
+                        e.target.value = String(valSec);
+                    }
+                });
+            });
+
+            // timer textbox：存值 + 阻止拖曳 + 千分位 focus/blur
+            el.querySelectorAll('.timer-value-input').forEach(inp => {
+                inp.addEventListener('mousedown', (e) => e.stopPropagation());
+                inp.addEventListener('focus', (e) => { e.target.value = e.target.dataset.raw ?? e.target.value; e.target.select(); });
+                inp.addEventListener('blur', (e) => {
+                    const raw = parseFloat(e.target.value);
+                    const val = (isNaN(raw) || raw <= 0) ? 1 : raw;
+                    e.target.dataset.raw = val;
+                    e.target.value = fmtNum(val);
+                    const nid = parseInt(e.target.dataset.nodeId);
+                    const field = e.target.dataset.field;
+                    const nd = canvasNodes.find(x => x.id === nid);
+                    if (nd) {
+                        if (field === 'delay') nd.timerDelay = val;
+                        else if (field === 'hold') nd.timerHold = val;
+                    }
+                });
+            });
+
+            // variadic algorithm：底部加 resize handle（拖動調整節點高度）
+            if (n.type === 'algorithm' && n.operator && ALGO_OPS[n.operator] && ALGO_OPS[n.operator].variadic) {
+                const handle = document.createElement('div');
+                handle.className = 'flow-node-resize-handle';
+                handle.title = '拖動調整高度';
+                handle.addEventListener('mousedown', (ev) => onResizeHandleMouseDown(ev, n.id));
+                el.appendChild(handle);
+            }
+
+            // variadic algorithm 的 N 輸入框：改 N → 更新 inputCount + 清掉超出範圍的連線 + 重繪
+            el.querySelectorAll('.algo-n-input').forEach(inp => {
+                inp.addEventListener('mousedown', (e) => e.stopPropagation());
+                inp.addEventListener('change', (e) => {
+                    const nid = parseInt(e.target.dataset.nodeId);
+                    const nd = canvasNodes.find(x => x.id === nid);
+                    if (!nd) return;
+                    const raw = parseInt(e.target.value, 10);
+                    const newN = (isNaN(raw) || raw < 1) ? 1 : raw;
+                    nd.inputCount = newN;
+                    e.target.value = newN;
+                    // 重新展開埠，清掉指向不存在 port 的連線（input 端 + output 端皆需檢查）
+                    const aop = ALGO_OPS[nd.operator];
+                    if (aop) {
+                        const ports = getAlgoPorts(aop, newN);
+                        const inputKeys = new Set(ports.inputs.map(p => p.key));
+                        const outputKeys = new Set(ports.outputs.map(p => p.key));
+                        canvasEdges = canvasEdges.filter(ed => {
+                            if (ed.target === nid && !inputKeys.has(ed.targetPort)) return false;
+                            if (ed.source === nid && !outputKeys.has(ed.sourcePort)) return false;
+                            return true;
+                        });
+                        // 同步更新節點 algoInputs（執行階段以此為依據）
+                        nd.algoInputs = ports.inputs.map(p => p.key);
+                    }
+                    // 清掉演算法快取，避免 N 變動後仍套用舊結果
+                    nd._algoResult = null;
+                    nd._algoCachedResult = null;
+                    nd._algoCacheKey = null;
+                    nd._algoFetching = false;
+                    nd._algoStatus = null;
+                    renderCanvasNodes();
                 });
             });
 
@@ -1529,6 +2046,7 @@
             + '<marker id="ah-s" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#0d6efd"/></marker>'
             + '<marker id="ah-ok" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#198754"/></marker>'
             + '<marker id="ah-bad" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#dc3545"/></marker>'
+            + '<marker id="ah-warn" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#fd7e14"/></marker>'
             + '</defs>';
 
         for (const edge of canvasEdges) {
@@ -1545,6 +2063,7 @@
             let edgeColor = '#6c757d';
             let edgeMarker = 'ah';
             let edgeLabel = null; // 邊線上的文字
+            let edgeTooltip = null; // SVG <title> 子元素內容（hover 邊線顯示）
             if (sel) {
                 edgeColor = '#0d6efd'; edgeMarker = 'ah-s';
             } else {
@@ -1590,14 +2109,14 @@
                         } else {
                             edgeColor = '#adb5bd';
                         }
-                    // A/B接點節點
+                    // A/B接點節點：以導通狀態決定顏色（導通即綠，不受透傳值 0 影響）
                     } else if (srcNode.type === 'contact_no' || srcNode.type === 'contact_nc') {
-                        if (srcNode._contactResult != null && srcNode._contactResult !== 0) {
+                        if (srcNode._contactOn === true && srcNode._contactResult != null) {
                             edgeColor = '#198754'; edgeMarker = 'ah-ok';
                             edgeLabel = fmtNum(srcNode._contactResult);
-                        } else if (srcNode._contactResult === 0) {
+                        } else if (srcNode._contactOn === false) {
                             edgeColor = '#adb5bd';
-                            edgeLabel = '0';
+                            edgeLabel = srcNode._contactResult === 0 ? '0' : null;
                         } else {
                             edgeColor = '#adb5bd';
                         }
@@ -1618,6 +2137,18 @@
                             } else {
                                 edgeColor = '#adb5bd';
                             }
+                        } else if (srcNode.operator === 'tpr') {
+                            // TPR 邊線顯示
+                            if (srcNode._tpPhase === 'confirmed' && srcNode._timerResult != null) {
+                                edgeColor = '#198754'; edgeMarker = 'ah-ok';
+                                edgeLabel = fmtNum(srcNode._timerResult);
+                            } else if (srcNode._tpPhase === 'delay' && srcNode._tpPhaseEnd) {
+                                edgeColor = '#adb5bd';
+                                const rem = Math.ceil((srcNode._tpPhaseEnd - Date.now()) / 1000);
+                                edgeLabel = Math.max(rem, 0) + 's';
+                            } else {
+                                edgeColor = '#adb5bd';
+                            }
                         } else {
                             // TP 邊線顯示
                             if (srcNode._tpPhase === 'hold' && srcNode._timerResult != null) {
@@ -1634,15 +2165,51 @@
                                 edgeColor = '#adb5bd';
                             }
                         }
-                    // 演算法節點
-                    } else if (srcNode.type === 'algorithm') {
-                        if (srcNode._algoResult != null) {
+                    // 計數器節點：q（達 preset 為 1）/ cv（目前累加值）
+                    } else if (srcNode.type === 'counter') {
+                        if (edge.sourcePort === 'cv') {
                             edgeColor = '#198754'; edgeMarker = 'ah-ok';
-                            edgeLabel = fmtNum(srcNode._algoResult);
+                            edgeLabel = String(srcNode._counterValue != null ? srcNode._counterValue : 0);
+                        } else {
+                            // q
+                            const q = srcNode._counterQ != null ? srcNode._counterQ : 0;
+                            if (q === 1) {
+                                edgeColor = '#198754'; edgeMarker = 'ah-ok';
+                                edgeLabel = '1';
+                            } else {
+                                edgeColor = '#adb5bd';
+                                edgeLabel = '0';
+                            }
+                        }
+                    // 演算法節點：per-output 反灰／顏色／tooltip。依 edge.sourcePort 取對應輸出值與 status。
+                    } else if (srcNode.type === 'algorithm') {
+                        var portKey = edge.sourcePort || 'out';
+                        var algoOutVal = null;
+                        var resObj = srcNode._algoResult || srcNode._algoCachedResult;
+                        if (resObj && typeof resObj === 'object') {
+                            algoOutVal = resObj[portKey];
+                        }
+                        var portStatus = (srcNode._algoStatus && srcNode._algoStatus.perOutput)
+                            ? srcNode._algoStatus.perOutput[portKey] : null;
+                        var portSev = portStatus ? (portStatus.severity || 'Info') : 'Info';
+                        if (portSev === 'Error') {
+                            edgeColor = '#dc3545'; edgeMarker = 'ah-bad';
+                            if (algoOutVal != null) edgeLabel = fmtNum(algoOutVal);
+                        } else if (portSev === 'Warning') {
+                            edgeColor = '#fd7e14'; edgeMarker = 'ah-warn';
+                            if (algoOutVal != null) edgeLabel = fmtNum(algoOutVal);
+                        } else if (algoOutVal != null) {
+                            edgeColor = '#198754'; edgeMarker = 'ah-ok';
+                            edgeLabel = fmtNum(algoOutVal);
                         } else if (srcNode._algoReady) {
                             edgeColor = '#198754'; edgeMarker = 'ah-ok';
                         } else {
                             edgeColor = '#adb5bd';
+                        }
+                        // Hover tooltip：非 OK 才顯示「{演算法} : {portKey} : {codeName} ({severity})」
+                        if (portStatus && portStatus.statusCodeId !== 0) {
+                            var algoLbl = (ALGO_OPS[srcNode.operator] && ALGO_OPS[srcNode.operator].label) || srcNode.operator || '';
+                            edgeTooltip = algoLbl + ' : ' + portKey + ' : ' + portStatus.statusCodeName + ' (' + portSev + ')';
                         }
                     }
                 }
@@ -1656,11 +2223,20 @@
                 else edgeLabel = '\u8d85\u9650';
             }
 
-            html += `<path d="${d}" class="edge-line${sel ? ' selected' : ''}" data-edge-id="${edge.id}"
-                      stroke="${edgeColor}" stroke-width="${sel ? 3 : 2}" fill="none"
-                      marker-end="url(#${edgeMarker})" style="pointer-events:stroke;cursor:pointer;"/>`;
-            html += `<path d="${d}" stroke="transparent" stroke-width="14" fill="none"
-                      style="pointer-events:stroke;cursor:pointer;" data-edge-id="${edge.id}"/>`;
+            // 自閉合 <path/> 不能含 <title> 子元素；有 tooltip 時改開合 tag 包 <title>
+            if (edgeTooltip != null) {
+                html += `<path d="${d}" class="edge-line${sel ? ' selected' : ''}" data-edge-id="${edge.id}"
+                          stroke="${edgeColor}" stroke-width="${sel ? 3 : 2}" fill="none"
+                          marker-end="url(#${edgeMarker})" style="pointer-events:stroke;cursor:pointer;"><title>${escHtml(edgeTooltip)}</title></path>`;
+                html += `<path d="${d}" stroke="transparent" stroke-width="14" fill="none"
+                          style="pointer-events:stroke;cursor:pointer;" data-edge-id="${edge.id}"><title>${escHtml(edgeTooltip)}</title></path>`;
+            } else {
+                html += `<path d="${d}" class="edge-line${sel ? ' selected' : ''}" data-edge-id="${edge.id}"
+                          stroke="${edgeColor}" stroke-width="${sel ? 3 : 2}" fill="none"
+                          marker-end="url(#${edgeMarker})" style="pointer-events:stroke;cursor:pointer;"/>`;
+                html += `<path d="${d}" stroke="transparent" stroke-width="14" fill="none"
+                          style="pointer-events:stroke;cursor:pointer;" data-edge-id="${edge.id}"/>`;
+            }
 
             // 邊線上顯示結果文字
             if (edgeLabel != null) {
@@ -1874,14 +2450,27 @@
         const keepValPort = newType === 'math' && operator && MATH_OPS[operator] && MATH_OPS[operator].hasValue;
         const keepTimerPorts = newType === 'timer';
         const isTon = newType === 'timer' && operator === 'ton';
-        const algoInputPorts = (newType === 'algorithm' && operator && ALGO_OPS[operator]) ? ALGO_OPS[operator].inputs : [];
+        // algorithm 切換：依新演算法 + 既有 inputCount 展開埠（variadic 沿用 node.inputCount，不存在則 2）
+        let algoInputPortKeys = [];
+        let algoOutputPortKeys = [];
+        if (newType === 'algorithm' && operator && ALGO_OPS[operator]) {
+            const newAop = ALGO_OPS[operator];
+            const newN = newAop.variadic ? (node.inputCount || 2) : null;
+            const newPorts = getAlgoPorts(newAop, newN);
+            algoInputPortKeys = newPorts.inputs.map(p => p.key);
+            algoOutputPortKeys = newPorts.outputs.map(p => p.key);
+        }
         canvasEdges = canvasEdges.filter(e => {
-            if (e.source === nodeId && !newMeta.outputs.includes(e.sourcePort)) return false;
+            if (e.source === nodeId) {
+                if (newType === 'algorithm') {
+                    if (!algoOutputPortKeys.includes(e.sourcePort)) return false;
+                } else if (!newMeta.outputs.includes(e.sourcePort)) return false;
+            }
             if (e.target === nodeId && !newMeta.inputs.includes(e.targetPort)) {
                 if (e.targetPort === 'val' && keepValPort) return true;
                 if (e.targetPort === 'delay' && keepTimerPorts) return true;
                 if (e.targetPort === 'hold' && keepTimerPorts && !isTon) return true;
-                if (newType === 'algorithm' && algoInputPorts.includes(e.targetPort)) return true;
+                if (newType === 'algorithm' && algoInputPortKeys.includes(e.targetPort)) return true;
                 return false;
             }
             return true;
@@ -1906,7 +2495,16 @@
         } else if (newType === 'algorithm' && operator) {
             node.operator = operator;
             const algo = ALGO_OPS[operator];
-            if (algo) node.algoInputs = [...algo.inputs];
+            if (algo) {
+                if (algo.variadic) {
+                    if (node.inputCount == null) node.inputCount = 2;
+                    const ports = getAlgoPorts(algo, node.inputCount);
+                    node.algoInputs = ports.inputs.map(p => p.key);
+                } else {
+                    delete node.inputCount;
+                    node.algoInputs = [...algo.inputs];
+                }
+            }
         } else if (newType !== 'compare' && newType !== 'math' && newType !== 'timer' && newType !== 'algorithm') {
             delete node.operator;
         }
@@ -1914,6 +2512,7 @@
         // algorithm 類型管理
         if (newType !== 'algorithm') {
             delete node.algoInputs;
+            delete node.inputCount;
         }
 
         // constant 類型管理
@@ -1923,13 +2522,31 @@
             delete node.constValue;
         }
 
+        // counter 類型管理
+        if (newType === 'counter') {
+            if (node.presetValue == null) node.presetValue = 10;
+            if (node.cuMinIntervalMs == null) node.cuMinIntervalMs = 60000;
+            // 重置運行時狀態
+            node._counterValue = 0;
+            node._counterPrevCu = null;
+            node._counterLastEdgeAt = 0;
+            node._counterQ = 0;
+        } else {
+            delete node.presetValue;
+            delete node.cuMinIntervalMs;
+            delete node._counterValue;
+            delete node._counterPrevCu;
+            delete node._counterLastEdgeAt;
+            delete node._counterQ;
+        }
+
         // timer 類型管理
         if (newType === 'timer') {
             if (node.timerDelay == null) node.timerDelay = 5;
             if (!node.operator || !TIMER_OPS[node.operator]) node.operator = 'tp';
             if (node.operator === 'tp' && node.timerHold == null) node.timerHold = 2;
-            // TON 不需要 hold → 移除 hold 連線
-            if (node.operator === 'ton') {
+            // TON/TPR 不需要 hold → 移除 hold 連線
+            if (node.operator === 'ton' || node.operator === 'tpr') {
                 canvasEdges = canvasEdges.filter(e => !(e.target === node.id && e.targetPort === 'hold'));
             }
             // 重置計時器運行狀態
@@ -1981,10 +2598,22 @@
             node.timerDelay = 5;
             if (node.operator === 'tp') node.timerHold = 2;
         }
+        if (type === 'counter') {
+            node.presetValue = 10;
+            node.cuMinIntervalMs = 60000;
+        }
         if (type === 'algorithm' && operator) {
             node.operator = operator;
             const algo = ALGO_OPS[operator];
-            if (algo) node.algoInputs = [...algo.inputs];
+            if (algo) {
+                if (algo.variadic) {
+                    node.inputCount = 2;
+                    const ports = getAlgoPorts(algo, 2);
+                    node.algoInputs = ports.inputs.map(p => p.key);
+                } else {
+                    node.algoInputs = [...algo.inputs];
+                }
+            }
         }
         canvasNodes.push(node);
         renderCanvasNodes();
@@ -2005,8 +2634,10 @@
     let ppPickedScheduleId = null;
     let ppPickedScheduleName = null;
     let ppPickedCalcGroup = null;   // 計算點位群組篩選
+    let ppPickedDbCoord = null;     // DB 來源 Coordinator 名稱篩選
 
     const PP_CALC_DEV_ID = -999;
+    const PP_DB_DEV_ID   = -998;
 
     function getSidPrefix(szSid) {
         const m = szSid.match(/^(\d+)-S\d+$/);
@@ -2015,9 +2646,13 @@
     function isCalcSid(szSid) {
         return szSid && szSid.indexOf('CALC-') === 0;
     }
+    function isDbSid(szSid) {
+        return !!szSid && /^DB\d+-S\d+$/.test(szSid);
+    }
     function isPointOfDev(szSid, nDevId) {
         if (nDevId === PP_CALC_DEV_ID) return isCalcSid(szSid);
-        if (isCalcSid(szSid)) return false;
+        if (nDevId === PP_DB_DEV_ID)   return isDbSid(szSid);
+        if (isCalcSid(szSid) || isDbSid(szSid)) return false;
         const p = getSidPrefix(szSid);
         return p >= nDevId * 65536 && p < (nDevId + 1) * 65536;
     }
@@ -2032,6 +2667,10 @@
         ppAllPoints  = await rPt.json();
         // 附加設備名稱到點位
         ppAllPoints.forEach(p => {
+            if (isDbSid(p.szSid)) {
+                p._devLabel = p.szGroupName || 'DB';
+                return;
+            }
             if (isCalcSid(p.szSid)) {
                 p._devLabel = p.szGroupName || '\u8a08\u7b97\u9ede\u4f4d';
                 return;
@@ -2098,6 +2737,18 @@
             if (boundSid && ppAllPoints) {
                 const boundPoint = ppAllPoints.find(p => p.szSid === boundSid);
                 if (boundPoint) {
+                    if (isDbSid(boundSid)) {
+                        // DB 點位 — 直接跳到對應 Coordinator 的點位列表
+                        ppSelectDbCoordinator(boundPoint.szGroupName || '');
+                        ppPickedSid = boundSid;
+                        document.getElementById('btnConfirmPoint').disabled = false;
+                        ppModal.show();
+                        setTimeout(() => {
+                            const item = document.querySelector('#pointListContainer .pp-list-item[data-sid="' + boundSid + '"]');
+                            if (item) { item.classList.add('selected'); item.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+                        }, 50);
+                        return;
+                    }
                     if (isCalcSid(boundSid)) {
                         // 計算點位 — 直接跳到計算點位列表
                         ppShowCalcStep();
@@ -2159,14 +2810,15 @@
         document.getElementById('ppStep1').style.display = 'none';
         document.getElementById('ppStep2').style.display = 'none';
         document.getElementById('btnConfirmPoint').disabled = true;
-        // 寫入點位不可選計算點位（計算值無法控制）
+        // 寫入點位不可選計算點位（計算值無法控制）；DB 點位允許寫入
         var calcEl = document.getElementById('ppStep0Calc');
         if (calcEl) calcEl.style.display = (ppPendingType === 'output') ? 'none' : '';
+        var dbEl = document.getElementById('ppStep0Db');
+        if (dbEl) dbEl.style.display = '';
     }
 
     function ppShowStep1() {
-        // 寫入點位只能選設備點位，跳過 Step 0 直接進設備清單
-        if (ppPendingType === 'output') { ppShowDeviceStep(); return; }
+        // 三種來源（設備 / 計算 / DB）統一從 Step 0 入口；output 由 ppShowStep0 隱藏計算點位
         ppShowStep0();
     }
 
@@ -2295,6 +2947,89 @@
         ppShowStep0();
     }
 
+    // =========== DB 來源 ===========
+
+    function ppShowDbStep() {
+        ppPickedDevId = PP_DB_DEV_ID;
+        ppPickedModbusId = null;
+        ppPickedSid = null;
+        ppPickedDbCoord = null;
+
+        const dbCoords = _ppGetDbCoordinators();
+        if (dbCoords.length === 0) {
+            // 無 DB 點位 — 直接顯示空清單
+            _ppShowDbPointsFlat();
+            return;
+        }
+        document.getElementById('ppStep0').style.display = 'none';
+        document.getElementById('ppStep1').style.display = '';
+        document.getElementById('ppStep2').style.display = 'none';
+        document.getElementById('ppModalTitle').textContent = '選擇 DB 來源裝置';
+        var backBtn = document.getElementById('ppStep1Back');
+        if (backBtn) backBtn.style.display = '';
+        _ppRenderDbCoordinatorList(dbCoords);
+    }
+
+    function _ppGetDbCoordinators() {
+        if (!ppAllPoints) return [];
+        const groups = {};
+        ppAllPoints.forEach(p => {
+            if (!isDbSid(p.szSid)) return;
+            const g = p.szGroupName || '';
+            if (!groups[g]) groups[g] = 0;
+            groups[g]++;
+        });
+        return Object.keys(groups).filter(g => g !== '').sort();
+    }
+
+    function _ppRenderDbCoordinatorList(coords) {
+        const container = document.getElementById('deviceListContainer');
+        const hasUngrouped = (ppAllPoints || []).some(p => isDbSid(p.szSid) && !p.szGroupName);
+        let html = coords.map(g => {
+            const nPts = (ppAllPoints || []).filter(p => isDbSid(p.szSid) && p.szGroupName === g).length;
+            return `<div class="pp-list-item" onclick="window._lf.ppSelectDbCoordinator('${escHtml(g)}')">
+                <i class="fas fa-database text-info" style="font-size:14px;"></i>
+                <div style="flex:1;"><div class="pp-point-name">${escHtml(g)}</div><div class="pp-point-sid">${nPts} 個點位</div></div>
+                <i class="fas fa-chevron-right text-muted" style="font-size:11px;"></i></div>`;
+        }).join('');
+        if (hasUngrouped) {
+            const nPts = (ppAllPoints || []).filter(p => isDbSid(p.szSid) && !p.szGroupName).length;
+            html += `<div class="pp-list-item" onclick="window._lf.ppSelectDbCoordinator('')">
+                <i class="fas fa-inbox text-secondary" style="font-size:14px;"></i>
+                <div style="flex:1;"><div class="pp-point-name">未分組</div><div class="pp-point-sid">${nPts} 個點位</div></div>
+                <i class="fas fa-chevron-right text-muted" style="font-size:11px;"></i></div>`;
+        }
+        container.innerHTML = html;
+    }
+
+    function ppSelectDbCoordinator(szCoord) {
+        ppPickedDevId = PP_DB_DEV_ID;
+        ppPickedModbusId = null;
+        ppPickedDbCoord = szCoord;
+        ppPickedSid = null;
+        document.getElementById('ppDeviceName').textContent = szCoord || '未分組';
+        document.getElementById('ppDeviceIcon').className = 'fas fa-database me-1';
+        document.getElementById('ppStep0').style.display = 'none';
+        document.getElementById('ppStep1').style.display = 'none';
+        document.getElementById('ppStep2').style.display = '';
+        document.getElementById('ppModalTitle').textContent = '選擇 DB 點位';
+        document.getElementById('ppPointSearch').value = '';
+        document.getElementById('btnConfirmPoint').disabled = true;
+        ppRenderPoints('');
+    }
+
+    function _ppShowDbPointsFlat() {
+        document.getElementById('ppStep0').style.display = 'none';
+        document.getElementById('ppStep1').style.display = 'none';
+        document.getElementById('ppStep2').style.display = '';
+        document.getElementById('ppModalTitle').textContent = '選擇 DB 點位';
+        document.getElementById('ppDeviceName').textContent = 'DB 點位';
+        document.getElementById('ppDeviceIcon').className = 'fas fa-database me-1';
+        document.getElementById('ppPointSearch').value = '';
+        document.getElementById('btnConfirmPoint').disabled = true;
+        ppRenderPoints('');
+    }
+
     // =========== 排程來源切換 ===========
 
     function ppSwitchSource(mode) {
@@ -2382,6 +3117,14 @@
             } else {
                 ppShowStep0();
             }
+        } else if (ppPickedDevId === PP_DB_DEV_ID) {
+            if (ppPickedDbCoord != null) {
+                // 從 DB 點位列表返回 Coordinator 列表
+                ppPickedDbCoord = null;
+                ppShowDbStep();
+            } else {
+                ppShowStep0();
+            }
         } else {
             ppShowDeviceStep();
         }
@@ -2400,6 +3143,10 @@
                 // 計算點位群組篩選
                 if (!isCalcSid(p.szSid)) return false;
                 if ((p.szGroupName || '') !== ppPickedCalcGroup) return false;
+            } else if (ppPickedDevId === PP_DB_DEV_ID) {
+                // DB 點位 Coordinator 篩選（ppPickedDbCoord 為 null 時顯示全部 DB）
+                if (!isDbSid(p.szSid)) return false;
+                if (ppPickedDbCoord != null && (p.szGroupName || '') !== ppPickedDbCoord) return false;
             } else if (ppPickedModbusId != null) {
                 const pfx = getSidPrefix(p.szSid);
                 const base = ppPickedDevId * 65536 + ppPickedModbusId * 256;
@@ -2561,6 +3308,32 @@
         document.addEventListener('mouseup', onUp);
     }
 
+    // 拖動 resize handle → 動態調整節點高度（不觸發 startDrag）
+    function onResizeHandleMouseDown(e, nodeId) {
+        e.stopPropagation();
+        if (e.button !== 0) return;
+        const canvas = document.getElementById('diagramCanvas');
+        const el = canvas && canvas.querySelector(`.flow-node[data-node-id="${nodeId}"]`);
+        const node = canvasNodes.find(n => n.id === nodeId);
+        if (!el || !node) return;
+        const startY = e.clientY;
+        const startH = el.offsetHeight;
+        const MIN_H = 40;
+        function onMove(ev) {
+            const newH = Math.max(MIN_H, startH + (ev.clientY - startY));
+            el.style.height = newH + 'px';
+            node.height = newH;
+            renderEdges();  // 埠位置會跟著節點高度變動，連線需即時重畫
+        }
+        function onUp() {
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+        }
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+        e.preventDefault();
+    }
+
     // 更新節點選取外觀（不做完整 re-render）
     function updateNodeSelectionVisual() {
         const canvas = document.getElementById('diagramCanvas');
@@ -2586,6 +3359,9 @@
             if (n.fMax != null) o.fMax = n.fMax;
             if (n.scheduleId != null) o.scheduleId = n.scheduleId;
             if (n.scheduleName) o.scheduleName = n.scheduleName;
+            if (n.algoInputs) o.algoInputs = n.algoInputs;
+            if (n.inputCount != null) o.inputCount = n.inputCount;
+            if (n.height != null) o.height = n.height;
             return o;
         });
         const edges = canvasEdges.filter(e => selectedNodeIds.has(e.source) && selectedNodeIds.has(e.target));
@@ -2735,6 +3511,10 @@
                 if (n.scheduleId != null) o.scheduleId = n.scheduleId;
                 if (n.scheduleName) o.scheduleName = n.scheduleName;
                 if (n.algoInputs)  o.algoInputs = n.algoInputs;
+                if (n.inputCount != null) o.inputCount = n.inputCount;
+                if (n.height != null) o.height = n.height;
+                if (n.presetValue != null) o.presetValue = n.presetValue;
+                if (n.cuMinIntervalMs != null) o.cuMinIntervalMs = n.cuMinIntervalMs;
                 return o;
             });
             const json = JSON.stringify({ nodes: cleanNodes, edges: canvasEdges });
@@ -2768,6 +3548,7 @@
         ppSelectPoint: ppSelectPoint, ppConfirm: ppConfirm,
         ppSwitchSource: ppSwitchSource, ppSelectSchedule: ppSelectSchedule,
         ppShowDeviceStep: ppShowDeviceStep, ppShowCalcStep: ppShowCalcStep, ppBackToStep0: ppBackToStep0,
-        ppSelectCalcGroup: ppSelectCalcGroup
+        ppSelectCalcGroup: ppSelectCalcGroup,
+        ppShowDbStep: ppShowDbStep, ppSelectDbCoordinator: ppSelectDbCoordinator
     };
 })();

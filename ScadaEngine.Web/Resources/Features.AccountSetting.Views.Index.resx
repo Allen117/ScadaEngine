@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="account.title" xml:space="preserve"><value>帳號管理</value></data>
+  <data name="account.list.title" xml:space="preserve"><value>使用者清單</value></data>
+  <data name="account.list.count" xml:space="preserve"><value>共 {0} 筆</value></data>
+  <data name="account.button.create" xml:space="preserve"><value>新增使用者</value></data>
+
+  <data name="account.col.username" xml:space="preserve"><value>帳號</value></data>
+  <data name="account.col.realname" xml:space="preserve"><value>姓名</value></data>
+  <data name="account.col.role" xml:space="preserve"><value>角色</value></data>
+  <data name="account.col.department" xml:space="preserve"><value>部門</value></data>
+  <data name="account.col.status" xml:space="preserve"><value>狀態</value></data>
+  <data name="account.col.last_login" xml:space="preserve"><value>最後登入</value></data>
+  <data name="account.col.created_at" xml:space="preserve"><value>建立時間</value></data>
+  <data name="account.col.actions" xml:space="preserve"><value>操作</value></data>
+
+  <data name="account.status.active" xml:space="preserve"><value>啟用</value></data>
+  <data name="account.status.inactive" xml:space="preserve"><value>停用</value></data>
+  <data name="account.status.never_login" xml:space="preserve"><value>尚未登入</value></data>
+  <data name="account.status.no_users" xml:space="preserve"><value>目前無使用者資料</value></data>
+
+  <data name="account.button.edit" xml:space="preserve"><value>編輯</value></data>
+  <data name="account.button.delete" xml:space="preserve"><value>刪除</value></data>
+
+  <data name="account.modal.create_title" xml:space="preserve"><value>新增使用者</value></data>
+  <data name="account.modal.edit_title" xml:space="preserve"><value>編輯使用者</value></data>
+  <data name="account.modal.delete_title" xml:space="preserve"><value>確認刪除</value></data>
+
+  <data name="account.field.username" xml:space="preserve"><value>帳號</value></data>
+  <data name="account.field.realname" xml:space="preserve"><value>姓名</value></data>
+  <data name="account.field.password" xml:space="preserve"><value>密碼</value></data>
+  <data name="account.field.password_confirm" xml:space="preserve"><value>確認密碼</value></data>
+  <data name="account.field.role" xml:space="preserve"><value>角色</value></data>
+  <data name="account.field.department" xml:space="preserve"><value>部門</value></data>
+  <data name="account.field.is_active" xml:space="preserve"><value>啟用帳號</value></data>
+
+  <data name="account.button.save" xml:space="preserve"><value>儲存</value></data>
+  <data name="account.button.save_changes" xml:space="preserve"><value>儲存變更</value></data>
+  <data name="account.button.cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="account.button.confirm_delete" xml:space="preserve"><value>確認刪除</value></data>
+
+  <data name="account.permission.title" xml:space="preserve"><value>頁面存取權限</value></data>
+  <data name="account.permission.main_pages" xml:space="preserve"><value>主功能頁面</value></data>
+  <data name="account.permission.scada_pages" xml:space="preserve"><value>即時監控子頁面（ScadaPage）</value></data>
+  <data name="account.permission.select_all" xml:space="preserve"><value>全選</value></data>
+  <data name="account.permission.col_page" xml:space="preserve"><value>頁面</value></data>
+  <data name="account.permission.col_can_view" xml:space="preserve"><value>可檢視</value></data>
+  <data name="account.permission.col_can_control" xml:space="preserve"><value>可控制</value></data>
+  <data name="account.permission.no_pages" xml:space="preserve"><value>尚無已發佈的畫面設計</value></data>
+  <data name="account.permission.loading" xml:space="preserve"><value>載入中...</value></data>
+
+  <data name="account.delete.confirm_msg" xml:space="preserve"><value>確定要刪除使用者 {0} 嗎？</value></data>
+  <data name="account.delete.warning" xml:space="preserve"><value>此操作無法復原</value></data>
+
+  <data name="account.alert.input_username" xml:space="preserve"><value>請輸入帳號</value></data>
+  <data name="account.alert.input_password" xml:space="preserve"><value>請輸入密碼</value></data>
+  <data name="account.alert.password_mismatch" xml:space="preserve"><value>兩次輸入的密碼不一致</value></data>
+  <data name="account.alert.create_success" xml:space="preserve"><value>新增成功，頁面即將重新整理...</value></data>
+  <data name="account.alert.create_failed" xml:space="preserve"><value>新增失敗</value></data>
+  <data name="account.alert.create_failed_with" xml:space="preserve"><value>新增失敗：{0}</value></data>
+  <data name="account.alert.update_success" xml:space="preserve"><value>更新成功，頁面即將重新整理...</value></data>
+  <data name="account.alert.update_failed" xml:space="preserve"><value>更新失敗</value></data>
+  <data name="account.alert.update_failed_with" xml:space="preserve"><value>更新失敗：{0}</value></data>
+  <data name="account.alert.delete_failed" xml:space="preserve"><value>刪除失敗</value></data>
+  <data name="account.alert.delete_failed_with" xml:space="preserve"><value>刪除失敗：{0}</value></data>
+  <data name="account.alert.saving" xml:space="preserve"><value>儲存中...</value></data>
+
+  <data name="account.required" xml:space="preserve"><value>*</value></data>
+</root>

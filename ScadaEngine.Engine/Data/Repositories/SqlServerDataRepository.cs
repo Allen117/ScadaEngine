@@ -334,8 +334,8 @@ public class SqlServerDataRepository : IDataRepository, IDisposable
                 }
             }
 
-            _logger.LogInformation("批量儲存歷史資料完成: 成功={SuccessCount}, 總計={TotalCount}", 
-                nSuccessCount, historyDataList.Count());
+            // _logger.LogInformation("批量儲存歷史資料完成: 成功={SuccessCount}, 總計={TotalCount}",
+            //     nSuccessCount, historyDataList.Count());
         }
         catch (Exception ex)
         {
@@ -1645,6 +1645,309 @@ public class SqlServerDataRepository : IDataRepository, IDisposable
         {
             _logger.LogError(ex, "取得計算點位最大索引失敗");
             return 0;
+        }
+    }
+
+    #endregion
+
+    #region DB 來源 Coordinator / Points / LatestData
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<DbCoordinatorModel>> GetAllDbCoordinatorsAsync()
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+
+            const string szSql = @"
+                SELECT
+                    Id,
+                    Name            AS szName,
+                    PollingInterval AS nPollingInterval,
+                    ConnectTimeout  AS nConnectTimeout,
+                    MonitorEnabled  AS isMonitorEnabled,
+                    CreatedAt       AS dtCreatedAt
+                FROM DBCoordinator
+                ORDER BY Id";
+
+            return await connection.QueryAsync<DbCoordinatorModel>(szSql);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "查詢 DBCoordinator 時發生錯誤");
+            return Enumerable.Empty<DbCoordinatorModel>();
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<DbPointModel>> GetAllDbPointsAsync()
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+
+            const string szSql = @"
+                SELECT
+                    SID            AS szSID,
+                    CoordinatorId  AS nCoordinatorId,
+                    Sequence       AS nSequence,
+                    Name           AS szName,
+                    Unit           AS szUnit,
+                    [Min]          AS fMin,
+                    [Max]          AS fMax
+                FROM DBPoints
+                ORDER BY CoordinatorId, Sequence";
+
+            return await connection.QueryAsync<DbPointModel>(szSql);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "查詢 DBPoints 時發生錯誤");
+            return Enumerable.Empty<DbPointModel>();
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<DbPointModel>> GetDbPointsByCoordinatorIdAsync(int nCoordinatorId)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+
+            const string szSql = @"
+                SELECT
+                    SID            AS szSID,
+                    CoordinatorId  AS nCoordinatorId,
+                    Sequence       AS nSequence,
+                    Name           AS szName,
+                    Unit           AS szUnit,
+                    [Min]          AS fMin,
+                    [Max]          AS fMax
+                FROM DBPoints
+                WHERE CoordinatorId = @CoordinatorId
+                ORDER BY Sequence";
+
+            return await connection.QueryAsync<DbPointModel>(szSql, new { CoordinatorId = nCoordinatorId });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "查詢 Coordinator {Id} 的 DBPoints 時發生錯誤", nCoordinatorId);
+            return Enumerable.Empty<DbPointModel>();
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<(int nId, int nPollingInterval, int nConnectTimeout, bool isMonitorEnabled)> SaveDbCoordinatorAsync(DbCoordinatorModel coordinator)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        using var connection = new SqlConnection(_szConnectionString);
+        await connection.OpenAsync();
+
+        // UPSERT by Name — 同名 sheet 永遠拿到同一個 Id
+        const string szCheckSql = "SELECT Id, PollingInterval, ConnectTimeout, MonitorEnabled FROM DBCoordinator WHERE Name = @Name";
+        var existing = await connection.QuerySingleOrDefaultAsync<(int Id, int PollingInterval, int ConnectTimeout, bool MonitorEnabled)?>(
+            szCheckSql, new { Name = coordinator.szName });
+
+        if (existing.HasValue)
+        {
+            const string szUpdateSql = @"
+                UPDATE DBCoordinator
+                SET PollingInterval = @PollingInterval,
+                    ConnectTimeout  = @ConnectTimeout,
+                    MonitorEnabled  = @MonitorEnabled
+                WHERE Id = @Id";
+            await connection.ExecuteAsync(szUpdateSql, new
+            {
+                PollingInterval = coordinator.nPollingInterval,
+                ConnectTimeout = coordinator.nConnectTimeout,
+                MonitorEnabled = coordinator.isMonitorEnabled,
+                Id = existing.Value.Id
+            });
+            _logger.LogDebug("更新 DBCoordinator: Id={Id}, Name={Name}, Interval={Interval}, Timeout={Timeout}, Enabled={Enabled}",
+                existing.Value.Id, coordinator.szName, coordinator.nPollingInterval, coordinator.nConnectTimeout, coordinator.isMonitorEnabled);
+            return (existing.Value.Id, coordinator.nPollingInterval, coordinator.nConnectTimeout, coordinator.isMonitorEnabled);
+        }
+
+        const string szInsertSql = @"
+            INSERT INTO DBCoordinator (Name, PollingInterval, ConnectTimeout, MonitorEnabled)
+            VALUES (@Name, @PollingInterval, @ConnectTimeout, @MonitorEnabled);
+            SELECT CAST(SCOPE_IDENTITY() AS INT);";
+        var nNewId = await connection.QuerySingleAsync<int>(szInsertSql, new
+        {
+            Name = coordinator.szName,
+            PollingInterval = coordinator.nPollingInterval,
+            ConnectTimeout = coordinator.nConnectTimeout,
+            MonitorEnabled = coordinator.isMonitorEnabled
+        });
+        _logger.LogInformation("新增 DBCoordinator: Id={Id}, Name={Name}", nNewId, coordinator.szName);
+        return (nNewId, coordinator.nPollingInterval, coordinator.nConnectTimeout, coordinator.isMonitorEnabled);
+    }
+
+    /// <inheritdoc/>
+    public async Task<int> SaveDbPointsAsync(int nCoordinatorId, IEnumerable<DbPointModel> points)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        var pointList = points.ToList();
+        if (pointList.Count == 0)
+        {
+            _logger.LogDebug("Coordinator {Id} 無 DB 點位，跳過儲存", nCoordinatorId);
+            // 仍要清空舊資料，避免遺留
+        }
+
+        using var connection = new SqlConnection(_szConnectionString);
+        await connection.OpenAsync();
+        using var transaction = await connection.BeginTransactionAsync();
+
+        try
+        {
+            await connection.ExecuteAsync(
+                "DELETE FROM DBPoints WHERE CoordinatorId = @CoordinatorId",
+                new { CoordinatorId = nCoordinatorId },
+                transaction: transaction);
+
+            const string szInsertSql = @"
+                INSERT INTO DBPoints (SID, CoordinatorId, Sequence, Name, Unit, [Min], [Max])
+                VALUES (@SID, @CoordinatorId, @Sequence, @Name, @Unit, @Min, @Max)";
+
+            // DBLatestData 預先 seed：沒 row 就寫一筆 0/Bad；已存在則保留外部既有值
+            const string szSeedLatestSql = @"
+                INSERT INTO DBLatestData (SID, Value, Timestamp, Quality)
+                SELECT @SID, 0, GETDATE(), 0
+                WHERE NOT EXISTS (SELECT 1 FROM DBLatestData WHERE SID = @SID)";
+
+            var nInserted = 0;
+            var nSeeded = 0;
+            foreach (var p in pointList)
+            {
+                if (!p.Validate())
+                {
+                    _logger.LogWarning("DB 點位驗證失敗，跳過: SID={SID}, Name={Name}", p.szSID, p.szName);
+                    continue;
+                }
+
+                await connection.ExecuteAsync(szInsertSql, new
+                {
+                    SID = p.szSID,
+                    CoordinatorId = nCoordinatorId,
+                    Sequence = p.nSequence,
+                    Name = p.szName,
+                    Unit = p.szUnit ?? string.Empty,
+                    Min = p.fMin,
+                    Max = p.fMax
+                }, transaction);
+                nInserted++;
+
+                var nAffected = await connection.ExecuteAsync(szSeedLatestSql,
+                    new { SID = p.szSID }, transaction);
+                if (nAffected > 0) nSeeded++;
+            }
+
+            await transaction.CommitAsync();
+            _logger.LogInformation("DBPoints 全量覆寫完成: CoordinatorId={Id}, 寫入={Count}, DBLatestData seed={Seeded}",
+                nCoordinatorId, nInserted, nSeeded);
+            return nInserted;
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "儲存 DBPoints 失敗: CoordinatorId={Id}", nCoordinatorId);
+            return 0;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<LatestDataModel>> GetDbLatestDataByPrefixAsync(string szSidPrefix, int nCommandTimeoutMs = 1000)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        // 注意：例外不在此 swallow，往上拋給 caller — caller（DbCommunicationService、
+        // MqttRealtimeSubscriberService）需要分辨「讀失敗」vs「無資料」以決定是否寫 Bad quality
+        using var connection = new SqlConnection(_szConnectionString);
+        await connection.OpenAsync();
+
+        const string szSql = @"
+            SELECT
+                SID                          AS szSID,
+                ISNULL(Value, 0)             AS fValue,
+                ISNULL(Timestamp, GETDATE()) AS dtTimestamp,
+                ISNULL(Quality, 0)           AS nQuality
+            FROM DBLatestData
+            WHERE SID LIKE @Prefix";
+
+        // ADO.NET CommandTimeout 單位是秒，向上取整；最小 1 秒
+        var nTimeoutSec = Math.Max(1, (int)Math.Ceiling(nCommandTimeoutMs / 1000.0));
+        return await connection.QueryAsync<LatestDataModel>(
+            new CommandDefinition(szSql, new { Prefix = szSidPrefix + "%" }, commandTimeout: nTimeoutSec));
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> UpdateDbLatestDataAsync(string szSid, double dValue)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+
+            // 1) 取得 Min/Max 做範圍驗證（同時驗證 SID 存在）
+            const string szRangeSql = "SELECT [Min] AS fMin, [Max] AS fMax FROM DBPoints WHERE SID = @Sid";
+            var range = await connection.QuerySingleOrDefaultAsync<(float fMin, float fMax)?>(
+                szRangeSql, new { Sid = szSid });
+
+            if (!range.HasValue)
+            {
+                _logger.LogWarning("[DBLatestData 寫入] SID 不存在於 DBPoints: {SID}", szSid);
+                return false;
+            }
+
+            if (dValue < range.Value.fMin || dValue > range.Value.fMax)
+            {
+                _logger.LogWarning("[DBLatestData 寫入] 值超出範圍 reject: SID={SID} Value={Value} Min={Min} Max={Max}",
+                    szSid, dValue, range.Value.fMin, range.Value.fMax);
+                return false;
+            }
+
+            // 2) UPDATE DBLatestData
+            const string szUpdateSql = @"
+                UPDATE DBLatestData
+                SET Value = @Value,
+                    Timestamp = GETDATE(),
+                    Quality = 1
+                WHERE SID = @Sid";
+
+            var nAffected = await connection.ExecuteAsync(szUpdateSql, new { Sid = szSid, Value = dValue });
+
+            if (nAffected <= 0)
+            {
+                _logger.LogWarning("[DBLatestData 寫入] DBLatestData 無對應 SID 列（DBPoints 有但 DBLatestData 缺）: {SID}", szSid);
+                return false;
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[DBLatestData 寫入] 寫入失敗: SID={SID} Value={Value}", szSid, dValue);
+            return false;
         }
     }
 

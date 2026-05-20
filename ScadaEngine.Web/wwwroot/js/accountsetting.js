@@ -4,6 +4,10 @@
     var _configurablePages = JSON.parse(_root.dataset.configurablePages || '[]');
     var _scadaDesignPages = JSON.parse(_root.dataset.scadaDesignPages || '[]');
 
+    function t(key, args) {
+        return (window.i18n && window.i18n.t) ? window.i18n.t(key, args) : key;
+    }
+
     // ── 共用工具 ─────────────────────────────────────────────
     function showAlert(elId, msg, type) {
         var el = document.getElementById(elId);
@@ -50,12 +54,12 @@
         var szDepartment = document.getElementById('inputDepartment').value.trim();
         var isActive = document.getElementById('inputIsActive').checked;
 
-        if (!szUsername) { showAlert('createUserAlert', '\u8acb\u8f38\u5165\u5e33\u865f', 'warning'); return; }
-        if (!szPassword) { showAlert('createUserAlert', '\u8acb\u8f38\u5165\u5bc6\u78bc', 'warning'); return; }
-        if (szPassword !== szPasswordConfirm) { showAlert('createUserAlert', '\u5169\u6b21\u8f38\u5165\u7684\u5bc6\u78bc\u4e0d\u4e00\u81f4', 'warning'); return; }
+        if (!szUsername) { showAlert('createUserAlert', t('account.alert.input_username'), 'warning'); return; }
+        if (!szPassword) { showAlert('createUserAlert', t('account.alert.input_password'), 'warning'); return; }
+        if (szPassword !== szPasswordConfirm) { showAlert('createUserAlert', t('account.alert.password_mismatch'), 'warning'); return; }
 
         this.disabled = true;
-        this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>\u5132\u5b58\u4e2d...';
+        this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>' + t('account.alert.saving');
 
         try {
             var resp = await fetch('/AccountSetting/Create', {
@@ -68,16 +72,16 @@
             });
             var result = await resp.json();
             if (result.success) {
-                showAlert('createUserAlert', '\u65b0\u589e\u6210\u529f\uff0c\u9801\u9762\u5373\u5c07\u91cd\u65b0\u6574\u7406...', 'success');
+                showAlert('createUserAlert', t('account.alert.create_success'), 'success');
                 setTimeout(function () { location.reload(); }, 1000);
             } else {
-                showAlert('createUserAlert', result.message || '\u65b0\u589e\u5931\u6557', 'danger');
+                showAlert('createUserAlert', result.message || t('account.alert.create_failed'), 'danger');
             }
         } catch (ex) {
-            showAlert('createUserAlert', '\u65b0\u589e\u5931\u6557\uff1a' + ex.message, 'danger');
+            showAlert('createUserAlert', t('account.alert.create_failed_with', { 0: ex.message }), 'danger');
         } finally {
             this.disabled = false;
-            this.innerHTML = '<i class="fas fa-save me-1"></i>\u5132\u5b58';
+            this.innerHTML = '<i class="fas fa-save me-1"></i>' + t('account.button.save');
         }
     });
 
@@ -128,16 +132,16 @@
     function renderPermScadaPages(permData) {
         var wrap = document.getElementById('permScadaPages');
         if (!_scadaDesignPages || _scadaDesignPages.length === 0) {
-            wrap.innerHTML = '<small class="text-muted">\u5c1a\u7121\u5df2\u767c\u4f48\u7684\u756b\u9762\u8a2d\u8a08</small>';
+            wrap.innerHTML = '<small class="text-muted">' + escapeText(t('account.permission.no_pages')) + '</small>';
             return;
         }
         var sp = (permData && permData.scadaPages) || {};
         var html = '<table class="table table-sm table-bordered mb-0"><thead><tr>' +
-            '<th class="small">\u9801\u9762</th>' +
+            '<th class="small">' + escapeText(t('account.permission.col_page')) + '</th>' +
             '<th class="small text-center" style="width:100px">' +
-            '<input type="checkbox" class="form-check-input me-1" id="cbSelectAllView">\u53ef\u6aa2\u8996</th>' +
+            '<input type="checkbox" class="form-check-input me-1" id="cbSelectAllView">' + escapeText(t('account.permission.col_can_view')) + '</th>' +
             '<th class="small text-center" style="width:100px">' +
-            '<input type="checkbox" class="form-check-input me-1" id="cbSelectAllCtrl">\u53ef\u63a7\u5236</th></tr></thead><tbody>';
+            '<input type="checkbox" class="form-check-input me-1" id="cbSelectAllCtrl">' + escapeText(t('account.permission.col_can_control')) + '</th></tr></thead><tbody>';
 
         _scadaDesignPages.forEach(function (pg) {
             var perm = sp[pg.szPageSid] || { canView: false, canControl: false };
@@ -154,6 +158,11 @@
         html += '</tbody></table>';
         wrap.innerHTML = html;
         syncSelectAllScada();
+    }
+
+    function escapeText(s) {
+        if (s == null) return '';
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
     function collectPermissionJson() {
@@ -266,7 +275,7 @@
         };
 
         this.disabled = true;
-        this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>\u5132\u5b58\u4e2d...';
+        this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>' + t('account.alert.saving');
 
         try {
             var resp = await fetch('/AccountSetting/Update', {
@@ -276,16 +285,16 @@
             });
             var result = await resp.json();
             if (result.success) {
-                showAlert('editUserAlert', '\u66f4\u65b0\u6210\u529f\uff0c\u9801\u9762\u5373\u5c07\u91cd\u65b0\u6574\u7406...', 'success');
+                showAlert('editUserAlert', t('account.alert.update_success'), 'success');
                 setTimeout(function () { location.reload(); }, 1000);
             } else {
-                showAlert('editUserAlert', result.message || '\u66f4\u65b0\u5931\u6557', 'danger');
+                showAlert('editUserAlert', result.message || t('account.alert.update_failed'), 'danger');
             }
         } catch (ex) {
-            showAlert('editUserAlert', '\u66f4\u65b0\u5931\u6557\uff1a' + ex.message, 'danger');
+            showAlert('editUserAlert', t('account.alert.update_failed_with', { 0: ex.message }), 'danger');
         } finally {
             this.disabled = false;
-            this.innerHTML = '<i class="fas fa-save me-1"></i>\u5132\u5b58\u8b8a\u66f4';
+            this.innerHTML = '<i class="fas fa-save me-1"></i>' + t('account.button.save_changes');
         }
     });
 
@@ -296,6 +305,11 @@
 
         document.getElementById('deleteUserID').value = btn.dataset.userid;
         document.getElementById('deleteUsername').textContent = btn.dataset.username;
+        // 用 i18n 樣板拆 prefix/suffix 包住 username strong
+        var msg = t('account.delete.confirm_msg', { 0: 'USERNAME' });
+        var parts = msg.split('USERNAME');
+        document.getElementById('deleteUserMsgPrefix').textContent = parts[0] || '';
+        document.getElementById('deleteUserMsgSuffix').textContent = parts[1] || '';
         new bootstrap.Modal(document.getElementById('deleteUserModal')).show();
     });
 
@@ -313,10 +327,10 @@
             if (result.success) {
                 location.reload();
             } else {
-                alert(result.message || '\u522a\u9664\u5931\u6557');
+                alert(result.message || t('account.alert.delete_failed'));
             }
         } catch (ex) {
-            alert('\u522a\u9664\u5931\u6557\uff1a' + ex.message);
+            alert(t('account.alert.delete_failed_with', { 0: ex.message }));
         } finally {
             this.disabled = false;
         }

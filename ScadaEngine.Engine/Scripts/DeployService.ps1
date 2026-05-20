@@ -209,7 +209,7 @@ function Install-Service {
             }
         }
 
-        $SubDirs = @("Setting", "Modbus", "MqttSetting", "Log", "DatabaseSchema", "Algorithms", "PythonRuntime")
+        $SubDirs = @("Setting", "Modbus", "MqttSetting", "Log", "DatabaseSchema", "DBPoint", "Algorithms", "PythonRuntime")
         foreach ($dir in $SubDirs) {
             $dirPath = Join-Path $TargetPath $dir
             if (-not (Test-Path $dirPath)) { New-Item -ItemType Directory -Path $dirPath -Force | Out-Null }
@@ -221,7 +221,7 @@ function Install-Service {
         Get-ChildItem -Path $publishPath -File | ForEach-Object { Copy-Item -Path $_.FullName -Destination $TargetPath -Force }
 
         # Copy configuration directories (遞迴複製，含子資料夾)
-        $dirsToCopy = @("Setting","Modbus","MqttSetting","DatabaseSchema","Algorithms","PythonRuntime")
+        $dirsToCopy = @("Setting","Modbus","MqttSetting","DatabaseSchema","DBPoint","Algorithms","PythonRuntime")
         foreach ($d in $dirsToCopy) {
             $src = Join-Path $ProjectPath $d
             $dst = Join-Path $TargetPath $d
@@ -252,6 +252,7 @@ function Install-Service {
         Write-Host '  - Modbus\*.json'
         Write-Host '  - Mqtt\MqttSetting.json'
         Write-Host '  - DatabaseSchema\DatabaseSchema.json'
+        Write-Host '  - DBPoint\*.json'
         return $true
 
     } catch {
@@ -499,7 +500,7 @@ function Update-Service {
         Write-Host "Updated $copied files." -ForegroundColor Green
 
         # 同步設定檔 (遞迴複製，含子資料夾，含 PythonRuntime)
-        $dirsToCopy = @("Setting","Modbus","MqttSetting","DatabaseSchema","Algorithms","PythonRuntime")
+        $dirsToCopy = @("Setting","Modbus","MqttSetting","DatabaseSchema","DBPoint","Algorithms","PythonRuntime")
         foreach ($d in $dirsToCopy) {
             $src = Join-Path $ProjectPath $d
             $dst = Join-Path $TargetPath $d

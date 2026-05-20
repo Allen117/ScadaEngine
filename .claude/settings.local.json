@@ -1,6 +1,8 @@
 {
   "permissions": {
     "allow": [
+      "Edit",
+      "Write",
       "Bash(curl:*)",
       "Bash(dotnet build:*)",
       "Bash(pkill:*)",

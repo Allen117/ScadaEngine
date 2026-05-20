@@ -1,6 +1,6 @@
 @model ScadaEngine.Web.Features.Realtime.Models.RealtimeMonitorViewModel
 @{
-    ViewData["Title"] = "SCADA 即時監控儀表板";
+    ViewData["Title"] = Localizer["realtime.title"].Value;
     Layout = "~/Views/Shared/_Layout.cshtml";
 
     var firstCoordinator = Model.CoordinatorList.FirstOrDefault();
@@ -35,6 +35,9 @@
             badgeClass = item.QualityBadgeClass
         })
     );
+
+    var szCalcLabel = Localizer["realtime.coordinator.calc"].Value;
+    var szUngroupedLabel = Localizer["realtime.coordinator.ungrouped"].Value;
 }
 
 <link rel="stylesheet" href="~/css/realtime.css" />
@@ -45,15 +48,15 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="mb-0">
             <i class="fas fa-tachometer-alt text-primary me-2"></i>
-            SCADA 即時監控儀表板
+            @Localizer["realtime.title"]
         </h2>
         <div class="d-flex align-items-center">
             <span class="badge @(Model.isConnectionHealthy ? "bg-success" : "bg-danger") me-3" id="connectionStatus">
                 <i class="fas @(Model.isConnectionHealthy ? "fa-wifi" : "fa-exclamation-triangle") me-1"></i>
-                @(Model.isConnectionHealthy ? "連線正常" : "連線異常")
+                @(Model.isConnectionHealthy ? Localizer["realtime.connection.ok"].Value : Localizer["realtime.connection.bad"].Value)
             </span>
             <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window._realtime.refreshData()" id="refreshBtn">
-                <i class="fas fa-sync-alt me-1" id="refreshIcon"></i> 重新整理
+                <i class="fas fa-sync-alt me-1" id="refreshIcon"></i> @Localizer["realtime.button.refresh"]
             </button>
         </div>
     </div>
@@ -65,7 +68,7 @@
                 <div class="card-header bg-dark text-white py-2">
                     <h6 class="mb-0">
                         <i class="fas fa-server me-1"></i>
-                        設備清單
+                        @Localizer["realtime.coordinator.title"]
                     </h6>
                 </div>
                 <div id="coordinatorList">
@@ -119,19 +122,86 @@
                                 isFirst = false;
                             }
                         }
-                        <a href="#" class="list-group-item list-group-item-action py-2 coordinator-item"
-                           data-id="-999"
-                           data-modbusid=""
-                           data-name="計算點位">
-                            <i class="fas fa-calculator me-1 text-warning"></i>
-                            <span class="small">計算點位</span>
-                        </a>
+                        @if (Model.DbCoordinatorList.Any())
+                        {
+                            <div class="coordinator-group">
+                                <a href="#" class="list-group-item list-group-item-action py-2 coordinator-toggle"
+                                   data-sid-prefix="DB"
+                                   data-name="DB">
+                                    <i class="fas fa-chevron-right me-1 toggle-icon text-secondary" style="font-size:.7rem;transition:transform .2s;"></i>
+                                    <i class="fas fa-database me-1 text-secondary"></i>
+                                    <span class="small">DB</span>
+                                </a>
+                                <div class="sub-menu" style="display:none;">
+                                    @foreach (var dbCoord in Model.DbCoordinatorList)
+                                    {
+                                        <a href="#"
+                                           class="list-group-item list-group-item-action py-1 ps-4 sub-item"
+                                           data-sid-prefix="DB@(dbCoord.Id)-"
+                                           data-name="@dbCoord.szName">
+                                            <i class="fas fa-database me-1 text-muted" style="font-size:.75rem;"></i>
+                                            <span class="small">@dbCoord.szName</span>
+                                        </a>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        @if (Model.CalcPointGroups.Any())
+                        {
+                            <div class="coordinator-group">
+                                <a href="#" class="list-group-item list-group-item-action py-2 coordinator-toggle"
+                                   data-id="-999"
+                                   data-modbusid=""
+                                   data-name="@szCalcLabel">
+                                    <i class="fas fa-chevron-right me-1 toggle-icon text-secondary" style="font-size:.7rem;transition:transform .2s;"></i>
+                                    <i class="fas fa-calculator me-1 text-warning"></i>
+                                    <span class="small">@szCalcLabel</span>
+                                </a>
+                                <div class="sub-menu" style="display:none;">
+                                    @foreach (var group in Model.CalcPointGroups)
+                                    {
+                                        <a href="#"
+                                           class="list-group-item list-group-item-action py-1 ps-4 sub-item"
+                                           data-id="-999"
+                                           data-calcgroup="@group"
+                                           data-name="@group">
+                                            <i class="fas fa-layer-group me-1 text-muted" style="font-size:.75rem;"></i>
+                                            <span class="small">@group</span>
+                                        </a>
+                                    }
+                                    @{
+                                        var hasUngrouped = Model.CalcGroupMap.Any(kvp => string.IsNullOrWhiteSpace(kvp.Value));
+                                    }
+                                    @if (hasUngrouped)
+                                    {
+                                        <a href="#"
+                                           class="list-group-item list-group-item-action py-1 ps-4 sub-item"
+                                           data-id="-999"
+                                           data-calcgroup=""
+                                           data-name="@szUngroupedLabel">
+                                            <i class="fas fa-inbox me-1 text-muted" style="font-size:.75rem;"></i>
+                                            <span class="small">@szUngroupedLabel</span>
+                                        </a>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <a href="#" class="list-group-item list-group-item-action py-2 coordinator-item"
+                               data-id="-999"
+                               data-modbusid=""
+                               data-name="@szCalcLabel">
+                                <i class="fas fa-calculator me-1 text-warning"></i>
+                                <span class="small">@szCalcLabel</span>
+                            </a>
+                        }
                     }
                     else
                     {
                         <div class="list-group-item text-muted small py-3 text-center">
                             <i class="fas fa-inbox d-block mb-1"></i>
-                            無設備資料
+                            @Localizer["realtime.coordinator.empty"]
                         </div>
                     }
                 </div>
@@ -162,7 +232,7 @@
                 <div class="card-header bg-light">
                     <h5 class="mb-0">
                         <i class="fas fa-table text-primary me-2"></i>
-                        即時資料監控 (<span id="pointCount">@initialFilteredList.Count</span> 筆)
+                        @Localizer["realtime.table.title"] (<span id="pointCount">@initialFilteredList.Count</span> @Localizer["realtime.table.count_suffix"])
                         @if (firstCoordinator != null)
                         {
                             <small class="text-muted ms-2" id="currentCoordinatorName">— @firstCoordinator.szName</small>
@@ -175,12 +245,12 @@
                         <table class="table table-striped table-hover mb-0" id="realtimeTable">
                             <thead class="table-dark">
                                 <tr>
-                                    <th style="width: 25%; cursor: pointer; user-select: none;" onclick="window._realtime.sortTable('name')" id="th-name">名稱 <span class="sort-icon">⇅</span></th>
-                                    <th style="width: 20%; cursor: pointer; user-select: none;" onclick="window._realtime.sortTable('subTopic')" id="th-subTopic">SID <span class="sort-icon">⇅</span></th>
-                                    <th style="width: 15%; cursor: pointer; user-select: none;" class="text-end" onclick="window._realtime.sortTable('value')" id="th-value">數值 <span class="sort-icon">⇅</span></th>
-                                    <th style="width: 10%; cursor: pointer; user-select: none;" onclick="window._realtime.sortTable('unit')" id="th-unit">單位 <span class="sort-icon">⇅</span></th>
-                                    <th style="width: 15%; cursor: pointer; user-select: none;" onclick="window._realtime.sortTable('quality')" id="th-quality">品質 <span class="sort-icon">⇅</span></th>
-                                    <th style="width: 15%; cursor: pointer; user-select: none;" onclick="window._realtime.sortTable('timestamp')" id="th-timestamp">時間戳記 <span class="sort-icon">⇅</span></th>
+                                    <th style="width: 25%; cursor: pointer; user-select: none;" onclick="window._realtime.sortTable('name')" id="th-name">@Localizer["realtime.col.name"] <span class="sort-icon">⇅</span></th>
+                                    <th style="width: 20%; cursor: pointer; user-select: none;" onclick="window._realtime.sortTable('subTopic')" id="th-subTopic">@Localizer["realtime.col.sid"] <span class="sort-icon">⇅</span></th>
+                                    <th style="width: 15%; cursor: pointer; user-select: none;" class="text-end" onclick="window._realtime.sortTable('value')" id="th-value">@Localizer["realtime.col.value"] <span class="sort-icon">⇅</span></th>
+                                    <th style="width: 10%; cursor: pointer; user-select: none;" onclick="window._realtime.sortTable('unit')" id="th-unit">@Localizer["realtime.col.unit"] <span class="sort-icon">⇅</span></th>
+                                    <th style="width: 15%; cursor: pointer; user-select: none;" onclick="window._realtime.sortTable('quality')" id="th-quality">@Localizer["realtime.col.quality"] <span class="sort-icon">⇅</span></th>
+                                    <th style="width: 15%; cursor: pointer; user-select: none;" onclick="window._realtime.sortTable('timestamp')" id="th-timestamp">@Localizer["realtime.col.timestamp"] <span class="sort-icon">⇅</span></th>
                                 </tr>
                             </thead>
                             <tbody id="realtimeTableBody">
@@ -205,7 +275,7 @@
                                     <tr>
                                         <td colspan="6" class="text-center text-muted py-4">
                                             <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
-                                            尚無即時資料，請確認 MQTT 連線狀態
+                                            @Localizer["realtime.empty.no_data"]
                                         </td>
                                     </tr>
                                 }
@@ -218,10 +288,10 @@
                     <div class="d-flex justify-content-between">
                         <small>
                             <i class="fas fa-info-circle me-1"></i>
-                            自動更新週期: 3 秒 | 訂閱主題: SCADA/Realtime/+
+                            @Localizer["realtime.footer.note"]
                         </small>
                         <small id="footerLastUpdate">
-                            最後更新: @DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+                            @Localizer["realtime.footer.last_update"]: @DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
                         </small>
                     </div>
                 </div>
@@ -236,6 +306,7 @@
     <script>
         window._realtimeInitCoordinatorId = @(firstCoordinator?.Id ?? 0);
         window._realtimeInitData = @Html.Raw(initialDataJson);
+        window._realtimeCalcGroupMap = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CalcGroupMap));
     </script>
     <script src="~/js/realtime.js"></script>
 }

@@ -1,8 +1,28 @@
 (function () {
     var data = window._condCtrlData || {};
-    var allPoints = data.allPoints || [];
-    var allCoords = data.allCoords || [];
-    var dbRules   = data.dbRules   || [];
+    var allPoints   = data.allPoints   || [];
+    var allCoords   = data.allCoords   || [];
+    var allDbCoords = data.allDbCoords || [];
+    var dbRules     = data.dbRules     || [];
+
+    // ── SID 類型判斷 ───────────────────────────────────────────────
+    function isCalcSid(sid) { return !!sid && sid.indexOf('CALC-') === 0; }
+    function isDbSid(sid)   { return !!sid && /^DB\d+-S\d+$/.test(sid); }
+    function getDbCoordIdForSid(sid) {
+        var m = sid && sid.match(/^DB(\d+)-S\d+$/);
+        return m ? parseInt(m[1]) : 0;
+    }
+
+    // 設備下拉選單value三類："CALC" / "DB:{n}" / Modbus coord id (數字字串) / "0" 表全部
+    function parseDeviceValue(v) {
+        if (v === 'CALC') return { kind: 'calc' };
+        if (typeof v === 'string' && v.indexOf('DB:') === 0) {
+            var n = parseInt(v.substring(3));
+            return isNaN(n) ? { kind: 'all' } : { kind: 'db', id: n };
+        }
+        var nId = parseInt(v) || 0;
+        return nId > 0 ? { kind: 'modbus', id: nId } : { kind: 'all' };
+    }
 
     var rules        = [];
     var ruleSeq      = 0;
@@ -50,6 +70,14 @@
         return coord ? coord.id : 0;
     }
 
+    // 從 SID 反推「設備下拉值」（Modbus / DB:N / CALC / '0'=未知）
+    function findDeviceValueForSid(sid) {
+        if (isCalcSid(sid)) return 'CALC';
+        if (isDbSid(sid))   return 'DB:' + getDbCoordIdForSid(sid);
+        var nDbId = findCoordForSid(sid);
+        return nDbId > 0 ? String(nDbId) : '0';
+    }
+
     // \u2500\u2500 \u591aID\u8a2d\u5099\u5224\u65b7\u8207\u5b50\u8a2d\u5099\u8655\u7406 \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
     function isMultiIdCoord(coord) {
         return coord && coord.modbusId && coord.modbusId.includes(',');
@@ -72,6 +100,12 @@
     }
 
     function getSubDeviceNameForSid(sid) {
+        if (isCalcSid(sid)) return '計算點位';
+        if (isDbSid(sid)) {
+            var dbId = getDbCoordIdForSid(sid);
+            var dbCoord = allDbCoords.find(function (c) { return c.id === dbId; });
+            return dbCoord ? dbCoord.name : 'DB 來源';
+        }
         var hyphen = sid.indexOf('-');
         if (hyphen < 0) return null;
         var num = parseInt(sid.substring(0, hyphen));
@@ -115,9 +149,21 @@
     }
 
     function setupCoordinatorForSid(sid, coordSelectEl, subDeviceColEl, subDeviceSelectEl, pointSelectEl, pointColEl) {
-        var nDbId = findCoordForSid(sid);
-        coordSelectEl.value = nDbId;
-        var coord = allCoords.find(function (c) { return c.id === nDbId; });
+        var deviceVal = findDeviceValueForSid(sid);
+        coordSelectEl.value = deviceVal;
+        var dv = parseDeviceValue(deviceVal);
+
+        // CALC / DB 來源都沒有子設備概念
+        if (dv.kind === 'calc' || dv.kind === 'db') {
+            subDeviceColEl.classList.add('d-none');
+            pointColEl.classList.remove('col-md-2');
+            pointColEl.classList.add('col-md-4');
+            filterPointDropdownByDevice(pointSelectEl, dv);
+            pointSelectEl.value = sid;
+            return;
+        }
+
+        var coord = allCoords.find(function (c) { return c.id === dv.id; });
         if (coord && isMultiIdCoord(coord)) {
             subDeviceColEl.classList.remove('d-none');
             pointColEl.classList.remove('col-md-4');
@@ -129,13 +175,13 @@
             var subId = findSubModbusIdForSid(sid);
             if (subId !== null) {
                 subDeviceSelectEl.value = subId;
-                filterPointDropdownBySubDevice(pointSelectEl, nDbId, subId);
+                filterPointDropdownBySubDevice(pointSelectEl, dv.id, subId);
             }
         } else {
             subDeviceColEl.classList.add('d-none');
             pointColEl.classList.remove('col-md-2');
             pointColEl.classList.add('col-md-4');
-            filterPointDropdown(pointSelectEl, nDbId);
+            filterPointDropdownByDevice(pointSelectEl, dv);
         }
         pointSelectEl.value = sid;
     }
@@ -224,18 +270,36 @@
 
     // \u2500\u2500 \u8a2d\u5099\u7be9\u9078 \u2192 \u91cd\u65b0\u586b\u5145\u9ede\u4f4d\u4e0b\u62c9\u9078\u55ae \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
     function filterPointDropdown(selectEl, nDbId) {
+        // 維持向後相容：純 Modbus coord id（0 = 全部 Modbus + 計算 + DB）
+        if (nDbId <= 0) {
+            filterPointDropdownByDevice(selectEl, { kind: 'all' });
+            return;
+        }
+        filterPointDropdownByDevice(selectEl, { kind: 'modbus', id: nDbId });
+    }
+
+    // 依「設備下拉值」抽出對應點位塞回下拉
+    function filterPointDropdownByDevice(selectEl, dv) {
         var currentVal = selectEl.value;
         while (selectEl.options.length > 1) selectEl.remove(1);
 
-        var pts = nDbId <= 0
-            ? allPoints
-            : allPoints.filter(function (p) {
+        var pts;
+        if (dv.kind === 'calc') {
+            pts = allPoints.filter(function (p) { return isCalcSid(p.sid); });
+        } else if (dv.kind === 'db') {
+            pts = allPoints.filter(function (p) { return isDbSid(p.sid) && getDbCoordIdForSid(p.sid) === dv.id; });
+        } else if (dv.kind === 'modbus') {
+            pts = allPoints.filter(function (p) {
+                if (isCalcSid(p.sid) || isDbSid(p.sid)) return false;
                 var hyphen = p.sid.indexOf('-');
                 if (hyphen < 0) return false;
                 var num = parseInt(p.sid.substring(0, hyphen));
                 if (isNaN(num)) return false;
-                return num >= nDbId * 65536 && num < (nDbId + 1) * 65536;
+                return num >= dv.id * 65536 && num < (dv.id + 1) * 65536;
             });
+        } else {
+            pts = allPoints;
+        }
 
         pts.forEach(function (p) {
             var opt = new Option(p.name, p.sid);
@@ -436,45 +500,35 @@
         });
         if (rules.length > 0) renderRules();
 
-        conditionCoordinator.addEventListener('change', function () {
-            var nDbId = parseInt(this.value) || 0;
-            var coord = allCoords.find(function (c) { return c.id === nDbId; });
-            if (coord && isMultiIdCoord(coord)) {
-                conditionSubDeviceCol.classList.remove('d-none');
-                conditionPointCol.classList.remove('col-md-4');
-                conditionPointCol.classList.add('col-md-2');
-                while (conditionSubDevice.options.length > 1) conditionSubDevice.remove(1);
-                getSubDevices(coord).forEach(function (s) { conditionSubDevice.add(new Option(s.name, s.modbusId)); });
-                conditionSubDevice.value = '';
-                while (conditionPoint.options.length > 1) conditionPoint.remove(1);
-                conditionPoint.value = '';
-            } else {
-                conditionSubDeviceCol.classList.add('d-none');
-                conditionPointCol.classList.remove('col-md-2');
-                conditionPointCol.classList.add('col-md-4');
-                filterPointDropdown(conditionPoint, nDbId);
-            }
-        });
+        function bindCoordinatorChange(coordSelectEl, subDeviceColEl, subDeviceSelectEl, pointSelectEl, pointColEl) {
+            coordSelectEl.addEventListener('change', function () {
+                var dv = parseDeviceValue(this.value);
 
-        controlCoordinator.addEventListener('change', function () {
-            var nDbId = parseInt(this.value) || 0;
-            var coord = allCoords.find(function (c) { return c.id === nDbId; });
-            if (coord && isMultiIdCoord(coord)) {
-                controlSubDeviceCol.classList.remove('d-none');
-                controlPointCol.classList.remove('col-md-4');
-                controlPointCol.classList.add('col-md-2');
-                while (controlSubDevice.options.length > 1) controlSubDevice.remove(1);
-                getSubDevices(coord).forEach(function (s) { controlSubDevice.add(new Option(s.name, s.modbusId)); });
-                controlSubDevice.value = '';
-                while (controlPoint.options.length > 1) controlPoint.remove(1);
-                controlPoint.value = '';
-            } else {
-                controlSubDeviceCol.classList.add('d-none');
-                controlPointCol.classList.remove('col-md-2');
-                controlPointCol.classList.add('col-md-4');
-                filterPointDropdown(controlPoint, nDbId);
-            }
-        });
+                if (dv.kind === 'modbus') {
+                    var coord = allCoords.find(function (c) { return c.id === dv.id; });
+                    if (coord && isMultiIdCoord(coord)) {
+                        subDeviceColEl.classList.remove('d-none');
+                        pointColEl.classList.remove('col-md-4');
+                        pointColEl.classList.add('col-md-2');
+                        while (subDeviceSelectEl.options.length > 1) subDeviceSelectEl.remove(1);
+                        getSubDevices(coord).forEach(function (s) { subDeviceSelectEl.add(new Option(s.name, s.modbusId)); });
+                        subDeviceSelectEl.value = '';
+                        while (pointSelectEl.options.length > 1) pointSelectEl.remove(1);
+                        pointSelectEl.value = '';
+                        return;
+                    }
+                }
+
+                // CALC / DB / 單ID Modbus / 全部 → 直接刷新點位下拉
+                subDeviceColEl.classList.add('d-none');
+                pointColEl.classList.remove('col-md-2');
+                pointColEl.classList.add('col-md-4');
+                filterPointDropdownByDevice(pointSelectEl, dv);
+            });
+        }
+
+        bindCoordinatorChange(conditionCoordinator, conditionSubDeviceCol, conditionSubDevice, conditionPoint, conditionPointCol);
+        bindCoordinatorChange(controlCoordinator,   controlSubDeviceCol,   controlSubDevice,   controlPoint,   controlPointCol);
 
         conditionSubDevice.addEventListener('change', function () {
             var nDbId = parseInt(conditionCoordinator.value) || 0;

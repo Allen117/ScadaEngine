@@ -58,7 +58,8 @@ public class LogicFlowRepository
         {
             const string szSql = @"
                 SELECT Id, RecurrenceType, RunLength, RestLength, AnchorDateTime,
-                       DaysOfWeek, DaysOfMonth, StartTime, EndTime
+                       DaysOfWeek, DaysOfMonth, StartTime, EndTime,
+                       ExcludeDates, IncludeDates
                 FROM TimeSchedules
                 WHERE IsEnabled = 1";
 
@@ -105,4 +106,6 @@ public class ScheduleRecord
     public string? DaysOfMonth { get; set; }
     public string StartTime { get; set; } = "";
     public string EndTime { get; set; } = "";
+    public string? ExcludeDates { get; set; }
+    public string? IncludeDates { get; set; }
 }

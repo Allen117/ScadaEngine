@@ -8,29 +8,22 @@
     <!-- Bootstrap CSS -->
     <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
     <!-- FontAwesome 圖示 -->
-    <link href="~/lib/fontawesome/css/all.min.css" rel="stylesheet" />
+    <link href="~/lib/font-awesome/css/all.min.css" rel="stylesheet" />
     <!-- 全域樣式 -->
     <link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
     <!-- 登入頁面專用樣式 -->
     <link href="~/css/login.css" rel="stylesheet" asp-append-version="true" />
-    
-    <style>
-        /* 僅保留背景樣式，其餘移至外部 CSS */
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            font-family: 'Microsoft JhengHei', sans-serif;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-    </style>
 </head>
 <body>
     <main role="main">
         @RenderBody()
     </main>
-    
+
+    <img src="~/images/itri-logo.svg"
+         alt="ITRI"
+         class="login-corner-logo"
+         onerror="this.style.display='none'" />
+
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     @RenderSection("Scripts", required: false)
 </body>

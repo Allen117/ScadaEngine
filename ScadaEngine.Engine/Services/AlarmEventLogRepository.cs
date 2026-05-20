@@ -75,10 +75,10 @@ public class AlarmEventLogRepository
             const string szSql = @"
                 INSERT INTO EventLog
                     (SID, EventType, Severity, TriggerValue, ThresholdValue,
-                     Operator, Message, OccurredAt)
+                     Operator, Message, MessageKey, MessageArgs, OccurredAt)
                 VALUES
                     (@SID, @EventType, @Severity, @TriggerValue, @ThresholdValue,
-                     @Operator, @Message, @OccurredAt)";
+                     @Operator, @Message, @MessageKey, @MessageArgs, @OccurredAt)";
 
             using var connection = new SqlConnection(_szConnectionString);
             await connection.OpenAsync();
@@ -91,6 +91,8 @@ public class AlarmEventLogRepository
                 ThresholdValue = model.dThresholdValue,
                 Operator       = model.nOperator,
                 Message        = model.szMessage,
+                MessageKey     = model.szMessageKey,
+                MessageArgs    = model.szMessageArgs,
                 OccurredAt     = model.dtOccurredAt
             });
 
@@ -133,7 +135,74 @@ public class AlarmEventLogRepository
         }
     }
 
-    /// <summary>查詢所有未解除的警報（用於啟動時還原狀態）</summary>
+    /// <summary>
+    /// 標記指定 SID + 特定 Operator 類型 的未恢復事件為已恢復
+    /// 用於規則被刪除/停用後，清除孤立的警報事件（避免誤清同 SID 但其他類型仍在警報中的事件）
+    /// nOperator: 2=high, 3=low, 4=di
+    /// </summary>
+    public async Task<bool> ClearEventByOperatorAsync(string szSID, byte nOperator)
+    {
+        await EnsureConnectionStringAsync();
+        try
+        {
+            const string szSql = @"
+                UPDATE EventLog
+                SET ClearedAt = GETDATE()
+                WHERE SID = @SID
+                  AND Operator = @Operator
+                  AND ClearedAt IS NULL";
+
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+            var nAffected = await connection.ExecuteAsync(szSql, new { SID = szSID, Operator = nOperator });
+
+            if (nAffected > 0)
+                _logger.LogInformation("孤立警報已清除: SID={SID}, Operator={Operator}, 更新 {Count} 筆",
+                    szSID, nOperator, nAffected);
+
+            return nAffected > 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "清除孤立警報失敗: SID={SID}, Operator={Operator}", szSID, nOperator);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 啟動時清除所有未解除的 Fault 事件 (EventType=1)。
+    /// 系統型故障（如 LogicFlow 連續寫入失敗）依賴記憶體計數器追蹤，
+    /// Engine 重啟後計數器歸零，舊故障無法再以正常流程清除，
+    /// 故啟動時統一恢復；若故障仍存在會由執行邏輯重新累積觸發。
+    /// </summary>
+    public async Task<int> ClearAllUnresolvedFaultEventsAsync()
+    {
+        await EnsureConnectionStringAsync();
+        try
+        {
+            const string szSql = @"
+                UPDATE EventLog
+                SET ClearedAt = GETDATE()
+                WHERE EventType = 1
+                  AND ClearedAt IS NULL";
+
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+            var nAffected = await connection.ExecuteAsync(szSql);
+
+            if (nAffected > 0)
+                _logger.LogInformation("Engine 啟動：清除 {Count} 筆未恢復 Fault 事件", nAffected);
+
+            return nAffected;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "啟動時清除未恢復 Fault 事件失敗");
+            return 0;
+        }
+    }
+
+    /// <summary>查詢所有未解除的警報（用於啟動時還原狀態） — 只取 EventType=0 (Alarm)</summary>
     public async Task<IEnumerable<EventLogModel>> GetActiveAlarmsAsync()
     {
         await EnsureConnectionStringAsync();
@@ -156,6 +225,7 @@ public class AlarmEventLogRepository
                        Remarks        AS szRemarks
                 FROM EventLog
                 WHERE ClearedAt IS NULL
+                  AND EventType = 0
                 ORDER BY OccurredAt DESC";
 
             using var connection = new SqlConnection(_szConnectionString);

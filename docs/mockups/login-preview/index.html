@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Login 風格預覽 - 比較</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+    background: #f5f7fa;
+    padding: 40px 20px;
+    color: #333;
+}
+.hero {
+    max-width: 1200px;
+    margin: 0 auto 32px;
+    text-align: center;
+}
+.hero h1 { font-size: 2rem; margin-bottom: 8px; color: #1a1a1a; }
+.hero p { color: #666; font-size: 1rem; }
+.grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 24px;
+}
+.card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.card:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.12); }
+.card-thumb {
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 3rem;
+    position: relative;
+}
+.thumb-a { background: linear-gradient(135deg, #2d6a4f, #52b788); }
+.thumb-b {
+    background: #0a1929;
+    background-image: radial-gradient(circle at 30% 50%, rgba(0, 212, 170, 0.3), transparent 50%);
+}
+.thumb-b .icon { color: #00d4aa; text-shadow: 0 0 20px rgba(0, 212, 170, 0.8); }
+.thumb-c { background: linear-gradient(135deg, #1e88e5, #43a047); }
+.card-body { padding: 20px 24px; }
+.card-body h3 { margin-bottom: 8px; font-size: 1.2rem; }
+.card-body p { color: #666; font-size: 0.9rem; line-height: 1.6; margin-bottom: 16px; }
+.tag {
+    display: inline-block;
+    background: #f0f0f0;
+    color: #555;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    margin-right: 6px;
+    margin-bottom: 6px;
+}
+.btn {
+    display: inline-block;
+    background: #2c5aa0;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background 0.2s;
+    margin-top: 8px;
+}
+.btn:hover { background: #1e4374; }
+.note {
+    max-width: 1200px;
+    margin: 32px auto 0;
+    padding: 16px 20px;
+    background: #fff3cd;
+    border-left: 4px solid #ffc107;
+    border-radius: 4px;
+    color: #664d03;
+    font-size: 0.9rem;
+}
+</style>
+</head>
+<body>
+<div class="hero">
+    <h1>Login 頁面風格預覽</h1>
+    <p>三個方向同一份表單結構，請點開比較後告訴我選哪個</p>
+</div>
+<div class="grid">
+    <div class="card">
+        <div class="card-thumb thumb-a"><i class="icon">🌿</i></div>
+        <div class="card-body">
+            <h3>A · 自然節能風</h3>
+            <p>森林綠＋米白底，葉脈裝飾，柔和氣質。適合 ESG / 企業形象導向。</p>
+            <div>
+                <span class="tag">#2d6a4f</span>
+                <span class="tag">#52b788</span>
+                <span class="tag">米白</span>
+            </div>
+            <a class="btn" href="style-a-natural.html">開啟預覽 →</a>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-thumb thumb-b"><i class="icon">⚡</i></div>
+        <div class="card-body">
+            <h3>B · 智慧控制風</h3>
+            <p>深夜藍＋青綠霓虹，電路線條動畫。控制中心、科技感最強。</p>
+            <div>
+                <span class="tag">#0a1929</span>
+                <span class="tag">#00d4aa</span>
+                <span class="tag">深色</span>
+            </div>
+            <a class="btn" href="style-b-smart-control.html">開啟預覽 →</a>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-thumb thumb-c"><i class="icon">📊</i></div>
+        <div class="card-body">
+            <h3>C · 能源儀表風</h3>
+            <p>藍＋綠雙色，KPI 卡點綴，與現有 Realtime 儀表板風格一致。</p>
+            <div>
+                <span class="tag">#1e88e5</span>
+                <span class="tag">#43a047</span>
+                <span class="tag">白底</span>
+            </div>
+            <a class="btn" href="style-c-energy-dashboard.html">開啟預覽 →</a>
+        </div>
+    </div>
+</div>
+<div class="note">
+    💡 預覽用 CDN 載 Bootstrap / FontAwesome，不影響專案。選定後我會把對應風格套到 <code>wwwroot/css/login.css</code> 與必要的 cshtml 微調，<strong>不動任何登入邏輯/Cookie</strong>。
+</div>
+</body>
+</html>

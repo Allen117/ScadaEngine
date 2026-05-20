@@ -132,8 +132,8 @@ public class HistoryDataStorageService : IDisposable
             
             if (nSuccessCount > 0)
             {
-                _logger.LogInformation("歷史資料儲存完成: 成功 {SuccessCount}/{TotalCount} 筆", 
-                    nSuccessCount, dataToSave.Count);
+                // _logger.LogInformation("歷史資料儲存完成: 成功 {SuccessCount}/{TotalCount} 筆",
+                //     nSuccessCount, dataToSave.Count);
             }
             else
             {

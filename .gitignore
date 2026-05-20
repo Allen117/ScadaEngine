@@ -29,3 +29,6 @@ Release/
 
 # Sensitive config (uncomment if repo is public)
 # ScadaEngine.Engine/Setting/dbSetting.json
+
+# Line Messaging API token (must NEVER be committed)
+ScadaEngine.Engine/Setting/LineSetting.json

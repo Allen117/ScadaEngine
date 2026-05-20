@@ -126,8 +126,10 @@
         <div class="ctx-submenu">
             <div class="ctx-menu-item" data-type="timer" data-operator="tp"><span class="ctx-op-symbol ctx-op-wide" style="color:#6c757d;">TP</span>脈衝</div>
             <div class="ctx-menu-item" data-type="timer" data-operator="ton"><span class="ctx-op-symbol ctx-op-wide" style="color:#6c757d;">TON</span>延時開啟</div>
+            <div class="ctx-menu-item" data-type="timer" data-operator="tpr"><span class="ctx-op-symbol ctx-op-wide" style="color:#6c757d;">TPR</span>重複脈衝</div>
         </div>
     </div>
+    <div class="ctx-menu-item" data-type="counter"><i class="fas fa-sort-numeric-up text-teal me-2"></i>計數器 (CTU)</div>
     <div class="ctx-menu-divider"></div>
     <div class="ctx-menu-item ctx-has-sub"><i class="fas fa-brain text-purple me-2"></i>演算法 <i class="fas fa-caret-right ms-auto"></i>
         <div class="ctx-submenu" id="ctxAlgoSub">
@@ -183,8 +185,10 @@
         <div class="ctx-submenu">
             <div class="ctx-menu-item node-change-type" data-type="timer" data-operator="tp"><span class="ctx-op-symbol ctx-op-wide" style="color:#6c757d;">TP</span>脈衝</div>
             <div class="ctx-menu-item node-change-type" data-type="timer" data-operator="ton"><span class="ctx-op-symbol ctx-op-wide" style="color:#6c757d;">TON</span>延時開啟</div>
+            <div class="ctx-menu-item node-change-type" data-type="timer" data-operator="tpr"><span class="ctx-op-symbol ctx-op-wide" style="color:#6c757d;">TPR</span>重複脈衝</div>
         </div>
     </div>
+    <div class="ctx-menu-item node-change-type" data-type="counter"><i class="fas fa-sort-numeric-up text-teal me-2"></i>計數器 (CTU)</div>
     <div class="ctx-menu-divider"></div>
     <div class="ctx-menu-item ctx-has-sub"><i class="fas fa-brain text-purple me-2"></i>演算法 <i class="fas fa-caret-right ms-auto"></i>
         <div class="ctx-submenu" id="nodeCtxAlgoSub">
@@ -235,6 +239,14 @@
                             <div style="flex:1;">
                                 <div class="pp-point-name" style="font-size:14px;">計算點位</div>
                                 <div class="pp-point-sid">從公式衍生的計算點位</div>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted" style="font-size:12px;"></i>
+                        </div>
+                        <div id="ppStep0Db" class="pp-list-item" onclick="window._lf.ppShowDbStep()" style="cursor:pointer;padding:14px 16px;">
+                            <i class="fas fa-database text-info" style="font-size:18px;"></i>
+                            <div style="flex:1;">
+                                <div class="pp-point-name" style="font-size:14px;">DB 點位</div>
+                                <div class="pp-point-sid">從 DB 來源裝置選擇點位</div>
                             </div>
                             <i class="fas fa-chevron-right text-muted" style="font-size:12px;"></i>
                         </div>

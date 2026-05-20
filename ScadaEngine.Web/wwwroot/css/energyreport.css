@@ -1,0 +1,52 @@
+/* 用電報表頁專屬樣式 */
+
+.er-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+}
+
+.er-filter-bar .er-circuit {
+    flex: 0 0 220px;
+}
+
+.er-filter-bar .er-narrow-unit {
+    flex: 0 0 90px;
+}
+
+.er-filter-bar .er-narrow-date {
+    flex: 0 0 130px;
+}
+
+.er-filter-bar .er-btn .btn {
+    white-space: nowrap;
+}
+
+.er-period {
+    display: none;
+}
+
+.er-period.active {
+    display: block;
+}
+
+#erTableBody td {
+    font-size: 0.85rem;
+    padding: 6px 10px;
+}
+
+#erTableBody td.text-end {
+    font-family: monospace;
+    font-weight: 500;
+}
+
+#erTableBody tr.er-total {
+    background-color: #fff3cd !important;
+    font-weight: bold;
+}
+
+#erWarnText {
+    color: #fd7e14;
+    font-weight: 500;
+}

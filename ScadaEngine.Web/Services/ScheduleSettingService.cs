@@ -43,6 +43,8 @@ namespace ScadaEngine.Web.Services
                            DaysOfMonth     AS szDaysOfMonth,
                            StartTime       AS szStartTime,
                            EndTime         AS szEndTime,
+                           ExcludeDates    AS szExcludeDates,
+                           IncludeDates    AS szIncludeDates,
                            IsEnabled       AS isEnabled,
                            Remarks         AS szRemarks,
                            CreatedAt       AS dtCreatedAt,
@@ -83,6 +85,7 @@ namespace ScadaEngine.Web.Services
                             AnchorDateTime = @AnchorDateTime,
                             DaysOfWeek = @DaysOfWeek, DaysOfMonth = @DaysOfMonth,
                             StartTime = @StartTime, EndTime = @EndTime,
+                            ExcludeDates = @ExcludeDates, IncludeDates = @IncludeDates,
                             IsEnabled = @IsEnabled, Remarks = @Remarks,
                             UpdatedAt = GETDATE()
                         WHERE Id = @Id";
@@ -92,10 +95,12 @@ namespace ScadaEngine.Web.Services
                     szSql = @"
                         INSERT INTO TimeSchedules
                             (Name, RecurrenceType, RunLength, RestLength, AnchorDateTime,
-                             DaysOfWeek, DaysOfMonth, StartTime, EndTime, IsEnabled, Remarks)
+                             DaysOfWeek, DaysOfMonth, StartTime, EndTime,
+                             ExcludeDates, IncludeDates, IsEnabled, Remarks)
                         VALUES
                             (@Name, @RecurrenceType, @RunLength, @RestLength, @AnchorDateTime,
-                             @DaysOfWeek, @DaysOfMonth, @StartTime, @EndTime, @IsEnabled, @Remarks)";
+                             @DaysOfWeek, @DaysOfMonth, @StartTime, @EndTime,
+                             @ExcludeDates, @IncludeDates, @IsEnabled, @Remarks)";
                 }
 
                 using var connection = new SqlConnection(_szConnectionString);
@@ -112,6 +117,8 @@ namespace ScadaEngine.Web.Services
                     DaysOfMonth     = dto.daysOfMonth,
                     StartTime       = dto.startTime,
                     EndTime         = dto.endTime,
+                    ExcludeDates    = string.IsNullOrWhiteSpace(dto.excludeDates) ? null : dto.excludeDates,
+                    IncludeDates    = string.IsNullOrWhiteSpace(dto.includeDates) ? null : dto.includeDates,
                     IsEnabled       = dto.isEnabled,
                     Remarks         = dto.remarks
                 });

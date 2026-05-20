@@ -183,6 +183,13 @@ public class MqttRealtimeSubscriberService : BackgroundService, IDisposable
             var props = jsonDoc.RootElement.EnumerateObject()
                 .ToDictionary(p => p.Name, p => p.Value, StringComparer.OrdinalIgnoreCase);
 
+            // DB 來源點位不透過 MQTT 更新快取（Web 端定期直讀 DBLatestData，避免雙路徑互覆寫）
+            var szParsedSid = props.TryGetValue("sid", out var sidPropEarly) ? sidPropEarly.GetString() ?? "" : "";
+            if (szParsedSid.StartsWith("DB", StringComparison.Ordinal))
+            {
+                return;
+            }
+
             // 除錯：記錄原始 JSON 資料
             _logger.LogInformation("收到MQTT原始資料: {Topic} -> {Payload}", szTopic, szPayload);
 
@@ -394,12 +401,70 @@ public class MqttRealtimeSubscriberService : BackgroundService, IDisposable
                 _realtimeDataCache.TryAdd(cp.szSID, item);
             }
 
-            _logger.LogInformation("預填點位快取完成，共 {Count} 個點位（含 {CalcCount} 個計算點位），其中 {WithValue} 個有最新數值",
+            _logger.LogInformation("預填 Modbus + 計算點位快取完成，共 {Count} 個點位（含 {CalcCount} 個計算點位），其中 {WithValue} 個有最新數值",
                 pointList.Count + calcList.Count, calcList.Count, nWithValue + nCalcWithValue);
+
+            // DB 來源走獨立資料路徑：直接從 DBLatestData 表讀取（不依賴 LatestData / MQTT）
+            await RefreshDbSourcesAsync();
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "預填點位快取時發生錯誤，將等待 MQTT 資料自動建立快取");
+        }
+    }
+
+    /// <summary>
+    /// 重新從 DBLatestData 表讀取所有 DB 來源點位，更新到快取。
+    /// 品質規則：SQL 查詢無 exception → GOOD；有 exception → BAD。
+    /// </summary>
+    public async Task RefreshDbSourcesAsync()
+    {
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var repository = scope.ServiceProvider.GetRequiredService<IDataRepository>();
+
+            var dbPoints = (await repository.GetAllDbPointsAsync()).ToList();
+            if (dbPoints.Count == 0) return;
+
+            // 嘗試讀 DBLatestData；只要 SQL 不丟 exception 就視為 GOOD
+            bool isSqlOk;
+            Dictionary<string, ScadaEngine.Common.Data.Models.LatestDataModel> dbLatestMap;
+            try
+            {
+                var rows = await repository.GetDbLatestDataByPrefixAsync("DB");
+                dbLatestMap = rows.ToDictionary(x => x.szSID, x => x);
+                isSqlOk = true;
+            }
+            catch (Exception sqlEx)
+            {
+                _logger.LogWarning(sqlEx, "讀取 DBLatestData 失敗，將所有 DB 來源點位標記為 BAD");
+                dbLatestMap = new Dictionary<string, ScadaEngine.Common.Data.Models.LatestDataModel>();
+                isSqlOk = false;
+            }
+
+            foreach (var dp in dbPoints)
+            {
+                var hasRow = dbLatestMap.TryGetValue(dp.szSID, out var row);
+                var item = new RealtimeDataItemModel
+                {
+                    szSubTopic = dp.szSID,
+                    szSID = dp.szSID,
+                    szName = dp.szName,
+                    szUnit = dp.szUnit ?? string.Empty,
+                    szQuality = isSqlOk ? "GOOD" : "BAD",
+                    dValue = hasRow ? row!.fValue : 0,
+                    dtTimestamp = hasRow ? row!.dtTimestamp : DateTime.MinValue,
+                    hasData = isSqlOk,
+                    // DB 來源以 SQL 讀取成功代表通訊正常，不依時間戳判斷新舊
+                    isFreshBypass = isSqlOk
+                };
+                _realtimeDataCache[dp.szSID] = item;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "刷新 DB 來源點位時發生未預期錯誤");
         }
     }
 

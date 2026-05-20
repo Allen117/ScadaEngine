@@ -10,6 +10,7 @@
 .badge-severity-1 { background-color: #fd7e14; }
 .badge-severity-2 { background-color: #ffc107; color: #333; }
 .badge-severity-3 { background-color: #6c757d; }
+.badge-severity-4 { background-color: #adb5bd; color: #333; }
 
 .alarm-tag {
     display: inline-block;
@@ -22,3 +23,60 @@
 .alarm-tag-low  { background-color: #fff3cd; color: #664d03; }
 .alarm-tag-di   { background-color: #d1e7dd; color: #0f5132; }
 .alarm-tag-off  { background-color: #e9ecef; color: #6c757d; }
+
+/* ── Tabs ── */
+.alarm-tabs .nav-link {
+    color: #495057;
+    font-weight: 500;
+    padding: 0.55rem 1.2rem;
+    border-radius: 8px 8px 0 0;
+    transition: background-color 0.15s, color 0.15s;
+}
+.alarm-tabs .nav-link:hover {
+    background-color: #e9ecef;
+}
+.alarm-tabs .nav-link.active {
+    color: #0d6efd;
+    font-weight: 600;
+    background-color: #fff;
+    border-color: #dee2e6 #dee2e6 #fff;
+}
+
+/* ── Line 群組表格 ── */
+#lineTargetsTable th {
+    font-size: .85rem;
+    white-space: nowrap;
+}
+#lineTargetsTable td {
+    vertical-align: middle;
+    font-size: .85rem;
+}
+#lineTargetsTable .group-id-cell {
+    font-family: monospace;
+    font-size: .8rem;
+    color: #6c757d;
+    word-break: break-all;
+}
+.line-severity-pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: .78rem;
+    font-weight: 500;
+    background-color: #cfe2ff;
+    color: #084298;
+}
+.btn-line-test {
+    background-color: #00c300;
+    color: #fff;
+    border-color: #00c300;
+}
+.btn-line-test:hover:not(:disabled) {
+    background-color: #00a300;
+    color: #fff;
+    border-color: #00a300;
+}
+.btn-line-test:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}

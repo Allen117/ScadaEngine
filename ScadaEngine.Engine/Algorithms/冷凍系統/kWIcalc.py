@@ -1,20 +1,22 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 # @algorithm: kW計算
 # @inputs: V,A,PF
 # @outputs: out
-# @description: 計算冷凍效率 COP = 冷凍能力 / 功率
+# @description: 三相功率計算 kW = V * A * PF * 1.732 / 1000
 
-def evaluate(inputs: dict) -> dict:
+from _status import AlgoStatus, make_status, make_result
+
+
+def evaluate_one(V, A, PF):
     """
-    kW = V*A*PF*1.732/1000
-    inputs:
-        V: V (V)
-        A: A (A)
-	PF:PF
-    outputs:
-        out: kW 值
+    三相 kW = V * A * PF * 1.732 / 1000
+
+    Status（業務語意，由演算法主動回傳）:
+        INPUT_OUT_OF_RANGE (Warning) — PF 不在 [0, 1] 範圍（仍可算，給警告）
+
+    框架處理：缺輸入 / 型別錯 → INPUT_MISSING；其他例外 → INTERNAL_ERROR。
     """
-    V = inputs.get("V", 0)
-    A = inputs.get("A", 0)
-    PF = inputs.get("PF", 0)
-    return {"out": V*A*PF*1.732/1000}
+    out = V * A * PF * 1.732 / 1000
+    if PF < 0 or PF > 1:
+        return make_result({"out": out}, make_status(AlgoStatus.INPUT_OUT_OF_RANGE))
+    return {"out": out}

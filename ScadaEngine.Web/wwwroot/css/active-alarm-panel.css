@@ -1,0 +1,228 @@
+.active-alarm-panel {
+    margin-top: 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.active-alarm-panel .alarm-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: #212529;
+    color: #fff;
+    user-select: none;
+}
+
+.active-alarm-panel .alarm-panel-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 4px;
+    border-radius: 4px;
+}
+
+.active-alarm-panel .alarm-panel-title:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.active-alarm-panel .alarm-panel-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.active-alarm-panel .alarm-filter-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #adb5bd;
+    font-size: 0.80rem;
+    margin: 0;
+}
+
+.active-alarm-panel .alarm-filter-select {
+    background: #343a40;
+    color: #fff;
+    border: 1px solid #495057;
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 0.80rem;
+    cursor: pointer;
+}
+
+.active-alarm-panel .alarm-filter-select:focus {
+    outline: none;
+    border-color: #0d6efd;
+}
+
+.active-alarm-panel .alarm-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #dc3545;
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.active-alarm-panel .alarm-count-badge.zero {
+    background: #6c757d;
+}
+
+.active-alarm-panel .alarm-toggle-icon {
+    transition: transform 0.2s ease;
+}
+
+.active-alarm-panel.collapsed .alarm-toggle-icon {
+    transform: rotate(-90deg);
+}
+
+.active-alarm-panel .alarm-panel-body {
+    max-height: 280px;
+    overflow-y: auto;
+    transition: max-height 0.3s ease;
+}
+
+.active-alarm-panel.collapsed .alarm-panel-body {
+    max-height: 0;
+    overflow: hidden;
+}
+
+.active-alarm-panel .alarm-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.active-alarm-panel .alarm-item {
+    display: grid;
+    grid-template-columns: 150px 6px 90px 1fr 90px 90px 110px;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 14px;
+    border-bottom: 1px solid #e9ecef;
+    font-size: 0.85rem;
+}
+
+.active-alarm-panel .alarm-item.is-acked {
+    background: #f8f9fa;
+    color: #6c757d;
+}
+
+.active-alarm-panel .alarm-item:not(.is-acked) {
+    cursor: pointer;
+}
+
+.active-alarm-panel .alarm-item:not(.is-acked):hover {
+    background: #fff8e1;
+}
+
+.active-alarm-panel .alarm-item:last-child {
+    border-bottom: none;
+}
+
+.active-alarm-panel .alarm-item:hover {
+    background: #f8f9fa;
+}
+
+.active-alarm-panel .alarm-severity-bar {
+    width: 6px;
+    height: 28px;
+    border-radius: 3px;
+}
+
+.active-alarm-panel .alarm-severity-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 8px;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.active-alarm-panel .alarm-message {
+    color: #212529;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.active-alarm-panel .alarm-occurred-at {
+    color: #6c757d;
+    font-size: 0.80rem;
+    font-family: monospace;
+}
+
+.active-alarm-panel .alarm-elapsed {
+    color: #6c757d;
+    font-size: 0.80rem;
+    text-align: right;
+}
+
+.active-alarm-panel .alarm-ack-status {
+    text-align: center;
+}
+
+.active-alarm-panel .alarm-ack-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.active-alarm-panel .alarm-ack-badge.ack {
+    background: #d1e7dd;
+    color: #0f5132;
+    border: 1px solid #badbcc;
+}
+
+.active-alarm-panel .alarm-ack-badge.unack {
+    background: #f8d7da;
+    color: #842029;
+    border: 1px solid #f5c2c7;
+}
+
+.active-alarm-panel .alarm-ack-by {
+    color: #495057;
+    font-size: 0.80rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.active-alarm-panel .alarm-ack-by-empty {
+    color: #adb5bd;
+}
+
+.active-alarm-panel .alarm-empty {
+    padding: 18px;
+    text-align: center;
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+
+.active-alarm-panel .alarm-empty i {
+    margin-right: 6px;
+}
+
+.active-alarm-panel .alarm-conn-warn {
+    padding: 6px 14px;
+    font-size: 0.75rem;
+    color: #856404;
+    background: #fff3cd;
+    border-bottom: 1px solid #ffeeba;
+}

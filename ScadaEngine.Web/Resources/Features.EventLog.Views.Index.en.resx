@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="eventlog.title" xml:space="preserve"><value>Event Log Query</value></data>
+
+  <data name="eventlog.filter.start_time" xml:space="preserve"><value>Start Time</value></data>
+  <data name="eventlog.filter.end_time" xml:space="preserve"><value>End Time</value></data>
+  <data name="eventlog.filter.event_type" xml:space="preserve"><value>Event Type</value></data>
+  <data name="eventlog.filter.severity" xml:space="preserve"><value>Severity</value></data>
+  <data name="eventlog.filter.point" xml:space="preserve"><value>Point Filter</value></data>
+  <data name="eventlog.filter.acknowledged" xml:space="preserve"><value>Ack Status</value></data>
+  <data name="eventlog.filter.all" xml:space="preserve"><value>All</value></data>
+  <data name="eventlog.filter.unselected" xml:space="preserve"><value>None</value></data>
+  <data name="eventlog.filter.quick" xml:space="preserve"><value>Quick:</value></data>
+  <data name="eventlog.filter.button.query" xml:space="preserve"><value>Query</value></data>
+
+  <data name="eventlog.event.alarm" xml:space="preserve"><value>Alarm</value></data>
+  <data name="eventlog.event.fault" xml:space="preserve"><value>Fault</value></data>
+  <data name="eventlog.event.warning" xml:space="preserve"><value>Warning</value></data>
+  <data name="eventlog.event.info" xml:space="preserve"><value>Info</value></data>
+  <data name="eventlog.event.system" xml:space="preserve"><value>System</value></data>
+  <data name="eventlog.event.unknown" xml:space="preserve"><value>Unknown</value></data>
+
+  <data name="eventlog.severity.urgent" xml:space="preserve"><value>Critical</value></data>
+  <data name="eventlog.severity.high" xml:space="preserve"><value>High</value></data>
+  <data name="eventlog.severity.medium" xml:space="preserve"><value>Medium</value></data>
+  <data name="eventlog.severity.low" xml:space="preserve"><value>Low</value></data>
+  <data name="eventlog.severity.none" xml:space="preserve"><value>None</value></data>
+
+  <data name="eventlog.ack.unack" xml:space="preserve"><value>Unack'd</value></data>
+  <data name="eventlog.ack.acked" xml:space="preserve"><value>Acknowledged</value></data>
+
+  <data name="eventlog.stat.total" xml:space="preserve"><value>Total</value></data>
+  <data name="eventlog.stat.alarm" xml:space="preserve"><value>Alarms</value></data>
+  <data name="eventlog.stat.warning" xml:space="preserve"><value>Warnings</value></data>
+  <data name="eventlog.stat.cleared" xml:space="preserve"><value>Cleared</value></data>
+  <data name="eventlog.stat.unack" xml:space="preserve"><value>Unack'd</value></data>
+
+  <data name="eventlog.col.no" xml:space="preserve"><value>#</value></data>
+  <data name="eventlog.col.occurred_at" xml:space="preserve"><value>Occurred At</value></data>
+  <data name="eventlog.col.event_type" xml:space="preserve"><value>Event Type</value></data>
+  <data name="eventlog.col.severity" xml:space="preserve"><value>Severity</value></data>
+  <data name="eventlog.col.message" xml:space="preserve"><value>Message</value></data>
+  <data name="eventlog.col.cleared_at" xml:space="preserve"><value>Cleared At</value></data>
+  <data name="eventlog.col.ack_status" xml:space="preserve"><value>Ack Status</value></data>
+  <data name="eventlog.col.ack_by" xml:space="preserve"><value>Acked By</value></data>
+
+  <data name="eventlog.tooltip.trigger_value" xml:space="preserve"><value>Trigger Value</value></data>
+  <data name="eventlog.tooltip.threshold" xml:space="preserve"><value>Threshold</value></data>
+  <data name="eventlog.tooltip.condition" xml:space="preserve"><value>Condition</value></data>
+
+  <data name="eventlog.result.empty_default" xml:space="preserve"><value>Set query conditions and click "Query"</value></data>
+  <data name="eventlog.result.empty_query" xml:space="preserve"><value>No events in the query range</value></data>
+  <data name="eventlog.result.placeholder" xml:space="preserve"><value>Set conditions and click query</value></data>
+  <data name="eventlog.result.found" xml:space="preserve"><value>{0} record(s) found</value></data>
+  <data name="eventlog.result.button.export" xml:space="preserve"><value>Export CSV</value></data>
+  <data name="eventlog.result.cell.active" xml:space="preserve"><value>Active</value></data>
+  <data name="eventlog.result.loading" xml:space="preserve"><value>Loading...</value></data>
+
+  <data name="eventlog.alert.select_time" xml:space="preserve"><value>Please select start and end time</value></data>
+  <data name="eventlog.alert.query_failed" xml:space="preserve"><value>Query failed: {0}</value></data>
+  <data name="eventlog.alert.unknown_error" xml:space="preserve"><value>Unknown error</value></data>
+  <data name="eventlog.alert.query_error" xml:space="preserve"><value>Query error: {0}</value></data>
+
+  <data name="eventlog.csv.filename" xml:space="preserve"><value>EventLog</value></data>
+
+  <data name="eventlog.picker.title.select_device" xml:space="preserve"><value>Select Device</value></data>
+  <data name="eventlog.picker.title.select_point" xml:space="preserve"><value>Select Point</value></data>
+  <data name="eventlog.picker.button.cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="eventlog.picker.button.confirm" xml:space="preserve"><value>Confirm</value></data>
+  <data name="eventlog.picker.button.back" xml:space="preserve"><value>Back</value></data>
+  <data name="eventlog.picker.search_placeholder" xml:space="preserve"><value>Search point name...</value></data>
+  <data name="eventlog.picker.no_devices" xml:space="preserve"><value>No devices</value></data>
+  <data name="eventlog.picker.no_points" xml:space="preserve"><value>No matching points</value></data>
+  <data name="eventlog.picker.calc_point" xml:space="preserve"><value>Calculated Points</value></data>
+  <data name="eventlog.picker.point_count" xml:space="preserve"><value>{0} pts</value></data>
+  <data name="eventlog.picker.load_failed" xml:space="preserve"><value>Failed to load device/point list: {0}</value></data>
+</root>

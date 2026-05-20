@@ -23,6 +23,7 @@ public class LogicFlowExecutionService : BackgroundService
     private readonly RealtimeDataStorageService _realtimeDataService;
     private readonly MqttPublishService _mqttPublishService;
     private readonly CSharpAlgorithmService _csharpAlgoService;
+    private readonly AlarmEventLogRepository _alarmEventLogRepo;
 
     // 快取
     private readonly ConcurrentDictionary<int, DiagramContext> _diagrams = new();
@@ -53,10 +54,13 @@ public class LogicFlowExecutionService : BackgroundService
         BaseAddress = new Uri("http://127.0.0.1:8100"),
         Timeout = TimeSpan.FromSeconds(3)
     };
-    // 演算法結果快取：key = "{nodeId}-{inputHash}", value = result
-    private readonly ConcurrentDictionary<string, double> _algoResultCache = new();
+    // 演算法結果快取：key = "{treeId}-{nodeId}-{inputHash}" 為輸入快取，"{treeId}-{nodeId}" 為節點最新值快取
+    // value 為 (輸出 dict, status)；status 在 cache hit 時一併還原，否則狀態會在 hit 時遺失
+    private readonly ConcurrentDictionary<string, AlgoCachedOutput> _algoResultCache = new();
     // 演算法首次呼叫時間戳（grace period 用，避免啟動瞬間輸出 null）
     private readonly ConcurrentDictionary<string, DateTime> _algoPendingSince = new();
+    // 演算法 status 上一輪值（用於 OK ↔ 非 OK 轉換偵測，寫 EventLog）
+    private readonly ConcurrentDictionary<string, AlgoStatusSnapshot> _algoLastStatus = new();
     private static readonly TimeSpan ALGO_GRACE_PERIOD = TimeSpan.FromSeconds(5);
 
     private static readonly TimeSpan DIAGRAM_RELOAD_INTERVAL = TimeSpan.FromSeconds(15);
@@ -74,7 +78,8 @@ public class LogicFlowExecutionService : BackgroundService
         LogicFlowRepository logicFlowRepository,
         RealtimeDataStorageService realtimeDataService,
         MqttPublishService mqttPublishService,
-        CSharpAlgorithmService csharpAlgoService)
+        CSharpAlgorithmService csharpAlgoService,
+        AlarmEventLogRepository alarmEventLogRepo)
     {
         _logger = logger;
         _serviceProvider = serviceProvider;
@@ -83,6 +88,7 @@ public class LogicFlowExecutionService : BackgroundService
         _realtimeDataService = realtimeDataService;
         _mqttPublishService = mqttPublishService;
         _csharpAlgoService = csharpAlgoService;
+        _alarmEventLogRepo = alarmEventLogRepo;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -296,13 +302,20 @@ public class LogicFlowExecutionService : BackgroundService
     /// <summary>多輪迭代求值所有節點</summary>
     private void EvaluateNodes(DiagramContext ctx)
     {
-        var evalTypes = new HashSet<string> { "math", "compare", "and", "or", "not", "xor", "timer", "contact_no", "contact_nc", "algorithm" };
+        var evalTypes = new HashSet<string> { "math", "compare", "and", "or", "not", "xor", "timer", "contact_no", "contact_nc", "algorithm", "counter" };
         var evalNodes = ctx.Nodes.Where(n => evalTypes.Contains(n.Type)).ToList();
 
         // 清除上一輪結果（保留 TP 狀態機屬性）
         foreach (var nd in evalNodes)
         {
-            nd.Result = null;
+            // counter 的 Result（q）跨 tick 保留，支援 q→reset 自回授；CounterValue 等運行時狀態本來就跨 tick 持續
+            if (nd.Type != "counter") nd.Result = null;
+            nd.AlgoResultDict = null;
+            // 演算法 status 跨 tick 重置為 OK，避免上一輪 Error 殘留誤判 HasUpstreamBad
+            nd.AlgoStatusCodeId = 0;
+            nd.AlgoStatusCodeName = "OK";
+            nd.AlgoStatusSeverity = "Info";
+            nd.AlgoPerOutputStatus = null;
             nd.IsDone = false;
         }
 
@@ -516,8 +529,129 @@ public class LogicFlowExecutionService : BackgroundService
             case "contact_no":
             case "contact_nc": return EvalContact(ctx, nd);
             case "algorithm": return EvalAlgorithm(ctx, nd);
+            case "counter": return EvalCounter(ctx, nd);
             default: return false;
         }
+    }
+
+    /// <summary>
+    /// CTU 計數器：cu 上升緣 +1，達 preset 後 cv 飽和；reset 高電位歸零，優先於 cu。
+    /// reset 支援 q→reset 自回授（不等待自身上一輪完成，直接讀 nd.Result 即上一 tick 的 q）。
+    /// 累加值不持久化，Engine 重啟歸零。
+    /// </summary>
+    private bool EvalCounter(DiagramContext ctx, FlowNode nd)
+    {
+        // ── 1. preset：優先輸入腳，其次節點設定 ──
+        int nPreset = nd.PresetValue;
+        var presetEdge = ctx.Edges.Find(e => e.Target == nd.Id && e.TargetPort == "preset");
+        if (presetEdge != null)
+        {
+            var pv = GetNodeOutputValue(ctx, presetEdge.Source, presetEdge.SourcePort);
+            if (pv.HasValue) nPreset = Math.Max(1, (int)pv.Value);
+            else if (!IsSourceEvalDone(ctx, presetEdge.Source)) return false;
+        }
+        if (nPreset < 1) nPreset = 1;
+
+        // ── 2. cu：邊緣偵測；上游 Bad 時保留 prevCu ──
+        var cuEdge = ctx.Edges.Find(e => e.Target == nd.Id && e.TargetPort == "cu");
+        double? dCuVal = null;
+        bool isCuBad = false;
+        if (cuEdge != null)
+        {
+            if (HasUpstreamBadFromSource(ctx, cuEdge.Source, cuEdge.SourcePort))
+            {
+                isCuBad = true;
+            }
+            else
+            {
+                var v = GetNodeOutputValue(ctx, cuEdge.Source, cuEdge.SourcePort);
+                if (v.HasValue) dCuVal = v.Value;
+                else if (!IsSourceEvalDone(ctx, cuEdge.Source)) return false;
+            }
+        }
+
+        // ── 3. reset：自回授特例（直接讀 nd.Result 上一 tick 的 q），其餘走標準等待 ──
+        var resetEdge = ctx.Edges.Find(e => e.Target == nd.Id && e.TargetPort == "reset");
+        double? dResetVal = null;
+        if (resetEdge != null)
+        {
+            if (resetEdge.Source == nd.Id)
+            {
+                // q→reset 自回授：用 nd.Result（上一 tick 的 q，因 counter 不清 Result）
+                dResetVal = nd.Result;
+            }
+            else if (!HasUpstreamBadFromSource(ctx, resetEdge.Source, resetEdge.SourcePort))
+            {
+                var v = GetNodeOutputValue(ctx, resetEdge.Source, resetEdge.SourcePort);
+                if (v.HasValue) dResetVal = v.Value;
+                else if (!IsSourceEvalDone(ctx, resetEdge.Source)) return false;
+            }
+            // upstream Bad → dResetVal stays null = 忽略 reset
+        }
+
+        // ── 4. reset 優先 ──
+        bool isReset = dResetVal.HasValue && dResetVal.Value != 0;
+        if (isReset)
+        {
+            nd.CounterValue = 0;
+            // 同步更新 prevCu，避免 reset 期間若 cu 仍為高，後續被誤判為新邊緣
+            if (dCuVal.HasValue) nd.CounterPrevCu = dCuVal;
+        }
+        else if (dCuVal.HasValue && !isCuBad)
+        {
+            // ── 5. cu 上升緣偵測（首次載入只記錄、不偵測，避免 Engine 啟動瞬間誤計數）──
+            if (nd.CounterPrevCu == null)
+            {
+                nd.CounterPrevCu = dCuVal;
+            }
+            else
+            {
+                bool isEdge = nd.CounterPrevCu.Value == 0 && dCuVal.Value != 0;
+                if (isEdge)
+                {
+                    var dtNow = DateTime.Now;
+                    int nMinMs = Math.Max(0, nd.CuMinIntervalMs);
+                    bool isFirstEdge = nd.CounterLastEdgeAt == DateTime.MinValue;
+                    if (isFirstEdge || (dtNow - nd.CounterLastEdgeAt).TotalMilliseconds >= nMinMs)
+                    {
+                        if (nd.CounterValue < nPreset) nd.CounterValue++;
+                        nd.CounterLastEdgeAt = dtNow;
+                    }
+                }
+                nd.CounterPrevCu = dCuVal;
+            }
+        }
+        else if (!dCuVal.HasValue && !isCuBad && cuEdge != null)
+        {
+            // 上游已完成但輸出 null → 視為 0；下次有值會被當成新邊緣
+            nd.CounterPrevCu = 0;
+        }
+        // isCuBad：保留 CounterPrevCu，等下次資料恢復
+
+        // ── 6. 輸出 ──
+        nd.Result = nd.CounterValue >= nPreset ? 1.0 : 0.0;
+        nd.IsDone = true;
+        return true;
+    }
+
+    /// <summary>從某來源節點 + 來源 port 往上遞迴檢查是否有 Bad input（給 counter 等需 per-port 判斷的節點用）。
+    /// algorithm 節點走 per-port severity 判斷：只有該 sourcePort 的 status = Error 才視為 Bad。</summary>
+    private bool HasUpstreamBadFromSource(DiagramContext ctx, int nSourceId, string szSourcePort = "out")
+    {
+        var srcNode = ctx.Nodes.Find(n => n.Id == nSourceId);
+        if (srcNode == null) return false;
+        if (srcNode.Type == "input" && !string.IsNullOrEmpty(srcNode.Sid))
+        {
+            if (!_latestCache.TryGetValue(srcNode.Sid, out var lv) || lv.nQuality != 1)
+                return true;
+        }
+        if (srcNode.Type == "algorithm" && IsAlgoPortBad(srcNode, szSourcePort))
+            return true;
+        if (srcNode.Type is "math" or "compare" or "and" or "or" or "not" or "xor" or "timer" or "contact_no" or "contact_nc" or "algorithm" or "counter")
+        {
+            return HasUpstreamBad(ctx, srcNode.Id);
+        }
+        return false;
     }
 
     private bool EvalMath(DiagramContext ctx, FlowNode nd)
@@ -610,6 +744,7 @@ public class LogicFlowExecutionService : BackgroundService
     private bool EvalTimer(DiagramContext ctx, FlowNode nd)
     {
         if (nd.Operator == "ton") return EvalTimerTon(ctx, nd);
+        if (nd.Operator == "tpr") return EvalTimerTpr(ctx, nd);
 
         // TP 脈衝：質變觸發 — 輸入值改變 → delay → hold(輸出) → 閒置等待下次質變
         var inEdge = ctx.Edges.Find(e => e.Target == nd.Id && e.TargetPort == "in");
@@ -625,7 +760,7 @@ public class LogicFlowExecutionService : BackgroundService
                 nd.IsDone = true;
                 return true;
             }
-            var v = GetNodeOutputValue(ctx, inEdge.Source);
+            var v = GetNodeOutputValue(ctx, inEdge.Source, inEdge.SourcePort);
             if (v.HasValue)
             {
                 dCurrentInput = v.Value;
@@ -720,7 +855,7 @@ public class LogicFlowExecutionService : BackgroundService
                 nd.Result = null;
                 return true;
             }
-            var v = GetNodeOutputValue(ctx, inEdge.Source);
+            var v = GetNodeOutputValue(ctx, inEdge.Source, inEdge.SourcePort);
             if (!v.HasValue) return false;
             dInputVal = v.Value;
         }
@@ -759,13 +894,181 @@ public class LogicFlowExecutionService : BackgroundService
         return true;
     }
 
+    /// <summary>TPR 延遲導通 + 回饋重送：
+    /// delay 倒數中輸出 null（值變會 debounce 重置）；
+    /// 倒數結束輸出 passValue 並進入 confirmed（同時開始 settling 倒數，期間不檢查回饋）；
+    /// confirmed 內若輸入值變 (passValue ≠ TprLastSentValue) 或下游回饋偏離 → 回 delay。
+    /// TpPhaseEnd 雙語意：delay 階段=倒數結束時間；confirmed 階段=settling 結束時間。</summary>
+    private bool EvalTimerTpr(DiagramContext ctx, FlowNode nd)
+    {
+        // ── 1. 取得輸入值 ──
+        var inEdge = ctx.Edges.Find(e => e.Target == nd.Id && e.TargetPort == "in");
+        double dPassValue = nd.TpLastPassValue;
+        double? dCurrentInput = null;
+
+        if (inEdge != null)
+        {
+            if (HasUpstreamBad(ctx, nd.Id))
+            {
+                ResetTpState(nd);
+                nd.IsDone = true;
+                return true;
+            }
+            var v = GetNodeOutputValue(ctx, inEdge.Source, inEdge.SourcePort);
+            if (v.HasValue)
+            {
+                dCurrentInput = v.Value;
+                dPassValue = v.Value;
+                nd.TpLastPassValue = dPassValue;
+            }
+            else if (!IsSourceEvalDone(ctx, inEdge.Source))
+            {
+                return false;
+            }
+        }
+        else
+        {
+            dCurrentInput = 1;
+        }
+
+        // 輸入 null → 中止循環
+        if (!dCurrentInput.HasValue)
+        {
+            ResetTpState(nd);
+            nd.IsDone = true;
+            return true;
+        }
+
+        // ── 2. 回饋偵測：找下游 output 節點的即時值 ──
+        if (nd.TprFeedbackSid == null)
+            nd.TprFeedbackSid = FindDownstreamOutputSid(ctx, nd.Id);
+
+        double? dFeedback = null;
+        if (nd.TprFeedbackSid != null && _latestCache.TryGetValue(nd.TprFeedbackSid, out var lv))
+            dFeedback = lv.dValue;
+
+        double dEffDelay = GetInputValue(ctx, nd.Id, "delay") ?? nd.TimerDelay;
+        int nDelayMs = Math.Max((int)(dEffDelay * 1000), 500);
+        var now = DateTime.Now;
+
+        // ── 3. 狀態機 ──
+
+        // 初始：進入 delay 倒數，輸出 null
+        if (nd.TpPhase == null)
+        {
+            nd.TpPhase = "delay";
+            nd.TpPhaseEnd = now.AddMilliseconds(nDelayMs);
+            nd.TprPrevInput = dCurrentInput;
+            ScheduleTpTimer(ctx, nd, nDelayMs);
+            nd.Result = null;
+            nd.IsDone = true;
+            return true;
+        }
+
+        // confirmed：已輸出 passValue，視 settling 與回饋狀況決定是否回 delay
+        if (nd.TpPhase == "confirmed")
+        {
+            // (a) 輸入值變化 → 回 delay 重啟倒數
+            if (nd.TprLastSentValue.HasValue
+                && Math.Abs(dPassValue - nd.TprLastSentValue.Value) >= 0.001)
+            {
+                nd.TpPhase = "delay";
+                nd.TpPhaseEnd = now.AddMilliseconds(nDelayMs);
+                nd.TprPrevInput = dCurrentInput;
+                ScheduleTpTimer(ctx, nd, nDelayMs);
+                nd.Result = null;
+                nd.IsDone = true;
+                return true;
+            }
+
+            // (b) settling 中（now < TpPhaseEnd）→ 不檢查回饋，持續輸出 passValue
+            if (now < nd.TpPhaseEnd)
+            {
+                nd.Result = dPassValue;
+                nd.IsDone = true;
+                return true;
+            }
+
+            // (c) settling 已過 → 檢查回饋
+            bool isFeedbackMatch = dFeedback.HasValue && Math.Abs(dFeedback.Value - dPassValue) < 0.001;
+            if (isFeedbackMatch)
+            {
+                nd.Result = dPassValue;
+                nd.IsDone = true;
+                return true;
+            }
+            // 回饋偏離 → 回 delay 重新計時 + 重送
+            nd.TpPhase = "delay";
+            nd.TpPhaseEnd = now.AddMilliseconds(nDelayMs);
+            nd.TprPrevInput = dCurrentInput;
+            ScheduleTpTimer(ctx, nd, nDelayMs);
+            nd.Result = null;
+            nd.IsDone = true;
+            return true;
+        }
+
+        // delay：倒數中
+        // (a) 值變偵測 → debounce 重置倒數
+        if (nd.TprPrevInput.HasValue
+            && Math.Abs(dCurrentInput.Value - nd.TprPrevInput.Value) >= 0.001)
+        {
+            nd.TpPhaseEnd = now.AddMilliseconds(nDelayMs);
+            nd.TprPrevInput = dCurrentInput;
+            ScheduleTpTimer(ctx, nd, nDelayMs);
+            nd.Result = null;
+            nd.IsDone = true;
+            return true;
+        }
+
+        // (b) 倒數結束 → 進入 confirmed、輸出 passValue、啟動 settling
+        if (now >= nd.TpPhaseEnd)
+        {
+            nd.TpPhase = "confirmed";
+            nd.TprLastSentValue = dPassValue;
+            nd.TpPhaseEnd = now.AddMilliseconds(nDelayMs);  // settling 結束時間
+            ScheduleTpTimer(ctx, nd, nDelayMs);
+            nd.Result = dPassValue;
+            nd.IsDone = true;
+            return true;
+        }
+
+        // (c) 倒數中且輸入未變 → 輸出 null
+        nd.Result = null;
+        nd.IsDone = true;
+        return true;
+    }
+
+    /// <summary>從指定節點往下游遍歷，找到第一個 output 節點的 SID</summary>
+    private string? FindDownstreamOutputSid(DiagramContext ctx, int nStartNodeId)
+    {
+        var visited = new HashSet<int> { nStartNodeId };
+        var queue = new Queue<int>();
+        // 找從此節點出發的邊
+        foreach (var e in ctx.Edges.Where(e => e.Source == nStartNodeId))
+            queue.Enqueue(e.Target);
+
+        while (queue.Count > 0)
+        {
+            var nodeId = queue.Dequeue();
+            if (!visited.Add(nodeId)) continue;
+            var target = ctx.Nodes.Find(n => n.Id == nodeId);
+            if (target == null) continue;
+            if (target.Type == "output" && !string.IsNullOrEmpty(target.Sid))
+                return target.Sid;
+            // 繼續往下游
+            foreach (var e in ctx.Edges.Where(e => e.Source == nodeId))
+                queue.Enqueue(e.Target);
+        }
+        return null;
+    }
+
     private bool EvalContact(DiagramContext ctx, FlowNode nd)
     {
         // ── ctrl 埠模式（邏輯閘控制導通）──
         var ctrlEdge = ctx.Edges.Find(e => e.Target == nd.Id && e.TargetPort == "ctrl");
         if (ctrlEdge != null)
         {
-            var ctrlVal = GetNodeOutputValue(ctx, ctrlEdge.Source);
+            var ctrlVal = GetNodeOutputValue(ctx, ctrlEdge.Source, ctrlEdge.SourcePort);
             if (!ctrlVal.HasValue)
             {
                 if (!IsSourceEvalDone(ctx, ctrlEdge.Source))
@@ -866,7 +1169,7 @@ public class LogicFlowExecutionService : BackgroundService
         if (HasUpstreamBad(ctx, nd.Id)) return false;
         if (string.IsNullOrEmpty(nd.Operator)) return false;
 
-        // 收集所有輸入 port 的值
+        // 收集所有輸入 port 的值（algoInputs 已是展開後的清單，含 variadic 展開的 cooling_capacity1, power1, ...）
         var algoInputs = nd.AlgoInputs ?? new List<string> { "in" };
         var inputDict = new Dictionary<string, double>();
         foreach (var portName in algoInputs)
@@ -876,34 +1179,29 @@ public class LogicFlowExecutionService : BackgroundService
             inputDict[portName] = v.Value;
         }
 
-        // ★ 優先嘗試 C# 演算法（同步 in-process，零延遲）
-        if (_csharpAlgoService.TryEvaluate(nd.Operator, inputDict, out var csResult))
+        // ★ 優先嘗試 C# 演算法（同步 in-process，零延遲；第一版 .cs 不支援 variadic，所以不會帶 n）
+        if (_csharpAlgoService.TryEvaluate(nd.Operator, inputDict, out var csResult, out var csStatus, out var csPerOutput) && csResult.Count > 0)
         {
-            if (csResult.TryGetValue("out", out var dOut))
-            {
-                nd.Result = dOut;
-                nd.IsDone = true;
-                return true;
-            }
-            if (csResult.Count > 0)
-            {
-                nd.Result = csResult.Values.First();
-                nd.IsDone = true;
-                return true;
-            }
+            var perOutputTuples = ConvertCsPerOutput(csPerOutput);
+            ApplyAlgoResult(nd, csResult, csStatus.CodeId, csStatus.CodeName, csStatus.Severity, perOutputTuples);
+            HandleAlgoStatusTransition(ctx, nd, csStatus.CodeId, csStatus.CodeName, csStatus.Severity, perOutputTuples);
+            nd.IsDone = true;
+            return true;
         }
 
-        // ★ 退回 Python HTTP（原有邏輯）
+        // ★ 退回 Python HTTP
         // 快取 key：以輸入值的 hash 判斷是否需要重新呼叫
         var szInputHash = string.Join("|", inputDict.OrderBy(kv => kv.Key).Select(kv => $"{kv.Key}={kv.Value:G}"));
-        var szCacheKey = $"{ctx.TreeId}-{nd.Id}-{szInputHash}";
+        var szCacheKey = $"{ctx.TreeId}-{nd.Id}-N{nd.InputCount?.ToString() ?? "_"}-{szInputHash}";
+        var szNodeKey = $"{ctx.TreeId}-{nd.Id}";
 
-        if (_algoResultCache.TryGetValue($"{ctx.TreeId}-{nd.Id}", out _))
+        if (_algoResultCache.TryGetValue(szNodeKey, out _))
         {
             // 檢查輸入是否變化
-            if (_algoResultCache.TryGetValue(szCacheKey, out var cachedResult))
+            if (_algoResultCache.TryGetValue(szCacheKey, out var cachedOut))
             {
-                nd.Result = cachedResult;
+                ApplyAlgoResult(nd, cachedOut.Result, cachedOut.StatusCodeId, cachedOut.StatusCodeName, cachedOut.Severity, cachedOut.PerOutput);
+                HandleAlgoStatusTransition(ctx, nd, cachedOut.StatusCodeId, cachedOut.StatusCodeName, cachedOut.Severity, cachedOut.PerOutput);
                 nd.IsDone = true;
                 return true;
             }
@@ -911,11 +1209,16 @@ public class LogicFlowExecutionService : BackgroundService
 
         // 非同步呼叫 Python — 使用 fire-and-forget + cache 寫回
         // （EvalOneNode 是同步的，無法 await，因此先回傳上次結果，背景更新）
+        var treeId = ctx.TreeId;
+        var nodeId = nd.Id;
         _ = Task.Run(async () =>
         {
             try
             {
-                var payload = JsonSerializer.Serialize(new { inputs = inputDict });
+                object payloadObj = nd.InputCount.HasValue
+                    ? new { inputs = inputDict, n = nd.InputCount.Value }
+                    : new { inputs = inputDict };
+                var payload = JsonSerializer.Serialize(payloadObj);
                 var content = new StringContent(payload, Encoding.UTF8, "application/json");
                 var response = await _algoHttpClient.PostAsync($"/algorithms/{nd.Operator}/evaluate", content);
 
@@ -923,18 +1226,46 @@ public class LogicFlowExecutionService : BackgroundService
                 {
                     var json = await response.Content.ReadAsStringAsync();
                     using var doc = JsonDocument.Parse(json);
-                    if (doc.RootElement.TryGetProperty("result", out var resultEl) &&
-                        resultEl.TryGetProperty("out", out var outEl))
+                    var root = doc.RootElement;
+                    if (root.TryGetProperty("result", out var resultEl) && resultEl.ValueKind == JsonValueKind.Object)
                     {
-                        var dResult = outEl.GetDouble();
-                        // 清除舊的快取項，寫入新的
-                        foreach (var key in _algoResultCache.Keys.Where(k => k.StartsWith($"{ctx.TreeId}-{nd.Id}-")).ToList())
-                            _algoResultCache.TryRemove(key, out _);
-                        _algoResultCache[szCacheKey] = dResult;
-                        _algoResultCache[$"{ctx.TreeId}-{nd.Id}"] = dResult;  // 最新值快取
-                        _algoPendingSince.TryRemove($"{ctx.TreeId}-{nd.Id}", out _);
+                        var dResult = new Dictionary<string, double>();
+                        foreach (var prop in resultEl.EnumerateObject())
+                        {
+                            if (prop.Value.ValueKind == JsonValueKind.Number)
+                                dResult[prop.Name] = prop.Value.GetDouble();
+                        }
+                        if (dResult.Count > 0)
+                        {
+                            var (sCodeId, sCodeName, sSeverity) = ParsePythonStatus(root);
+                            var perOutput = ParsePythonPerOutput(root, dResult, sCodeId, sCodeName, sSeverity);
+
+                            // 清除舊的快取項，寫入新的
+                            foreach (var key in _algoResultCache.Keys.Where(k => k.StartsWith($"{treeId}-{nodeId}-")).ToList())
+                                _algoResultCache.TryRemove(key, out _);
+                            var cached = new AlgoCachedOutput(dResult, sCodeId, sCodeName, sSeverity, perOutput);
+                            _algoResultCache[szCacheKey] = cached;
+                            _algoResultCache[szNodeKey] = cached;  // 最新值快取
+                            _algoPendingSince.TryRemove(szNodeKey, out _);
+
+                            // 狀態轉換在主迴圈的下一輪由 EvalAlgorithm cache-hit 路徑統一處理
+                            // （此處在 Task.Run 中，避免與主迴圈並發寫 EventLog）
+                        }
                     }
                 }
+            }
+            catch (HttpRequestException ex)
+            {
+                // Engine 連 Python 服務失敗 → 將狀態標為 API_CALL_FAILED
+                _logger.LogDebug(ex, "Python 演算法服務連線失敗 {Algo}", nd.Operator);
+                var failedTuple = (CodeId: 41, CodeName: "API_CALL_FAILED", Severity: "Error");
+                var failed = new AlgoCachedOutput(
+                    new Dictionary<string, double> { ["out"] = 0 },
+                    failedTuple.CodeId, failedTuple.CodeName, failedTuple.Severity,
+                    new Dictionary<string, (int CodeId, string CodeName, string Severity)> { ["out"] = failedTuple });
+                _algoResultCache[szNodeKey] = failed;
+                _algoResultCache[szCacheKey] = failed;
+                _algoPendingSince.TryRemove(szNodeKey, out _);
             }
             catch (Exception ex)
             {
@@ -943,10 +1274,10 @@ public class LogicFlowExecutionService : BackgroundService
         });
 
         // 第一次呼叫尚無快取：嘗試用最新值快取
-        var szNodeKey = $"{ctx.TreeId}-{nd.Id}";
-        if (_algoResultCache.TryGetValue(szNodeKey, out var lastResult))
+        if (_algoResultCache.TryGetValue(szNodeKey, out var lastOut))
         {
-            nd.Result = lastResult;
+            ApplyAlgoResult(nd, lastOut.Result, lastOut.StatusCodeId, lastOut.StatusCodeName, lastOut.Severity, lastOut.PerOutput);
+            HandleAlgoStatusTransition(ctx, nd, lastOut.StatusCodeId, lastOut.StatusCodeName, lastOut.Severity, lastOut.PerOutput);
             nd.IsDone = true;
             return true;
         }
@@ -957,6 +1288,11 @@ public class LogicFlowExecutionService : BackgroundService
         if (dtNow - dtPending < ALGO_GRACE_PERIOD)
         {
             nd.Result = null;
+            nd.AlgoResultDict = null;
+            nd.AlgoStatusCodeId = 0;
+            nd.AlgoStatusCodeName = "OK";
+            nd.AlgoStatusSeverity = "Info";
+            nd.AlgoPerOutputStatus = null;
             nd.IsDone = true;
             return true;
         }
@@ -964,68 +1300,231 @@ public class LogicFlowExecutionService : BackgroundService
         return false;  // 超過 grace period 仍無結果
     }
 
-    /// <summary>評估排程是否在有效時段內</summary>
+    /// <summary>把 CSharpAlgorithmStatus 字典轉成 tuple 字典（供 FlowNode / cache 使用）。</summary>
+    private static Dictionary<string, (int CodeId, string CodeName, string Severity)> ConvertCsPerOutput(
+        Dictionary<string, CSharpAlgorithmStatus> csPerOutput)
+    {
+        var result = new Dictionary<string, (int CodeId, string CodeName, string Severity)>(csPerOutput.Count);
+        foreach (var (k, v) in csPerOutput)
+            result[k] = (v.CodeId, v.CodeName, v.Severity);
+        return result;
+    }
+
+    /// <summary>從 Python /evaluate JSON 解析 perOutput；缺欄位（舊版）→ 所有 result key 套 merged status。</summary>
+    private static Dictionary<string, (int CodeId, string CodeName, string Severity)> ParsePythonPerOutput(
+        JsonElement root, Dictionary<string, double> result, int mergedCodeId, string mergedCodeName, string mergedSeverity)
+    {
+        var perOutput = new Dictionary<string, (int CodeId, string CodeName, string Severity)>();
+        if (root.TryGetProperty("perOutput", out var poEl) && poEl.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var prop in poEl.EnumerateObject())
+            {
+                if (prop.Value.ValueKind != JsonValueKind.Object) continue;
+                int codeId = 0; string codeName = "OK"; string severity = "Info";
+                if (prop.Value.TryGetProperty("statusCodeId", out var idEl) && idEl.ValueKind == JsonValueKind.Number)
+                    codeId = idEl.GetInt32();
+                if (prop.Value.TryGetProperty("statusCodeName", out var nmEl) && nmEl.ValueKind == JsonValueKind.String)
+                    codeName = nmEl.GetString() ?? "OK";
+                if (prop.Value.TryGetProperty("severity", out var sevEl) && sevEl.ValueKind == JsonValueKind.String)
+                    severity = sevEl.GetString() ?? "Info";
+                perOutput[prop.Name] = (codeId, codeName, severity);
+            }
+        }
+        // fallback：缺 perOutput → 所有 result key 套 merged
+        if (perOutput.Count == 0)
+        {
+            foreach (var k in result.Keys)
+                perOutput[k] = (mergedCodeId, mergedCodeName, mergedSeverity);
+        }
+        return perOutput;
+    }
+
+    /// <summary>從 Python /evaluate 回傳 JSON 解析 status 三欄位（兼容舊回應）</summary>
+    private static (int codeId, string codeName, string severity) ParsePythonStatus(JsonElement root)
+    {
+        int codeId = 0;
+        string codeName = "OK";
+        string severity = "Info";
+        if (root.TryGetProperty("statusCodeId", out var idEl) && idEl.ValueKind == JsonValueKind.Number)
+            codeId = idEl.GetInt32();
+        if (root.TryGetProperty("statusCodeName", out var nmEl) && nmEl.ValueKind == JsonValueKind.String)
+            codeName = nmEl.GetString() ?? "OK";
+        if (root.TryGetProperty("severity", out var sevEl) && sevEl.ValueKind == JsonValueKind.String)
+            severity = sevEl.GetString() ?? "Info";
+        // 舊版只有 quality，無 status 三欄 → 視為 OK
+        return (codeId, codeName, severity);
+    }
+
+    /// <summary>把演算法回傳 dict + status 套到節點。HasUpstreamBad 走 per-output severity 判斷，整顆 Result 不再需要因 Error 設 null。</summary>
+    private static void ApplyAlgoResult(FlowNode nd, Dictionary<string, double> result,
+                                        int statusCodeId, string statusCodeName, string severity,
+                                        Dictionary<string, (int CodeId, string CodeName, string Severity)> perOutput)
+    {
+        nd.AlgoResultDict = result;
+        nd.Result = result.TryGetValue("out", out var dOut) ? dOut : result.Values.First();
+        nd.AlgoStatusCodeId = statusCodeId;
+        nd.AlgoStatusCodeName = statusCodeName;
+        nd.AlgoStatusSeverity = severity;
+        nd.AlgoPerOutputStatus = perOutput;
+    }
+
+    /// <summary>per-output 狀態變化偵測：每個 output key 各自跑 OK ↔ 非 OK 切換寫 EventLog。
+    /// SID 格式：ALGO:{nodeId}@{treeId}:{outputKey}，避免一組混合狀態被聚合掩蓋。</summary>
+    private void HandleAlgoStatusTransition(DiagramContext ctx, FlowNode nd,
+                                            int mergedCodeId, string mergedCodeName, string mergedSeverity,
+                                            Dictionary<string, (int CodeId, string CodeName, string Severity)> perOutput)
+    {
+        var nodeName = string.IsNullOrEmpty(nd.Operator) ? $"node#{nd.Id}" : nd.Operator;
+        foreach (var (outputKey, status) in perOutput)
+        {
+            var szKey = $"{ctx.TreeId}-{nd.Id}:{outputKey}";
+            var prev = _algoLastStatus.TryGetValue(szKey, out var p) ? p : new AlgoStatusSnapshot(0, "OK", "Info");
+
+            if (prev.CodeId == status.CodeId) continue;  // 沒變化
+
+            var szSid = $"ALGO:{nd.Id}@{ctx.TreeId}:{outputKey}";
+
+            // 1) 先前為非 OK → 清舊事件
+            if (prev.CodeId != 0)
+            {
+                var sidToClear = szSid;
+                _ = Task.Run(async () =>
+                {
+                    try { await _alarmEventLogRepo.ClearEventAsync(sidToClear); }
+                    catch (Exception ex) { _logger.LogWarning(ex, "演算法 status 清舊事件失敗 {Sid}", sidToClear); }
+                });
+            }
+
+            // 2) 新狀態為非 OK 且 severity 非 Info → 寫新事件
+            if (status.CodeId != 0 && status.Severity != "Info")
+            {
+                byte nEventType = status.Severity == "Error" ? (byte)1 : (byte)2;
+                byte nSeverity = status.Severity == "Error" ? (byte)1 : (byte)2;
+                var szMessage = $"{nodeName}.{outputKey}: {status.CodeName} ({status.Severity})";
+
+                var model = new ScadaEngine.Common.Data.Models.EventLogModel
+                {
+                    szSID = szSid,
+                    nEventType = nEventType,
+                    nSeverity = nSeverity,
+                    szMessage = szMessage,
+                    szMessageKey = null,
+                    szMessageArgs = $"{{\"statusCodeId\":{status.CodeId},\"statusCodeName\":\"{status.CodeName}\",\"severity\":\"{status.Severity}\",\"node\":\"{nodeName}\",\"outputKey\":\"{outputKey}\"}}",
+                    dtOccurredAt = DateTime.Now,
+                };
+
+                _ = Task.Run(async () =>
+                {
+                    try { await _alarmEventLogRepo.InsertEventAsync(model); }
+                    catch (Exception ex) { _logger.LogWarning(ex, "演算法 status 寫 EventLog 失敗 {Sid}", szSid); }
+                });
+            }
+
+            _algoLastStatus[szKey] = new AlgoStatusSnapshot(status.CodeId, status.CodeName, status.Severity);
+        }
+    }
+
+    /// <summary>
+    /// 評估排程是否在有效時段內。
+    /// 跨日邏輯：以「啟始日」為日期條件比對基準 — 凌晨段（now &lt; endTime）視為昨天那筆排程的延續。
+    /// 例外日 / 加開日皆以基準日比對，加開日無視重複規則強制啟動，例外日當天整段停。
+    /// </summary>
     private static bool EvalScheduleIsActive(ScheduleRecord sch)
     {
         var now = DateTime.Now;
 
-        // 日期條件
-        bool dayMatch = sch.RecurrenceType switch
-        {
-            0 => CheckDaysOfWeek(now, sch.DaysOfWeek),
-            1 => CheckWeekCycle(now, sch) && CheckDaysOfWeek(now, sch.DaysOfWeek),
-            2 => CheckDaysOfMonth(now, sch.DaysOfMonth),
-            3 => CheckMonthCycle(now, sch) && CheckDaysOfMonth(now, sch.DaysOfMonth),
-            _ => false
-        };
-        if (!dayMatch) return false;
+        if (string.IsNullOrEmpty(sch.StartTime) || string.IsNullOrEmpty(sch.EndTime)) return false;
 
-        // 時間條件（支援跨日）
-        return CheckTimeWindow(now, sch.StartTime, sch.EndTime);
+        var sp = sch.StartTime.Split(':');
+        var ep = sch.EndTime.Split(':');
+        if (sp.Length < 2 || ep.Length < 2) return false;
+        if (!int.TryParse(sp[0], out var startH) || !int.TryParse(sp[1], out var startM)) return false;
+        if (!int.TryParse(ep[0], out var endH) || !int.TryParse(ep[1], out var endM)) return false;
+
+        int nowMin = now.Hour * 60 + now.Minute;
+        int startMin = startH * 60 + startM;
+        int endMin = endH * 60 + endM;
+        bool isCrossDay = endMin <= startMin;
+
+        DateTime baseDate;
+        if (isCrossDay)
+        {
+            if (nowMin >= startMin)
+                baseDate = now.Date;                    // 晚上段：今天啟動
+            else if (nowMin < endMin)
+                baseDate = now.Date.AddDays(-1);        // 凌晨段：屬於昨天那筆排程的延續
+            else
+                return false;                           // 中午段：完全不在排程內
+        }
+        else
+        {
+            if (nowMin < startMin || nowMin >= endMin) return false;
+            baseDate = now.Date;
+        }
+
+        return CheckDayMatch(sch, baseDate);
     }
 
-    private static bool CheckDaysOfWeek(DateTime now, string? daysStr)
+    /// <summary>
+    /// 比對某基準日是否符合排程的日期條件。
+    /// 順序：加開日 → 例外日 → 重複規則。前端 + 後端都防止例外/加開交集，運行時不會發生衝突。
+    /// </summary>
+    private static bool CheckDayMatch(ScheduleRecord sch, DateTime baseDate)
+    {
+        var szDateKey = baseDate.ToString("yyyy-MM-dd");
+
+        if (DateListContains(sch.IncludeDates, szDateKey)) return true;
+        if (DateListContains(sch.ExcludeDates, szDateKey)) return false;
+
+        return sch.RecurrenceType switch
+        {
+            0 => CheckDaysOfWeek(baseDate, sch.DaysOfWeek),
+            1 => CheckWeekCycle(baseDate, sch) && CheckDaysOfWeek(baseDate, sch.DaysOfWeek),
+            2 => CheckDaysOfMonth(baseDate, sch.DaysOfMonth),
+            3 => CheckMonthCycle(baseDate, sch) && CheckDaysOfMonth(baseDate, sch.DaysOfMonth),
+            _ => false
+        };
+    }
+
+    private static bool DateListContains(string? listStr, string szDateKey)
+    {
+        if (string.IsNullOrWhiteSpace(listStr)) return false;
+        foreach (var part in listStr.Split(','))
+        {
+            if (part.Trim() == szDateKey) return true;
+        }
+        return false;
+    }
+
+    private static bool CheckDaysOfWeek(DateTime baseDate, string? daysStr)
     {
         if (string.IsNullOrEmpty(daysStr)) return false;
-        int isoDay = now.DayOfWeek == DayOfWeek.Sunday ? 7 : (int)now.DayOfWeek; // 1=Mon..7=Sun
+        int isoDay = baseDate.DayOfWeek == DayOfWeek.Sunday ? 7 : (int)baseDate.DayOfWeek; // 1=Mon..7=Sun
         return daysStr.Split(',').Any(d => int.TryParse(d.Trim(), out var v) && v == isoDay);
     }
 
-    private static bool CheckDaysOfMonth(DateTime now, string? daysStr)
+    private static bool CheckDaysOfMonth(DateTime baseDate, string? daysStr)
     {
         if (string.IsNullOrEmpty(daysStr)) return false;
-        int dom = now.Day;
+        int dom = baseDate.Day;
         return daysStr.Split(',').Any(d => int.TryParse(d.Trim(), out var v) && v == dom);
     }
 
-    private static bool CheckTimeWindow(DateTime now, string startStr, string endStr)
-    {
-        if (string.IsNullOrEmpty(startStr) || string.IsNullOrEmpty(endStr)) return false;
-        int nowMin = now.Hour * 60 + now.Minute;
-        var sp = startStr.Split(':'); var ep = endStr.Split(':');
-        if (sp.Length < 2 || ep.Length < 2) return false;
-        int startMin = int.Parse(sp[0]) * 60 + int.Parse(sp[1]);
-        int endMin = int.Parse(ep[0]) * 60 + int.Parse(ep[1]);
-        if (endMin <= startMin)
-            return nowMin >= startMin || nowMin < endMin; // 跨日
-        return nowMin >= startMin && nowMin < endMin;
-    }
-
-    private static bool CheckWeekCycle(DateTime now, ScheduleRecord sch)
+    private static bool CheckWeekCycle(DateTime baseDate, ScheduleRecord sch)
     {
         if (!sch.AnchorDateTime.HasValue || !sch.RunLength.HasValue || !sch.RestLength.HasValue) return false;
-        var elapsed = now - sch.AnchorDateTime.Value;
+        var elapsed = baseDate - sch.AnchorDateTime.Value;
         if (elapsed.TotalMilliseconds < 0) return false;
         int totalCycle = sch.RunLength.Value + sch.RestLength.Value;
         int elapsedWeeks = (int)(elapsed.TotalDays / 7);
         return (elapsedWeeks % totalCycle) < sch.RunLength.Value;
     }
 
-    private static bool CheckMonthCycle(DateTime now, ScheduleRecord sch)
+    private static bool CheckMonthCycle(DateTime baseDate, ScheduleRecord sch)
     {
         if (!sch.AnchorDateTime.HasValue || !sch.RunLength.HasValue || !sch.RestLength.HasValue) return false;
         var anchor = sch.AnchorDateTime.Value;
-        int totalMonths = (now.Year - anchor.Year) * 12 + (now.Month - anchor.Month);
+        int totalMonths = (baseDate.Year - anchor.Year) * 12 + (baseDate.Month - anchor.Month);
         if (totalMonths < 0) return false;
         int totalCycle = sch.RunLength.Value + sch.RestLength.Value;
         return (totalMonths % totalCycle) < sch.RunLength.Value;
@@ -1033,7 +1532,7 @@ public class LogicFlowExecutionService : BackgroundService
 
     // ─── 輔助方法 ────────────────────────────────────────────────────────────
 
-    private double? GetNodeOutputValue(DiagramContext ctx, int nNodeId)
+    private double? GetNodeOutputValue(DiagramContext ctx, int nNodeId, string szSourcePort = "out")
     {
         var nd = ctx.Nodes.Find(n => n.Id == nNodeId);
         if (nd == null) return null;
@@ -1045,7 +1544,20 @@ public class LogicFlowExecutionService : BackgroundService
             return lv.dValue;
         }
         if (nd.Type == "constant") return nd.ConstValue ?? 0;
-        if (nd.Type is "math" or "compare" or "and" or "or" or "not" or "xor" or "timer" or "contact_no" or "contact_nc" or "algorithm")
+        if (nd.Type == "algorithm")
+        {
+            // 多輸出：依 edge.SourcePort 從 dict 取值；找不到才退回 Result（向後相容）
+            if (nd.AlgoResultDict != null && nd.AlgoResultDict.TryGetValue(szSourcePort, out var dPortVal))
+                return dPortVal;
+            return nd.Result;
+        }
+        if (nd.Type == "counter")
+        {
+            // counter 多輸出：q（預設）= 是否達到 preset；cv = 目前累加值
+            if (szSourcePort == "cv") return (double)nd.CounterValue;
+            return nd.Result; // q
+        }
+        if (nd.Type is "math" or "compare" or "and" or "or" or "not" or "xor" or "timer" or "contact_no" or "contact_nc")
             return nd.Result;
 
         return null;
@@ -1055,7 +1567,7 @@ public class LogicFlowExecutionService : BackgroundService
     {
         var edge = ctx.Edges.Find(e => e.Target == nNodeId && e.TargetPort == szPortName);
         if (edge == null) return null;
-        return GetNodeOutputValue(ctx, edge.Source);
+        return GetNodeOutputValue(ctx, edge.Source, edge.SourcePort);
     }
 
     /// <summary>上游可評估節點是否已完成本輪評估（input/constant/output 視為永遠就緒）</summary>
@@ -1075,6 +1587,9 @@ public class LogicFlowExecutionService : BackgroundService
         return IsSourceEvalDone(ctx, edge.Source);
     }
 
+    /// <summary>檢查指定節點是否有任一輸入邊線來自 Bad upstream。
+    /// algorithm 節點走 per-output severity 判斷（依 edge.SourcePort 查 perOutput），
+    /// 同節點不同 output port 各自決定是否 Bad，cop1 Error 不會連帶蓋掉 cop2 Good。</summary>
     private bool HasUpstreamBad(DiagramContext ctx, int nNodeId)
     {
         var inEdges = ctx.Edges.Where(e => e.Target == nNodeId).ToList();
@@ -1087,13 +1602,28 @@ public class LogicFlowExecutionService : BackgroundService
                 if (!_latestCache.TryGetValue(srcNode.Sid, out var lv) || lv.nQuality != 1)
                     return true;
             }
+            // 演算法節點：per-port severity 判斷（依消費邊線的 sourcePort 查 perOutput）
+            if (srcNode.Type == "algorithm" && IsAlgoPortBad(srcNode, edge.SourcePort))
+                return true;
             // 遞迴檢查
-            if (srcNode.Type is "math" or "compare" or "and" or "or" or "not" or "xor" or "timer" or "contact_no" or "contact_nc" or "algorithm")
+            if (srcNode.Type is "math" or "compare" or "and" or "or" or "not" or "xor" or "timer" or "contact_no" or "contact_nc" or "algorithm" or "counter")
             {
                 if (HasUpstreamBad(ctx, srcNode.Id)) return true;
             }
         }
         return false;
+    }
+
+    /// <summary>判斷演算法節點的指定 output port 是否為 Bad（severity = Error）。
+    /// 有 perOutput → 走 per-port；無（grace period 或舊資料）→ fallback 走 merged severity。</summary>
+    private static bool IsAlgoPortBad(FlowNode srcNode, string szSourcePort)
+    {
+        if (srcNode.AlgoPerOutputStatus != null)
+        {
+            return srcNode.AlgoPerOutputStatus.TryGetValue(szSourcePort, out var portStatus)
+                   && portStatus.Severity == "Error";
+        }
+        return srcNode.AlgoStatusSeverity == "Error";
     }
 
     private void ResetTpState(FlowNode nd)
@@ -1104,6 +1634,8 @@ public class LogicFlowExecutionService : BackgroundService
         nd.TpPhaseEnd = DateTime.MinValue;
         nd.TpHasHeld = false;
         nd.TpPrevInputValue = null;
+        nd.TprPrevInput = null;
+        nd.TprLastSentValue = null;
         nd.Result = null;
     }
 
@@ -1131,6 +1663,17 @@ public class LogicFlowExecutionService : BackgroundService
 
     // ─── TP 狀態發布 ─────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// 安全地把 DateTime 轉成 Unix 毫秒；遇到 MinValue/MaxValue（含 Unspecified Kind 套用本地時區後溢位）
+    /// 一律回傳 0，避免 DateTimeOffset(DateTime) 在台灣時區（+08:00）下將 MinValue 推到年份 0 之前而拋例外。
+    /// </summary>
+    private static long ToUnixMs(DateTime dt)
+    {
+        if (dt == DateTime.MinValue || dt == DateTime.MaxValue) return 0;
+        var dtUtc = dt.Kind == DateTimeKind.Utc ? dt : dt.ToUniversalTime();
+        return new DateTimeOffset(dtUtc, TimeSpan.Zero).ToUnixTimeMilliseconds();
+    }
+
     /// <summary>收集所有 TP 計時器狀態，僅在階段變化時才透過 MQTT 發布</summary>
     private async Task PublishTimerStatesAsync()
     {
@@ -1152,7 +1695,7 @@ public class LogicFlowExecutionService : BackgroundService
                     {
                         if (nd.TonPhase == null) continue;
                         var szKey = $"{ctx.TreeId}-{nd.Id}";
-                        var nPhaseEndMs = new DateTimeOffset(nd.TonPhaseEnd).ToUnixTimeMilliseconds();
+                        var nPhaseEndMs = ToUnixMs(nd.TonPhaseEnd);
                         timers[szKey] = new
                         {
                             phase = nd.TonPhase,
@@ -1166,7 +1709,7 @@ public class LogicFlowExecutionService : BackgroundService
                     if (nd.TpPhase == null) continue;
                     {
                         var szKey = $"{ctx.TreeId}-{nd.Id}";
-                        var nPhaseEndMs = new DateTimeOffset(nd.TpPhaseEnd).ToUnixTimeMilliseconds();
+                        var nPhaseEndMs = ToUnixMs(nd.TpPhaseEnd);
                         timers[szKey] = new
                         {
                             phase = nd.TpPhase,
@@ -1203,6 +1746,25 @@ public class LogicFlowExecutionService : BackgroundService
 
     private async Task<bool> ExecuteControlWriteAsync(string szSid, double dValue)
     {
+        // DB 來源 SID（DB{coordId}-S{n}）— 改寫 DBLatestData，不走 Modbus 路徑
+        if (szSid.StartsWith("DB", StringComparison.Ordinal))
+        {
+            try
+            {
+                using var scope = _serviceProvider.CreateScope();
+                var repo = scope.ServiceProvider.GetRequiredService<IDataRepository>();
+                var isOk = await repo.UpdateDbLatestDataAsync(szSid, dValue);
+                if (isOk)
+                    _logger.LogInformation("[LogicFlow] DBLatestData 寫入成功: {SID} = {Value}", szSid, dValue);
+                return isOk;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[LogicFlow] DBLatestData 寫入失敗: SID={SID}", szSid);
+                return false;
+            }
+        }
+
         try
         {
             var parts = szSid.Split('-');
@@ -1405,6 +1967,15 @@ public class LogicFlowExecutionService : BackgroundService
                         AlgoInputs = n.TryGetProperty("algoInputs", out var ai)
                             ? ai.EnumerateArray().Select(x => x.GetString() ?? "in").ToList()
                             : null,
+                        InputCount = n.TryGetProperty("inputCount", out var ic) && ic.ValueKind == JsonValueKind.Number
+                            ? ic.GetInt32()
+                            : null,
+                        PresetValue = n.TryGetProperty("presetValue", out var pv) && pv.ValueKind == JsonValueKind.Number
+                            ? pv.GetInt32()
+                            : 10,
+                        CuMinIntervalMs = n.TryGetProperty("cuMinIntervalMs", out var cmi) && cmi.ValueKind == JsonValueKind.Number
+                            ? cmi.GetInt32()
+                            : 60000,
                     });
                 }
             }
@@ -1479,9 +2050,25 @@ public class LogicFlowExecutionService : BackgroundService
         public double FMax { get; init; } = 100;
         public int? ScheduleId { get; init; }
         public List<string>? AlgoInputs { get; init; }
+        /// <summary>variadic 演算法的批次數 N（非 variadic 為 null）</summary>
+        public int? InputCount { get; init; }
+
+        // counter（CTU）設定
+        public int PresetValue { get; init; } = 10;
+        public int CuMinIntervalMs { get; init; } = 60000;
 
         // 運行時狀態
         public double? Result { get; set; }
+        /// <summary>多輸出演算法結果（key 對應 edge.SourcePort）；單輸出時也會放入 {"out": value}</summary>
+        public Dictionary<string, double>? AlgoResultDict { get; set; }
+        /// <summary>演算法狀態（merged，所有 output 取嚴重度最高者）：codeId（0=OK）</summary>
+        public int AlgoStatusCodeId { get; set; }
+        /// <summary>演算法狀態（merged）：codeName（OK / DIVIDE_BY_ZERO / ...）</summary>
+        public string AlgoStatusCodeName { get; set; } = "OK";
+        /// <summary>演算法狀態（merged）：severity（Info / Warning / Error）</summary>
+        public string AlgoStatusSeverity { get; set; } = "Info";
+        /// <summary>每個輸出 port (含 variadic suffix) 的 status；HasUpstreamBad / EventLog 走此 map per-port 判斷</summary>
+        public Dictionary<string, (int CodeId, string CodeName, string Severity)>? AlgoPerOutputStatus { get; set; }
         public bool IsDone { get; set; }
 
         // TP 脈衝狀態機
@@ -1495,6 +2082,18 @@ public class LogicFlowExecutionService : BackgroundService
         // TON 延時開啟狀態機
         public string? TonPhase { get; set; }
         public DateTime TonPhaseEnd { get; set; } = DateTime.MinValue;
+
+        // TPR 重複脈衝：回饋用（運行時快取下游 output SID）
+        public string? TprFeedbackSid { get; set; }
+        // TPR 值變偵測：上次注入值（用於 delay 倒數中的 debounce 與 confirmed 內值變判斷）
+        public double? TprPrevInput { get; set; }
+        // TPR 已輸出值：confirmed 內若 passValue ≠ 此值即視為「輸入值變」，回 delay
+        public double? TprLastSentValue { get; set; }
+
+        // counter 運行時狀態（不持久化，Engine 重啟歸零）
+        public int CounterValue { get; set; }
+        public double? CounterPrevCu { get; set; }
+        public DateTime CounterLastEdgeAt { get; set; } = DateTime.MinValue;
     }
 
     private class FlowEdge
@@ -1505,4 +2104,15 @@ public class LogicFlowExecutionService : BackgroundService
         public string SourcePort { get; init; } = "out";
         public string TargetPort { get; init; } = "in";
     }
+
+    /// <summary>演算法輸出快取項：含 result dict + merged status + per-output status</summary>
+    private record AlgoCachedOutput(
+        Dictionary<string, double> Result,
+        int StatusCodeId,
+        string StatusCodeName,
+        string Severity,
+        Dictionary<string, (int CodeId, string CodeName, string Severity)> PerOutput);
+
+    /// <summary>演算法 status 快照（用於變化偵測，決定是否寫 EventLog）</summary>
+    private record AlgoStatusSnapshot(int CodeId, string CodeName, string Severity);
 }

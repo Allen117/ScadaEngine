@@ -11,6 +11,9 @@ public class HistoryTrendViewModel
     /// <summary>所有 Coordinator 設備清單（左側邊欄）</summary>
     public List<CoordinatorModel> CoordinatorList { get; set; } = new();
 
+    /// <summary>DBCoordinator 設備清單（左側邊欄 DB 來源用）</summary>
+    public List<DbCoordinatorModel> DbCoordinatorList { get; set; } = new();
+
     /// <summary>所有點位清單（依 SID 排序）</summary>
     public List<ModbusPointModel> PointList { get; set; } = new();
 

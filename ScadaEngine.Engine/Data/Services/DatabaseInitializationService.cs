@@ -179,6 +179,79 @@ public class DatabaseInitializationService
                     "EXEC sp_rename 'CalculatedPoints.CoordinatorName', 'GroupName', 'COLUMN'");
                 _logger.LogInformation("欄位遷移完成: CalculatedPoints.CoordinatorName → GroupName");
             }
+
+            // EnergyCircuit: 補上 Sign 欄位（既有 DB 升級用，預設 +1 與升級前行為一致）
+            var nHasSignColumn = await connection.QuerySingleAsync<int>(
+                @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+                  WHERE TABLE_NAME = 'EnergyCircuit' AND COLUMN_NAME = 'Sign'");
+
+            if (nHasSignColumn == 0)
+            {
+                var nHasTable = await connection.QuerySingleAsync<int>(
+                    @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
+                      WHERE TABLE_NAME = 'EnergyCircuit' AND TABLE_TYPE = 'BASE TABLE'");
+                if (nHasTable > 0)
+                {
+                    await connection.ExecuteAsync(
+                        "ALTER TABLE [EnergyCircuit] ADD [Sign] INT NOT NULL DEFAULT 1");
+                    _logger.LogInformation("欄位遷移完成: EnergyCircuit 新增 Sign 欄位（預設 1）");
+                }
+            }
+
+            // TimeSchedules: 補上 ExcludeDates / IncludeDates 欄位
+            var nHasTimeSchedulesTable = await connection.QuerySingleAsync<int>(
+                @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
+                  WHERE TABLE_NAME = 'TimeSchedules' AND TABLE_TYPE = 'BASE TABLE'");
+
+            if (nHasTimeSchedulesTable > 0)
+            {
+                var nHasExcludeDates = await connection.QuerySingleAsync<int>(
+                    @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+                      WHERE TABLE_NAME = 'TimeSchedules' AND COLUMN_NAME = 'ExcludeDates'");
+                if (nHasExcludeDates == 0)
+                {
+                    await connection.ExecuteAsync(
+                        "ALTER TABLE [TimeSchedules] ADD [ExcludeDates] NVARCHAR(MAX) NULL");
+                    _logger.LogInformation("欄位遷移完成: TimeSchedules 新增 ExcludeDates 欄位");
+                }
+
+                var nHasIncludeDates = await connection.QuerySingleAsync<int>(
+                    @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+                      WHERE TABLE_NAME = 'TimeSchedules' AND COLUMN_NAME = 'IncludeDates'");
+                if (nHasIncludeDates == 0)
+                {
+                    await connection.ExecuteAsync(
+                        "ALTER TABLE [TimeSchedules] ADD [IncludeDates] NVARCHAR(MAX) NULL");
+                    _logger.LogInformation("欄位遷移完成: TimeSchedules 新增 IncludeDates 欄位");
+                }
+            }
+
+            // EventLog: 補上 MessageKey / MessageArgs 欄位（i18n 結構化警報訊息）
+            var nHasEventLogTable = await connection.QuerySingleAsync<int>(
+                @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
+                  WHERE TABLE_NAME = 'EventLog' AND TABLE_TYPE = 'BASE TABLE'");
+            if (nHasEventLogTable > 0)
+            {
+                var nHasMessageKey = await connection.QuerySingleAsync<int>(
+                    @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+                      WHERE TABLE_NAME = 'EventLog' AND COLUMN_NAME = 'MessageKey'");
+                if (nHasMessageKey == 0)
+                {
+                    await connection.ExecuteAsync(
+                        "ALTER TABLE [EventLog] ADD [MessageKey] NVARCHAR(64) NULL");
+                    _logger.LogInformation("欄位遷移完成: EventLog 新增 MessageKey 欄位");
+                }
+
+                var nHasMessageArgs = await connection.QuerySingleAsync<int>(
+                    @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+                      WHERE TABLE_NAME = 'EventLog' AND COLUMN_NAME = 'MessageArgs'");
+                if (nHasMessageArgs == 0)
+                {
+                    await connection.ExecuteAsync(
+                        "ALTER TABLE [EventLog] ADD [MessageArgs] NVARCHAR(512) NULL");
+                    _logger.LogInformation("欄位遷移完成: EventLog 新增 MessageArgs 欄位");
+                }
+            }
         }
         catch (Exception ex)
         {

@@ -15,6 +15,8 @@ public class TimeScheduleModel
     public string? szDaysOfMonth { get; set; }
     public string szStartTime { get; set; } = string.Empty;
     public string szEndTime { get; set; } = string.Empty;
+    public string? szExcludeDates { get; set; }
+    public string? szIncludeDates { get; set; }
     public bool isEnabled { get; set; } = true;
     public string? szRemarks { get; set; }
     public DateTime? dtCreatedAt { get; set; }

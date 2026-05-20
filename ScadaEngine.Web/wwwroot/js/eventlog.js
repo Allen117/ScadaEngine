@@ -1,6 +1,10 @@
 (function () {
     var _queryResults = [];
 
+    function t(key, args) {
+        return (window.i18n && window.i18n.t) ? window.i18n.t(key, args) : key;
+    }
+
     function escapeHtml(text) {
         if (text == null) return '';
         var div = document.createElement('div');
@@ -13,7 +17,7 @@
         var endTime = document.getElementById('endTime').value;
 
         if (!startTime || !endTime) {
-            alert('\u8acb\u9078\u64c7\u8d77\u59cb\u8207\u7d50\u675f\u6642\u9593');
+            alert(t('eventlog.alert.select_time'));
             return;
         }
 
@@ -43,7 +47,7 @@
                 document.getElementById('btnQuery').disabled = false;
 
                 if (!result.success) {
-                    alert('\u67e5\u8a62\u5931\u6557: ' + (result.error || '\u672a\u77e5\u932f\u8aa4'));
+                    alert(t('eventlog.alert.query_failed', { 0: result.error || t('eventlog.alert.unknown_error') }));
                     return;
                 }
 
@@ -51,7 +55,7 @@
                 renderTable(_queryResults);
                 renderStats(_queryResults);
                 document.getElementById('resultInfo').textContent =
-                    '\u5171\u67e5\u8a62\u5230 ' + result.total + ' \u7b46\u8a18\u9304';
+                    t('eventlog.result.found', { 0: result.total });
                 document.getElementById('btnExport').style.display =
                     result.total > 0 ? '' : 'none';
                 document.getElementById('statsRow').style.display =
@@ -60,7 +64,7 @@
             .catch(function (err) {
                 overlay.classList.remove('active');
                 document.getElementById('btnQuery').disabled = false;
-                alert('\u67e5\u8a62\u767c\u751f\u932f\u8aa4: ' + err.message);
+                alert(t('eventlog.alert.query_error', { 0: err.message }));
             });
     }
 
@@ -69,7 +73,8 @@
 
         if (!data || data.length === 0) {
             tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-5">' +
-                '<i class="fas fa-inbox fa-2x mb-2 d-block"></i>\u67e5\u8a62\u7bc4\u570d\u5167\u7121\u4e8b\u4ef6\u8a18\u9304</td></tr>';
+                '<i class="fas fa-inbox fa-2x mb-2 d-block"></i>' +
+                escapeHtml(t('eventlog.result.empty_query')) + '</td></tr>';
             return;
         }
 
@@ -78,10 +83,10 @@
             var e = data[i];
             // 組合 tooltip 明細（觸發值、門檻值、條件）
             var tipParts = [];
-            tipParts.push('\u89f8\u767c\u503c: ' + (e.triggerValue != null ? e.triggerValue.toFixed(2) : '-'));
-            tipParts.push('\u9580\u6abb\u503c: ' + (e.thresholdValue != null ? e.thresholdValue.toFixed(2) : '-'));
-            tipParts.push('\u689d\u4ef6: ' + (e.operatorSymbol || '-'));
-            var tipHtml = tipParts.map(function (t) { return '<div>' + escapeHtml(t) + '</div>'; }).join('');
+            tipParts.push(t('eventlog.tooltip.trigger_value') + ': ' + (e.triggerValue != null ? e.triggerValue.toFixed(2) : '-'));
+            tipParts.push(t('eventlog.tooltip.threshold') + ': ' + (e.thresholdValue != null ? e.thresholdValue.toFixed(2) : '-'));
+            tipParts.push(t('eventlog.tooltip.condition') + ': ' + (e.operatorSymbol || '-'));
+            var tipHtml = tipParts.map(function (txt) { return '<div>' + escapeHtml(txt) + '</div>'; }).join('');
 
             html += '<tr>';
             html += '<td>' + (i + 1) + '</td>';
@@ -93,13 +98,21 @@
             html += '<td class="msg-cell"><span class="msg-tooltip-wrap">' +
                     escapeHtml(e.message) +
                     '<span class="msg-tip">' + tipHtml + '</span></span></td>';
-            html += '<td>' + (e.isCleared
-                ? '<span class="text-success">' + escapeHtml(e.clearedAt) + '</span>'
-                : '<span class="text-danger fw-bold">\u767c\u751f\u4e2d</span>') + '</td>';
-            html += '<td>' + (e.isAcknowledged
-                ? '<span class="badge bg-success">\u5df2\u78ba\u8a8d</span>'
-                : '<span class="badge bg-warning text-dark">\u672a\u78ba\u8a8d</span>') + '</td>';
-            html += '<td>' + escapeHtml(e.acknowledgedBy || '-') + '</td>';
+            // 資訊類事件（EventType=3，控制動作等）為一次性紀錄，無「恢復 / 確認」概念，統一顯示 '-'
+            var isInfoEvent = (e.eventType === 3);
+            if (isInfoEvent) {
+                html += '<td class="text-muted">-</td>';
+                html += '<td class="text-muted">-</td>';
+                html += '<td class="text-muted">-</td>';
+            } else {
+                html += '<td>' + (e.isCleared
+                    ? '<span class="text-success">' + escapeHtml(e.clearedAt) + '</span>'
+                    : '<span class="text-danger fw-bold">' + escapeHtml(t('eventlog.result.cell.active')) + '</span>') + '</td>';
+                html += '<td>' + (e.isAcknowledged
+                    ? '<span class="badge bg-success">' + escapeHtml(t('eventlog.ack.acked')) + '</span>'
+                    : '<span class="badge bg-warning text-dark">' + escapeHtml(t('eventlog.ack.unack')) + '</span>') + '</td>';
+                html += '<td>' + escapeHtml(e.acknowledgedBy || '-') + '</td>';
+            }
             html += '</tr>';
         }
 
@@ -124,30 +137,37 @@
     function exportCSV() {
         if (!_queryResults || _queryResults.length === 0) return;
 
-        var headers = ['#', '\u767c\u751f\u6642\u9593', '\u4e8b\u4ef6\u985e\u578b', '\u56b4\u91cd\u7a0b\u5ea6',
-                       '\u8a0a\u606f', '\u6062\u5fa9\u6642\u9593', '\u78ba\u8a8d\u72c0\u614b', '\u78ba\u8a8d\u8005'];
+        var headers = ['#',
+            t('eventlog.col.occurred_at'),
+            t('eventlog.col.event_type'),
+            t('eventlog.col.severity'),
+            t('eventlog.col.message'),
+            t('eventlog.col.cleared_at'),
+            t('eventlog.col.ack_status'),
+            t('eventlog.col.ack_by')];
         var rows = [headers.join(',')];
 
         for (var i = 0; i < _queryResults.length; i++) {
             var e = _queryResults[i];
+            var isInfoEvent = (e.eventType === 3);
             var row = [
                 i + 1,
                 '"' + e.occurredAt + '"',
                 '"' + e.eventTypeName + '"',
                 '"' + e.severityName + '"',
                 '"' + (e.message || '').replace(/"/g, '""') + '"',
-                '"' + (e.clearedAt || '\u767c\u751f\u4e2d') + '"',
-                e.isAcknowledged ? '\u5df2\u78ba\u8a8d' : '\u672a\u78ba\u8a8d',
-                '"' + (e.acknowledgedBy || '') + '"'
+                '"' + (isInfoEvent ? '-' : (e.clearedAt || t('eventlog.result.cell.active'))) + '"',
+                isInfoEvent ? '-' : (e.isAcknowledged ? t('eventlog.ack.acked') : t('eventlog.ack.unack')),
+                '"' + (isInfoEvent ? '-' : (e.acknowledgedBy || '')) + '"'
             ];
             rows.push(row.join(','));
         }
 
-        var csvContent = '\uFEFF' + rows.join('\n');
+        var csvContent = '﻿' + rows.join('\n');
         var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         var link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = '\u4e8b\u4ef6\u8a18\u9304_' + new Date().toISOString().slice(0, 10) + '.csv';
+        link.download = t('eventlog.csv.filename') + '_' + new Date().toISOString().slice(0, 10) + '.csv';
         link.click();
     }
 
@@ -284,7 +304,7 @@
             }
             _ppModal.show();
         }).catch(function (err) {
-            alert('\u7121\u6cd5\u8f09\u5165\u8a2d\u5099/\u9ede\u4f4d\u6e05\u55ae: ' + err.message);
+            alert(t('eventlog.picker.load_failed', { 0: err.message }));
         });
     }
 
@@ -292,7 +312,7 @@
         document.getElementById('ppStep1').style.display = '';
         document.getElementById('ppStep2').style.display = 'none';
         document.getElementById('ppTitle').innerHTML =
-            '<i class="fas fa-crosshairs text-primary me-1"></i>\u9078\u64c7\u8a2d\u5099';
+            '<i class="fas fa-crosshairs text-primary me-1"></i>' + escapeHtml(t('eventlog.picker.title.select_device'));
         document.getElementById('ppConfirmBtn').disabled = true;
         ppRenderDevices();
     }
@@ -300,7 +320,8 @@
     function ppRenderDevices() {
         var container = document.getElementById('ppDeviceList');
         if (!_ppDevices || _ppDevices.length === 0) {
-            container.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-plug fa-2x mb-2 d-block"></i>\u5c1a\u7121\u8a2d\u5099</div>';
+            container.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-plug fa-2x mb-2 d-block"></i>' +
+                escapeHtml(t('eventlog.picker.no_devices')) + '</div>';
             return;
         }
         var html = '';
@@ -317,7 +338,7 @@
                 html += '<div class="pp-dev-item" onclick="window._eventLog.ppToggleSub(this)">' +
                     '<i class="fas fa-server text-primary me-2"></i>' +
                     '<span class="flex-fill">' + escapeHtml(d.szName) + '</span>' +
-                    '<small class="text-muted me-2">' + nPts + ' \u9ede</small>' +
+                    '<small class="text-muted me-2">' + escapeHtml(t('eventlog.picker.point_count', { 0: nPts })) + '</small>' +
                     '<i class="fas fa-chevron-down pp-toggle-icon"></i></div>';
                 html += '<div class="pp-sub-menu" style="display:none;">';
                 for (var j = 0; j < mids.length; j++) {
@@ -334,7 +355,7 @@
                     d.nId + ',\'' + escapeHtml(d.szName).replace(/'/g, "\\'") + '\')">' +
                     '<i class="fas fa-server text-primary me-2"></i>' +
                     '<span class="flex-fill">' + escapeHtml(d.szName) + '</span>' +
-                    '<small class="text-muted me-2">' + nPts + ' \u9ede</small>' +
+                    '<small class="text-muted me-2">' + escapeHtml(t('eventlog.picker.point_count', { 0: nPts })) + '</small>' +
                     '<i class="fas fa-chevron-right text-muted" style="font-size:.7rem;"></i></div>';
             }
         }
@@ -345,11 +366,12 @@
             if (isCalcSid(_ppPoints[ci].szSid)) nCalcPts++;
         }
         if (nCalcPts > 0) {
+            var calcLabel = t('eventlog.picker.calc_point');
             html += '<div class="pp-dev-item" onclick="window._eventLog.ppSelectDevice(' +
-                CALC_DEVICE_ID + ',\'\u8a08\u7b97\u9ede\u4f4d\')">' +
+                CALC_DEVICE_ID + ',\'' + escapeHtml(calcLabel).replace(/'/g, "\\'") + '\')">' +
                 '<i class="fas fa-calculator text-warning me-2"></i>' +
-                '<span class="flex-fill">\u8a08\u7b97\u9ede\u4f4d</span>' +
-                '<small class="text-muted me-2">' + nCalcPts + ' \u9ede</small>' +
+                '<span class="flex-fill">' + escapeHtml(calcLabel) + '</span>' +
+                '<small class="text-muted me-2">' + escapeHtml(t('eventlog.picker.point_count', { 0: nCalcPts })) + '</small>' +
                 '<i class="fas fa-chevron-right text-muted" style="font-size:.7rem;"></i></div>';
         }
 
@@ -375,7 +397,7 @@
         document.getElementById('ppStep1').style.display = 'none';
         document.getElementById('ppStep2').style.display = '';
         document.getElementById('ppTitle').innerHTML =
-            '<i class="fas fa-crosshairs text-primary me-1"></i>\u9078\u64c7\u9ede\u4f4d';
+            '<i class="fas fa-crosshairs text-primary me-1"></i>' + escapeHtml(t('eventlog.picker.title.select_point'));
         document.getElementById('ppDevName').textContent = szLabel;
         document.getElementById('ppSearch').value = '';
         document.getElementById('ppConfirmBtn').disabled = true;
@@ -409,7 +431,8 @@
 
         var container = document.getElementById('ppPointList');
         if (filtered.length === 0) {
-            container.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x mb-2 d-block"></i>\u7121\u7b26\u5408\u9ede\u4f4d</div>';
+            container.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x mb-2 d-block"></i>' +
+                escapeHtml(t('eventlog.picker.no_points')) + '</div>';
             return;
         }
         var html = '';

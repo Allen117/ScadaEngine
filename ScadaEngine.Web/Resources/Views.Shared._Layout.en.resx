@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="layout.brand" xml:space="preserve"><value>SCADA Monitoring System</value></data>
+
+  <data name="layout.menu.scadapage" xml:space="preserve"><value>SCADA Page</value></data>
+  <data name="layout.menu.realtime" xml:space="preserve"><value>Realtime Data</value></data>
+
+  <data name="layout.menu.control" xml:space="preserve"><value>Control Logic</value></data>
+  <data name="layout.menu.condition" xml:space="preserve"><value>Condition Control</value></data>
+  <data name="layout.menu.logicflow" xml:space="preserve"><value>Logic Flow</value></data>
+  <data name="layout.menu.schedule" xml:space="preserve"><value>Schedule</value></data>
+
+  <data name="layout.menu.history" xml:space="preserve"><value>History</value></data>
+  <data name="layout.menu.trend" xml:space="preserve"><value>Trend</value></data>
+  <data name="layout.menu.eventlog" xml:space="preserve"><value>Event Log</value></data>
+
+  <data name="layout.menu.energy" xml:space="preserve"><value>Energy Management</value></data>
+  <data name="layout.menu.energy_meter" xml:space="preserve"><value>Energy Meter / Circuit</value></data>
+  <data name="layout.menu.energy_report" xml:space="preserve"><value>Energy Report</value></data>
+  <data name="layout.menu.chilled_water" xml:space="preserve"><value>Chilled Water Efficiency</value></data>
+
+  <data name="layout.menu.system" xml:space="preserve"><value>System Settings</value></data>
+  <data name="layout.menu.designer" xml:space="preserve"><value>Designer</value></data>
+  <data name="layout.menu.alarm" xml:space="preserve"><value>Alarm Settings</value></data>
+  <data name="layout.menu.points" xml:space="preserve"><value>Point Settings</value></data>
+  <data name="layout.menu.commsetting" xml:space="preserve"><value>Modbus Source</value></data>
+  <data name="layout.menu.dbcoordinator" xml:space="preserve"><value>DB Source</value></data>
+  <data name="layout.menu.calcpoint" xml:space="preserve"><value>Calculated Points</value></data>
+  <data name="layout.menu.account" xml:space="preserve"><value>Account Management</value></data>
+
+  <data name="layout.user.profile" xml:space="preserve"><value>Profile</value></data>
+  <data name="layout.user.logout" xml:space="preserve"><value>Log Out</value></data>
+  <data name="layout.user.login" xml:space="preserve"><value>Log In</value></data>
+
+  <data name="layout.footer.platform" xml:space="preserve"><value>SCADA Smart Energy Platform</value></data>
+  <data name="layout.footer.version" xml:space="preserve"><value>Version {0}</value></data>
+  <data name="layout.footer.server_time" xml:space="preserve"><value>Server Time</value></data>
+
+  <data name="layout.logout.title" xml:space="preserve"><value>Confirm Log Out</value></data>
+  <data name="layout.logout.confirm" xml:space="preserve"><value>Are you sure you want to log out?</value></data>
+  <data name="layout.logout.notice" xml:space="preserve"><value>You will need to re-enter your credentials to log back in.</value></data>
+  <data name="layout.logout.cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="layout.logout.confirm_btn" xml:space="preserve"><value>Log Out</value></data>
+
+  <data name="layout.lang.label" xml:space="preserve"><value>Language</value></data>
+  <data name="layout.lang.zh" xml:space="preserve"><value>繁體中文</value></data>
+  <data name="layout.lang.en" xml:space="preserve"><value>English</value></data>
+</root>

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Localization;
 using ScadaEngine.Common.Data.Services;
 using ScadaEngine.Engine.Data.Interfaces;
 using ScadaEngine.Engine.Data.Services;
@@ -7,6 +8,7 @@ using ScadaEngine.Engine.Communication.Mqtt;
 using ScadaEngine.Engine.Communication.Modbus.Services;
 using ScadaEngine.Web.Services;
 using Serilog;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,10 +24,40 @@ builder.Host.UseSerilog((context, config) =>
     config.ReadFrom.Configuration(context.Configuration);
 });
 
+// 多語系：resx 集中放在 Resources/，IStringLocalizer / IViewLocalizer / DataAnnotations 都吃這份
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+
 // Add services to the container.
-builder.Services.AddControllersWithViews(options =>
+builder.Services
+    .AddControllersWithViews(options =>
+    {
+        options.Filters.Add<ScadaEngine.Web.Filters.PageAccessFilter>();
+    })
+    .AddViewLocalization()
+    .AddDataAnnotationsLocalization(options =>
+    {
+        options.DataAnnotationLocalizerProvider = (type, factory) =>
+            factory.Create(typeof(ScadaEngine.Web.Resources.SharedResource));
+    });
+
+// 支援的語系（zh-TW 為預設，缺 key 時 fallback 至 zh-TW）
+var aSupportedCultures = new[]
 {
-    options.Filters.Add<ScadaEngine.Web.Filters.PageAccessFilter>();
+    new CultureInfo("zh-TW"),
+    new CultureInfo("en")
+};
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    options.DefaultRequestCulture = new RequestCulture("zh-TW", "zh-TW");
+    options.SupportedCultures = aSupportedCultures;
+    options.SupportedUICultures = aSupportedCultures;
+    options.FallBackToParentUICultures = true;
+
+    // Provider 順序：Cookie → QueryString → AcceptLanguage
+    options.RequestCultureProviders.Clear();
+    options.RequestCultureProviders.Add(new CookieRequestCultureProvider());
+    options.RequestCultureProviders.Add(new QueryStringRequestCultureProvider());
+    options.RequestCultureProviders.Add(new AcceptLanguageHeaderRequestCultureProvider());
 });
 
 // 配置視圖引擎以支援 Features 資料夾結構
@@ -108,14 +140,48 @@ builder.Services.AddScoped<ScadaEngine.Web.Services.AlarmRuleService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.AccountSettingService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.CalcPointService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.ScheduleSettingService>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.LineTargetService>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyCircuitService>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyReportService>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.DbCoordinatorService>();
+// Scoped：依賴 IStringLocalizer<T>（Scoped），且 exporter 本身無狀態
+builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyReportExcelExporter>();
+
+// Line 測試發送（內含 throttle 字典 → 必須 Singleton 才能跨請求保留狀態）
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<ScadaEngine.Web.Services.LineTestSendService>();
 
 // 註冊 C# 演算法服務（供 LogicFlow 前端預覽用）
 builder.Services.AddSingleton<ScadaEngine.Engine.Services.CSharpAlgorithmService>();
+
+// 多語系：把 .resx 打包成 JSON 給前端 i18n.js（Singleton 內部有 ConcurrentDictionary 快取）
+builder.Services.AddSingleton<ScadaEngine.Web.Services.I18nResourceService>();
+
+// 警報訊息 i18n 翻譯器（依當前 culture 套 messageKey + args → 顯示字串）
+builder.Services.AddScoped<ScadaEngine.Web.Services.AlarmMessageLocalizer>();
+
+// ScadaPage 控制動作 EventLog 寫入器（EventType=3 資訊）
+builder.Services.AddScoped<ScadaEngine.Web.Services.ControlEventLogger>();
 
 // 註冊即時監控 MQTT 訂閱服務
 builder.Services.AddSingleton<ScadaEngine.Web.Services.MqttRealtimeSubscriberService>();
 builder.Services.AddHostedService<ScadaEngine.Web.Services.MqttRealtimeSubscriberService>(provider =>
     provider.GetRequiredService<ScadaEngine.Web.Services.MqttRealtimeSubscriberService>());
+
+// 註冊未恢復警報 MQTT 訂閱服務（雙註冊：Singleton + HostedService）
+builder.Services.AddSingleton<ScadaEngine.Web.Services.MqttAlarmSubscriberService>();
+builder.Services.AddHostedService<ScadaEngine.Web.Services.MqttAlarmSubscriberService>(provider =>
+    provider.GetRequiredService<ScadaEngine.Web.Services.MqttAlarmSubscriberService>());
+
+// 註冊警報規則 Reload 發布者（雙註冊：Singleton 供 AlarmRuleService 注入呼叫 + HostedService 啟動時連 broker）
+builder.Services.AddSingleton<ScadaEngine.Web.Services.AlarmRuleReloadPublisher>();
+builder.Services.AddHostedService<ScadaEngine.Web.Services.AlarmRuleReloadPublisher>(provider =>
+    provider.GetRequiredService<ScadaEngine.Web.Services.AlarmRuleReloadPublisher>());
+
+// 註冊 DB 來源 Reload 發布者（雙註冊：Singleton 供 Controller 注入呼叫 + HostedService 啟動時連 broker）
+builder.Services.AddSingleton<ScadaEngine.Web.Services.DbCoordinatorReloadPublisher>();
+builder.Services.AddHostedService<ScadaEngine.Web.Services.DbCoordinatorReloadPublisher>(provider =>
+    provider.GetRequiredService<ScadaEngine.Web.Services.DbCoordinatorReloadPublisher>());
 
 var app = builder.Build();
 
@@ -137,6 +203,10 @@ try
     app.UseHttpsRedirection();
     app.UseStaticFiles();
     app.UseRouting();
+
+    // 多語系中介軟體（位置：UseRouting 之後、UseAuthentication 之前）
+    var localizationOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<RequestLocalizationOptions>>().Value;
+    app.UseRequestLocalization(localizationOptions);
 
     // 認證和授權中介軟體
     app.UseAuthentication();

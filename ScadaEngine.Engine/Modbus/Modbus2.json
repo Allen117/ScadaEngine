@@ -14,7 +14,7 @@
       "Max": "100"
     },
     {
-      "Name": "Single1-2",
+      "Name": "CWP1",
       "Address": "40001",
       "DataType": "FLOATINGPT",
       "Ratio": "1",
@@ -23,7 +23,7 @@
       "Max": "100"
     },
     {
-      "Name": "Single2-1",
+      "Name": "CHP1",
       "Address": "2001",
       "DataType": "UINTEGER",
       "Ratio": "1",
@@ -32,7 +32,7 @@
       "Max": "1"
     },
     {
-      "Name": "Single2-2",
+      "Name": "CH1",
       "Address": "2004",
       "DataType": "UINTEGER",
       "Ratio": "1",

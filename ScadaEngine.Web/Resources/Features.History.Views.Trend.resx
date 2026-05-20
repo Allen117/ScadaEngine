@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="history.title" xml:space="preserve"><value>歷史趨勢圖</value></data>
+  <data name="history.source" xml:space="preserve"><value>資料來源：HistoryData</value></data>
+
+  <data name="history.coordinator.title" xml:space="preserve"><value>設備清單</value></data>
+  <data name="history.coordinator.calc" xml:space="preserve"><value>計算點位</value></data>
+  <data name="history.coordinator.ungrouped" xml:space="preserve"><value>未分組</value></data>
+  <data name="history.coordinator.empty" xml:space="preserve"><value>無設備資料</value></data>
+
+  <data name="history.filter.title" xml:space="preserve"><value>查詢條件</value></data>
+  <data name="history.filter.points" xml:space="preserve"><value>點位選取</value></data>
+  <data name="history.filter.button.check_all" xml:space="preserve"><value>全選</value></data>
+  <data name="history.filter.button.uncheck_all" xml:space="preserve"><value>清除</value></data>
+  <data name="history.filter.button.add_to_basket" xml:space="preserve"><value>加入待查詢清單</value></data>
+
+  <data name="history.basket.title" xml:space="preserve"><value>待查詢清單</value></data>
+  <data name="history.basket.button.clear_all" xml:space="preserve"><value>清除全部</value></data>
+  <data name="history.basket.empty" xml:space="preserve"><value>尚未加入任何點位</value></data>
+  <data name="history.basket.hint" xml:space="preserve"><value>可跨設備加入，最多 8 個點位</value></data>
+
+  <data name="history.time.start" xml:space="preserve"><value>開始時間</value></data>
+  <data name="history.time.end" xml:space="preserve"><value>結束時間</value></data>
+  <data name="history.button.query" xml:space="preserve"><value>查詢</value></data>
+  <data name="history.button.clear" xml:space="preserve"><value>清除圖表</value></data>
+  <data name="history.time.quick" xml:space="preserve"><value>快速：</value></data>
+
+  <data name="history.chart.title.empty" xml:space="preserve"><value>請加入點位後按下查詢</value></data>
+  <data name="history.chart.title.placeholder" xml:space="preserve"><value>請加入點位後按下查詢</value></data>
+  <data name="history.chart.title.queried" xml:space="preserve"><value>已查詢 {0} 個點位</value></data>
+
+  <data name="history.chart.warning.limit" xml:space="preserve"><value>部分點位超過 5000 筆上限</value></data>
+  <data name="history.chart.button.export" xml:space="preserve"><value>匯出 Excel</value></data>
+  <data name="history.chart.axis_dual" xml:space="preserve"><value>雙軸</value></data>
+  <data name="history.chart.axis_single" xml:space="preserve"><value>單軸</value></data>
+  <data name="history.chart.axis_toggle_title" xml:space="preserve"><value>切換單軸/雙軸模式</value></data>
+  <data name="history.chart.type.line" xml:space="preserve"><value>折線</value></data>
+  <data name="history.chart.type.bar" xml:space="preserve"><value>柱狀</value></data>
+
+  <data name="history.chart.querying" xml:space="preserve"><value>查詢中...</value></data>
+  <data name="history.chart.placeholder" xml:space="preserve"><value>請加入點位並設定時間範圍後按下查詢</value></data>
+  <data name="history.chart.no_data" xml:space="preserve"><value>該時段內無歷史資料</value></data>
+  <data name="history.chart.query_failed" xml:space="preserve"><value>查詢失敗：{0}</value></data>
+  <data name="history.chart.completed_at" xml:space="preserve"><value>查詢完成: {0}</value></data>
+
+  <data name="history.stats.min" xml:space="preserve"><value>最小值</value></data>
+  <data name="history.stats.max" xml:space="preserve"><value>最大值</value></data>
+  <data name="history.stats.avg" xml:space="preserve"><value>平均值</value></data>
+  <data name="history.stats.std_dev" xml:space="preserve"><value>標準差</value></data>
+  <data name="history.stats.count" xml:space="preserve"><value>筆數</value></data>
+
+  <data name="history.multistats.point" xml:space="preserve"><value>點位</value></data>
+
+  <data name="history.footer.note" xml:space="preserve"><value>每個點位最多顯示 5000 筆；品質不良以紅色標示（單點模式）</value></data>
+
+  <data name="history.table.title" xml:space="preserve"><value>資料明細</value></data>
+  <data name="history.table.count" xml:space="preserve"><value>筆</value></data>
+  <data name="history.table.button.expand" xml:space="preserve"><value>展開</value></data>
+  <data name="history.table.button.collapse" xml:space="preserve"><value>收合</value></data>
+  <data name="history.table.col.timestamp" xml:space="preserve"><value>時間戳記</value></data>
+  <data name="history.table.col.value" xml:space="preserve"><value>數值</value></data>
+  <data name="history.table.col.quality" xml:space="preserve"><value>品質</value></data>
+
+  <data name="history.alert.no_points_in_basket" xml:space="preserve"><value>請先將點位加入待查詢清單</value></data>
+  <data name="history.alert.no_time_range" xml:space="preserve"><value>請設定查詢時間範圍</value></data>
+  <data name="history.alert.bad_time_range" xml:space="preserve"><value>開始時間必須早於結束時間</value></data>
+  <data name="history.alert.basket_full" xml:space="preserve"><value>最多只能加入 {0} 個點位</value></data>
+  <data name="history.alert.already_in_basket" xml:space="preserve"><value>選取的點位已全部在清單中</value></data>
+  <data name="history.alert.no_points_selected" xml:space="preserve"><value>請先勾選點位</value></data>
+  <data name="history.alert.no_export_data" xml:space="preserve"><value>無可匯出的資料</value></data>
+  <data name="history.alert.no_points_data" xml:space="preserve"><value>無點位資料</value></data>
+
+  <data name="history.basket.button.remove" xml:space="preserve"><value>移除</value></data>
+
+  <data name="history.excel.col.timestamp" xml:space="preserve"><value>時間戳記</value></data>
+  <data name="history.excel.col.value" xml:space="preserve"><value>數值</value></data>
+  <data name="history.excel.col.quality" xml:space="preserve"><value>品質</value></data>
+  <data name="history.excel.summary.sheet" xml:space="preserve"><value>統計摘要</value></data>
+  <data name="history.excel.summary.col.point" xml:space="preserve"><value>點位名稱</value></data>
+  <data name="history.excel.summary.col.unit" xml:space="preserve"><value>單位</value></data>
+  <data name="history.excel.summary.col.count" xml:space="preserve"><value>筆數</value></data>
+  <data name="history.excel.summary.col.min" xml:space="preserve"><value>最小值</value></data>
+  <data name="history.excel.summary.col.max" xml:space="preserve"><value>最大值</value></data>
+  <data name="history.excel.summary.col.avg" xml:space="preserve"><value>平均值</value></data>
+  <data name="history.excel.summary.col.std_dev" xml:space="preserve"><value>標準差</value></data>
+  <data name="history.excel.filename" xml:space="preserve"><value>歷史趨勢</value></data>
+</root>

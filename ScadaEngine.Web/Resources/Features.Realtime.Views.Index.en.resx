@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="realtime.title" xml:space="preserve"><value>SCADA Realtime Dashboard</value></data>
+
+  <data name="realtime.connection.ok" xml:space="preserve"><value>Connected</value></data>
+  <data name="realtime.connection.bad" xml:space="preserve"><value>Disconnected</value></data>
+  <data name="realtime.button.refresh" xml:space="preserve"><value>Refresh</value></data>
+
+  <data name="realtime.coordinator.title" xml:space="preserve"><value>Devices</value></data>
+  <data name="realtime.coordinator.calc" xml:space="preserve"><value>Calculated Points</value></data>
+  <data name="realtime.coordinator.ungrouped" xml:space="preserve"><value>Ungrouped</value></data>
+  <data name="realtime.coordinator.empty" xml:space="preserve"><value>No devices</value></data>
+
+  <data name="realtime.table.title" xml:space="preserve"><value>Realtime Data</value></data>
+  <data name="realtime.table.count_suffix" xml:space="preserve"><value>rows</value></data>
+
+  <data name="realtime.col.name" xml:space="preserve"><value>Name</value></data>
+  <data name="realtime.col.sid" xml:space="preserve"><value>SID</value></data>
+  <data name="realtime.col.value" xml:space="preserve"><value>Value</value></data>
+  <data name="realtime.col.unit" xml:space="preserve"><value>Unit</value></data>
+  <data name="realtime.col.quality" xml:space="preserve"><value>Quality</value></data>
+  <data name="realtime.col.timestamp" xml:space="preserve"><value>Timestamp</value></data>
+
+  <data name="realtime.empty.no_data" xml:space="preserve"><value>No realtime data; please check the MQTT connection.</value></data>
+
+  <data name="realtime.footer.note" xml:space="preserve"><value>Auto-refresh: 3s | Topic: SCADA/Realtime/+</value></data>
+  <data name="realtime.footer.last_update" xml:space="preserve"><value>Last update</value></data>
+
+  <data name="realtime.alert.refresh_failed" xml:space="preserve"><value>Refresh failed: {0}</value></data>
+  <data name="realtime.alert.network_failed" xml:space="preserve"><value>Network request failed; please check the connection.</value></data>
+
+  <data name="alarm.panel.fetch_failed" xml:space="preserve"><value>Failed to fetch alarm data</value></data>
+  <data name="alarm.panel.mqtt_disconnected" xml:space="preserve"><value>Alarm MQTT disconnected; data may be stale</value></data>
+  <data name="alarm.panel.no_connection" xml:space="preserve"><value>Cannot reach the server</value></data>
+  <data name="alarm.panel.empty.no_active" xml:space="preserve"><value>No active alarms</value></data>
+  <data name="alarm.panel.empty.no_match" xml:space="preserve"><value>No alarms match the filter</value></data>
+
+  <data name="alarm.panel.ack.acked" xml:space="preserve"><value>Acknowledged</value></data>
+  <data name="alarm.panel.ack.unack" xml:space="preserve"><value>Unack'd</value></data>
+  <data name="alarm.panel.ack.title.acked" xml:space="preserve"><value>Acknowledged — {0}</value></data>
+  <data name="alarm.panel.ack.title.dblclick" xml:space="preserve"><value>Double-click to acknowledge</value></data>
+  <data name="alarm.panel.ack.failed" xml:space="preserve"><value>Failed to acknowledge alarm</value></data>
+  <data name="alarm.panel.ack.failed_with" xml:space="preserve"><value>Acknowledge failed: cannot reach server</value></data>
+
+  <data name="alarm.panel.elapsed.sec" xml:space="preserve"><value>{0}s ago</value></data>
+  <data name="alarm.panel.elapsed.min" xml:space="preserve"><value>{0}m ago</value></data>
+  <data name="alarm.panel.elapsed.hour" xml:space="preserve"><value>{0}h ago</value></data>
+  <data name="alarm.panel.elapsed.day" xml:space="preserve"><value>{0}d ago</value></data>
+</root>

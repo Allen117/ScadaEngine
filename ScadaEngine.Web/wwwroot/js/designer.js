@@ -140,7 +140,7 @@ const WIDGET_DEFS = {
         szLabel: 'AI 點位',
         szIcon: 'fas fa-digital-tachograph',
         nDefaultW: 100,
-        nDefaultH: 40,
+        nDefaultH: 20,
         nMinW: 60, nMinH: 20,
         defaultProps: {
             szTitle:     'AI 點位',
@@ -158,7 +158,7 @@ const WIDGET_DEFS = {
         szLabel: 'DI 點位',
         szIcon: 'fas fa-circle',
         nDefaultW: 100,
-        nDefaultH: 40,
+        nDefaultH: 20,
         nMinW: 60, nMinH: 20,
         defaultProps: {
             szTitle:        'DI 點位',
@@ -180,7 +180,7 @@ const WIDGET_DEFS = {
         szLabel: 'AO 點位',
         szIcon: 'fas fa-sliders-h',
         nDefaultW: 100,
-        nDefaultH: 40,
+        nDefaultH: 20,
         nMinW: 60, nMinH: 20,
         defaultProps: {
             szTitle:            'AO 點位',
@@ -205,7 +205,7 @@ const WIDGET_DEFS = {
         szLabel: 'DO 點位',
         szIcon: 'fas fa-toggle-on',
         nDefaultW: 100,
-        nDefaultH: 40,
+        nDefaultH: 20,
         nMinW: 60, nMinH: 20,
         defaultProps: {
             szTitle:          'DO 點位',
@@ -2294,8 +2294,10 @@ let pendingGaugeY      = 0;
 let szPickerWidgetType = 'gauge'; // 記錄是哪種 widget 開啟選擇器
 let _pointPickerModal  = null;
 let nPickedCalcGroup   = null;   // 計算點位群組篩選（null=全部, ''=未分組, 'GroupName'=指定群組）
+let szPickedDbGroup    = null;   // DB 來源 Coordinator 群組篩選（null=全部, 'CoordinatorName'=指定群組）
 
 const CALC_DEVICE_ID = -999; // 計算點位的虛擬設備 ID
+const DB_DEVICE_ID   = -998; // DB 來源點位的虛擬設備 ID
 
 // SID 格式: {coordinatorId*65536 + modbusId*256 + 1}-S{N}
 // 某設備所屬 SID 的數字前綴落在 [Id*65536, (Id+1)*65536-1] 範圍內
@@ -2308,9 +2310,15 @@ function isCalcPoint(szSid) {
     return szSid && szSid.startsWith('CALC-');
 }
 
+function isDbPoint(szSid) {
+    return !!(szSid && /^DB\d+-S\d+$/.test(szSid));
+}
+
 function isPointOfDevice(szSid, nDevId) {
     if (nDevId === CALC_DEVICE_ID) return isCalcPoint(szSid);
+    if (nDevId === DB_DEVICE_ID)   return isDbPoint(szSid);
     if (isCalcPoint(szSid)) return false;
+    if (isDbPoint(szSid))   return false;
     const nPfx = getSidNumericPrefix(szSid);
     return nPfx >= nDevId * 65536 && nPfx < (nDevId + 1) * 65536;
 }
@@ -2347,6 +2355,10 @@ async function _ensurePickerData() {
 function _enrichPointsWithDeviceLabel() {
     if (!arrAllDevices || !arrAllPoints) return;
     arrAllPoints.forEach(p => {
+        if (isDbPoint(p.szSid)) {
+            p.szDeviceLabel = p.szGroupName || 'DB 來源';
+            return;
+        }
         if (isCalcPoint(p.szSid)) {
             p.szDeviceLabel = p.szGroupName || '\u8a08\u7b97\u9ede\u4f4d';
             return;
@@ -2491,6 +2503,71 @@ function _showCalcPointsFlat() {
     _renderFilteredPoints('');
 }
 
+// ---- DB 來源點位 ----
+function showDbPointStep() {
+    nPickedDevId     = DB_DEVICE_ID;
+    nPickedModbusId  = null;
+    szPickedSid      = null;
+    szPickedDbGroup  = null;
+
+    const dbGroups = _getDbGroups();
+    document.getElementById('ppStep0').style.display = 'none';
+    document.getElementById('ppStep1').style.display = '';
+    document.getElementById('ppStep2').style.display = 'none';
+    document.getElementById('ppModalTitle').textContent = '選擇 DB 來源';
+    _renderDbGroupList(dbGroups);
+}
+
+function _getDbGroups() {
+    if (!arrAllPoints) return [];
+    const groups = {};
+    arrAllPoints.forEach(p => {
+        if (!isDbPoint(p.szSid)) return;
+        const g = p.szGroupName || '';
+        if (!groups[g]) groups[g] = 0;
+        groups[g]++;
+    });
+    return Object.keys(groups).sort();
+}
+
+function _renderDbGroupList(groups) {
+    const container = document.getElementById('deviceListContainer');
+    if (!groups || groups.length === 0) {
+        container.innerHTML = '<div style="color:#888;font-size:12px;text-align:center;padding:20px;">' +
+            '<i class="fas fa-database" style="font-size:24px;display:block;margin-bottom:8px;"></i>尚無 DB 來源點位</div>';
+        return;
+    }
+    container.innerHTML = groups.map(g => {
+        const nPts = (arrAllPoints || []).filter(p => isDbPoint(p.szSid) && (p.szGroupName || '') === g).length;
+        const szDisplay = g || 'DB 來源';
+        return `
+        <div class="point-list-item" onclick="selectDbGroup('${escHtml(g)}')">
+            <i class="fas fa-database" style="font-size:14px;color:#6ec1a3;flex-shrink:0;"></i>
+            <div style="flex:1;min-width:0;">
+                <div class="point-name">${escHtml(szDisplay)}</div>
+                <div class="point-sid">${nPts} 個點位</div>
+            </div>
+            <i class="fas fa-chevron-right" style="color:#555;font-size:11px;"></i>
+        </div>`;
+    }).join('');
+}
+
+function selectDbGroup(szGroup) {
+    nPickedDevId    = DB_DEVICE_ID;
+    nPickedModbusId = null;
+    szPickedDbGroup = szGroup;
+    szPickedSid     = null;
+    document.getElementById('ppDeviceName').textContent = szGroup || 'DB 來源';
+    document.getElementById('ppDeviceIcon').className = 'fas fa-database me-1';
+    document.getElementById('ppStep0').style.display = 'none';
+    document.getElementById('ppStep1').style.display = 'none';
+    document.getElementById('ppStep2').style.display = '';
+    document.getElementById('ppModalTitle').textContent = '選擇 DB 來源點位';
+    document.getElementById('ppPointSearch').value = '';
+    document.getElementById('btnConfirmPoint').disabled = true;
+    _renderFilteredPoints('');
+}
+
 function goBackToStep0() {
     document.getElementById('ppStep0').style.display = '';
     document.getElementById('ppStep1').style.display = 'none';
@@ -2527,6 +2604,12 @@ function _showPickerForBoundSid(szBoundSid) {
         szPickedSid     = szBoundSid;
         nPickedCalcGroup = point.szGroupName || null;
         szDevLabel      = point.szGroupName || '\u8a08\u7b97\u9ede\u4f4d';
+    } else if (isDbPoint(szBoundSid)) {
+        nPickedDevId    = DB_DEVICE_ID;
+        nPickedModbusId = null;
+        szPickedSid     = szBoundSid;
+        szPickedDbGroup = point.szGroupName || null;
+        szDevLabel      = point.szGroupName || 'DB 來源';
     } else {
         for (const d of arrAllDevices) {
             if (!isPointOfDevice(szBoundSid, d.nId)) continue;
@@ -2558,7 +2641,7 @@ function _showPickerForBoundSid(szBoundSid) {
     }
 
     document.getElementById('ppDeviceName').textContent = szDevLabel;
-    document.getElementById('ppDeviceIcon').className = isCalcPoint(szBoundSid) ? 'fas fa-calculator me-1' : 'fas fa-server me-1';
+    document.getElementById('ppDeviceIcon').className = isCalcPoint(szBoundSid) ? 'fas fa-calculator me-1' : (isDbPoint(szBoundSid) ? 'fas fa-database me-1' : 'fas fa-server me-1');
     document.getElementById('ppStep0').style.display = 'none';
     document.getElementById('ppStep1').style.display = 'none';
     document.getElementById('ppStep2').style.display = '';
@@ -2672,6 +2755,10 @@ function goBackToDevices() {
         } else {
             goBackToStep0();
         }
+    } else if (nPickedDevId === DB_DEVICE_ID) {
+        // DB 來源：返回 Coordinator 清單
+        szPickedDbGroup = null;
+        showDbPointStep();
     } else {
         document.getElementById('ppStep0').style.display = 'none';
         document.getElementById('ppStep1').style.display = '';
@@ -2695,6 +2782,10 @@ function _renderFilteredPoints(szKeyword) {
             // 計算點位群組篩選
             if (!isCalcPoint(p.szSid)) return false;
             if ((p.szGroupName || '') !== nPickedCalcGroup) return false;
+        } else if (nPickedDevId === DB_DEVICE_ID) {
+            // DB 來源點位：依 Coordinator 群組篩選（null=全部 DB 點位）
+            if (!isDbPoint(p.szSid)) return false;
+            if (szPickedDbGroup != null && (p.szGroupName || '') !== szPickedDbGroup) return false;
         } else if (nPickedModbusId != null) {
             const nPfx = getSidNumericPrefix(p.szSid);
             const base = nPickedDevId * 65536 + nPickedModbusId * 256;

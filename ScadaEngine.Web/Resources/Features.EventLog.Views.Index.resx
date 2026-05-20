@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="eventlog.title" xml:space="preserve"><value>事件記錄查詢</value></data>
+
+  <data name="eventlog.filter.start_time" xml:space="preserve"><value>起始時間</value></data>
+  <data name="eventlog.filter.end_time" xml:space="preserve"><value>結束時間</value></data>
+  <data name="eventlog.filter.event_type" xml:space="preserve"><value>事件類型</value></data>
+  <data name="eventlog.filter.severity" xml:space="preserve"><value>嚴重程度</value></data>
+  <data name="eventlog.filter.point" xml:space="preserve"><value>點位篩選</value></data>
+  <data name="eventlog.filter.acknowledged" xml:space="preserve"><value>確認狀態</value></data>
+  <data name="eventlog.filter.all" xml:space="preserve"><value>全部</value></data>
+  <data name="eventlog.filter.unselected" xml:space="preserve"><value>未選擇</value></data>
+  <data name="eventlog.filter.quick" xml:space="preserve"><value>快速：</value></data>
+  <data name="eventlog.filter.button.query" xml:space="preserve"><value>查詢</value></data>
+
+  <data name="eventlog.event.alarm" xml:space="preserve"><value>警報</value></data>
+  <data name="eventlog.event.fault" xml:space="preserve"><value>故障</value></data>
+  <data name="eventlog.event.warning" xml:space="preserve"><value>警告</value></data>
+  <data name="eventlog.event.info" xml:space="preserve"><value>資訊</value></data>
+  <data name="eventlog.event.system" xml:space="preserve"><value>系統</value></data>
+  <data name="eventlog.event.unknown" xml:space="preserve"><value>未知</value></data>
+
+  <data name="eventlog.severity.urgent" xml:space="preserve"><value>緊急</value></data>
+  <data name="eventlog.severity.high" xml:space="preserve"><value>高</value></data>
+  <data name="eventlog.severity.medium" xml:space="preserve"><value>中</value></data>
+  <data name="eventlog.severity.low" xml:space="preserve"><value>低</value></data>
+  <data name="eventlog.severity.none" xml:space="preserve"><value>無</value></data>
+
+  <data name="eventlog.ack.unack" xml:space="preserve"><value>未確認</value></data>
+  <data name="eventlog.ack.acked" xml:space="preserve"><value>已確認</value></data>
+
+  <data name="eventlog.stat.total" xml:space="preserve"><value>總筆數</value></data>
+  <data name="eventlog.stat.alarm" xml:space="preserve"><value>警報</value></data>
+  <data name="eventlog.stat.warning" xml:space="preserve"><value>警告</value></data>
+  <data name="eventlog.stat.cleared" xml:space="preserve"><value>已恢復</value></data>
+  <data name="eventlog.stat.unack" xml:space="preserve"><value>未確認</value></data>
+
+  <data name="eventlog.col.no" xml:space="preserve"><value>#</value></data>
+  <data name="eventlog.col.occurred_at" xml:space="preserve"><value>發生時間</value></data>
+  <data name="eventlog.col.event_type" xml:space="preserve"><value>事件類型</value></data>
+  <data name="eventlog.col.severity" xml:space="preserve"><value>嚴重程度</value></data>
+  <data name="eventlog.col.message" xml:space="preserve"><value>訊息</value></data>
+  <data name="eventlog.col.cleared_at" xml:space="preserve"><value>恢復時間</value></data>
+  <data name="eventlog.col.ack_status" xml:space="preserve"><value>確認狀態</value></data>
+  <data name="eventlog.col.ack_by" xml:space="preserve"><value>確認者</value></data>
+
+  <data name="eventlog.tooltip.trigger_value" xml:space="preserve"><value>觸發值</value></data>
+  <data name="eventlog.tooltip.threshold" xml:space="preserve"><value>門檻值</value></data>
+  <data name="eventlog.tooltip.condition" xml:space="preserve"><value>條件</value></data>
+
+  <data name="eventlog.result.empty_default" xml:space="preserve"><value>請設定查詢條件後點擊「查詢」按鈕</value></data>
+  <data name="eventlog.result.empty_query" xml:space="preserve"><value>查詢範圍內無事件記錄</value></data>
+  <data name="eventlog.result.placeholder" xml:space="preserve"><value>請設定條件後點擊查詢</value></data>
+  <data name="eventlog.result.found" xml:space="preserve"><value>共查詢到 {0} 筆記錄</value></data>
+  <data name="eventlog.result.button.export" xml:space="preserve"><value>匯出 CSV</value></data>
+  <data name="eventlog.result.cell.active" xml:space="preserve"><value>發生中</value></data>
+  <data name="eventlog.result.loading" xml:space="preserve"><value>載入中...</value></data>
+
+  <data name="eventlog.alert.select_time" xml:space="preserve"><value>請選擇起始與結束時間</value></data>
+  <data name="eventlog.alert.query_failed" xml:space="preserve"><value>查詢失敗: {0}</value></data>
+  <data name="eventlog.alert.unknown_error" xml:space="preserve"><value>未知錯誤</value></data>
+  <data name="eventlog.alert.query_error" xml:space="preserve"><value>查詢發生錯誤: {0}</value></data>
+
+  <data name="eventlog.csv.filename" xml:space="preserve"><value>事件記錄</value></data>
+
+  <data name="eventlog.picker.title.select_device" xml:space="preserve"><value>選擇設備</value></data>
+  <data name="eventlog.picker.title.select_point" xml:space="preserve"><value>選擇點位</value></data>
+  <data name="eventlog.picker.button.cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="eventlog.picker.button.confirm" xml:space="preserve"><value>確認</value></data>
+  <data name="eventlog.picker.button.back" xml:space="preserve"><value>返回</value></data>
+  <data name="eventlog.picker.search_placeholder" xml:space="preserve"><value>搜尋點位名稱...</value></data>
+  <data name="eventlog.picker.no_devices" xml:space="preserve"><value>尚無設備</value></data>
+  <data name="eventlog.picker.no_points" xml:space="preserve"><value>無符合點位</value></data>
+  <data name="eventlog.picker.calc_point" xml:space="preserve"><value>計算點位</value></data>
+  <data name="eventlog.picker.point_count" xml:space="preserve"><value>{0} 點</value></data>
+  <data name="eventlog.picker.load_failed" xml:space="preserve"><value>無法載入設備/點位清單: {0}</value></data>
+</root>

@@ -14,6 +14,8 @@
             daysOfWeek = s.szDaysOfWeek ?? "",
             daysOfMonth = s.szDaysOfMonth ?? "",
             startTime = s.szStartTime, endTime = s.szEndTime,
+            excludeDates = s.szExcludeDates ?? "",
+            includeDates = s.szIncludeDates ?? "",
             isEnabled = s.isEnabled, remarks = s.szRemarks ?? ""
         })
     );
@@ -155,12 +157,49 @@
                         <input type="time" class="form-control" id="txtStartTime" value="08:00" />
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label fw-semibold"><i class="fas fa-clock me-1"></i>結束時間</label>
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-clock me-1"></i>結束時間
+                            <small class="text-muted fw-normal">（可跨日）</small>
+                        </label>
                         <input type="time" class="form-control" id="txtEndTime" value="17:00" />
                     </div>
                     <div class="col-md-4">
                         <label class="form-label fw-semibold"><i class="fas fa-comment me-1"></i>備註</label>
                         <input type="text" class="form-control" id="txtRemarks" maxlength="200" />
+                    </div>
+                </div>
+
+                <hr />
+
+                <!-- 例外日 / 加開日 -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-ban me-1 text-danger"></i>例外日
+                            <small class="text-muted fw-normal">（當天整段不啟動）</small>
+                        </label>
+                        <div class="input-group">
+                            <input type="text" class="form-control form-control-sm" id="txtExcludeDate"
+                                   placeholder="yyyy/MM/dd" maxlength="10" inputmode="numeric" />
+                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="window._schedule.addExcludeDate()">
+                                <i class="fas fa-plus"></i> 加入
+                            </button>
+                        </div>
+                        <div class="date-chip-list mt-2" id="excludeDateChips"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-calendar-plus me-1 text-success"></i>加開日
+                            <small class="text-muted fw-normal">（當天無視規則強制啟動）</small>
+                        </label>
+                        <div class="input-group">
+                            <input type="text" class="form-control form-control-sm" id="txtIncludeDate"
+                                   placeholder="yyyy/MM/dd" maxlength="10" inputmode="numeric" />
+                            <button type="button" class="btn btn-outline-success btn-sm" onclick="window._schedule.addIncludeDate()">
+                                <i class="fas fa-plus"></i> 加入
+                            </button>
+                        </div>
+                        <div class="date-chip-list mt-2" id="includeDateChips"></div>
                     </div>
                 </div>
 

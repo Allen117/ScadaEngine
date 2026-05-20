@@ -1,3 +1,25 @@
+/* 畫布工作區：深色底 + 內陰影，內部 wrap 以絕對定位 + transform 置中縮放
+   不用 flex 置中：wrap 的 layout box 等於畫布原始尺寸（例 3000×2000），
+   會把 viewport 撐到那個高度造成循環依賴（fScale 讀到上一輪殘留尺寸），
+   改用 position:absolute 讓 wrap 不參與 viewport 的 intrinsic 高度計算。 */
+.scada-canvas-viewport {
+    flex: 1;
+    height: calc(100vh - 240px);               /* 螢幕高 − header/footer/警報面板/邊距 */
+    min-height: 480px;                         /* 小螢幕底線 */
+    background: #ced4da;
+    border-radius: 8px;
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    position: relative;                        /* #scadaCanvasWrap 絕對定位錨點 */
+}
+
+#scadaCanvasWrap {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    /* transform 由 scadapage.js 動態設為 translate(-50%, -50%) scale(fScale) */
+}
+
 .scada-gauge:hover .scada-hover-label,
 .scada-rt-value:hover .scada-hover-label,
 .scada-ctrl-btn:hover .scada-hover-label,

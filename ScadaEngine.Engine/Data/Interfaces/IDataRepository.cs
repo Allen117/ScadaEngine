@@ -248,6 +248,53 @@ public interface IDataRepository
 
     #endregion
 
+    #region DB 來源 Coordinator / Points / LatestData
+
+    /// <summary>
+    /// 取得所有 DB 來源 Coordinator
+    /// </summary>
+    Task<IEnumerable<DbCoordinatorModel>> GetAllDbCoordinatorsAsync();
+
+    /// <summary>
+    /// 取得所有 DB 來源點位（不限 Coordinator）
+    /// </summary>
+    Task<IEnumerable<DbPointModel>> GetAllDbPointsAsync();
+
+    /// <summary>
+    /// 取得指定 Coordinator 的所有 DB 點位
+    /// </summary>
+    Task<IEnumerable<DbPointModel>> GetDbPointsByCoordinatorIdAsync(int nCoordinatorId);
+
+    /// <summary>
+    /// UPSERT DB Coordinator（依 Name 比對；存在則更新 PollingInterval/ConnectTimeout/MonitorEnabled，不存在則新增）
+    /// </summary>
+    /// <returns>(Id, PollingInterval, ConnectTimeout, MonitorEnabled)</returns>
+    Task<(int nId, int nPollingInterval, int nConnectTimeout, bool isMonitorEnabled)> SaveDbCoordinatorAsync(DbCoordinatorModel coordinator);
+
+    /// <summary>
+    /// 全量覆寫指定 Coordinator 的點位（先刪後插，Transaction 包裹）
+    /// </summary>
+    Task<int> SaveDbPointsAsync(int nCoordinatorId, IEnumerable<DbPointModel> points);
+
+    /// <summary>
+    /// 依 SID 前綴讀取 DBLatestData（polling 用）
+    /// </summary>
+    /// <param name="szSidPrefix">例 'DB1-'，會以 LIKE @prefix + '%' 比對</param>
+    /// <param name="nCommandTimeoutMs">SqlCommand.CommandTimeout（毫秒，向上取整為秒）</param>
+    Task<IEnumerable<ScadaEngine.Common.Data.Models.LatestDataModel>> GetDbLatestDataByPrefixAsync(string szSidPrefix, int nCommandTimeoutMs = 1000);
+
+    /// <summary>
+    /// 更新 DBLatestData（LogicFlow 寫入用）：先驗證 DBPoints.Min ≤ Value ≤ Max，
+    /// 範圍超出 / SID 不存在 → log warning + 回 false（不丟例外）；通過則
+    /// UPDATE Value=@val, Timestamp=GETDATE(), Quality=1。
+    /// </summary>
+    /// <param name="szSid">DB 點位 SID（例 DB1-S5）</param>
+    /// <param name="dValue">寫入工程值</param>
+    /// <returns>寫入成功（受影響列數 > 0）回傳 true</returns>
+    Task<bool> UpdateDbLatestDataAsync(string szSid, double dValue);
+
+    #endregion
+
     /// <summary>
     /// 釋放資源
     /// </summary>

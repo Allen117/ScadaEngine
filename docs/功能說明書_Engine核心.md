@@ -534,8 +534,18 @@ THEN 寫入 控制點位(ControlPointSID) = {控制值}
 | AND | 邏輯且 | 所有輸入皆為 1 時輸出 1 |
 | OR | 邏輯或 | 任一輸入為 1 時輸出 1 |
 | Timer (TP) | 脈衝定時器 | 可設定 ON/OFF 時間長度 |
+| Counter (CTU) | 上升緣計數器 | cu 上升緣 +1，達 preset 後 q=1 並飽和；reset 高電位歸零；累加值不持久化（重啟歸零） |
 | Schedule | 排程 | 依 TimeSchedules 表判斷是否在排程內 |
 | Output | 寫入控制 | 執行 Modbus 寫入動作 |
+
+#### Counter (CTU) 細節
+
+- **輸入腳**：`cu`（count up，0→非0 上升緣 +1）、`reset`（非 0 歸零，優先於 cu）、`preset`（達到後 q=1 並停止累加；未連線時用節點屬性 `presetValue`，預設 10）
+- **輸出腳**：`q`（cv ≥ preset 時為 1，否則 0）、`cv`（current value，目前累加值）
+- **節點屬性**：`presetValue`（int，預設 10）、`cuMinIntervalMs`（int 毫秒，預設 60000，cu 邊緣最小間隔過濾，避免雜訊或快速跳變誤計）
+- **自我回授**：`q → reset` 連線可運作（產生 one-shot pulse）— 此時 reset 直接讀本節點上一 tick 的 q，不等待自身評估完成；EvaluateNodes 對 counter 不清 `Result` 以保留跨 tick 的 q
+- **首次載入保護**：第一輪只記錄 prevCu、不觸發邊緣，避免 Engine 啟動瞬間若上游已是高電位被誤計
+- **持久化**：累加值僅存於記憶體（`FlowNode.CounterValue`），Engine 重啟歸零；節點屬性（presetValue/cuMinIntervalMs）寫入 DiagramJson
 
 ### 10.3 樂觀鎖
 

@@ -31,14 +31,10 @@ public class LoginController : Controller
     /// </summary>
     [HttpGet]
     [AllowAnonymous]
-    public async Task<IActionResult> Index()
+    public IActionResult Index()
     {
         if (User.Identity?.IsAuthenticated == true)
             return Redirect("/ScadaPage");
-
-        // 若 DB 無啟用的 Admin 帳號，顯示預設帳密提示
-        var nAdminCount = await _dataRepository.GetAdminCountAsync();
-        ViewBag.ShowDefaultHint = nAdminCount == 0;
 
         return View(new LoginModel());
     }
@@ -52,7 +48,6 @@ public class LoginController : Controller
     public async Task<IActionResult> Index(LoginModel loginModel)
     {
         var nAdminCount = await _dataRepository.GetAdminCountAsync();
-        ViewBag.ShowDefaultHint = nAdminCount == 0;
 
         if (!ModelState.IsValid)
             return View(loginModel);

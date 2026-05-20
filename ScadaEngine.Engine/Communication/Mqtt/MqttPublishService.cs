@@ -18,7 +18,6 @@ public class MqttPublishService : IDisposable
     private IMqttClient? _mqttClient;
     private MqttClientOptions? _mqttOptions;
     private Timer? _reconnectTimer;
-    private bool _isConnected = false;
     private bool _isReconnecting = false;
     private bool _disposed = false;
 
@@ -55,7 +54,6 @@ public class MqttPublishService : IDisposable
             // 設定連線事件處理
             _mqttClient.ConnectedAsync += async (e) =>
             {
-                _isConnected = true;
                 _logger.LogInformation("已成功連線至 MQTT Broker: {BrokerIp}:{Port}", _mqttConfig.szBrokerIp, _mqttConfig.nPort);
                 await Task.CompletedTask;
             };
@@ -90,7 +88,7 @@ public class MqttPublishService : IDisposable
     /// <returns>發布成功回傳 true，失敗回傳 false</returns>
     public async Task<bool> PublishRealtimeDataAsync(RealtimeDataModel realtimeData)
     {
-        if (!_isConnected || _mqttClient == null)
+        if (_mqttClient?.IsConnected != true)
         {
             _logger.LogWarning("MQTT 用戶端未連線，無法發布資料");
             return false;
@@ -142,7 +140,7 @@ public class MqttPublishService : IDisposable
     /// </summary>
     public async Task<bool> PublishRawJsonAsync(string szTopic, string szPayload, bool isRetain = true)
     {
-        if (!_isConnected || _mqttClient == null)
+        if (_mqttClient?.IsConnected != true)
         {
             _logger.LogWarning("MQTT 用戶端未連線，無法發布至 {Topic}", szTopic);
             return false;
@@ -184,7 +182,7 @@ public class MqttPublishService : IDisposable
             }
         }
 
-        _logger.LogInformation("批量發布完成: 成功={SuccessCount}, 總計={TotalCount}", nSuccessCount, realtimeDataList.Count());
+        // _logger.LogInformation("批量發布完成: 成功={SuccessCount}, 總計={TotalCount}", nSuccessCount, realtimeDataList.Count());
         return nSuccessCount;
     }
 
@@ -193,7 +191,6 @@ public class MqttPublishService : IDisposable
     /// </summary>
     private async Task OnDisconnectedAsync(MqttClientDisconnectedEventArgs e)
     {
-        _isConnected = false;
         _logger.LogWarning("與 MQTT Broker 連線中斷: {Reason}", e.Reason);
 
         // 正在釋放資源時不重連
@@ -272,7 +269,7 @@ public class MqttPublishService : IDisposable
     /// 檢查 MQTT 連線狀態
     /// </summary>
     /// <returns>已連線回傳 true，未連線回傳 false</returns>
-    public bool IsConnected => _isConnected && _mqttClient?.IsConnected == true;
+    public bool IsConnected => _mqttClient?.IsConnected == true;
 
     /// <summary>
     /// 釋放資源

@@ -1,21 +1,25 @@
 @using ScadaEngine.Web.Services
+@using System.Globalization
 @{
     bool canAccess(string route) => PermissionService.CanAccessPage(User, route);
     bool isAdmin = PermissionService.IsAdmin(User);
+    var szCurrentCulture = CultureInfo.CurrentUICulture.Name;
+    var szCurrentLangLabel = szCurrentCulture.StartsWith("en") ? "EN" : "台灣";
+    var szReturnUrl = Context.Request.Path + Context.Request.QueryString;
 }
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="@szCurrentCulture">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - SCADA 監控系統</title>
-    
+    <title>@ViewData["Title"] - @Localizer["layout.brand"]</title>
+
     <!-- Bootstrap CSS (本機) -->
     <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Font Awesome 6 Icons (本機) -->
     <link rel="stylesheet" href="~/lib/font-awesome/css/all.min.css">
-    
+
     <!-- 自訂樣式 -->
     <style>
         html, body {
@@ -25,40 +29,73 @@
             background-color: #f8f9fa;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        
+
         .navbar {
             box-shadow: 0 2px 4px rgba(0,0,0,.1);
         }
-        
+
+        /* 避免英文標籤過長造成 nav-link 換行；超寬時改為橫向溢出 */
+        .navbar .nav-link {
+            white-space: nowrap;
+        }
+        .navbar-collapse {
+            flex-wrap: nowrap;
+        }
+
         .footer {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 8px 0;
             margin-top: auto;
         }
-        
+
         main {
             min-height: calc(100vh - 140px);
         }
-        
+
         .card {
             border: none;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             border-radius: 10px;
         }
-        
+
         .btn-primary {
             background: linear-gradient(45deg, #007bff, #0056b3);
             border: none;
         }
-        
+
         .btn-primary:hover {
             background: linear-gradient(45deg, #0056b3, #004085);
             transform: translateY(-1px);
         }
-        
+
         .text-primary {
             color: #007bff !important;
+        }
+
+        /* 多層下拉選單（系統設定 → 點位設定） */
+        .dropdown-submenu {
+            position: relative;
+        }
+        .dropdown-submenu > .dropdown-menu {
+            top: 0;
+            left: 100%;
+            margin-top: -0.25rem;
+            margin-left: 0;
+            display: none;
+        }
+        .dropdown-submenu:hover > .dropdown-menu,
+        .dropdown-submenu.show > .dropdown-menu {
+            display: block;
+        }
+        .dropdown-submenu > a.dropdown-toggle::after {
+            border-top: 0.3em solid transparent;
+            border-bottom: 0.3em solid transparent;
+            border-left: 0.3em solid;
+            border-right: 0;
+            float: right;
+            margin-top: 0.55em;
+            margin-right: -0.25rem;
         }
     </style>
 </head>
@@ -67,16 +104,16 @@
     @if (ViewData["ShowNavigation"]?.ToString() != "false")
     {
         <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-            <div class="container">
+            <div class="container-fluid">
                 <a class="navbar-brand" href="/ScadaPage">
                     <i class="fas fa-industry me-2"></i>
-                    SCADA 監控系統
+                    @Localizer["layout.brand"]
                 </a>
-                
+
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                
+
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav me-auto">
                         @if (canAccess("/ScadaPage"))
@@ -84,7 +121,7 @@
                             <li class="nav-item">
                                 <a class="nav-link" href="/ScadaPage">
                                     <i class="fas fa-desktop me-1"></i>
-                                    即時監控
+                                    @Localizer["layout.menu.scadapage"]
                                 </a>
                             </li>
                         }
@@ -93,7 +130,7 @@
                             <li class="nav-item">
                                 <a class="nav-link" href="/RealTime">
                                     <i class="fas fa-tachometer-alt me-1"></i>
-                                    即時數據
+                                    @Localizer["layout.menu.realtime"]
                                 </a>
                             </li>
                         }
@@ -102,20 +139,20 @@
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                                     <i class="fas fa-microchip me-1"></i>
-                                    控制邏輯
+                                    @Localizer["layout.menu.control"]
                                 </a>
                                 <ul class="dropdown-menu">
                                     @if (canAccess("/ConditionCtrl"))
                                     {
-                                        <li><a class="dropdown-item" href="/ConditionCtrl"><i class="fas fa-code-branch me-2"></i>條件控制</a></li>
+                                        <li><a class="dropdown-item" href="/ConditionCtrl"><i class="fas fa-code-branch me-2"></i>@Localizer["layout.menu.condition"]</a></li>
                                     }
                                     @if (canAccess("/LogicFlow"))
                                     {
-                                        <li><a class="dropdown-item" href="/LogicFlow"><i class="fas fa-project-diagram me-2"></i>流程圖控制</a></li>
+                                        <li><a class="dropdown-item" href="/LogicFlow"><i class="fas fa-project-diagram me-2"></i>@Localizer["layout.menu.logicflow"]</a></li>
                                     }
                                     @if (canAccess("/ScheduleSetting"))
                                     {
-                                        <li><a class="dropdown-item" href="/ScheduleSetting"><i class="fas fa-calendar-alt me-2"></i>排程設定</a></li>
+                                        <li><a class="dropdown-item" href="/ScheduleSetting"><i class="fas fa-calendar-alt me-2"></i>@Localizer["layout.menu.schedule"]</a></li>
                                     }
                                 </ul>
                             </li>
@@ -125,72 +162,117 @@
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                                     <i class="fas fa-chart-line me-1"></i>
-                                    歷史資料
+                                    @Localizer["layout.menu.history"]
                                 </a>
                                 <ul class="dropdown-menu">
                                     @if (canAccess("/History/Trend"))
                                     {
-                                        <li><a class="dropdown-item" href="/History/Trend"><i class="fas fa-chart-area me-2"></i>趨勢圖</a></li>
+                                        <li><a class="dropdown-item" href="/History/Trend"><i class="fas fa-chart-area me-2"></i>@Localizer["layout.menu.trend"]</a></li>
                                     }
                                     @if (canAccess("/EventLog"))
                                     {
-                                        <li><a class="dropdown-item" href="/EventLog"><i class="fas fa-clipboard-list me-2"></i>事件記錄</a></li>
+                                        <li><a class="dropdown-item" href="/EventLog"><i class="fas fa-clipboard-list me-2"></i>@Localizer["layout.menu.eventlog"]</a></li>
                                     }
                                 </ul>
                             </li>
                         }
-                        @if (canAccess("/ChilledWaterSystem/Efficiency"))
+                        @if (canAccess("/EnergyMeter") || canAccess("/EnergyReport"))
                         {
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                                     <i class="fas fa-leaf me-1"></i>
-                                    能源管理
+                                    @Localizer["layout.menu.energy"]
                                 </a>
                                 <ul class="dropdown-menu">
+                                    @* 暫時隱藏：水系統效率管理
                                     @if (canAccess("/ChilledWaterSystem/Efficiency"))
                                     {
-                                        <li><a class="dropdown-item" href="/ChilledWaterSystem/Efficiency"><i class="fas fa-tint me-2"></i>水系統效率管理</a></li>
+                                        <li><a class="dropdown-item" href="/ChilledWaterSystem/Efficiency"><i class="fas fa-tint me-2"></i>@Localizer["layout.menu.chilled_water"]</a></li>
+                                    }
+                                    *@
+                                    @if (canAccess("/EnergyMeter"))
+                                    {
+                                        <li><a class="dropdown-item" href="/EnergyMeter"><i class="fas fa-sitemap me-2"></i>@Localizer["layout.menu.energy_meter"]</a></li>
+                                    }
+                                    @if (canAccess("/EnergyReport"))
+                                    {
+                                        <li><a class="dropdown-item" href="/EnergyReport"><i class="fas fa-chart-bar me-2"></i>@Localizer["layout.menu.energy_report"]</a></li>
                                     }
                                 </ul>
                             </li>
                         }
                         @{
-                            bool showSettings = canAccess("/Designer") || canAccess("/AlarmSetting") || canAccess("/CommSetting") || canAccess("/AccountSetting");
+                            bool showPointSettings = canAccess("/CommSetting") || canAccess("/DbCoordinator") || canAccess("/CalcPoint");
+                            bool showSettings = canAccess("/Designer") || canAccess("/AlarmSetting") || canAccess("/AccountSetting") || showPointSettings;
                         }
                         @if (showSettings)
                         {
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                                     <i class="fas fa-cogs me-1"></i>
-                                    系統設定
+                                    @Localizer["layout.menu.system"]
                                 </a>
                                 <ul class="dropdown-menu">
                                     @if (canAccess("/Designer"))
                                     {
-                                        <li><a class="dropdown-item" href="/Designer"><i class="fas fa-paint-brush me-2"></i>畫面設計</a></li>
+                                        <li><a class="dropdown-item" href="/Designer"><i class="fas fa-paint-brush me-2"></i>@Localizer["layout.menu.designer"]</a></li>
                                     }
                                     @if (canAccess("/AlarmSetting"))
                                     {
-                                        <li><a class="dropdown-item" href="/AlarmSetting"><i class="fas fa-bell me-2"></i>警報設定</a></li>
+                                        <li><a class="dropdown-item" href="/AlarmSetting"><i class="fas fa-bell me-2"></i>@Localizer["layout.menu.alarm"]</a></li>
                                     }
-                                    @if (canAccess("/CommSetting"))
+                                    @if (showPointSettings)
                                     {
-                                        <li><a class="dropdown-item" href="/CommSetting"><i class="fas fa-network-wired me-2"></i>通訊設定</a></li>
-                                    }
-                                    @if (canAccess("/CalcPoint"))
-                                    {
-                                        <li><a class="dropdown-item" href="/CalcPoint"><i class="fas fa-calculator me-2"></i>計算點位</a></li>
+                                        <li class="dropdown-submenu">
+                                            <a class="dropdown-item dropdown-toggle" href="#" role="button">
+                                                <i class="fas fa-map-marker-alt me-2"></i>@Localizer["layout.menu.points"]
+                                            </a>
+                                            <ul class="dropdown-menu">
+                                                @if (canAccess("/CommSetting"))
+                                                {
+                                                    <li><a class="dropdown-item" href="/CommSetting"><i class="fas fa-network-wired me-2"></i>@Localizer["layout.menu.commsetting"]</a></li>
+                                                }
+                                                @if (canAccess("/DbCoordinator"))
+                                                {
+                                                    <li><a class="dropdown-item" href="/DbCoordinator"><i class="fas fa-database me-2"></i>@Localizer["layout.menu.dbcoordinator"]</a></li>
+                                                }
+                                                @if (canAccess("/CalcPoint"))
+                                                {
+                                                    <li><a class="dropdown-item" href="/CalcPoint"><i class="fas fa-calculator me-2"></i>@Localizer["layout.menu.calcpoint"]</a></li>
+                                                }
+                                            </ul>
+                                        </li>
                                     }
                                     @if (canAccess("/AccountSetting"))
                                     {
-                                        <li><a class="dropdown-item" href="/AccountSetting"><i class="fas fa-users-cog me-2"></i>帳號管理</a></li>
+                                        <li><a class="dropdown-item" href="/AccountSetting"><i class="fas fa-users-cog me-2"></i>@Localizer["layout.menu.account"]</a></li>
                                     }
                                 </ul>
                             </li>
                         }
                     </ul>
-                    
-                    <ul class="navbar-nav">
+
+                    <ul class="navbar-nav flex-shrink-0 ms-auto">
+                        <!-- 語系切換 -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-label="@Localizer["layout.lang.label"]">
+                                <i class="fas fa-globe me-1"></i>
+                                <span>@szCurrentLangLabel</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item @(szCurrentCulture == "zh-TW" ? "active" : "")" href="#" onclick="setSiteCulture(event, 'zh-TW')">
+                                        @Localizer["layout.lang.zh"]
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item @(szCurrentCulture.StartsWith("en") ? "active" : "")" href="#" onclick="setSiteCulture(event, 'en')">
+                                        @Localizer["layout.lang.en"]
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+
                         @if (User.Identity?.IsAuthenticated == true)
                         {
                             <li class="nav-item dropdown">
@@ -199,12 +281,12 @@
                                     @User.Identity.Name
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end">
-                                    <li><a class="dropdown-item" href="/Account/Profile">個人資料</a></li>
+                                    <li><a class="dropdown-item" href="/Account/Profile">@Localizer["layout.user.profile"]</a></li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
                                         <a class="dropdown-item text-danger" href="#"
                                            onclick="showLogoutModal(event)">
-                                            <i class="fas fa-sign-out-alt me-1"></i>登出
+                                            <i class="fas fa-sign-out-alt me-1"></i>@Localizer["layout.user.logout"]
                                         </a>
                                     </li>
                                 </ul>
@@ -215,7 +297,7 @@
                             <li class="nav-item">
                                 <a class="nav-link" href="/Account/Login">
                                     <i class="fas fa-sign-in-alt me-1"></i>
-                                    登入
+                                    @Localizer["layout.user.login"]
                                 </a>
                             </li>
                         }
@@ -224,7 +306,7 @@
             </div>
         </nav>
     }
-    
+
     <!-- 主要內容 -->
     <main role="main" class="flex-grow-1">
         @RenderBody()
@@ -234,18 +316,18 @@
     @if (ViewData["ShowNavigation"]?.ToString() != "false")
     {
         <footer class="footer mt-auto">
-            <div class="container">
+            <div class="container-fluid">
                 <div class="d-flex flex-wrap justify-content-between align-items-center">
                     <span class="me-3">
-                        <i class="fas fa-industry me-1"></i>SCADA智慧控與能源管理系統
+                        <i class="fas fa-industry me-1"></i>@Localizer["layout.footer.platform"]
                     </span>
-                    <span class="me-3">
-                        <i class="fas fa-code me-1"></i>版本 1.0.0 |
-                        <i class="fas fa-calendar me-1"></i>@DateTime.Now.Year 工研院
+                    <span class="me-3 d-inline-flex align-items-center">
+                        <i class="fas fa-code me-1"></i>@Localizer["layout.footer.version", "2.2.3"]
+                        <img src="~/images/itri-logo.svg" alt="ITRI" style="height:18px;vertical-align:middle;" class="ms-2" />
                     </span>
                     <span>
                         <small>
-                            <i class="fas fa-server me-1"></i>伺服器時間: <span id="serverClock"></span>
+                            <i class="fas fa-server me-1"></i>@Localizer["layout.footer.server_time"]: <span id="serverClock"></span>
                         </small>
                     </span>
                 </div>
@@ -259,17 +341,17 @@
             <div class="modal-content">
                 <div class="modal-header border-0 pb-0">
                     <h6 class="modal-title" id="logoutModalLabel">
-                        <i class="fas fa-sign-out-alt text-danger me-2"></i>確認登出
+                        <i class="fas fa-sign-out-alt text-danger me-2"></i>@Localizer["layout.logout.title"]
                     </h6>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body text-center py-3">
-                    <p class="mb-1">確定要登出嗎？</p>
-                    <small class="text-muted">登出後需重新輸入帳號密碼</small>
+                    <p class="mb-1">@Localizer["layout.logout.confirm"]</p>
+                    <small class="text-muted">@Localizer["layout.logout.notice"]</small>
                 </div>
                 <div class="modal-footer border-0 pt-0 justify-content-center gap-2">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-danger btn-sm" onclick="confirmLogout()">確認登出</button>
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">@Localizer["layout.logout.cancel"]</button>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="confirmLogout()">@Localizer["layout.logout.confirm_btn"]</button>
                 </div>
             </div>
         </div>
@@ -285,6 +367,9 @@
 
     <!-- Bootstrap JavaScript Bundle (本機) -->
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- i18n helper（要在頁面其他 JS 之前載入）-->
+    <script src="~/js/i18n.js"></script>
 
     <script>
         (function () {
@@ -307,6 +392,40 @@
         function confirmLogout() {
             document.getElementById('logoutForm').submit();
         }
+
+        function setSiteCulture(e, culture) {
+            e.preventDefault();
+            if (window.i18n && typeof window.i18n.setCulture === 'function') {
+                window.i18n.setCulture(culture);
+            } else {
+                // fallback：直接 POST 後 reload
+                fetch('/api/i18n/set-culture?culture=' + encodeURIComponent(culture), { method: 'POST', credentials: 'same-origin' })
+                    .then(function () { window.location.reload(); });
+            }
+        }
+
+        // 多層下拉選單：點擊父項時 toggle 子選單，避免關閉外層 dropdown
+        (function () {
+            document.querySelectorAll('.dropdown-submenu > .dropdown-toggle').forEach(function (el) {
+                el.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var li = this.parentElement;
+                    li.parentElement.querySelectorAll(':scope > .dropdown-submenu.show').forEach(function (other) {
+                        if (other !== li) other.classList.remove('show');
+                    });
+                    li.classList.toggle('show');
+                });
+            });
+            // 父層 dropdown 關閉時，連帶清掉子選單 show 狀態
+            document.querySelectorAll('.nav-item.dropdown').forEach(function (parent) {
+                parent.addEventListener('hidden.bs.dropdown', function () {
+                    this.querySelectorAll('.dropdown-submenu.show').forEach(function (sub) {
+                        sub.classList.remove('show');
+                    });
+                });
+            });
+        })();
     </script>
 
     <!-- 頁面特定 JavaScript -->

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="energyreport.title" xml:space="preserve"><value>用電報表</value></data>
+  <data name="energyreport.breadcrumb.energy" xml:space="preserve"><value>能源管理</value></data>
+
+  <data name="energyreport.filter.title" xml:space="preserve"><value>查詢條件</value></data>
+  <data name="energyreport.filter.circuit" xml:space="preserve"><value>迴路</value></data>
+  <data name="energyreport.filter.granularity" xml:space="preserve"><value>單位</value></data>
+  <data name="energyreport.filter.date" xml:space="preserve"><value>日期</value></data>
+  <data name="energyreport.filter.month_start" xml:space="preserve"><value>起月</value></data>
+  <data name="energyreport.filter.month_end" xml:space="preserve"><value>訖月</value></data>
+  <data name="energyreport.filter.year_start" xml:space="preserve"><value>起年</value></data>
+  <data name="energyreport.filter.year_end" xml:space="preserve"><value>訖年</value></data>
+
+  <data name="energyreport.granularity.hour" xml:space="preserve"><value>時</value></data>
+  <data name="energyreport.granularity.day" xml:space="preserve"><value>日</value></data>
+  <data name="energyreport.granularity.month" xml:space="preserve"><value>月</value></data>
+  <data name="energyreport.granularity.year" xml:space="preserve"><value>年</value></data>
+
+  <data name="energyreport.button.query" xml:space="preserve"><value>查詢</value></data>
+  <data name="energyreport.button.export" xml:space="preserve"><value>匯出 Excel</value></data>
+
+  <data name="energyreport.chart.title" xml:space="preserve"><value>用電量分布</value></data>
+  <data name="energyreport.chart.y_axis" xml:space="preserve"><value>kWh</value></data>
+  <data name="energyreport.chart.x_axis" xml:space="preserve"><value>時段</value></data>
+  <data name="energyreport.chart.dataset_label" xml:space="preserve"><value>{0} (kWh)</value></data>
+
+  <data name="energyreport.table.title" xml:space="preserve"><value>數據明細</value></data>
+  <data name="energyreport.table.col_period" xml:space="preserve"><value>時段</value></data>
+  <data name="energyreport.table.col_kwh" xml:space="preserve"><value>用電量 (kWh)</value></data>
+  <data name="energyreport.table.total" xml:space="preserve"><value>合計</value></data>
+  <data name="energyreport.table.empty" xml:space="preserve"><value>尚未查詢</value></data>
+  <data name="energyreport.table.no_data" xml:space="preserve"><value>無資料</value></data>
+  <data name="energyreport.table.querying" xml:space="preserve"><value>查詢中…</value></data>
+
+  <data name="energyreport.label.total" xml:space="preserve"><value>總計</value></data>
+  <data name="energyreport.warning.kwh_overflow" xml:space="preserve"><value>⚠ 部分電表偵測到累積值倒退但未設 MaxKwh</value></data>
+
+  <data name="energyreport.select.loading" xml:space="preserve"><value>-- 載入中 --</value></data>
+  <data name="energyreport.select.placeholder" xml:space="preserve"><value>-- 請選擇迴路 --</value></data>
+  <data name="energyreport.select.empty" xml:space="preserve"><value>尚未設定迴路</value></data>
+
+  <data name="energyreport.alert.select_circuit" xml:space="preserve"><value>請選擇迴路</value></data>
+  <data name="energyreport.alert.month_order" xml:space="preserve"><value>訖月不可早於起月</value></data>
+  <data name="energyreport.alert.year_order" xml:space="preserve"><value>訖年不可早於起年</value></data>
+  <data name="energyreport.alert.query_failed" xml:space="preserve"><value>查詢失敗：{0}</value></data>
+  <data name="energyreport.alert.export_failed" xml:space="preserve"><value>匯出失敗：{0}</value></data>
+
+  <data name="energyreport.console.load_circuit_failed" xml:space="preserve"><value>[EnergyReport] 載入迴路失敗</value></data>
+</root>

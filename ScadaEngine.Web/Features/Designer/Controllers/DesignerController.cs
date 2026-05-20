@@ -25,13 +25,16 @@ public class DesignerController : Controller
     }
 
     /// <summary>
-    /// 取得所有可綁定的點位清單（Modbus + 計算點位，供儀錶板選擇）
+    /// 取得所有可綁定的點位清單（Modbus + 計算點位 + DB 來源點位，供儀錶板選擇）
     /// </summary>
     [HttpGet("/Designer/Points")]
     public async Task<IActionResult> GetPoints()
     {
-        var modbusPoints = await _repository.GetAllModbusPointsAsync();
-        var calcPoints = await _repository.GetAllCalculatedPointsAsync();
+        var modbusPoints   = await _repository.GetAllModbusPointsAsync();
+        var calcPoints     = await _repository.GetAllCalculatedPointsAsync();
+        var dbPoints       = await _repository.GetAllDbPointsAsync();
+        var dbCoordinators = await _repository.GetAllDbCoordinatorsAsync();
+        var dbCoordNameMap = dbCoordinators.ToDictionary(c => c.Id, c => c.szName);
 
         var allPoints = modbusPoints.Select(p => new
         {
@@ -49,6 +52,14 @@ public class DesignerController : Controller
             fMin        = 0f,
             fMax        = 100f,
             szGroupName = c.szGroupName
+        })).Concat(dbPoints.Select(p => new
+        {
+            szSid       = p.szSID,
+            szName      = p.szName,
+            szUnit      = p.szUnit ?? string.Empty,
+            fMin        = p.fMin,
+            fMax        = p.fMax,
+            szGroupName = dbCoordNameMap.TryGetValue(p.nCoordinatorId, out var szName) ? szName : "DB"
         }));
 
         return Json(allPoints);

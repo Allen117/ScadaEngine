@@ -21,9 +21,12 @@ public static class PermissionService
         ("/History/Trend",  "趨勢圖"),
         ("/EventLog",       "事件記錄"),
         ("/ChilledWaterSystem/Efficiency", "水系統效率管理"),
+        ("/EnergyMeter",    "電表/迴路設定"),
+        ("/EnergyReport",   "用電報表"),
         ("/Designer",       "畫面設計"),
         ("/Config",         "系統參數"),
-        ("/CommSetting",    "通訊設定"),
+        ("/CommSetting",    "Modbus來源"),
+        ("/DbCoordinator",  "DB 來源"),
         ("/AccountSetting", "帳號管理"),
     ];
 

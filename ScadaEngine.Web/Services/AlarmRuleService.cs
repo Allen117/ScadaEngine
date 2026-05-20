@@ -13,12 +13,17 @@ namespace ScadaEngine.Web.Services
     {
         private readonly ILogger<AlarmRuleService> _logger;
         private readonly DatabaseConfigService _configService;
+        private readonly AlarmRuleReloadPublisher _reloadPublisher;
         private string _szConnectionString = string.Empty;
 
-        public AlarmRuleService(ILogger<AlarmRuleService> logger, DatabaseConfigService configService)
+        public AlarmRuleService(
+            ILogger<AlarmRuleService> logger,
+            DatabaseConfigService configService,
+            AlarmRuleReloadPublisher reloadPublisher)
         {
             _logger = logger;
             _configService = configService;
+            _reloadPublisher = reloadPublisher;
         }
 
         private async Task EnsureConnectionStringAsync()
@@ -185,6 +190,11 @@ namespace ScadaEngine.Web.Services
                 });
 
                 _logger.LogInformation("儲存警報規則: SID={SID}, Affected={Count}", dto.sid, nAffected);
+
+                // DB 寫入成功後通知 Engine 即時重評（失敗不影響回應，已在 publisher 內捕捉）
+                if (nAffected > 0)
+                    await _reloadPublisher.PublishReloadAsync(dto.sid);
+
                 return nAffected > 0;
             }
             catch (Exception ex)
@@ -207,6 +217,11 @@ namespace ScadaEngine.Web.Services
                 await connection.OpenAsync();
                 var nAffected = await connection.ExecuteAsync(szSql, new { Id = nId });
                 _logger.LogInformation("刪除警報規則: Id={Id}, Affected={Count}", nId, nAffected);
+
+                // DB 刪除成功後通知 Engine 即時清掃孤立警報（不知道對應 SID，傳 null 由 Engine 全量重評）
+                if (nAffected > 0)
+                    await _reloadPublisher.PublishReloadAsync(null);
+
                 return nAffected > 0;
             }
             catch (Exception ex)

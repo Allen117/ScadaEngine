@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="app.title" xml:space="preserve"><value>SCADA Monitoring System</value></data>
+  <data name="app.brand" xml:space="preserve"><value>SCADA Monitoring System</value></data>
+
+  <data name="lang.zh-TW" xml:space="preserve"><value>繁體中文</value></data>
+  <data name="lang.en" xml:space="preserve"><value>English</value></data>
+  <data name="lang.switch" xml:space="preserve"><value>Language</value></data>
+
+  <data name="shared.button.save" xml:space="preserve"><value>Save</value></data>
+  <data name="shared.button.cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="shared.button.confirm" xml:space="preserve"><value>Confirm</value></data>
+  <data name="shared.button.ok" xml:space="preserve"><value>OK</value></data>
+  <data name="shared.button.delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="shared.button.add" xml:space="preserve"><value>Add</value></data>
+  <data name="shared.button.edit" xml:space="preserve"><value>Edit</value></data>
+  <data name="shared.button.query" xml:space="preserve"><value>Query</value></data>
+  <data name="shared.button.export" xml:space="preserve"><value>Export</value></data>
+  <data name="shared.button.import" xml:space="preserve"><value>Import</value></data>
+  <data name="shared.button.refresh" xml:space="preserve"><value>Refresh</value></data>
+  <data name="shared.button.close" xml:space="preserve"><value>Close</value></data>
+  <data name="shared.button.search" xml:space="preserve"><value>Search</value></data>
+  <data name="shared.button.reset" xml:space="preserve"><value>Reset</value></data>
+  <data name="shared.button.apply" xml:space="preserve"><value>Apply</value></data>
+
+  <data name="shared.status.loading" xml:space="preserve"><value>Loading…</value></data>
+  <data name="shared.status.connecting" xml:space="preserve"><value>Connecting…</value></data>
+  <data name="shared.status.connected" xml:space="preserve"><value>Connected</value></data>
+  <data name="shared.status.disconnected" xml:space="preserve"><value>Disconnected</value></data>
+  <data name="shared.status.success" xml:space="preserve"><value>Success</value></data>
+  <data name="shared.status.error" xml:space="preserve"><value>Error</value></data>
+  <data name="shared.status.warning" xml:space="preserve"><value>Warning</value></data>
+  <data name="shared.status.info" xml:space="preserve"><value>Info</value></data>
+  <data name="shared.status.no_data" xml:space="preserve"><value>No Data</value></data>
+  <data name="shared.status.processing" xml:space="preserve"><value>Processing</value></data>
+
+  <data name="shared.label.start_time" xml:space="preserve"><value>Start Time</value></data>
+  <data name="shared.label.end_time" xml:space="preserve"><value>End Time</value></data>
+  <data name="shared.label.timestamp" xml:space="preserve"><value>Timestamp</value></data>
+  <data name="shared.label.value" xml:space="preserve"><value>Value</value></data>
+  <data name="shared.label.unit" xml:space="preserve"><value>Unit</value></data>
+  <data name="shared.label.quality" xml:space="preserve"><value>Quality</value></data>
+  <data name="shared.label.name" xml:space="preserve"><value>Name</value></data>
+  <data name="shared.label.description" xml:space="preserve"><value>Description</value></data>
+  <data name="shared.label.status" xml:space="preserve"><value>Status</value></data>
+  <data name="shared.label.actions" xml:space="preserve"><value>Actions</value></data>
+  <data name="shared.label.settings" xml:space="preserve"><value>Settings</value></data>
+
+  <data name="shared.quality.good" xml:space="preserve"><value>Good</value></data>
+  <data name="shared.quality.bad" xml:space="preserve"><value>Bad</value></data>
+
+  <data name="shared.confirm.delete" xml:space="preserve"><value>Are you sure you want to delete?</value></data>
+
+  <data name="validation.required" xml:space="preserve"><value>This field is required</value></data>
+  <data name="validation.invalid" xml:space="preserve"><value>Invalid input</value></data>
+  <data name="validation.too_long" xml:space="preserve"><value>Input is too long</value></data>
+  <data name="validation.range" xml:space="preserve"><value>Value out of allowed range</value></data>
+
+  <data name="alarm.high_exceed" xml:space="preserve"><value>{0} exceeds upper limit {1}</value></data>
+  <data name="alarm.low_below" xml:space="preserve"><value>{0} below lower limit {1}</value></data>
+  <data name="alarm.di_triggered" xml:space="preserve"><value>{0} state {1} triggered alarm</value></data>
+
+  <data name="control.action.button_pressed" xml:space="preserve"><value>{0} pressed button "{1}", value={2}</value></data>
+  <data name="control.action.ao_manual_set" xml:space="preserve"><value>{0} manually set AO "{1}" to {2}</value></data>
+  <data name="control.action.ao_switch_auto" xml:space="preserve"><value>{0} switched AO "{1}" to auto</value></data>
+  <data name="control.action.do_set_on" xml:space="preserve"><value>{0} set DO "{1}" to ON</value></data>
+  <data name="control.action.do_set_off" xml:space="preserve"><value>{0} set DO "{1}" to OFF</value></data>
+  <data name="control.action.do_switch_auto" xml:space="preserve"><value>{0} switched DO "{1}" to auto</value></data>
+  <data name="control.action.pump_start" xml:space="preserve"><value>{0} started pump "{1}"</value></data>
+  <data name="control.action.pump_stop" xml:space="preserve"><value>{0} stopped pump "{1}"</value></data>
+  <data name="control.action.pump_freq_set" xml:space="preserve"><value>{0} set pump "{1}" frequency to {2} Hz</value></data>
+  <data name="control.action.pump_switch_auto" xml:space="preserve"><value>{0} switched pump "{1}" to auto</value></data>
+</root>

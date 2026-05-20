@@ -154,6 +154,39 @@
     font-weight: 700; font-size: .9rem; color: #9b59b6;
     min-width: 30px; text-align: center; margin-right: 4px;
 }
+.algo-n-input {
+    margin-left: 6px;
+    width: 38px; padding: 1px 3px; border: 1px solid #ced4da;
+    border-radius: 3px; font-size: .75rem; text-align: center;
+    outline: none; background: #fff; font-weight: 600; color: #495057;
+}
+.algo-n-input:focus { border-color: #9b59b6; box-shadow: 0 0 0 2px rgba(155,89,182,.15); }
+/* 隱藏 number input 上的 spinner 以節省空間 */
+.algo-n-input::-webkit-outer-spin-button,
+.algo-n-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.algo-n-input { -moz-appearance: textfield; }
+/* variadic 演算法：每組 repeat 埠的外框（N≥2 才畫，hover 顯示「組 N」tooltip） */
+.algo-group-frame {
+    position: absolute; left: -8px; right: -8px;
+    border: 1px dashed rgba(155, 89, 182, .5);
+    border-radius: 6px;
+    background: rgba(155, 89, 182, .04);
+    pointer-events: auto;
+    z-index: 1;
+}
+.algo-group-frame:hover {
+    border-color: #9b59b6;
+    background: rgba(155, 89, 182, .08);
+}
+/* 節點高度 resize handle（位於節點底部中央） */
+.flow-node-resize-handle {
+    position: absolute; bottom: -3px; left: 50%; transform: translateX(-50%);
+    width: 28px; height: 6px; border-radius: 3px;
+    background: #dee2e6; cursor: ns-resize; z-index: 15;
+    transition: background .15s;
+}
+.flow-node-resize-handle:hover { background: #9b59b6; }
+.flow-node:has(.flow-node-resize-handle) { padding-bottom: 12px; }
 .timer-type-badge {
     font-size: .7rem; font-weight: 700; color: #fff; background: #6c757d;
     padding: 1px 5px; border-radius: 3px; letter-spacing: .5px;
@@ -166,7 +199,32 @@
     background: #e9ecef; font-weight: 600; color: #495057;
     user-select: none;
 }
+.timer-value-input {
+    width: 38px; padding: 1px 3px; border: 1px solid #ced4da;
+    border-radius: 3px; font-size: .75rem; text-align: center;
+    outline: none; background: #fff; font-weight: 600; color: #495057;
+}
+.timer-value-input:focus { border-color: #0d6efd; background: #fff; box-shadow: 0 0 0 2px rgba(13,110,253,.15); }
 .timer-unit { font-size: .65rem; color: #adb5bd; }
+
+/* ========== 計數器 (CTU) ========== */
+.text-teal { color: #20c997 !important; }
+.flow-node.node-counter { border-color: #20c997; flex-wrap: wrap; min-width: 220px; }
+.counter-type-badge {
+    font-size: .7rem; font-weight: 700; color: #fff; background: #20c997;
+    padding: 1px 5px; border-radius: 3px; letter-spacing: .5px;
+}
+.counter-label { font-size: .7rem; color: #20c997; font-weight: 600; }
+.counter-unit  { font-size: .65rem; color: #adb5bd; }
+.counter-preset-input, .counter-interval-input {
+    width: 44px; padding: 1px 3px; border: 1px solid #ced4da;
+    border-radius: 3px; font-size: .75rem; text-align: center;
+    outline: none; background: #fff; font-weight: 600; color: #495057;
+}
+.counter-preset-input:focus, .counter-interval-input:focus {
+    border-color: #20c997; background: #fff; box-shadow: 0 0 0 2px rgba(32,201,151,.18);
+}
+.counter-live { font-size: .68rem; color: #495057; font-weight: 600; }
 
 /* ========== 連接埠 (Port) ========== */
 .flow-port {
@@ -206,3 +264,20 @@
 .pp-point-name { font-size: 12px; color: #212529; }
 .pp-point-sid  { font-size: 10px; color: #999; font-family: monospace; }
 .pp-point-unit { font-size: 11px; color: #0d6efd; margin-left: auto; white-space: nowrap; }
+
+/* ========== 演算法 StatusCode 反灰 ========== */
+/* 通用反灰：節點輸出視為不可信任時的視覺提示 */
+.flow-node.algo-status-bad {
+    opacity: .55;
+    filter: grayscale(60%);
+}
+/* Warning：橘黃虛線邊框 */
+.flow-node.algo-status-warning {
+    border-color: #fd7e14 !important;
+    border-style: dashed !important;
+}
+/* Error：紅色虛線邊框（覆蓋 warning） */
+.flow-node.algo-status-error {
+    border-color: #dc3545 !important;
+    border-style: dashed !important;
+}

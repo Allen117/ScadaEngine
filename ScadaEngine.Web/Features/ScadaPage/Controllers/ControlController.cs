@@ -16,15 +16,18 @@ public class ControlController : ControllerBase
     private readonly ILogger<ControlController> _logger;
     private readonly MqttRealtimeSubscriberService _mqttService;
     private readonly IDataRepository _repository;
+    private readonly ControlEventLogger _controlEventLogger;
 
     public ControlController(
         ILogger<ControlController> logger,
         MqttRealtimeSubscriberService mqttService,
-        IDataRepository repository)
+        IDataRepository repository,
+        ControlEventLogger controlEventLogger)
     {
-        _logger     = logger;
-        _mqttService = mqttService;
-        _repository  = repository;
+        _logger             = logger;
+        _mqttService        = mqttService;
+        _repository         = repository;
+        _controlEventLogger = controlEventLogger;
     }
 
     /// <summary>
@@ -46,13 +49,18 @@ public class ControlController : ControllerBase
             // 自動模式：不發送 MQTT，僅在資料庫標記為自動控制
             var isSaved = await _repository.SetAutoControlAsync(dto.szCid);
             if (!isSaved)
+            {
                 _logger.LogWarning("設定自動控制失敗 CID={Cid}", dto.szCid);
+                return Ok(new { success = true, cid = dto.szCid, mode = "auto" });
+            }
 
+            await WriteEventLogAsync(dto);
             return Ok(new { success = true, cid = dto.szCid, mode = "auto" });
         }
         else if (isLogicFlowMode)
         {
             // LogicFlow 自動控制：發送 MQTT 寫入，但不改變手動/自動旗標
+            // 此分支由 Engine/LogicFlow 自動觸發，非人類操作，不寫 EventLog
             var isSuccess = await _mqttService.PublishControlCommandAsync(dto.szCid, dto.nValue);
             if (!isSuccess)
                 return StatusCode(503, new { success = false, error = "MQTT 未連線，無法發送控制指令" });
@@ -70,8 +78,19 @@ public class ControlController : ControllerBase
             if (!isSaved)
                 _logger.LogWarning("手動控制值儲存失敗 CID={Cid}", dto.szCid);
 
+            await WriteEventLogAsync(dto);
             return Ok(new { success = true, cid = dto.szCid, value = dto.nValue });
         }
+    }
+
+    /// <summary>
+    /// 寫入控制動作 EventLog（actionType 為空或無法解析時忽略 — 相容舊前端）
+    /// </summary>
+    private async Task WriteEventLogAsync(ControlWriteDto dto)
+    {
+        var actionType = ControlActionTypeExtensions.ParseActionType(dto.szActionType);
+        var szUsername = User.Identity?.Name ?? "anonymous";
+        await _controlEventLogger.LogAsync(actionType, dto.szCid, dto.szDisplayName, dto.nValue, szUsername);
     }
 
     /// <summary>

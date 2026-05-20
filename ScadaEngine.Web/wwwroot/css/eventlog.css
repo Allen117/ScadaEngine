@@ -22,6 +22,7 @@
 .badge-severity-1 { background-color: #fd7e14; }
 .badge-severity-2 { background-color: #ffc107; color: #333; }
 .badge-severity-3 { background-color: #6c757d; }
+.badge-severity-4 { background-color: #adb5bd; color: #333; }
 .badge-event-0 { background-color: #dc3545; }
 .badge-event-1 { background-color: #6f42c1; }
 .badge-event-2 { background-color: #ffc107; color: #333; }

@@ -2,7 +2,7 @@
 @model List<UserModel>
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
-    ViewData["Title"] = "帳號管理";
+    ViewData["Title"] = Localizer["account.title"].Value;
     var szConfigurablePages = ViewData["ConfigurablePages"]?.ToString() ?? "[]";
     var szScadaDesignPages = ViewData["ScadaDesignPages"]?.ToString() ?? "[]";
 }
@@ -11,14 +11,14 @@
      id="accountSettingRoot"
      data-configurable-pages="@szConfigurablePages"
      data-scada-design-pages="@szScadaDesignPages">
-    <h4 class="mb-3"><i class="fas fa-users-cog me-2"></i>帳號管理</h4>
+    <h4 class="mb-3"><i class="fas fa-users-cog me-2"></i>@Localizer["account.title"]</h4>
 
     <div class="card shadow-sm">
         <div class="card-header bg-dark text-white d-flex align-items-center">
-            <h6 class="mb-0"><i class="fas fa-users me-2"></i>使用者清單</h6>
-            <span class="badge bg-light text-dark ms-2">共 @Model.Count 筆</span>
+            <h6 class="mb-0"><i class="fas fa-users me-2"></i>@Localizer["account.list.title"]</h6>
+            <span class="badge bg-light text-dark ms-2">@Localizer["account.list.count", Model.Count]</span>
             <button class="btn btn-success btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#createUserModal">
-                <i class="fas fa-user-plus me-1"></i>新增使用者
+                <i class="fas fa-user-plus me-1"></i>@Localizer["account.button.create"]
             </button>
         </div>
         <div class="card-body p-0">
@@ -28,14 +28,14 @@
                     <table class="table table-hover table-striped mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>帳號</th>
-                                <th>姓名</th>
-                                <th>角色</th>
-                                <th>部門</th>
-                                <th class="text-center">狀態</th>
-                                <th>最後登入</th>
-                                <th>建立時間</th>
-                                <th class="text-center" style="width:100px">操作</th>
+                                <th>@Localizer["account.col.username"]</th>
+                                <th>@Localizer["account.col.realname"]</th>
+                                <th>@Localizer["account.col.role"]</th>
+                                <th>@Localizer["account.col.department"]</th>
+                                <th class="text-center">@Localizer["account.col.status"]</th>
+                                <th>@Localizer["account.col.last_login"]</th>
+                                <th>@Localizer["account.col.created_at"]</th>
+                                <th class="text-center" style="width:100px">@Localizer["account.col.actions"]</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -54,15 +54,15 @@
                                     <td class="text-center">
                                         @if (user.isActive)
                                         {
-                                            <span class="badge bg-success">啟用</span>
+                                            <span class="badge bg-success">@Localizer["account.status.active"]</span>
                                         }
                                         else
                                         {
-                                            <span class="badge bg-secondary">停用</span>
+                                            <span class="badge bg-secondary">@Localizer["account.status.inactive"]</span>
                                         }
                                     </td>
                                     <td class="small text-muted">
-                                        @(user.dtLastLoginAt.HasValue ? user.dtLastLoginAt.Value.ToString("yyyy-MM-dd HH:mm:ss") : "尚未登入")
+                                        @(user.dtLastLoginAt.HasValue ? user.dtLastLoginAt.Value.ToString("yyyy-MM-dd HH:mm:ss") : Localizer["account.status.never_login"].Value)
                                     </td>
                                     <td class="small text-muted">
                                         @(user.dtCreatedAt.HasValue ? user.dtCreatedAt.Value.ToString("yyyy-MM-dd HH:mm:ss") : "-")
@@ -75,13 +75,13 @@
                                                 data-role="@user.szRole"
                                                 data-department="@user.szDepartment"
                                                 data-isactive="@user.isActive.ToString().ToLower()"
-                                                title="編輯">
+                                                title="@Localizer["account.button.edit"]">
                                             <i class="fas fa-edit"></i>
                                         </button>
                                         <button class="btn btn-outline-danger btn-sm btn-delete"
                                                 data-userid="@user.nUserID"
                                                 data-username="@user.szUsername"
-                                                title="刪除">
+                                                title="@Localizer["account.button.delete"]">
                                             <i class="fas fa-trash-alt"></i>
                                         </button>
                                     </td>
@@ -95,7 +95,7 @@
             {
                 <div class="text-center text-muted py-5">
                     <i class="fas fa-user-slash fa-3x mb-3 d-block"></i>
-                    <p>目前無使用者資料</p>
+                    <p>@Localizer["account.status.no_users"]</p>
                 </div>
             }
         </div>
@@ -108,22 +108,22 @@
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h6 class="modal-title" id="createUserModalLabel">
-                    <i class="fas fa-user-plus me-2"></i>新增使用者
+                    <i class="fas fa-user-plus me-2"></i>@Localizer["account.modal.create_title"]
                 </h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-bold">帳號 <span class="text-danger">*</span></label>
+                        <label class="form-label fw-bold">@Localizer["account.field.username"] <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="inputUsername" maxlength="50" required>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold">姓名</label>
+                        <label class="form-label fw-bold">@Localizer["account.field.realname"]</label>
                         <input type="text" class="form-control" id="inputRealName" maxlength="100">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold">密碼 <span class="text-danger">*</span></label>
+                        <label class="form-label fw-bold">@Localizer["account.field.password"] <span class="text-danger">*</span></label>
                         <div class="input-group">
                             <input type="password" class="form-control" id="inputPassword" maxlength="100" required>
                             <button class="btn btn-outline-secondary" type="button" id="btnTogglePassword">
@@ -132,33 +132,33 @@
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold">確認密碼 <span class="text-danger">*</span></label>
+                        <label class="form-label fw-bold">@Localizer["account.field.password_confirm"] <span class="text-danger">*</span></label>
                         <input type="password" class="form-control" id="inputPasswordConfirm" maxlength="100" required>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold">角色 <span class="text-danger">*</span></label>
+                        <label class="form-label fw-bold">@Localizer["account.field.role"] <span class="text-danger">*</span></label>
                         <select class="form-select" id="inputRole">
                             <option value="Admin">Admin</option>
                             <option value="User" selected>User</option>
                         </select>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold">部門</label>
+                        <label class="form-label fw-bold">@Localizer["account.field.department"]</label>
                         <input type="text" class="form-control" id="inputDepartment" maxlength="50">
                     </div>
                     <div class="col-12">
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="inputIsActive" checked>
-                            <label class="form-check-label" for="inputIsActive">啟用帳號</label>
+                            <label class="form-check-label" for="inputIsActive">@Localizer["account.field.is_active"]</label>
                         </div>
                     </div>
                 </div>
                 <div id="createUserAlert" class="alert mt-3 mb-0" style="display:none;"></div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["account.button.cancel"]</button>
                 <button type="button" class="btn btn-primary" id="btnCreateUser">
-                    <i class="fas fa-save me-1"></i>儲存
+                    <i class="fas fa-save me-1"></i>@Localizer["account.button.save"]
                 </button>
             </div>
         </div>
@@ -171,7 +171,7 @@
         <div class="modal-content">
             <div class="modal-header bg-warning text-dark">
                 <h6 class="modal-title" id="editUserModalLabel">
-                    <i class="fas fa-user-edit me-2"></i>編輯使用者
+                    <i class="fas fa-user-edit me-2"></i>@Localizer["account.modal.edit_title"]
                 </h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
@@ -179,28 +179,28 @@
                 <input type="hidden" id="editUserID">
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-bold">帳號</label>
+                        <label class="form-label fw-bold">@Localizer["account.field.username"]</label>
                         <input type="text" class="form-control" id="editUsername" disabled>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold">姓名</label>
+                        <label class="form-label fw-bold">@Localizer["account.field.realname"]</label>
                         <input type="text" class="form-control" id="editRealName" maxlength="100">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold">角色 <span class="text-danger">*</span></label>
+                        <label class="form-label fw-bold">@Localizer["account.field.role"] <span class="text-danger">*</span></label>
                         <select class="form-select" id="editRole">
                             <option value="Admin">Admin</option>
                             <option value="User">User</option>
                         </select>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold">部門</label>
+                        <label class="form-label fw-bold">@Localizer["account.field.department"]</label>
                         <input type="text" class="form-control" id="editDepartment" maxlength="50">
                     </div>
                     <div class="col-12">
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="editIsActive">
-                            <label class="form-check-label" for="editIsActive">啟用帳號</label>
+                            <label class="form-check-label" for="editIsActive">@Localizer["account.field.is_active"]</label>
                         </div>
                     </div>
                 </div>
@@ -208,14 +208,14 @@
                 <!-- 權限設定區塊（僅 User 角色顯示） -->
                 <div id="permissionSection" class="mt-3" style="display:none;">
                     <hr>
-                    <h6 class="fw-bold"><i class="fas fa-shield-alt me-1"></i>頁面存取權限</h6>
+                    <h6 class="fw-bold"><i class="fas fa-shield-alt me-1"></i>@Localizer["account.permission.title"]</h6>
 
                     <div class="card mb-3">
                         <div class="card-header py-2 bg-light d-flex align-items-center">
-                            <small class="fw-bold">主功能頁面</small>
+                            <small class="fw-bold">@Localizer["account.permission.main_pages"]</small>
                             <div class="form-check form-check-inline ms-auto mb-0">
                                 <input class="form-check-input" type="checkbox" id="cbSelectAllPages">
-                                <label class="form-check-label small" for="cbSelectAllPages">全選</label>
+                                <label class="form-check-label small" for="cbSelectAllPages">@Localizer["account.permission.select_all"]</label>
                             </div>
                         </div>
                         <div class="card-body py-2" id="permMainPages"></div>
@@ -223,10 +223,10 @@
 
                     <div class="card">
                         <div class="card-header py-2 bg-light">
-                            <small class="fw-bold">即時監控子頁面（ScadaPage）</small>
+                            <small class="fw-bold">@Localizer["account.permission.scada_pages"]</small>
                         </div>
                         <div class="card-body py-2" id="permScadaPages">
-                            <small class="text-muted">載入中...</small>
+                            <small class="text-muted">@Localizer["account.permission.loading"]</small>
                         </div>
                     </div>
                 </div>
@@ -234,9 +234,9 @@
                 <div id="editUserAlert" class="alert mt-3 mb-0" style="display:none;"></div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["account.button.cancel"]</button>
                 <button type="button" class="btn btn-warning" id="btnSaveEdit">
-                    <i class="fas fa-save me-1"></i>儲存變更
+                    <i class="fas fa-save me-1"></i>@Localizer["account.button.save_changes"]
                 </button>
             </div>
         </div>
@@ -248,17 +248,19 @@
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content">
             <div class="modal-header border-0 pb-0">
-                <h6 class="modal-title"><i class="fas fa-exclamation-triangle text-danger me-2"></i>確認刪除</h6>
+                <h6 class="modal-title"><i class="fas fa-exclamation-triangle text-danger me-2"></i>@Localizer["account.modal.delete_title"]</h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body text-center py-3">
-                <p class="mb-1">確定要刪除使用者 <strong id="deleteUsername"></strong> 嗎？</p>
-                <small class="text-muted">此操作無法復原</small>
+                <p class="mb-1" id="deleteUserMsgWrap">
+                    <span id="deleteUserMsgPrefix"></span><strong id="deleteUsername"></strong><span id="deleteUserMsgSuffix"></span>
+                </p>
+                <small class="text-muted">@Localizer["account.delete.warning"]</small>
                 <input type="hidden" id="deleteUserID">
             </div>
             <div class="modal-footer border-0 pt-0 justify-content-center gap-2">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-danger btn-sm" id="btnConfirmDelete">確認刪除</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">@Localizer["account.button.cancel"]</button>
+                <button type="button" class="btn btn-danger btn-sm" id="btnConfirmDelete">@Localizer["account.button.confirm_delete"]</button>
             </div>
         </div>
     </div>

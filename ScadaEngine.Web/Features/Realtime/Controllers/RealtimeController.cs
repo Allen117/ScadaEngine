@@ -35,6 +35,9 @@ public class RealtimeController : Controller
 
         try
         {
+            // DB 來源直讀 DBLatestData，確保初次渲染就拿到最新值
+            await _mqttService.RefreshDbSourcesAsync();
+
             // 載入即時資料
             model.RealtimeDataList = _mqttService.GetAllRealtimeData();
             model.isConnectionHealthy = _mqttService.IsConnected;
@@ -50,6 +53,19 @@ public class RealtimeController : Controller
             // 載入左側 Coordinator 清單
             var coordinators = await _dataRepository.GetAllCoordinatorsAsync();
             model.CoordinatorList = [.. coordinators];
+
+            // 載入左側 DBCoordinator 清單
+            var dbCoordinators = await _dataRepository.GetAllDbCoordinatorsAsync();
+            model.DbCoordinatorList = [.. dbCoordinators];
+
+            // 載入計算點位群組清單與 SID → GroupName 對照（供側欄分群與前端篩選）
+            var calcPointsAll = (await _dataRepository.GetAllCalculatedPointsAsync())
+                .Where(c => c.isEnabled).ToList();
+            model.CalcPointGroups = calcPointsAll
+                .Select(c => c.szGroupName)
+                .Where(g => !string.IsNullOrWhiteSpace(g))
+                .Distinct().OrderBy(g => g).ToList();
+            model.CalcGroupMap = calcPointsAll.ToDictionary(c => c.szSID, c => c.szGroupName ?? "");
 
             ViewData["PageTitle"] = "SCADA 即時監控儀表板";
 
@@ -70,10 +86,13 @@ public class RealtimeController : Controller
     /// API: 取得最新即時資料 (AJAX 更新用)
     /// </summary>
     [HttpGet("~/api/realtime/latest")]
-    public IActionResult GetLatestData()
+    public async Task<IActionResult> GetLatestData()
     {
         try
         {
+            // DB 來源直讀 DBLatestData（每次 AJAX 都刷新，沿用 Web 3 秒週期）
+            await _mqttService.RefreshDbSourcesAsync();
+
             var realtimeDataList = _mqttService.GetAllRealtimeData();
             var stats = _mqttService.GetDataStatistics();
 

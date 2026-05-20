@@ -29,7 +29,7 @@ dotnet publish $engineProject -c Release --self-contained true --runtime win-x64
 if ($LASTEXITCODE -ne 0) { Write-Host "Engine build FAILED" -ForegroundColor Red; exit 1 }
 
 # Copy Engine configs
-$engineConfigs = @("Setting", "Modbus", "MqttSetting", "DatabaseSchema", "Algorithms")
+$engineConfigs = @("Setting", "Modbus", "MqttSetting", "DatabaseSchema", "DBPoint", "Algorithms")
 foreach ($dir in $engineConfigs) {
     $src = Join-Path $engineProject $dir
     if (Test-Path $src) {
@@ -133,6 +133,7 @@ if exist "C:\SCADA\Engine\App\Modbus" (
     xcopy /E /I /Y "C:\SCADA\Engine\App\Modbus"      "%_BACKUP%\Engine\Modbus"      >nul
     xcopy /E /I /Y "C:\SCADA\Engine\App\Setting"      "%_BACKUP%\Engine\Setting"      >nul
     xcopy /E /I /Y "C:\SCADA\Engine\App\MqttSetting"  "%_BACKUP%\Engine\MqttSetting"  >nul
+    xcopy /E /I /Y "C:\SCADA\Engine\App\DBPoint"      "%_BACKUP%\Engine\DBPoint"      >nul
 )
 if exist "C:\SCADA\Web\App\Setting" (
     if not exist "%_BACKUP%" mkdir "%_BACKUP%"
@@ -169,6 +170,7 @@ if "%_IS_UPGRADE%"=="1" (
     xcopy /E /I /Y "%_BACKUP%\Engine\Modbus"      "C:\SCADA\Engine\App\Modbus"      >nul
     xcopy /E /I /Y "%_BACKUP%\Engine\Setting"      "C:\SCADA\Engine\App\Setting"      >nul
     xcopy /E /I /Y "%_BACKUP%\Engine\MqttSetting"  "C:\SCADA\Engine\App\MqttSetting"  >nul
+    if exist "%_BACKUP%\Engine\DBPoint" xcopy /E /I /Y "%_BACKUP%\Engine\DBPoint" "C:\SCADA\Engine\App\DBPoint" >nul
     if exist "%_BACKUP%\Web\Setting" (
         xcopy /E /I /Y "%_BACKUP%\Web\Setting"     "C:\SCADA\Web\App\Setting"         >nul
         xcopy /E /I /Y "%_BACKUP%\Web\MqttSetting" "C:\SCADA\Web\App\MqttSetting"     >nul
@@ -194,12 +196,13 @@ echo   Default login: ITRI / ITRI
 echo ========================================
 echo.
 if "%_IS_UPGRADE%"=="1" (
-    echo [OK] Site config was PRESERVED (Modbus, Setting, MqttSetting).
+    echo [OK] Site config was PRESERVED (Modbus, Setting, MqttSetting, DBPoint).
 ) else (
     echo [NOTE] First install — edit config files as needed:
     echo   C:\SCADA\Engine\App\Setting\dbSetting.json      (DB connection)
     echo   C:\SCADA\Engine\App\Modbus\*.json                (Modbus devices)
     echo   C:\SCADA\Engine\App\MqttSetting\MqttSetting.json (MQTT broker)
+    echo   C:\SCADA\Engine\App\DBPoint\*.json               (DB source points)
 )
 echo.
 pause

@@ -74,6 +74,26 @@ try
     // 註冊 LogicFlow 後端執行服務
     builder.Services.AddHostedService<LogicFlowExecutionService>();
 
+    // 註冊警報規則 Reload 訂閱服務（聽 Web 端規則異動 MQTT 通知）
+    builder.Services.AddHostedService<AlarmRuleReloadSubscriber>();
+
+    // 註冊 DB 來源通訊服務（雙註冊：Singleton 供 ReloadSubscriber 注入呼叫 + HostedService 啟動 polling）
+    builder.Services.AddHostedService<DbCommunicationService>(provider =>
+        provider.GetRequiredService<DbCommunicationService>());
+
+    // 註冊 DB 來源 Reload 訂閱服務（聽 Web 端 JSON 異動 MQTT 通知）
+    builder.Services.AddHostedService<DbCoordinatorReloadSubscriber>();
+
+    // 註冊葉子層 hourly 預聚合 — 純邏輯 + 資料存取
+    builder.Services.AddSingleton<EnergyLeafHourlyRepository>();
+    builder.Services.AddSingleton<EnergyLeafAggregator>();
+
+    // 註冊葉子層 hourly 預聚合背景服務（XX:02 觸發 + 啟動 catch-up）
+    builder.Services.AddHostedService<EnergyLeafAggregationService>();
+
+    // 註冊葉子層 Backfill MQTT 訂閱服務（接 SCADA/Sys/EnergyLeafHourly/Backfill）
+    builder.Services.AddHostedService<EnergyLeafBackfillSubscriber>();
+
     var host = builder.Build();
 
     // 初始化資料庫服務

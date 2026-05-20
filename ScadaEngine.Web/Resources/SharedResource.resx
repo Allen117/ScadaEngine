@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="app.title" xml:space="preserve"><value>SCADA 監控系統</value></data>
+  <data name="app.brand" xml:space="preserve"><value>SCADA 監控系統</value></data>
+
+  <data name="lang.zh-TW" xml:space="preserve"><value>繁體中文</value></data>
+  <data name="lang.en" xml:space="preserve"><value>English</value></data>
+  <data name="lang.switch" xml:space="preserve"><value>語系</value></data>
+
+  <data name="shared.button.save" xml:space="preserve"><value>儲存</value></data>
+  <data name="shared.button.cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="shared.button.confirm" xml:space="preserve"><value>確認</value></data>
+  <data name="shared.button.ok" xml:space="preserve"><value>確定</value></data>
+  <data name="shared.button.delete" xml:space="preserve"><value>刪除</value></data>
+  <data name="shared.button.add" xml:space="preserve"><value>新增</value></data>
+  <data name="shared.button.edit" xml:space="preserve"><value>編輯</value></data>
+  <data name="shared.button.query" xml:space="preserve"><value>查詢</value></data>
+  <data name="shared.button.export" xml:space="preserve"><value>匯出</value></data>
+  <data name="shared.button.import" xml:space="preserve"><value>匯入</value></data>
+  <data name="shared.button.refresh" xml:space="preserve"><value>重新整理</value></data>
+  <data name="shared.button.close" xml:space="preserve"><value>關閉</value></data>
+  <data name="shared.button.search" xml:space="preserve"><value>搜尋</value></data>
+  <data name="shared.button.reset" xml:space="preserve"><value>重設</value></data>
+  <data name="shared.button.apply" xml:space="preserve"><value>套用</value></data>
+
+  <data name="shared.status.loading" xml:space="preserve"><value>載入中…</value></data>
+  <data name="shared.status.connecting" xml:space="preserve"><value>連線中…</value></data>
+  <data name="shared.status.connected" xml:space="preserve"><value>已連線</value></data>
+  <data name="shared.status.disconnected" xml:space="preserve"><value>已斷線</value></data>
+  <data name="shared.status.success" xml:space="preserve"><value>成功</value></data>
+  <data name="shared.status.error" xml:space="preserve"><value>錯誤</value></data>
+  <data name="shared.status.warning" xml:space="preserve"><value>警告</value></data>
+  <data name="shared.status.info" xml:space="preserve"><value>資訊</value></data>
+  <data name="shared.status.no_data" xml:space="preserve"><value>無資料</value></data>
+  <data name="shared.status.processing" xml:space="preserve"><value>處理中</value></data>
+
+  <data name="shared.label.start_time" xml:space="preserve"><value>起始時間</value></data>
+  <data name="shared.label.end_time" xml:space="preserve"><value>結束時間</value></data>
+  <data name="shared.label.timestamp" xml:space="preserve"><value>時間戳記</value></data>
+  <data name="shared.label.value" xml:space="preserve"><value>數值</value></data>
+  <data name="shared.label.unit" xml:space="preserve"><value>單位</value></data>
+  <data name="shared.label.quality" xml:space="preserve"><value>品質</value></data>
+  <data name="shared.label.name" xml:space="preserve"><value>名稱</value></data>
+  <data name="shared.label.description" xml:space="preserve"><value>說明</value></data>
+  <data name="shared.label.status" xml:space="preserve"><value>狀態</value></data>
+  <data name="shared.label.actions" xml:space="preserve"><value>操作</value></data>
+  <data name="shared.label.settings" xml:space="preserve"><value>設定</value></data>
+
+  <data name="shared.quality.good" xml:space="preserve"><value>良好</value></data>
+  <data name="shared.quality.bad" xml:space="preserve"><value>不良</value></data>
+
+  <data name="shared.confirm.delete" xml:space="preserve"><value>確定要刪除嗎？</value></data>
+
+  <data name="validation.required" xml:space="preserve"><value>此欄位為必填</value></data>
+  <data name="validation.invalid" xml:space="preserve"><value>輸入內容無效</value></data>
+  <data name="validation.too_long" xml:space="preserve"><value>輸入內容過長</value></data>
+  <data name="validation.range" xml:space="preserve"><value>數值超出允許範圍</value></data>
+
+  <data name="alarm.high_exceed" xml:space="preserve"><value>{0} 超過上限 {1}</value></data>
+  <data name="alarm.low_below" xml:space="preserve"><value>{0} 低於下限 {1}</value></data>
+  <data name="alarm.di_triggered" xml:space="preserve"><value>{0} 狀態為 {1} 觸發警報</value></data>
+
+  <data name="control.action.button_pressed" xml:space="preserve"><value>{0} 觸發按鈕「{1}」，控制值={2}</value></data>
+  <data name="control.action.ao_manual_set" xml:space="preserve"><value>{0} 手動寫入 AO「{1}」={2}</value></data>
+  <data name="control.action.ao_switch_auto" xml:space="preserve"><value>{0} 將 AO「{1}」切換為自動</value></data>
+  <data name="control.action.do_set_on" xml:space="preserve"><value>{0} 將 DO「{1}」設為 ON</value></data>
+  <data name="control.action.do_set_off" xml:space="preserve"><value>{0} 將 DO「{1}」設為 OFF</value></data>
+  <data name="control.action.do_switch_auto" xml:space="preserve"><value>{0} 將 DO「{1}」切換為自動</value></data>
+  <data name="control.action.pump_start" xml:space="preserve"><value>{0} 啟動泵浦「{1}」</value></data>
+  <data name="control.action.pump_stop" xml:space="preserve"><value>{0} 停止泵浦「{1}」</value></data>
+  <data name="control.action.pump_freq_set" xml:space="preserve"><value>{0} 將泵浦「{1}」頻率設為 {2} Hz</value></data>
+  <data name="control.action.pump_switch_auto" xml:space="preserve"><value>{0} 將泵浦「{1}」切換為自動</value></data>
+</root>

@@ -42,10 +42,10 @@ namespace ScadaEngine.Web.Services
                 const string szSql = @"
                     INSERT INTO EventLog
                         (SID, EventType, Severity, TriggerValue, ThresholdValue,
-                         Operator, Message, OccurredAt)
+                         Operator, Message, MessageKey, MessageArgs, OccurredAt)
                     VALUES
                         (@SID, @EventType, @Severity, @TriggerValue, @ThresholdValue,
-                         @Operator, @Message, @OccurredAt)";
+                         @Operator, @Message, @MessageKey, @MessageArgs, @OccurredAt)";
 
                 using var connection = new SqlConnection(_szConnectionString);
                 await connection.OpenAsync();
@@ -58,6 +58,8 @@ namespace ScadaEngine.Web.Services
                     ThresholdValue = model.dThresholdValue,
                     Operator       = model.nOperator,
                     Message        = model.szMessage,
+                    MessageKey     = model.szMessageKey,
+                    MessageArgs    = model.szMessageArgs,
                     OccurredAt     = model.dtOccurredAt
                 });
 
@@ -118,6 +120,8 @@ namespace ScadaEngine.Web.Services
                            ThresholdValue AS dThresholdValue,
                            Operator       AS nOperator,
                            Message        AS szMessage,
+                           MessageKey     AS szMessageKey,
+                           MessageArgs    AS szMessageArgs,
                            OccurredAt     AS dtOccurredAt,
                            ClearedAt      AS dtClearedAt,
                            IsAcknowledged AS isAcknowledged,
@@ -159,6 +163,8 @@ namespace ScadaEngine.Web.Services
                            ThresholdValue AS dThresholdValue,
                            Operator       AS nOperator,
                            Message        AS szMessage,
+                           MessageKey     AS szMessageKey,
+                           MessageArgs    AS szMessageArgs,
                            OccurredAt     AS dtOccurredAt,
                            ClearedAt      AS dtClearedAt,
                            IsAcknowledged AS isAcknowledged,

@@ -547,7 +547,7 @@ public async Task<bool> ConnectAsync()
             }
         }
 
-        _logger.LogInformation("ModbusId {ModbusId} 批量優化完成: {BatchCount} 個批次", nModbusId, batchGroups.Count);
+        // _logger.LogInformation("ModbusId {ModbusId} 批量優化完成: {BatchCount} 個批次", nModbusId, batchGroups.Count);
         return batchGroups;
     }
 /// <summary>

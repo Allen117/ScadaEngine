@@ -47,6 +47,17 @@ public class RealtimeMonitorViewModel
     /// ModbusCoordinator 設備清單 (左側邊欄用)
     /// </summary>
     public List<CoordinatorModel> CoordinatorList { get; set; } = [];
+
+    /// <summary>
+    /// DBCoordinator 設備清單 (左側邊欄 DB 來源用)
+    /// </summary>
+    public List<DbCoordinatorModel> DbCoordinatorList { get; set; } = [];
+
+    /// <summary>計算點位的群組名稱清單（側欄分群用）</summary>
+    public List<string> CalcPointGroups { get; set; } = [];
+
+    /// <summary>計算點位 SID → GroupName 對照（前端 JS 過濾用）</summary>
+    public Dictionary<string, string> CalcGroupMap { get; set; } = new();
 }
 
 /// <summary>
@@ -122,6 +133,12 @@ public class RealtimeDataItemModel
     public bool hasData { get; set; } = true;
 
     /// <summary>
+    /// DB 來源等「直讀型」點位設為 true，跳過 isRecent 時間戳老化檢查
+    /// （這類點位的「通訊正常」由 SQL 讀取成功決定，與 Timestamp 新舊無關）
+    /// </summary>
+    public bool isFreshBypass { get; set; } = false;
+
+    /// <summary>
     /// 取得 CSS 列樣式類別
     /// </summary>
     public string GetCssRowClass()
@@ -129,7 +146,7 @@ public class RealtimeDataItemModel
         if (!hasData) return "row-nodata";
         if (szQuality.Equals("STALE", StringComparison.OrdinalIgnoreCase)) return "row-outdated table-warning";
         if (!isQualityGood) return "row-error table-danger";
-        if (!isRecent) return "row-outdated table-warning";
+        if (!isRecent && !isFreshBypass) return "row-outdated table-warning";
         return "row-recent";
     }
 

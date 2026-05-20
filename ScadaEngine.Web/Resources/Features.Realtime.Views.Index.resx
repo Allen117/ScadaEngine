@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="realtime.title" xml:space="preserve"><value>SCADA 即時監控儀表板</value></data>
+
+  <data name="realtime.connection.ok" xml:space="preserve"><value>連線正常</value></data>
+  <data name="realtime.connection.bad" xml:space="preserve"><value>連線異常</value></data>
+  <data name="realtime.button.refresh" xml:space="preserve"><value>重新整理</value></data>
+
+  <data name="realtime.coordinator.title" xml:space="preserve"><value>設備清單</value></data>
+  <data name="realtime.coordinator.calc" xml:space="preserve"><value>計算點位</value></data>
+  <data name="realtime.coordinator.ungrouped" xml:space="preserve"><value>未分組</value></data>
+  <data name="realtime.coordinator.empty" xml:space="preserve"><value>無設備資料</value></data>
+
+  <data name="realtime.table.title" xml:space="preserve"><value>即時資料監控</value></data>
+  <data name="realtime.table.count_suffix" xml:space="preserve"><value>筆</value></data>
+
+  <data name="realtime.col.name" xml:space="preserve"><value>名稱</value></data>
+  <data name="realtime.col.sid" xml:space="preserve"><value>SID</value></data>
+  <data name="realtime.col.value" xml:space="preserve"><value>數值</value></data>
+  <data name="realtime.col.unit" xml:space="preserve"><value>單位</value></data>
+  <data name="realtime.col.quality" xml:space="preserve"><value>品質</value></data>
+  <data name="realtime.col.timestamp" xml:space="preserve"><value>時間戳記</value></data>
+
+  <data name="realtime.empty.no_data" xml:space="preserve"><value>尚無即時資料，請確認 MQTT 連線狀態</value></data>
+
+  <data name="realtime.footer.note" xml:space="preserve"><value>自動更新週期: 3 秒 | 訂閱主題: SCADA/Realtime/+</value></data>
+  <data name="realtime.footer.last_update" xml:space="preserve"><value>最後更新</value></data>
+
+  <data name="realtime.alert.refresh_failed" xml:space="preserve"><value>更新資料失敗: {0}</value></data>
+  <data name="realtime.alert.network_failed" xml:space="preserve"><value>網路請求失敗，請檢查連線</value></data>
+
+  <data name="alarm.panel.fetch_failed" xml:space="preserve"><value>警報資料取得失敗</value></data>
+  <data name="alarm.panel.mqtt_disconnected" xml:space="preserve"><value>警報 MQTT 連線中斷，顯示資料可能不是最新</value></data>
+  <data name="alarm.panel.no_connection" xml:space="preserve"><value>無法連線至伺服器</value></data>
+  <data name="alarm.panel.empty.no_active" xml:space="preserve"><value>目前無未恢復警報</value></data>
+  <data name="alarm.panel.empty.no_match" xml:space="preserve"><value>無符合篩選條件的警報</value></data>
+
+  <data name="alarm.panel.ack.acked" xml:space="preserve"><value>已確認</value></data>
+  <data name="alarm.panel.ack.unack" xml:space="preserve"><value>未確認</value></data>
+  <data name="alarm.panel.ack.title.acked" xml:space="preserve"><value>已確認 — {0}</value></data>
+  <data name="alarm.panel.ack.title.dblclick" xml:space="preserve"><value>雙擊以確認此警報</value></data>
+  <data name="alarm.panel.ack.failed" xml:space="preserve"><value>確認警報失敗</value></data>
+  <data name="alarm.panel.ack.failed_with" xml:space="preserve"><value>確認警報失敗：無法連線伺服器</value></data>
+
+  <data name="alarm.panel.elapsed.sec" xml:space="preserve"><value>{0} 秒前</value></data>
+  <data name="alarm.panel.elapsed.min" xml:space="preserve"><value>{0} 分前</value></data>
+  <data name="alarm.panel.elapsed.hour" xml:space="preserve"><value>{0} 小時前</value></data>
+  <data name="alarm.panel.elapsed.day" xml:space="preserve"><value>{0} 天前</value></data>
+</root>

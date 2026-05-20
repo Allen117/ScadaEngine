@@ -1,0 +1,6 @@
+{
+  "ChannelAccessToken": "PASTE_YOUR_LINE_CHANNEL_ACCESS_TOKEN_HERE",
+  "EnableNotification": true,
+  "RatePerMinute": 10,
+  "TestSendThrottleSeconds": 10
+}

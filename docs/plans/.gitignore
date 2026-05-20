@@ -1,0 +1,10 @@
+# Plans 是個人工作草稿，不 commit
+# 只保留 README 與範本供他人參考
+
+*.md
+!README.md
+!_template.md
+
+# 封存目錄內容全部忽略，但保留資料夾
+_archive/*
+!_archive/.gitkeep

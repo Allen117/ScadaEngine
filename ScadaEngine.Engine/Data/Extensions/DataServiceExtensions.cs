@@ -203,7 +203,13 @@ public static class DataServiceExtensions
 
         // 註冊警報監控服務為單例
         services.AddSingleton<AlarmEventLogRepository>();
+        services.AddSingleton<AlarmMqttPublisher>();
         services.AddSingleton<AlarmMonitorService>();
+
+        // 註冊 Line 通知相關服務為單例
+        services.AddHttpClient();
+        services.AddSingleton<LineNotifyTargetRepository>();
+        services.AddSingleton<LineNotificationService>();
 
         // 註冊 LogicFlow 資料存取服務為單例
         services.AddSingleton<LogicFlowRepository>();
@@ -213,6 +219,10 @@ public static class DataServiceExtensions
 
         // 註冊計算點位服務為單例
         services.AddSingleton<CalculatedPointService>();
+
+        // 註冊 DB 來源相關服務為單例（DbCommunicationService 同時作 HostedService 由 Program.cs 註冊）
+        services.AddSingleton<DbCoordinatorJsonLoader>();
+        services.AddSingleton<DbCommunicationService>();
 
         return services;
     }
@@ -271,11 +281,17 @@ public static class DataServiceExtensions
             logger.LogInformation("資料儲存服務已初始化: 歷史資料服務(每分鐘)和即時資料服務(每5秒)");
 
             // 4. 初始化警報監控服務（載入規則 + 還原活躍警報狀態）
+            //    重要：此時 LineNotificationService 尚未 Initialize，還原期間呼叫 NotifyAsync 會被 skip
             var alarmMonitorService = serviceProvider.GetRequiredService<AlarmMonitorService>();
             await alarmMonitorService.InitializeAsync();
             logger.LogInformation("警報監控服務已初始化");
 
-            // 5. 初始化計算點位服務（載入公式設定）
+            // 5. 初始化 Line 通知服務（讀取 LineSetting.json）
+            var lineService = serviceProvider.GetRequiredService<LineNotificationService>();
+            var lineSetting = LoadLineSetting(logger);
+            await lineService.InitializeAsync(lineSetting);
+
+            // 6. 初始化計算點位服務（載入公式設定）
             var calculatedPointService = serviceProvider.GetRequiredService<CalculatedPointService>();
             await calculatedPointService.InitializeAsync();
             logger.LogInformation("計算點位服務已初始化");
@@ -284,6 +300,46 @@ public static class DataServiceExtensions
         {
             var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
             logger.LogError(ex, "資料庫初始化過程中發生錯誤");
+        }
+    }
+
+    /// <summary>
+    /// 載入 LineSetting.json — 路徑偵測與 dbSetting 同邏輯
+    /// 檔案不存在時回傳預設物件（EnableNotification=false 由 LineNotificationService 內處理）
+    /// </summary>
+    private static ScadaEngine.Common.Data.Models.LineSettingModel LoadLineSetting(ILogger logger)
+    {
+        var szBasePath = AppDomain.CurrentDomain.BaseDirectory;
+        var szPath = Path.Combine(szBasePath, "Setting", "LineSetting.json");
+
+        if (!File.Exists(szPath))
+        {
+            var szFallback1 = Path.Combine(Directory.GetCurrentDirectory(), "Setting", "LineSetting.json");
+            if (File.Exists(szFallback1)) szPath = szFallback1;
+        }
+
+        if (!File.Exists(szPath))
+        {
+            logger.LogWarning("找不到 LineSetting.json，Line 通知功能將停用 (路徑: {Path})", szPath);
+            return new ScadaEngine.Common.Data.Models.LineSettingModel
+            {
+                EnableNotification = false
+            };
+        }
+
+        try
+        {
+            var szJson = File.ReadAllText(szPath);
+            var setting = System.Text.Json.JsonSerializer.Deserialize<ScadaEngine.Common.Data.Models.LineSettingModel>(
+                szJson,
+                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            logger.LogInformation("LineSetting.json 已載入: {Path}", szPath);
+            return setting ?? new ScadaEngine.Common.Data.Models.LineSettingModel { EnableNotification = false };
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "解析 LineSetting.json 失敗，Line 通知功能將停用");
+            return new ScadaEngine.Common.Data.Models.LineSettingModel { EnableNotification = false };
         }
     }
 }

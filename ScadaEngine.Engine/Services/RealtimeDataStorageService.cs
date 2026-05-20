@@ -178,6 +178,22 @@ public class RealtimeDataStorageService : IDisposable
     }
 
     /// <summary>
+    /// 僅更新持久快取（不入 _latestDataCache 排隊寫 DB）。
+    /// 給 DbCommunicationService 用 — DB 來源點位的 LatestData 會帶 DBLatestData.Timestamp 直接寫 DB，
+    /// 不能讓 5 秒 Timer 用 current-time 覆蓋掉，但 calc/LogicFlow 仍需要從 _persistentCache 讀到最新值。
+    /// </summary>
+    public void UpdatePersistentCacheOnly(IEnumerable<RealtimeDataModel> realtimeDataList)
+    {
+        if (realtimeDataList == null) return;
+        foreach (var data in realtimeDataList)
+        {
+            if (data == null || string.IsNullOrEmpty(data.szSID)) continue;
+            var latest = new LatestDataModel(data) { dtTimestamp = data.dtTimestamp };
+            _persistentCache.AddOrUpdate(data.szSID, latest, (_, _) => latest);
+        }
+    }
+
+    /// <summary>
     /// 釋放資源
     /// </summary>
     public void Dispose()

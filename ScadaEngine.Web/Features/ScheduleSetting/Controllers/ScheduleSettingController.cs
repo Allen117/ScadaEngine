@@ -64,11 +64,52 @@ public class ScheduleSettingController : Controller
                 return BadRequest(new { success = false, message = "請設定週期起算時間" });
         }
 
+        // 例外日 / 加開日：格式驗證 + 交集驗證 + 正規化
+        if (!TryNormalizeDateList(dto.excludeDates, out var szExcludeNorm, out var szExcludeError))
+            return BadRequest(new { success = false, message = "例外日格式錯誤：" + szExcludeError });
+        if (!TryNormalizeDateList(dto.includeDates, out var szIncludeNorm, out var szIncludeError))
+            return BadRequest(new { success = false, message = "加開日格式錯誤：" + szIncludeError });
+
+        if (!string.IsNullOrEmpty(szExcludeNorm) && !string.IsNullOrEmpty(szIncludeNorm))
+        {
+            var excludeSet = new HashSet<string>(szExcludeNorm.Split(','));
+            var conflict = szIncludeNorm.Split(',').FirstOrDefault(d => excludeSet.Contains(d));
+            if (conflict != null)
+                return BadRequest(new { success = false, message = $"日期 {conflict} 同時出現在例外日與加開日，請擇一" });
+        }
+
+        dto.excludeDates = szExcludeNorm;
+        dto.includeDates = szIncludeNorm;
+
         var isSuccess = await _scheduleService.SaveScheduleAsync(dto);
         if (isSuccess)
             return Ok(new { success = true, message = "排程已儲存" });
 
         return StatusCode(500, new { success = false, message = "儲存失敗" });
+    }
+
+    /// <summary>驗證並正規化日期清單字串：每項須為合法 yyyy-MM-dd，輸出去重 + 排序的逗號分隔字串</summary>
+    private static bool TryNormalizeDateList(string? raw, out string? normalized, out string error)
+    {
+        normalized = null;
+        error = string.Empty;
+        if (string.IsNullOrWhiteSpace(raw)) return true;
+
+        var parts = raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var set = new SortedSet<string>(StringComparer.Ordinal);
+        foreach (var p in parts)
+        {
+            if (!DateTime.TryParseExact(p, "yyyy-MM-dd",
+                System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out _))
+            {
+                error = $"\"{p}\" 不是合法日期（須為 yyyy-MM-dd）";
+                return false;
+            }
+            set.Add(p);
+        }
+        normalized = set.Count == 0 ? null : string.Join(',', set);
+        return true;
     }
 
     /// <summary>刪除排程</summary>

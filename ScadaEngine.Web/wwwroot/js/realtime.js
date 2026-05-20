@@ -1,9 +1,15 @@
 (function () {
+    function t(key, args) { return (window.i18n && window.i18n.t) ? window.i18n.t(key, args) : key; }
+
     var isRefreshing = false;
 
     // 由 cshtml inline script 設定的初始資料
     var currentCoordinatorDbId = window._realtimeInitCoordinatorId || 0;
     var currentSubModbusId = null;
+    // DB 來源以 SID 前綴篩選（例：'DB1-'），與 currentCoordinatorDbId/SubModbusId 互斥
+    var currentSidPrefix = null;
+    // 計算點位群組篩選：null = 全部、''（空字串）= 未分組、其他 = 指定 GroupName
+    var currentCalcGroup = null;
 
     // 排序狀態
     var sortColumn = null;
@@ -33,7 +39,7 @@
             var th = document.getElementById('th-' + col);
             if (!th) return;
             th.classList.remove('sort-asc', 'sort-desc');
-            th.querySelector('.sort-icon').textContent = '\u21C5';
+            th.querySelector('.sort-icon').textContent = '⇅';
             if (col === sortColumn) {
                 th.classList.add(sortDirection === 'asc' ? 'sort-asc' : 'sort-desc');
                 th.querySelector('.sort-icon').textContent = '';
@@ -73,15 +79,31 @@
 
     // 依目前選取的 Coordinator 篩選資料
     function filterByCoordinator(data) {
+        // DB 來源前綴篩選（SID 以 'DB{Id}-' 開頭）— 優先順序最高
+        if (currentSidPrefix) {
+            var filtered = data.filter(function (item) {
+                return item.sid && item.sid.indexOf(currentSidPrefix) === 0;
+            });
+            console.log('[篩選] SID prefix=' + currentSidPrefix +
+                ', 總資料=' + data.length +
+                ', 篩選後=' + filtered.length);
+            return filtered;
+        }
+
         if (!currentCoordinatorDbId) return data;
 
         // 計算點位篩選（SID 以 CALC- 開頭）
         if (currentCoordinatorDbId === -999) {
+            var groupMap = window._realtimeCalcGroupMap || {};
             var filtered = data.filter(function (item) {
-                return item.sid && item.sid.indexOf('CALC-') === 0;
+                if (!item.sid || item.sid.indexOf('CALC-') !== 0) return false;
+                if (currentCalcGroup == null) return true;
+                var g = groupMap[item.sid] || '';
+                return g === currentCalcGroup;
             });
-            console.log('[\u7BE9\u9078] \u8A08\u7B97\u9EDE\u4F4D, \u7E3D\u8CC7\u6599=' + data.length +
-                ', \u7BE9\u9078\u5F8C=' + filtered.length);
+            console.log('[篩選] 計算點位, group=' + (currentCalcGroup == null ? '(全部)' : '"' + currentCalcGroup + '"') +
+                ', 總資料=' + data.length +
+                ', 篩選後=' + filtered.length);
             return filtered;
         }
 
@@ -102,14 +124,14 @@
             var sidNum = parseInt(item.sid.substring(0, hyphen));
             return !isNaN(sidNum) && sidNum >= rangeBase && sidNum < rangeEnd;
         });
-        console.log('[\u7BE9\u9078] CoordinatorId=' + currentCoordinatorDbId +
+        console.log('[篩選] CoordinatorId=' + currentCoordinatorDbId +
             ', SubModbusId=' + currentSubModbusId +
-            ', \u7BC4\u570D=[' + rangeBase + ', ' + rangeEnd +
-            '), \u7E3D\u8CC7\u6599=' + data.length +
-            ', \u7BE9\u9078\u5F8C=' + filtered.length);
+            ', 範圍=[' + rangeBase + ', ' + rangeEnd +
+            '), 總資料=' + data.length +
+            ', 篩選後=' + filtered.length);
         if (filtered.length === 0 && data.length > 0) {
             var sample = data.slice(0, 5).map(function (d) { return d.sid; });
-            console.warn('[\u7BE9\u9078] \u7BE9\u9078\u7D50\u679C\u70BA\u7A7A\uFF01\u524D 5 \u7B46 SID:', sample);
+            console.warn('[篩選] 篩選結果為空！前 5 筆 SID:', sample);
         }
         return filtered;
     }
@@ -170,13 +192,13 @@
                     updateConnectionStatus(result.connectionStatus);
                     updateFooterTime(result.timestamp);
                 } else {
-                    console.error('\u66F4\u65B0\u8CC7\u6599\u5931\u6557:', result.error);
-                    showTemporaryAlert('\u66F4\u65B0\u8CC7\u6599\u5931\u6557: ' + result.error, 'danger');
+                    console.error('更新資料失敗:', result.error);
+                    showTemporaryAlert(t('realtime.alert.refresh_failed', { 0: result.error }), 'danger');
                 }
             })
             .catch(function (error) {
-                console.error('AJAX \u8ACB\u6C42\u5931\u6557:', error);
-                showTemporaryAlert('\u7DB2\u8DEF\u8ACB\u6C42\u5931\u6557\uFF0C\u8ACB\u6AA2\u67E5\u9023\u7DDA', 'danger');
+                console.error('AJAX 請求失敗:', error);
+                showTemporaryAlert(t('realtime.alert.network_failed'), 'danger');
             })
             .finally(function () {
                 isRefreshing = false;
@@ -190,10 +212,10 @@
         var statusBadge = document.getElementById('connectionStatus');
         if (isConnected) {
             statusBadge.className = 'badge bg-success me-3';
-            statusBadge.innerHTML = '<i class="fas fa-wifi me-1"></i>\u9023\u7DDA\u6B63\u5E38';
+            statusBadge.innerHTML = '<i class="fas fa-wifi me-1"></i>' + t('realtime.connection.ok') + '';
         } else {
             statusBadge.className = 'badge bg-danger me-3';
-            statusBadge.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>\u9023\u7DDA\u7570\u5E38';
+            statusBadge.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>' + t('realtime.connection.bad') + '';
         }
     }
 
@@ -214,7 +236,7 @@
             tbody.innerHTML = '<tr>' +
                 '<td colspan="6" class="text-center text-muted py-4">' +
                 '<i class="fas fa-inbox fa-2x mb-2 d-block"></i>' +
-                '\u5C1A\u7121\u5373\u6642\u8CC7\u6599\uFF0C\u8ACB\u78BA\u8A8D MQTT \u9023\u7DDA\u72C0\u614B' +
+                '' + t('realtime.empty.no_data') + '' +
                 '</td></tr>';
             currentDisplayOrder = [];
             return;
@@ -241,7 +263,7 @@
 
     // 更新頁腳時間
     function updateFooterTime(timestamp) {
-        document.getElementById('footerLastUpdate').textContent = '\u6700\u5F8C\u66F4\u65B0: ' + timestamp;
+        document.getElementById('footerLastUpdate').textContent = t('realtime.footer.last_update') + ': ' + timestamp;
     }
 
     // 顯示臨時提醒
@@ -272,21 +294,41 @@
                 .forEach(function (el) { el.classList.remove('active'); });
         }
 
+        // 從側邊欄項目讀取選取參數並切換右側資料
+        function applySidebarSelection(el) {
+            var prefix = el.dataset.sidPrefix;
+            if (prefix) {
+                currentSidPrefix = prefix;
+                currentCoordinatorDbId = 0;
+                currentSubModbusId = null;
+                currentCalcGroup = null;
+            } else {
+                currentSidPrefix = null;
+                currentCoordinatorDbId = parseInt(el.dataset.id) || 0;
+                currentSubModbusId = el.dataset.modbusid != null && el.dataset.modbusid !== ''
+                    ? el.dataset.modbusid
+                    : null;
+                // 計算點位群組（仅在計算點位 sub-item 上設定 data-calcgroup）
+                currentCalcGroup = el.dataset.calcgroup != null ? el.dataset.calcgroup : null;
+            }
+            var nameEl = document.getElementById('currentCoordinatorName');
+            if (nameEl) nameEl.textContent = '— ' + (el.dataset.name || '');
+            updateTable();
+        }
+
         // 單一設備點擊（無子選單）
         document.querySelectorAll('.coordinator-item').forEach(function (item) {
             item.addEventListener('click', function (e) {
                 e.preventDefault();
                 clearAllSidebarActive();
                 this.classList.add('active');
-                currentCoordinatorDbId = parseInt(this.dataset.id) || 0;
                 currentSubModbusId = null;
-                var nameEl = document.getElementById('currentCoordinatorName');
-                if (nameEl) nameEl.textContent = '\u2014 ' + (this.dataset.name || '');
-                updateTable();
+                applySidebarSelection(this);
             });
         });
 
-        // 展開/收合子選單 + 顯示整個 Coordinator 資料
+        // 展開/收合子選單；若 toggle 帶 data-id 則同步切換右側資料（Modbus toggle），
+        // 若無 data-id（DB 父 toggle）只做展開/收合，不動目前選取狀態
         document.querySelectorAll('.coordinator-toggle').forEach(function (toggle) {
             toggle.addEventListener('click', function (e) {
                 e.preventDefault();
@@ -299,27 +341,23 @@
                     subMenu.style.display = 'none';
                     icon.classList.remove('open');
                 }
+                var hasDataId = this.dataset.id != null && this.dataset.id !== '';
+                var hasSidPrefix = this.dataset.sidPrefix != null && this.dataset.sidPrefix !== '';
+                if (!hasDataId && !hasSidPrefix) return; // 純展開/收合（無篩選資訊）
                 clearAllSidebarActive();
                 this.classList.add('active');
-                currentCoordinatorDbId = parseInt(this.dataset.id) || 0;
                 currentSubModbusId = null;
-                var nameEl = document.getElementById('currentCoordinatorName');
-                if (nameEl) nameEl.textContent = '\u2014 ' + (this.dataset.name || '');
-                updateTable();
+                applySidebarSelection(this);
             });
         });
 
-        // 子項目點擊：篩選特定 ModbusID
+        // 子項目點擊：依 data-sid-prefix 或 data-modbusid 篩選
         document.querySelectorAll('.sub-item').forEach(function (item) {
             item.addEventListener('click', function (e) {
                 e.preventDefault();
                 clearAllSidebarActive();
                 this.classList.add('active');
-                currentCoordinatorDbId = parseInt(this.dataset.id) || 0;
-                currentSubModbusId = this.dataset.modbusid;
-                var nameEl = document.getElementById('currentCoordinatorName');
-                if (nameEl) nameEl.textContent = '\u2014 ' + (this.dataset.name || '');
-                updateTable();
+                applySidebarSelection(this);
             });
         });
 
@@ -329,7 +367,7 @@
         // 每 3 秒自動更新
         setInterval(refreshData, 3000);
 
-        console.log('SCADA \u5373\u6642\u76E3\u63A7\u5100\u8868\u677F\u5DF2\u555F\u52D5\uFF0C\u81EA\u52D5\u66F4\u65B0\u9031\u671F: 3\u79D2');
+        console.log('SCADA 即時監控儀表板已啟動，自動更新週期: 3秒');
     });
 
     // 對外介面掛在 window._realtime 供 onclick 等屬性呼叫

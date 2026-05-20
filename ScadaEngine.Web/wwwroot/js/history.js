@@ -2,6 +2,10 @@
 (function () {
     'use strict';
 
+    function t(key, args) {
+        return (window.i18n && window.i18n.t) ? window.i18n.t(key, args) : key;
+    }
+
     // ── 從 Razor 注入的設定讀取資料 ──────────────────────────────────────
     var cfg = window.__historyConfig || {};
     var allPoints       = cfg.points       || [];
@@ -9,6 +13,7 @@
     var currentCoordinatorId = cfg.initialCoordId || 0;
     var currentModbusId      = null;
     var currentCalcGroup     = null;   // null = 全部計算點位, string = 指定群組
+    var currentSidPrefix     = null;   // null = 不以 SID 前綴篩選；'DB' / 'DB1-' 等切換到 DB 群組
 
     // ── 為每個點位計算所屬設備/子設備名稱，作為顯示前綴 ──────────────────
     function isCalcSid(sid) { return sid && sid.indexOf('CALC-') === 0; }
@@ -18,7 +23,7 @@
         var isOfDev   = function (sid, nId) { var n = getSidPfx(sid); return n >= nId * 65536 && n < (nId + 1) * 65536; };
         allPoints.forEach(function (p) {
             if (isCalcSid(p.sid)) {
-                var grp = p.groupName || '\u8a08\u7b97\u9ede\u4f4d';
+                var grp = p.groupName || t('history.coordinator.calc');
                 p.deviceLabel = grp;
                 p.fullName = grp + ' / ' + p.name;
                 return;
@@ -84,9 +89,16 @@
     // ── 點位選取清單 ─────────────────────────────────────────────────────
     var getN = function (sid) { var m = sid.match(/-S(\d+)$/); return m ? parseInt(m[1]) : Infinity; };
 
-    function renderPointList(nDbId, nModbusId, szCalcGroup) {
+    function renderPointList(nDbId, nModbusId, szCalcGroup, szSidPrefix) {
+        console.log('[renderPointList] nDbId=' + nDbId + ', nModbusId=' + nModbusId +
+            ', szCalcGroup=' + szCalcGroup + ', szSidPrefix=' + szSidPrefix);
         var pts;
-        if (nDbId === -999) {
+        if (szSidPrefix) {
+            // DB 群組（父或子）— 以 SID 前綴篩選
+            pts = allPoints.filter(function (p) {
+                return p.sid && p.sid.indexOf(szSidPrefix) === 0;
+            });
+        } else if (nDbId === -999) {
             // 計算點位 — 依群組篩選
             pts = allPoints.filter(function (p) {
                 if (!isCalcSid(p.sid)) return false;
@@ -123,7 +135,7 @@
                 + (p.deviceLabel ? '<span style="color:#0d6efd;">' + p.deviceLabel + '</span><span style="color:#999;margin:0 3px;">/</span>' : '')
                 + p.name
                 + '</label></div>';
-        }).join('') || '<div class="text-muted small text-center py-3">\u7121\u9ede\u4f4d\u8cc7\u6599</div>';
+        }).join('') || '<div class="text-muted small text-center py-3">' + t('history.alert.no_points_data') + '</div>';
     }
 
     // ── 待查詢清單（Basket）─────────────────────────────────────────────
@@ -138,7 +150,7 @@
             var emptyDiv = document.createElement('div');
             emptyDiv.id = 'basketEmpty';
             emptyDiv.className = 'text-muted text-center small py-4';
-            emptyDiv.innerHTML = '<i class="fas fa-inbox d-block mb-1 opacity-50"></i>\u5c1a\u672a\u52a0\u5165\u4efb\u4f55\u9ede\u4f4d';
+            emptyDiv.innerHTML = '<i class="fas fa-inbox d-block mb-1 opacity-50"></i>' + t('history.basket.empty') + '';
             basketContainer.appendChild(emptyDiv);
             hint.style.display = 'none';
             return;
@@ -152,7 +164,7 @@
                 + '<span class="color-dot" style="background:' + c.border + '"></span>'
                 + '<span class="text-truncate">' + p.name + '</span>'
                 + '</div>'
-                + '<button class="btn-remove" onclick="window._history.removeFromBasket(\'' + p.sid + '\')" title="\u79fb\u9664">'
+                + '<button class="btn-remove" onclick="window._history.removeFromBasket(\'' + p.sid + '\')" title="' + t('history.basket.button.remove') + '">'
                 + '<i class="fas fa-times"></i>'
                 + '</button></div>';
         }).join('');
@@ -164,14 +176,14 @@
             var item = items[idx];
             if (basket.some(function (b) { return b.sid === item.sid; })) continue;
             if (basket.length >= MAX_BASKET) {
-                showAlert('\u6700\u591a\u53ea\u80fd\u52a0\u5165 ' + MAX_BASKET + ' \u500b\u9ede\u4f4d', 'warning');
+                showAlert(t('history.alert.basket_full', { 0: MAX_BASKET }), 'warning');
                 break;
             }
             basket.push(item);
             added++;
         }
         if (added > 0) renderBasket();
-        else if (items.length > 0 && added === 0) showAlert('\u9078\u53d6\u7684\u9ede\u4f4d\u5df2\u5168\u90e8\u5728\u6e05\u55ae\u4e2d', 'info');
+        else if (items.length > 0 && added === 0) showAlert(t('history.alert.already_in_basket'), 'info');
     }
 
     function removeFromBasket(sid) {
@@ -432,9 +444,9 @@
         var szStart = dtStart.value;
         var szEnd   = dtEnd.value;
 
-        if (basket.length === 0) { showAlert('\u8acb\u5148\u5c07\u9ede\u4f4d\u52a0\u5165\u5f85\u67e5\u8a62\u6e05\u55ae', 'warning'); return; }
-        if (!szStart || !szEnd)  { showAlert('\u8acb\u8a2d\u5b9a\u67e5\u8a62\u6642\u9593\u7bc4\u570d', 'warning'); return; }
-        if (szStart >= szEnd)    { showAlert('\u958b\u59cb\u6642\u9593\u5fc5\u9808\u65e9\u65bc\u7d50\u675f\u6642\u9593', 'warning'); return; }
+        if (basket.length === 0) { showAlert(t('history.alert.no_points_in_basket'), 'warning'); return; }
+        if (!szStart || !szEnd)  { showAlert(t('history.alert.no_time_range'), 'warning'); return; }
+        if (szStart >= szEnd)    { showAlert(t('history.alert.bad_time_range'), 'warning'); return; }
 
         noDataMsg.classList.add('d-none');
         chartContainer.style.display = 'none';
@@ -462,7 +474,7 @@
                 noDataMsg.classList.remove('d-none'); return;
             }
             if (!results.some(function (r) { return r.nCount > 0; })) {
-                noDataMsg.innerHTML = '<i class="fas fa-inbox fa-3x mb-3 d-block opacity-25"></i><div>\u8a72\u6642\u6bb5\u5167\u7121\u6b77\u53f2\u8cc7\u6599</div>';
+                noDataMsg.innerHTML = '<i class="fas fa-inbox fa-3x mb-3 d-block opacity-25"></i><div>' + t('history.chart.no_data') + '</div>';
                 noDataMsg.classList.remove('d-none'); return;
             }
 
@@ -480,7 +492,7 @@
 
             chartTitle.innerHTML = results.length === 1
                 ? '<i class="fas fa-chart-area text-primary me-2"></i>' + results[0].szName
-                : '<i class="fas fa-chart-area text-primary me-2"></i>\u5df2\u67e5\u8a62 ' + results.length + ' \u500b\u9ede\u4f4d';
+                : '<i class="fas fa-chart-area text-primary me-2"></i>' + t('history.chart.title.queried', { 0: results.length });
 
             if (results.length === 1) {
                 var json = results[0];
@@ -521,7 +533,7 @@
 
             document.getElementById('btnExportExcel').classList.remove('d-none');
             document.getElementById('footerQueryTime').textContent =
-                '\u67e5\u8a62\u5b8c\u6210: ' + new Date().toLocaleTimeString();
+                t('history.chart.completed_at', { 0: new Date().toLocaleTimeString() });
 
             if (results.length === 1) {
                 var json2 = results[0];
@@ -539,7 +551,7 @@
         }).catch(function (err) {
             loadingSpinner.classList.add('d-none');
             btnQuery.disabled = false;
-            noDataMsg.innerHTML = '<i class="fas fa-exclamation-circle fa-3x mb-3 d-block text-danger opacity-50"></i><div>\u67e5\u8a62\u5931\u6557\uff1a' + err.message + '</div>';
+            noDataMsg.innerHTML = '<i class="fas fa-exclamation-circle fa-3x mb-3 d-block text-danger opacity-50"></i><div>' + t('history.chart.query_failed', { 0: err.message }) + '</div>';
             noDataMsg.classList.remove('d-none');
         });
     }
@@ -547,7 +559,7 @@
     // ── 匯出 Excel ──────────────────────────────────────────────────────
     function exportToExcel() {
         if (!lastResults || !lastResults.some(function (r) { return r.nCount > 0; })) {
-            showAlert('\u7121\u53ef\u532f\u51fa\u7684\u8cc7\u6599', 'warning');
+            showAlert(t('history.alert.no_export_data'), 'warning');
             return;
         }
 
@@ -564,7 +576,7 @@
             }
 
             var unitSuffix = json.szUnit ? ' (' + json.szUnit + ')' : '';
-            var rows = [['\u6642\u9593\u6233\u8a18', '\u6578\u503c' + unitSuffix, '\u54c1\u8cea']];
+            var rows = [[t('history.excel.col.timestamp'), t('history.excel.col.value') + unitSuffix, t('history.excel.col.quality')]];
             json.data.forEach(function (d) { rows.push([d.t.replace('T', ' '), d.v, d.q]); });
 
             var ws = XLSX.utils.aoa_to_sheet(rows);
@@ -573,7 +585,7 @@
         });
 
         if (lastResults.filter(function (r) { return r.nCount > 0; }).length > 1) {
-            var summaryRows = [['\u9ede\u4f4d\u540d\u7a31', '\u55ae\u4f4d', '\u7b46\u6578', '\u6700\u5c0f\u503c', '\u6700\u5927\u503c', '\u5e73\u5747\u503c', '\u6a19\u6e96\u5dee']];
+            var summaryRows = [[t('history.excel.summary.col.point'), t('history.excel.summary.col.unit'), t('history.excel.summary.col.count'), t('history.excel.summary.col.min'), t('history.excel.summary.col.max'), t('history.excel.summary.col.avg'), t('history.excel.summary.col.std_dev')]];
             lastResults.filter(function (r) { return r.nCount > 0; }).forEach(function (json) {
                 var f = function (v) { return v != null ? Number(v) : ''; };
                 summaryRows.push([json.szName, json.szUnit, json.nCount,
@@ -582,12 +594,12 @@
             var wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
             wsSummary['!cols'] = [{ wch: 20 }, { wch: 8 }, { wch: 8 },
                                    { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }];
-            XLSX.utils.book_append_sheet(wb, wsSummary, '\u7d71\u8a08\u6458\u8981');
+            XLSX.utils.book_append_sheet(wb, wsSummary, t('history.excel.summary.sheet'));
         }
 
         var p     = function (n) { return String(n).padStart(2, '0'); };
         var now   = new Date();
-        var fname = '\u6b77\u53f2\u8da8\u52e2_' + now.getFullYear() + p(now.getMonth()+1) + p(now.getDate()) + '_' + p(now.getHours()) + p(now.getMinutes()) + '.xlsx';
+        var fname = t('history.excel.filename') + '_' + now.getFullYear() + p(now.getMonth()+1) + p(now.getDate()) + '_' + p(now.getHours()) + p(now.getMinutes()) + '.xlsx';
         XLSX.writeFile(wb, fname);
     }
 
@@ -618,7 +630,7 @@
     // ── 事件綁定 ─────────────────────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', function () {
 
-        renderPointList(currentCoordinatorId, currentModbusId);
+        renderPointList(currentCoordinatorId, currentModbusId, null, null);
         renderBasket();
 
         // ── 外部導航預載（ScadaPage 趨勢圖右鍵選單）──
@@ -648,15 +660,30 @@
                 .forEach(function (el) { el.classList.remove('active'); });
         }
 
+        function applySelectionFromEl(el) {
+            var prefix = el.dataset.sidPrefix;
+            if (prefix) {
+                currentSidPrefix = prefix;
+                currentCoordinatorId = 0;
+                currentModbusId = null;
+                currentCalcGroup = null;
+            } else {
+                currentSidPrefix = null;
+                currentCoordinatorId = parseInt(el.dataset.id) || 0;
+                currentModbusId = el.dataset.modbusid != null && el.dataset.modbusid !== ''
+                    ? (parseInt(el.dataset.modbusid) || null)
+                    : null;
+                currentCalcGroup = el.dataset.calcgroup != null ? el.dataset.calcgroup : null;
+            }
+            renderPointList(currentCoordinatorId, currentModbusId, currentCalcGroup, currentSidPrefix);
+        }
+
         document.querySelectorAll('.coordinator-item').forEach(function (item) {
             item.addEventListener('click', function (e) {
                 e.preventDefault();
                 clearAllCoordinatorActive();
                 this.classList.add('active');
-                currentCoordinatorId = parseInt(this.dataset.id) || 0;
-                currentModbusId = null;
-                currentCalcGroup = null;
-                renderPointList(currentCoordinatorId);
+                applySelectionFromEl(this);
             });
         });
 
@@ -674,10 +701,7 @@
                 }
                 clearAllCoordinatorActive();
                 this.classList.add('active');
-                currentCoordinatorId = parseInt(this.dataset.id) || 0;
-                currentModbusId = null;
-                currentCalcGroup = null;
-                renderPointList(currentCoordinatorId);
+                applySelectionFromEl(this);
             });
         });
 
@@ -686,11 +710,7 @@
                 e.preventDefault();
                 clearAllCoordinatorActive();
                 this.classList.add('active');
-                currentCoordinatorId = parseInt(this.dataset.id) || 0;
-                currentModbusId = parseInt(this.dataset.modbusid) || null;
-                // 計算點位群組篩選
-                currentCalcGroup = this.dataset.calcgroup != null ? this.dataset.calcgroup : null;
-                renderPointList(currentCoordinatorId, currentModbusId, currentCalcGroup);
+                applySelectionFromEl(this);
             });
         });
 
@@ -703,7 +723,7 @@
 
         document.getElementById('btnAddToBasket').addEventListener('click', function () {
             var checked = Array.from(pointListContainer.querySelectorAll('.point-checkbox:checked'));
-            if (checked.length === 0) { showAlert('\u8acb\u5148\u52fe\u9078\u9ede\u4f4d', 'warning'); return; }
+            if (checked.length === 0) { showAlert(t('history.alert.no_points_selected'), 'warning'); return; }
             addToBasket(checked.map(function (cb) { return { sid: cb.value, name: cb.dataset.name, unit: cb.dataset.unit }; }));
             checked.forEach(function (cb) { cb.checked = false; });
         });
@@ -722,17 +742,17 @@
             var btnAxis = document.getElementById('btnSingleAxis');
             btnAxis.classList.add('d-none');
             btnAxis.classList.remove('pressed');
-            btnAxis.innerHTML = '<i class="fas fa-arrows-alt-v me-1"></i>\u96d9\u8ef8';
+            btnAxis.innerHTML = '<i class="fas fa-arrows-alt-v me-1"></i>' + t('history.chart.axis_dual');
             document.getElementById('btnExportExcel').classList.add('d-none');
             chartContainer.style.display = 'none';
             document.getElementById('stackedChartsContainer').style.display = 'none';
-            noDataMsg.innerHTML = '<i class="fas fa-chart-line fa-3x mb-3 d-block opacity-25"></i><div>\u8acb\u52a0\u5165\u9ede\u4f4d\u4e26\u8a2d\u5b9a\u6642\u9593\u7bc4\u570d\u5f8c\u6309\u4e0b\u67e5\u8a62</div>';
+            noDataMsg.innerHTML = '<i class="fas fa-chart-line fa-3x mb-3 d-block opacity-25"></i><div>' + t('history.chart.placeholder') + '</div>';
             noDataMsg.classList.remove('d-none');
             statsRow.style.display = 'none';
             multiStatsWrapper.style.display = 'none';
             dataTableCard.classList.add('d-none');
             limitWarning.classList.add('d-none');
-            chartTitle.innerHTML = '<i class="fas fa-chart-area text-primary me-2"></i>\u8acb\u52a0\u5165\u9ede\u4f4d\u5f8c\u6309\u4e0b\u67e5\u8a62';
+            chartTitle.innerHTML = '<i class="fas fa-chart-area text-primary me-2"></i>' + t('history.chart.title.empty');
             document.getElementById('footerQueryTime').textContent = '';
         });
 
@@ -758,8 +778,8 @@
             isSingleAxis = !isSingleAxis;
             this.classList.toggle('pressed', isSingleAxis);
             this.innerHTML = isSingleAxis
-                ? '<i class="fas fa-arrows-alt-v me-1"></i>\u55ae\u8ef8'
-                : '<i class="fas fa-arrows-alt-v me-1"></i>\u96d9\u8ef8';
+                ? '<i class="fas fa-arrows-alt-v me-1"></i>' + t('history.chart.axis_single')
+                : '<i class="fas fa-arrows-alt-v me-1"></i>' + t('history.chart.axis_dual');
             if (lastResults) {
                 buildChart(lastResults.filter(function (r) { return r.nCount > 0; }).map(function (json) {
                     var rawData = json.data.map(function (d) { return { x: d.t, y: d.v }; });
@@ -780,8 +800,8 @@
             var hidden = tableBodyEl.classList.contains('d-none');
             tableBodyEl.classList.toggle('d-none', !hidden);
             btnToggleTable.innerHTML = hidden
-                ? '<i class="fas fa-chevron-up me-1"></i>\u6536\u5408'
-                : '<i class="fas fa-chevron-down me-1"></i>\u5c55\u958b';
+                ? '<i class="fas fa-chevron-up me-1"></i>' + t('history.table.button.collapse')
+                : '<i class="fas fa-chevron-down me-1"></i>' + t('history.table.button.expand');
         });
     });
 

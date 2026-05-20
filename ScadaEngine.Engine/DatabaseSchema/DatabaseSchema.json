@@ -128,7 +128,11 @@
         { "Name": "Operator",       "Type": "tinyint",                   "Nullable": true,
           "_comment": "比較運算子: 0=> 1=< 2=>= 3=<= 4=== 5=!=，與 ConditionControlRules 一致" },
         { "Name": "Message",        "Type": "nvarchar",  "Length": 500,  "Nullable": false,
-          "_comment": "事件描述文字，例如 '溫度超過上限 85°C'" },
+          "_comment": "事件描述文字（人類可讀 fallback），例如 '溫度超過上限 85°C'" },
+        { "Name": "MessageKey",     "Type": "nvarchar",  "Length": 64,   "Nullable": true,
+          "_comment": "結構化訊息 i18n key，例如 'alarm.high_exceed'；舊資料為 NULL，Web 顯示時 fallback 用 Message 欄" },
+        { "Name": "MessageArgs",    "Type": "nvarchar",  "Length": 512,  "Nullable": true,
+          "_comment": "結構化訊息參數 JSON，例如 '{\"name\":\"溫度\",\"threshold\":\"85.0\"}'，Web 顯示時與 MessageKey 套模板" },
         { "Name": "OccurredAt",     "Type": "datetime",                  "Nullable": false, "Default": "getdate()",
           "_comment": "事件發生時間" },
         { "Name": "ClearedAt",      "Type": "datetime",                  "Nullable": true,
@@ -252,6 +256,10 @@
           "_comment": "開始時間，24小時制 HH:mm，例如 '08:00'" },
         { "Name": "EndTime",         "Type": "nvarchar", "Length": 10,   "Nullable": false,
           "_comment": "結束時間，24小時制 HH:mm，例如 '17:00'" },
+        { "Name": "ExcludeDates",    "Type": "nvarchar", "Length": -1,   "Nullable": true,
+          "_comment": "例外日清單（當天不啟動），逗號分隔 yyyy-MM-dd，例如 '2026-05-15,2026-05-16'" },
+        { "Name": "IncludeDates",    "Type": "nvarchar", "Length": -1,   "Nullable": true,
+          "_comment": "加開日清單（當天無視重複規則強制啟動），逗號分隔 yyyy-MM-dd" },
         { "Name": "IsEnabled",       "Type": "bit",                      "Nullable": false, "Default": 1 },
         { "Name": "Remarks",         "Type": "nvarchar", "Length": 200,  "Nullable": true },
         { "Name": "CreatedAt",       "Type": "datetime",                 "Nullable": false, "Default": "getdate()" },
@@ -275,6 +283,101 @@
         { "Name": "IsEnabled",       "Type": "bit",      "Nullable": false, "Default": 1 },
         { "Name": "CreatedAt",       "Type": "datetime", "Nullable": false, "Default": "getdate()" },
         { "Name": "UpdatedAt",       "Type": "datetime", "Nullable": true }
+      ]
+    },
+    {
+      "_comment": "能源管理 — 電表/迴路階層（自參照樹）。葉子綁 SID + MaxKwh，虛擬節點不綁 SID。",
+      "TableName": "EnergyCircuit",
+      "Columns": [
+        { "Name": "Id",          "Type": "int",      "IsPrimaryKey": true, "IsIdentity": true, "Nullable": false },
+        { "Name": "Name",        "Type": "nvarchar", "Length": 100, "Nullable": false },
+        { "Name": "ParentId",    "Type": "int",                     "Nullable": true,
+          "_comment": "父節點 Id；NULL 表示根層級（self-FK，由應用程式保證一致性）" },
+        { "Name": "SortOrder",   "Type": "int",                     "Nullable": false, "Default": 0,
+          "_comment": "同層排序（由 0 起算）" },
+        { "Name": "SID",         "Type": "nvarchar", "Length": 100, "Nullable": true,
+          "_comment": "葉子綁 ModbusPoints/CalculatedPoints 的 SID；虛擬迴路為 NULL" },
+        { "Name": "MaxKwh",      "Type": "float",                   "Nullable": true,
+          "_comment": "電表累積最大值（kWh），用於溢位/重置判定。葉子才有意義" },
+        { "Name": "Sign",        "Type": "int",                     "Nullable": false, "Default": 1,
+          "_comment": "對父節點的貢獻方向：+1=正向加入、-1=反向扣減。根節點固定 +1" },
+        { "Name": "Description", "Type": "nvarchar", "Length": 500, "Nullable": true },
+        { "Name": "CreatedAt",   "Type": "datetime",                "Nullable": false, "Default": "getdate()" },
+        { "Name": "UpdatedAt",   "Type": "datetime",                "Nullable": true }
+      ]
+    },
+    {
+      "_comment": "DB 來源 — 將外部資料庫寫入的點位納入 SCADA SID 體系，每個 Coordinator 預留 100 個 slot。Name UNIQUE，UPSERT by Name 保 Id 穩定。",
+      "TableName": "DBCoordinator",
+      "Columns": [
+        { "Name": "Id",              "Type": "int",      "IsPrimaryKey": true, "IsIdentity": true, "Nullable": false },
+        { "Name": "Name",            "Type": "nvarchar", "Length": 100, "Nullable": false, "IsUnique": true,
+          "_comment": "= sheet name = JSON 檔名" },
+        { "Name": "PollingInterval", "Type": "int",                     "Nullable": false, "Default": 1000,
+          "_comment": "毫秒" },
+        { "Name": "ConnectTimeout",  "Type": "int",                     "Nullable": false, "Default": 1000,
+          "_comment": "毫秒；polling 讀 DBLatestData 時換算成 SqlCommand.CommandTimeout（秒，向上取整）" },
+        { "Name": "MonitorEnabled",  "Type": "bit",                     "Nullable": false, "Default": 1 },
+        { "Name": "CreatedAt",       "Type": "datetime",                "Nullable": false, "Default": "getdate()" }
+      ]
+    },
+    {
+      "_comment": "DB 來源點位 — SID 格式 DB{CoordinatorId}-S{Sequence}；Sequence 由載入器以 JSON 陣列順序自動填，1~100。",
+      "TableName": "DBPoints",
+      "Columns": [
+        { "Name": "SID",           "Type": "nvarchar", "Length": 100, "IsPrimaryKey": true, "Nullable": false,
+          "_comment": "DB{CoordinatorId}-S{Sequence}" },
+        { "Name": "CoordinatorId", "Type": "int",                     "Nullable": false },
+        { "Name": "Sequence",      "Type": "int",                     "Nullable": false,
+          "_comment": "1~100；由載入器以 JSON 陣列索引+1 自動產生（與 Modbus 對齊）" },
+        { "Name": "Name",          "Type": "nvarchar", "Length": 100, "Nullable": false },
+        { "Name": "Unit",          "Type": "nvarchar", "Length": 50,  "Nullable": true },
+        { "Name": "Min",           "Type": "float",                   "Nullable": false, "Default": 0.0,
+          "_comment": "UI 顯示下限 + 控制寫入下限（寫入路徑做時驗證）" },
+        { "Name": "Max",           "Type": "float",                   "Nullable": false, "Default": 100.0,
+          "_comment": "UI 顯示上限 + 控制寫入上限（寫入路徑做時驗證）" }
+      ]
+    },
+    {
+      "_comment": "DB 來源統一入口表 — 外部系統 INSERT/UPDATE 此表，Engine 依 SID prefix 分群 polling。寫入路徑（Phase 2）也統一 UPDATE 此表。",
+      "TableName": "DBLatestData",
+      "Columns": [
+        { "Name": "SID",       "Type": "nvarchar", "Length": 100, "IsPrimaryKey": true, "Nullable": false },
+        { "Name": "Value",     "Type": "float",                   "Nullable": true },
+        { "Name": "Timestamp", "Type": "datetime",                "Nullable": true,  "Default": "getdate()" },
+        { "Name": "Quality",   "Type": "int",                     "Nullable": true,  "Default": 1 }
+      ]
+    },
+    {
+      "_comment": "能源管理 — 葉子層 hourly 預聚合表。一列 = 一個葉子 SID 在某個小時的 kWh 增量（已套 MaxKwh 溢位、未套 sign）。Quality=0 表示掉線 transition（只缺一邊邊界），兩邊都缺則不寫該列（sparse storage）。",
+      "TableName": "EnergyLeafHourly",
+      "Columns": [
+        { "Name": "SID",          "Type": "nvarchar", "Length": 50, "IsPrimaryKey": true, "Nullable": false },
+        { "Name": "HourStart",    "Type": "datetime",               "IsPrimaryKey": true, "Nullable": false,
+          "_comment": "小時起點（local time，與 HistoryData.Timestamp 同基準）" },
+        { "Name": "DeltaKwh",     "Type": "float",                  "Nullable": false,
+          "_comment": "該小時 kWh 增量；Quality=0 時恆為 0" },
+        { "Name": "Quality",      "Type": "tinyint",                "Nullable": false, "Default": 1,
+          "_comment": "1=Good, 0=掉線 transition" },
+        { "Name": "IsRolledOver", "Type": "bit",                    "Nullable": false, "Default": 0,
+          "_comment": "是否觸發 MaxKwh 溢位修正" },
+        { "Name": "CreatedAt",    "Type": "datetime",               "Nullable": false, "Default": "getdate()" }
+      ]
+    },
+    {
+      "_comment": "Line 通知收件群組 — 警報觸發時推播 Line 訊息的目標群組清單",
+      "TableName": "LineNotifyTargets",
+      "Columns": [
+        { "Name": "Id",           "Type": "int",      "IsPrimaryKey": true, "IsIdentity": true, "Nullable": false },
+        { "Name": "GroupId",      "Type": "nvarchar", "Length": 64,  "Nullable": false,
+          "_comment": "Line GroupID，C 開頭 33 字元" },
+        { "Name": "Label",        "Type": "nvarchar", "Length": 100, "Nullable": false,
+          "_comment": "顯示名稱，例如 '主管群'、'值班工程群'" },
+        { "Name": "MaxSeverity",  "Type": "tinyint",                 "Nullable": false, "Default": 3,
+          "_comment": "接收上限：0=只收 Critical, 1=Critical+High, 2=Critical+High+Medium, 3=全收" },
+        { "Name": "IsEnabled",    "Type": "bit",                     "Nullable": false, "Default": 1 },
+        { "Name": "CreatedAt",    "Type": "datetime",                "Nullable": false, "Default": "getdate()" },
+        { "Name": "UpdatedAt",    "Type": "datetime",                "Nullable": true }
       ]
     }
   ]

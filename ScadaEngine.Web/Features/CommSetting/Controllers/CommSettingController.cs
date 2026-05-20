@@ -18,7 +18,7 @@ public class CommSettingController : Controller
     [HttpGet("/CommSetting")]
     public async Task<IActionResult> Index()
     {
-        ViewData["Title"] = "通訊設定";
+        ViewData["Title"] = "Modbus來源";
         var coordinators = await _repository.GetAllCoordinatorsAsync();
         return View(coordinators.ToList());
     }

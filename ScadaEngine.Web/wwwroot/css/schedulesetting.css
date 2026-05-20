@@ -157,3 +157,63 @@
     font-size: .75rem;
     color: #6c757d;
 }
+
+/* 例外日 / 加開日提示（列表「日期條件」欄位） */
+.date-override-hint {
+    font-size: .7rem;
+    color: #6c757d;
+    margin-top: 2px;
+}
+
+/* 日期 chip 容器 */
+.date-chip-list {
+    min-height: 32px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 4px 6px;
+    border: 1px dashed #dee2e6;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+}
+
+/* 日期 chip */
+.date-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 4px 2px 8px;
+    border-radius: 12px;
+    font-size: .75rem;
+    font-weight: 600;
+    color: #fff;
+    line-height: 1.4;
+}
+
+.date-chip-exclude {
+    background-color: #dc3545;
+}
+
+.date-chip-include {
+    background-color: #198754;
+}
+
+.date-chip-remove {
+    border: none;
+    background: rgba(255, 255, 255, 0.25);
+    color: #fff;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    font-size: .85rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+}
+
+.date-chip-remove:hover {
+    background: rgba(255, 255, 255, 0.45);
+}
