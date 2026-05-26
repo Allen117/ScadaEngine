@@ -27,6 +27,10 @@ Release/
 # Claude Code (personal memory only)
 .claude/projects/
 
+# Claude Code skill lock 只放在 repo root，不該出現在子專案
+ScadaEngine.Web/skills-lock.json
+ScadaEngine.Engine/skills-lock.json
+
 # Sensitive config (uncomment if repo is public)
 # ScadaEngine.Engine/Setting/dbSetting.json
 

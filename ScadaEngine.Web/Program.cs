@@ -141,6 +141,7 @@ builder.Services.AddScoped<ScadaEngine.Web.Services.AccountSettingService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.CalcPointService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.ScheduleSettingService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.LineTargetService>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.EmailGroupService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyCircuitService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyReportService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.DbCoordinatorService>();
@@ -150,6 +151,10 @@ builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyReportExcelExporter>()
 // Line 測試發送（內含 throttle 字典 → 必須 Singleton 才能跨請求保留狀態）
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<ScadaEngine.Web.Services.LineTestSendService>();
+
+// Email 設定檔讀寫 + 測試寄送（Singleton：throttle 字典需跨請求保留）
+builder.Services.AddSingleton<ScadaEngine.Web.Services.EmailSenderConfigService>();
+builder.Services.AddSingleton<ScadaEngine.Web.Services.EmailTestSendService>();
 
 // 註冊 C# 演算法服務（供 LogicFlow 前端預覽用）
 builder.Services.AddSingleton<ScadaEngine.Engine.Services.CSharpAlgorithmService>();

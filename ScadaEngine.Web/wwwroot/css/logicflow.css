@@ -159,6 +159,7 @@
     width: 38px; padding: 1px 3px; border: 1px solid #ced4da;
     border-radius: 3px; font-size: .75rem; text-align: center;
     outline: none; background: #fff; font-weight: 600; color: #495057;
+    position: relative; z-index: 5;
 }
 .algo-n-input:focus { border-color: #9b59b6; box-shadow: 0 0 0 2px rgba(155,89,182,.15); }
 /* 隱藏 number input 上的 spinner 以節省空間 */

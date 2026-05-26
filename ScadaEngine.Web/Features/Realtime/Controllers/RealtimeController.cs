@@ -91,10 +91,13 @@ public class RealtimeController : Controller
         try
         {
             // DB 來源直讀 DBLatestData（每次 AJAX 都刷新，沿用 Web 3 秒週期）
+            // 手動/自動模式快取同節奏刷新 → ScadaPage 跨分頁切換能在 ≤1 秒內同步 M badge
             await _mqttService.RefreshDbSourcesAsync();
+            await _mqttService.RefreshManualAutoMapAsync();
 
             var realtimeDataList = _mqttService.GetAllRealtimeData();
             var stats = _mqttService.GetDataStatistics();
+            var manualAutoMap = _mqttService.GetManualAutoMap();
 
             var response = new
             {
@@ -117,7 +120,9 @@ public class RealtimeController : Controller
                     timestamp = item.hasData ? item.dtTimestamp.ToString("yyyy-MM-dd HH:mm:ss") : "--",
                     isRecent = item.isRecent,
                     cssClass = item.CssRowClass,
-                    badgeClass = item.QualityBadgeClass
+                    badgeClass = item.QualityBadgeClass,
+                    // 控制點位才有 isAuto；非控制點位回 null（前端只在 false 時顯示 M badge）
+                    isAuto = manualAutoMap.TryGetValue(item.szSID, out var bIsAuto) ? (bool?)bIsAuto : null
                 }).ToArray()
             };
 

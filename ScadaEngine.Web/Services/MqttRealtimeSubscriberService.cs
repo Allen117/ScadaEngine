@@ -26,6 +26,10 @@ public class MqttRealtimeSubscriberService : BackgroundService, IDisposable
     // LogicFlow TP 計時器狀態快取 (key: "treeId-nodeId")
     private readonly ConcurrentDictionary<string, TimerStateItem> _timerStateCache = new();
 
+    // 手動/自動模式快取 (key: SID/CID, value: isAuto)
+    // 來源：ManualControlValue 表，由 RefreshManualAutoMapAsync 同步
+    private readonly ConcurrentDictionary<string, bool> _manualAutoMap = new();
+
     // MQTT 即時資料主題 (格式: SCADA/Realtime/{coordinatorName}/{SID})
     private const string REALTIME_TOPIC = "SCADA/Realtime/+/+";
     private const string TIMER_STATE_TOPIC = "SCADA/LogicFlow/TimerState";
@@ -406,11 +410,64 @@ public class MqttRealtimeSubscriberService : BackgroundService, IDisposable
 
             // DB 來源走獨立資料路徑：直接從 DBLatestData 表讀取（不依賴 LatestData / MQTT）
             await RefreshDbSourcesAsync();
+
+            // 初次載入手動/自動模式快取
+            await RefreshManualAutoMapAsync();
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "預填點位快取時發生錯誤，將等待 MQTT 資料自動建立快取");
         }
+    }
+
+    /// <summary>
+    /// 重新從 ManualControlValue 表讀取手動/自動旗標，更新到快取。
+    /// 由 /api/realtime/latest 每秒呼叫一次（與 RefreshDbSourcesAsync 同節奏），讓跨分頁切換能在 ≤1 秒內同步。
+    /// 表內無紀錄者代表「未進入手動模式」，在快取中以「不存在」表達。
+    /// </summary>
+    public async Task RefreshManualAutoMapAsync()
+    {
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var repository = scope.ServiceProvider.GetRequiredService<IDataRepository>();
+            var dict = await repository.LoadManualControlValuesAsync();
+
+            // 寫入新值
+            foreach (var kv in dict)
+            {
+                _manualAutoMap[kv.Key] = kv.Value.isAuto;
+            }
+            // 移除 DB 已不存在的 key（防止資料庫被外部清理後快取殘留）
+            var toRemove = _manualAutoMap.Keys.Where(k => !dict.ContainsKey(k)).ToList();
+            foreach (var k in toRemove) _manualAutoMap.TryRemove(k, out _);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "刷新手動/自動模式快取時發生錯誤");
+        }
+    }
+
+    /// <summary>
+    /// 取得手動/自動模式快取快照。
+    /// Key 為 SID/CID（兩者在 Modbus 點位是同一字串）。
+    /// Value 為 isAuto：true=自動模式、false=手動模式。
+    /// Key 不存在於回傳字典 = 該點位「沒有手動控制紀錄」（未曾切過手動）。
+    /// </summary>
+    public IReadOnlyDictionary<string, bool> GetManualAutoMap()
+    {
+        return _manualAutoMap;
+    }
+
+    /// <summary>
+    /// 寫入路徑通知：ControlController 寫完 ManualControlValue 後立即同步本機快取，
+    /// 讓「自己這個分頁」optimistic update 後不必等下一次 polling 才正確。
+    /// 其他分頁仍走 RefreshManualAutoMapAsync 的下一個 1 秒週期同步。
+    /// </summary>
+    public void UpdateManualAutoFlag(string szSid, bool isAuto)
+    {
+        if (string.IsNullOrWhiteSpace(szSid)) return;
+        _manualAutoMap[szSid] = isAuto;
     }
 
     /// <summary>

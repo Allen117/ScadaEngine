@@ -71,6 +71,7 @@
         window._isAdmin = @Html.Raw(ViewData["IsAdmin"]?.ToString().ToLower() ?? "false");
         window._scadaPagePerms = @Html.Raw(ViewData["ScadaPagePermissions"] ?? "{}");
     </script>
+    <script src="~/js/common/schedule-eval.js"></script>
     <script src="~/js/scadapage.js"></script>
     <script src="~/js/active-alarm-panel.js"></script>
 }

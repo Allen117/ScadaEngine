@@ -31,7 +31,7 @@
 | 畫面設計 | Designer | `/Designer` |
 | 警報設定 | Alarm Settings | `/AlarmSetting` |
 | 點位設定 | Point Settings | submenu |
-| Modbus 來源 | Modbus Source | `/CommSetting` |
+| Modbus 來源 | Modbus Source | `/ModbusCoordinator` |
 | DB 來源 | DB Source | `/DbCoordinator` |
 | 計算點位 | Calculated Points | `/CalcPoint` |
 | 帳號管理 | Account Management | `/AccountSetting` |
@@ -48,6 +48,14 @@
 | DB 來源 | DB Source | DBLatestData polling 系列 |
 | Modbus 來源 | Modbus Source | Modbus TCP polling 系列 |
 | 系統總覽 | System Overview | ScadaPage 樹 |
+| 設備名稱 | Device Name | 與「設備」區分 |
+| 設備詳細資料 | Device Details | ModbusCoordinator/DbCoord 卡片標題 |
+| 裝置資料 | Device Info | ModbusCoordinator 子項目標題 |
+| 延遲時間 | Delay Time | Modbus DelayTime |
+| 啟用監控 | Monitoring Enabled | MonitorEnabled |
+| 輪詢間隔 | Polling Interval | DB PollingInterval |
+| 連線逾時 | Connect Timeout | DB ConnectTimeout |
+| 點位數 | Point Count | DB Coordinator 點位數 |
 
 ## 警報相關
 
@@ -237,6 +245,231 @@
 | 可控制 | Control | 表頭 |
 | 尚未登入 | Never logged in | |
 
+## 條件控制 (ConditionCtrl)
+
+| zh-TW | en | 備註 |
+|---|---|---|
+| 條件控制 | Condition Control | 頁面標題 |
+| 條件控制設定 | Condition Control Settings | 副標 |
+| 新增條件控制規則 | Add Condition Control Rule | 卡片標題 |
+| 條件控制規則清單 | Condition Control Rules | 卡片標題 |
+| 條件點位 | Condition Point | 表頭 |
+| 參考點位 | Reference Point | 表單欄位 |
+| 控制點位 | Control Point | 表頭/欄位 |
+| 條件設備 / 設備 | Device | 上下文裡的 Device |
+| 子設備 | Sub Device | |
+| 計算點位 | Calculated Points | 設備下拉選項 |
+| 全部設備 | All Devices | 設備下拉預設 |
+| 請選擇設備 / 請選擇子設備 / 請選擇點位 | Select Device / Sub Device / Point | 下拉 placeholder |
+| 運算子 | Operator | 比較運算子 |
+| 數值 | Value | 表頭/欄位 |
+| 控制值 | Control Value | 表頭/欄位 |
+| 輸入比較數值 | Enter comparison value | placeholder |
+| 輸入控制值 | Enter control value | placeholder |
+| 輸入備註說明 | Enter remarks | placeholder |
+| 新增規則 | Add Rule | 按鈕 |
+| 儲存規則至資料庫 | Save Rules to DB | 按鈕 |
+| 清除全部 | Clear All | 按鈕 |
+| 尚未新增任何條件控制規則 | No condition control rules yet | 空狀態 |
+| 請填寫上方表單後按下「新增規則」 | Fill the form above and click "Add Rule" | 空狀態提示 |
+| 大於 | Greater Than | 運算子提示 |
+| 小於 | Less Than | 運算子提示 |
+| 大於等於 | Greater or Equal | 運算子提示 |
+| 小於等於 | Less or Equal | 運算子提示 |
+| 等於 | Equal | 運算子提示 |
+| 不等於 | Not Equal | 運算子提示 |
+| 請選擇條件點位 | Please select a condition point | 表單錯誤 |
+| 請輸入條件數值 | Please enter condition value | 表單錯誤 |
+| 請選擇控制點位 | Please select a control point | 表單錯誤 |
+| 請輸入控制值 | Please enter control value | 表單錯誤 |
+| 條件點位與控制點位不能相同 | Condition and control points cannot be the same | 表單錯誤 |
+| 確定要清除所有規則嗎？ | Clear all rules? | confirm |
+| 已儲存 {N} 筆規則 | {N} rule(s) saved | API 成功訊息 |
+| 儲存失敗，請查看 Engine 日誌 | Save failed. See Engine logs. | API 錯誤訊息 |
+| 網路錯誤，請稍後再試 | Network error. Please try again. | API 錯誤訊息 |
+| 點擊載入至表單 | Click to load into form | tooltip |
+| DB 來源 | DB Source | suffix |
+
+## 流程圖控制 (LogicFlow)
+
+### 基本架構
+
+| zh-TW | en | 備註 |
+|---|---|---|
+| 流程圖控制 | Logic Flow | 頁面 |
+| 邏輯流程 | Logic Flow | 樹根 |
+| 資料夾 | Folder | 樹節點 |
+| 邏輯 | Logic | 樹節點 |
+| 新增邏輯 | Add Logic | 按鈕 |
+| 新增資料夾 | Add Folder | 按鈕 |
+| 開啟畫布 | Open Canvas | 按鈕 |
+| 儲存畫布 | Save Canvas | 按鈕 |
+| 啟用邏輯 | Enable Logic | 動詞 |
+| 停用邏輯 | Disable Logic | 動詞 |
+| 重新命名 | Rename | 動詞 |
+| 重新整理 | Refresh | 動詞 |
+| 展開全部 | Expand All | |
+| 收合全部 | Collapse All | |
+| 節點 | Node | 通用 |
+| 連線 | Connection / Wire | LogicFlow 內 |
+| 畫布 | Canvas | |
+| 工具列 | Toolbar | |
+| 屬性 / 設定 | Properties / Config | 節點 config |
+| 輸入埠 / 輸出埠 | Input Port / Output Port | |
+
+### 節點類型 (Node displayName)
+
+| zh-TW | en | 備註 |
+|---|---|---|
+| 讀取點位 | Read Point | 節點 |
+| 寫入點位 | Write Point | 節點 |
+| A接點 | NO Contact | Normally Open（決策 5） |
+| B接點 | NC Contact | Normally Closed（決策 5） |
+| 常數 | Constant | 節點 |
+| 排程 | Schedule | 節點，與排程設定對應 |
+| 比較 | Compare | 節點群類別 |
+| 數學運算 | Math | 節點群類別 |
+| 邏輯閘 | Logic Gate | 節點群類別 |
+| 計時器 | Timer | 節點群類別 |
+| 計數器 | Counter | 節點群類別 |
+| 輸出 | Output | 通用 |
+| 控制 | Control | 通用 |
+| 動作 | Action | 通用 |
+
+### 運算子 / 邏輯 (Operator labels)
+
+| zh-TW | en | 備註 |
+|---|---|---|
+| 大於 (>) | Greater Than (>) | 比較 |
+| 小於 (<) | Less Than (<) | 比較 |
+| 大於等於 (≥) | Greater or Equal (≥) | 比較 |
+| 小於等於 (≤) | Less or Equal (≤) | 比較 |
+| 等於 (=) | Equal (=) | 比較 |
+| 不等於 (≠) | Not Equal (≠) | 比較 |
+| 加 | Add | 數學 |
+| 減 | Subtract | 數學 |
+| 乘 | Multiply | 數學 |
+| 除 | Divide | 數學 |
+| 取餘數 | Modulo | 數學 |
+| 平方 | Square | 數學 |
+| 開根號 | Square Root | 數學 |
+| 絕對值 | Absolute | 數學 |
+| 反相 | Invert / NOT | 邏輯閘 |
+| 及 (AND) | AND | 邏輯閘 |
+| 或 (OR) | OR | 邏輯閘 |
+| 互斥或 (XOR) | XOR | 邏輯閘 |
+| 反及 (NAND) | NAND | 邏輯閘 |
+| 反或 (NOR) | NOR | 邏輯閘 |
+
+### 計時器 / 計數器
+
+| zh-TW | en | 備註 |
+|---|---|---|
+| 通電延遲 (TON) | On-Delay (TON) | timer |
+| 斷電延遲 (TOF) | Off-Delay (TOF) | timer |
+| 脈衝 (TP) | Pulse (TP) | timer |
+| 上數計數器 (CTU) | Up Counter (CTU) | counter |
+| 下數計數器 (CTD) | Down Counter (CTD) | counter |
+| 上下數計數器 (CTUD) | Up/Down Counter (CTUD) | counter |
+| 預設值 | Preset Value | 計時/計數參數 |
+| 累積時間 | Elapsed Time | timer |
+| 重設 | Reset | counter 動詞 |
+
+### Modal / 對話框
+
+| zh-TW | en | 備註 |
+|---|---|---|
+| 編輯節點設定 | Edit Node Settings | modal 標題 |
+| 節點設定 | Node Settings | modal 標題 |
+| 請選擇排程 | Select schedule | placeholder |
+| 確定要刪除這個節點嗎？ | Delete this node? | confirm |
+| 確定要刪除這個邏輯嗎？ | Delete this logic? | confirm |
+| 確定要刪除這個資料夾嗎？ | Delete this folder? | confirm |
+| 確定要儲存畫布變更嗎？ | Save canvas changes? | confirm |
+| 確定要啟用此邏輯嗎？ | Enable this logic? | confirm |
+| 確定要停用此邏輯嗎？ | Disable this logic? | confirm |
+| 畫布有未儲存變更，確定要離開嗎？ | Unsaved changes. Leave anyway? | confirm |
+| 名稱不能為空 | Name cannot be empty | validate |
+| 名稱已存在 | Name already exists | validate |
+| 名稱包含不允許的字元 | Name contains invalid characters | validate |
+| 版本衝突，請重新整理頁面 | Version conflict. Please refresh. | API 錯誤 |
+| 此邏輯不存在或已被刪除 | Logic not found or deleted | API 錯誤 |
+| 儲存成功 | Saved | toast |
+| 已啟用 | Enabled | toast |
+| 已停用 | Disabled | toast |
+
+## 點位設定 (ModbusCoordinator / DbCoordinator)
+
+| zh-TW | en | 備註 |
+|---|---|---|
+| Modbus 通訊 | Modbus Communication | ModbusCoordinator 卡片標題 |
+| DB 通訊 | DB Communication | DbCoordinator 卡片標題 |
+| 重新整理頁面 | Refresh Page | DbCoordinator 按鈕 |
+| 通知 Engine 重新載入 JSON | Notify Engine to Reload JSON | DbCoordinator 按鈕 |
+| 通知中… | Notifying… | DbCoordinator |
+| 已通知 Engine 重新載入 JSON | Notified Engine to reload JSON | DbCoordinator API 成功 |
+| 通知失敗（請確認 MQTT broker 是否運作） | Notification failed. Please check MQTT broker. | DbCoordinator API 失敗 |
+| 請從左側選擇 DB 來源 | Please select a DB source from the sidebar | empty state |
+| 尚無 DB 來源 | No DB Source | empty state |
+| 尚未載入任何 DB 來源 Coordinator | No DB source coordinator loaded | empty state |
+| 尚無設備資料 | No Device Data | empty state |
+| 請選擇設備 | Please Select a Device | empty state |
+| 儲存名稱 | Save Name | 按鈕 |
+
+## 計算點位 (CalcPoint)
+
+| zh-TW | en | 備註 |
+|---|---|---|
+| 計算點位設定 | Calculated Points Settings | 頁面副標 |
+| 新增公式 | Add Formula | 按鈕 |
+| 新增計算點位 | Add Calculated Point | Modal 標題 |
+| 編輯計算點位 | Edit Calculated Point | Modal 標題 |
+| 已設定的計算點位 | Configured Calculated Points | 卡片標題 |
+| 公式 / 計算公式 | Formula | 表頭 / 欄位 |
+| 群組 / 群組名稱 | Group / Group Name | 表頭 / 欄位 |
+| 輸入變數對應 | Input Variable Mapping | Modal 區塊 |
+| 變數名稱 | Variable Name | 變數列表頭 |
+| 對應點位 | Mapped Point | 變數列表頭 |
+| 新增變數 | Add Variable | 按鈕 |
+| 即時預覽 | Live Preview | 按鈕 |
+| 計算中… | Calculating… | 預覽狀態 |
+| 計算結果無效 (NaN/Infinity) | Invalid result (NaN/Infinity) | 錯誤 |
+| 公式計算失敗 | Formula evaluation failed | 錯誤 |
+| 計算成功 | Calculation succeeded | Service msg |
+| 選擇點位來源 | Select Point Source | Picker 標題 |
+| 設備點位 | Device Point | Picker step 0 |
+| 從 Modbus 設備選擇原始點位 | Select raw points from Modbus devices | Picker 說明 |
+| 從公式衍生的計算點位 | Calculated points derived from formulas | Picker 說明 |
+| 未分組 | Ungrouped | Picker 群組 |
+| 選擇設備 | Select Device | Picker step 1 |
+| 選擇計算點位群組 | Select Calculated Point Group | Picker step 1 |
+| 選擇點位 / 選擇計算點位 | Select Point / Select Calculated Point | Picker step 2 |
+| 確認選擇 | Confirm Selection | Picker 確認鈕 |
+| 確認刪除 | Confirm Delete | 按鈕 / Modal 標題 |
+| 此操作無法復原 | This action cannot be undone | 刪除 modal |
+| Engine 每 60 秒自動重載設定 | Engine auto-reloads config every 60 seconds | footer 提示 |
+| {n} 個點位 | {n} points | Picker 計數 |
+| 共 {n} 筆 | {n} total | 表格筆數 |
+| — 未選擇 — | — Not Selected — | 變數列預設 |
+| 無法載入設備/點位清單 | Failed to load device/point list | Picker 載入失敗 |
+| 無符合點位 | No Matching Points | Picker 空狀態 |
+| 搜尋點位名稱… | Search point name… | Picker placeholder |
+| 請輸入名稱 | Please enter a name | validate |
+| 請輸入公式 / 請先輸入公式 | Please enter a formula / Please enter a formula first | validate |
+| 至少需要一個輸入變數 | At least one input variable is required | validate |
+| 名稱不可為空 | Name cannot be empty | validate (Service) |
+| 公式不可為空 | Formula cannot be empty | validate (Service) |
+| SID 不可為空 | SID cannot be empty | validate (Service) |
+| 輸入變數對應格式錯誤 | Invalid input variable mapping format | validate (Service) |
+| 新增成功 / 新增失敗 | Added / Add failed | Service msg |
+| 更新成功 / 更新失敗 | Updated / Update failed | Service msg |
+| 刪除成功 / 刪除失敗 | Deleted / Delete failed | Service msg |
+| 儲存成功 / 儲存失敗 | Saved / Save failed | API msg |
+| 操作失敗 | Operation failed | 通用錯誤 |
+| 網路錯誤 | Network error | 通用錯誤 |
+| 參數錯誤 | Invalid parameters | API 錯誤 |
+| 更新失敗 | Update failed | API 錯誤 |
+
 ## 警報觸發訊息（結構化 i18n key）
 
 | key | zh-TW 模板 | en 模板 |
@@ -246,6 +479,102 @@
 | `alarm.di_triggered` | `{0} 狀態為 {1} 觸發警報` | `{0} state {1} triggered alarm` |
 
 `{0}` = 點位名（user input，可能仍是中文）；`{1}` = threshold 或 state（state 為使用者自填的 DiOnLabel/DiOffLabel，可能仍是中文）。
+
+## 警報設定 (AlarmSetting)
+
+| zh-TW | en | 備註 |
+|---|---|---|
+| 警報設定 | Alarm Settings | 頁面 |
+| 警報規則 | Alarm Rules | tab |
+| Line 通知設定 | Line Notification | tab |
+| 新增規則 | Add Rule | 按鈕 |
+| 新增 Line 群組 | Add Line Group | 按鈕 |
+| 上限警報 / 下限警報 / DI 警報 | High Alarm / Low Alarm / DI Alarm | 規則類型 |
+| 閾值 | Threshold | 表單 |
+| 死區 | Deadband | 表單 |
+| 觸發狀態 | Trigger State | DI |
+| 接收嚴重度上限 | Max Severity | Line 群組 |
+| 只收 緊急 | Critical only | Line option |
+| 緊急 + 高 | Critical + High | Line option |
+| 全收 | All | Line option |
+| 由 Designer DI 點位設定自動帶入 | Auto-populated from Designer DI point settings | hint |
+| 測試發送 | Test Send | Line 按鈕 |
+| 發送中 | Sending | 按鈕 loading |
+| 測試訊息已送出，請檢查群組 | Test message sent. Please check the group. | toast |
+| 通知語系 | Notification Language | Line / Email 群組欄位 |
+| Email 通知設定 | Email Notification | tab |
+| SMTP 設定 | SMTP Settings | 按鈕 / Modal |
+| 新增 Email 群組 | Add Email Group | 按鈕 |
+| 新增收件人 | Add Recipient | 按鈕 |
+| 群組識別名稱 | Group Identifier | Email 群組 (Name 欄) |
+| 群組顯示名稱 | Group Display Name | Email 群組 (Label 欄) |
+| 收件人 / 收件 Email | Recipient / Recipient Email | Email 收件人 |
+| 顯示名稱 | Display Name | Email 收件人 |
+| SMTP 主機 / 連接埠 | SMTP Host / Port | Email config |
+| SMTP 帳號 / 密碼 | SMTP Username / Password | Email config |
+| 寄件者 Email / 顯示名稱 | From Address / From Display Name | Email config |
+| 每群組每分鐘上限 | Rate per minute per group | rate limit |
+| 測試寄送節流（秒） | Test send throttle (seconds) | throttle |
+| 啟用 Email 通知 | Enable Email notifications | 總開關 |
+| 規則對應 | Rule Mapping | Email 群組 → 警報規則 |
+| 對應規則 | Map Rules | 按鈕 |
+| 警報觸發 / 警報恢復 | Alarm Triggered / Alarm Cleared | 通知訊息主旨 |
+| 通知摘要 | Notification Summary | EventLog |
+| 通知通道 | Notify Channel | EventLog 欄位 |
+| 收件人數 | Recipients | 表格欄位 |
+
+## 畫面設計 (Designer)
+
+| zh-TW | en | 備註 |
+|---|---|---|
+| 畫面設計 | Screen Designer | 頁面 |
+| 元件庫 | Components | 左側面板 |
+| 屬性 | Properties | 右側面板 |
+| 頁面 | Pages | 左上面板 |
+| 表格 / 儀錶板 / 文字 / 控制按鈕 | Table / Gauge / Text / Control Button | 元件 |
+| AI 點位 / DI 點位 / AO 點位 / DO 點位 | AI Point / DI Point / AO Point / DO Point | 元件 |
+| 水泵 | Pump | 元件 |
+| 工具列 | Toolbar | |
+| 匯入圖片 | Import Image | 工具列 |
+| 清除 | Clear | 工具列（與 LogicFlow Clear All 區分） |
+| 儲存中… | Saving… | 工具列 |
+| 主頁面 | Main Page | 預設根節點 |
+| 新頁面 | New Page | addPage 預設名 |
+| 燈號 / 文字 | Indicator / Text | DI 顯示模式 |
+| ON 文字 / OFF 文字 | ON Text / OFF Text | DI 標籤 |
+| 警報顏色 / 警報字色 | Alarm Color / Alarm Text Color | DI alarm |
+| 顯示名稱 | Display Name | AO/DO |
+| 預設寫入值 | Default Write Value | AO |
+| 步進值 | Step | AO |
+| 小數點位數 | Decimal Places | AO |
+| 「手動控制」選單文字 | "Manual Control" menu text | AO |
+| 「自動控制」選單文字 | "Auto Control" menu text | AO/DO |
+| 「手動ON」選單文字 | "Manual ON" menu text | DO |
+| 「手動OFF」選單文字 | "Manual OFF" menu text | DO |
+| 留空則不顯示 | Leave blank to hide | placeholder |
+| 出水口方向 | Outlet Direction | pump |
+| 運轉狀態 / 故障狀態 / 手自動狀態 / 頻率 | Run Status / Fault Status / Manual/Auto Status / Frequency | pump SID |
+| 啟動停止 / 頻率設定 | Start/Stop / Frequency Set | pump CID |
+| 重選 / 綁定 / 清除 | Reselect / Bind / Clear | binding action |
+| 未綁定 | (not bound) | UI status |
+| 未綁定 SID / CID | SID not bound / CID not bound | UI status |
+| 透明背景 | Transparent background | |
+| 重選 | Reselect | binding |
+| 標題列 / 資料列 | Header Row / Data Row | 表格 cell |
+| 點位屬性 | Point Type | 表格 cell |
+| 小數位數（整欄） | Decimal Places (whole column) | 表格 cell |
+| 不限 | Unlimited | placeholder |
+| 選擇點位來源 / 選擇設備 / 選擇點位 | Select Point Source / Select Device / Select Point | picker |
+| 選擇計算點位群組 / 選擇計算點位 | Select Calc Group / Select Calc Point | picker |
+| 選擇 DB 來源 / 選擇 DB 來源點位 | Select DB Source / Select DB Source Point | picker |
+| 設備清單 | Device List | picker |
+| 尚無 DB 來源點位 / 尚無設備 / 無符合點位 | No DB source points / No devices / No matching points | picker empty |
+| 確定要清除畫布上所有元件？ | Are you sure you want to clear all widgets from the canvas? | confirm |
+| 確定要刪除「{name}」？ | Delete "{name}"? | confirm |
+| 已成功儲存至資料庫 | Successfully saved to database | toast |
+| 儲存失敗：{error} | Save failed: {error} | toast |
+| 網路錯誤：{error} | Network error: {error} | toast |
+| 未知錯誤 | Unknown error | toast |
 
 ## 翻譯原則
 

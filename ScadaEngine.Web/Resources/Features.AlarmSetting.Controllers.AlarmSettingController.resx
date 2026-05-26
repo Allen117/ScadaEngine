@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="alarm.error.sid_required" xml:space="preserve"><value>SID 不可為空</value></data>
+  <data name="alarm.error.group_id_required" xml:space="preserve"><value>GroupID 不可為空</value></data>
+  <data name="alarm.error.label_required" xml:space="preserve"><value>標籤不可為空</value></data>
+  <data name="alarm.error.max_severity_range" xml:space="preserve"><value>嚴重度上限必須在 0–3 之間</value></data>
+  <data name="alarm.error.save_failed" xml:space="preserve"><value>儲存失敗</value></data>
+  <data name="alarm.error.toggle_failed" xml:space="preserve"><value>切換失敗</value></data>
+  <data name="alarm.error.rule_not_found" xml:space="preserve"><value>規則不存在</value></data>
+  <data name="alarm.error.group_not_found" xml:space="preserve"><value>群組不存在</value></data>
+  <data name="alarm.success.rule_saved" xml:space="preserve"><value>警報規則已儲存</value></data>
+  <data name="alarm.success.saved" xml:space="preserve"><value>已儲存</value></data>
+  <data name="alarm.success.deleted" xml:space="preserve"><value>已刪除</value></data>
+  <data name="alarm.error.smtp_host_required" xml:space="preserve"><value>SMTP 主機不可為空</value></data>
+  <data name="alarm.error.from_address_required" xml:space="preserve"><value>寄件者 Email 不可為空</value></data>
+  <data name="alarm.error.group_name_required" xml:space="preserve"><value>群組識別名稱不可為空</value></data>
+  <data name="alarm.error.email_required" xml:space="preserve"><value>Email 不可為空</value></data>
+  <data name="alarm.error.group_required" xml:space="preserve"><value>未指定群組</value></data>
+  <data name="alarm.error.recipient_not_found" xml:space="preserve"><value>收件人不存在</value></data>
+</root>

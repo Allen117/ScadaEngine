@@ -48,6 +48,7 @@ public class LineNotifyTargetRepository
                        GroupId     AS szGroupId,
                        Label       AS szLabel,
                        MaxSeverity AS nMaxSeverity,
+                       Language    AS szLanguage,
                        IsEnabled   AS isEnabled,
                        CreatedAt   AS dtCreatedAt,
                        UpdatedAt   AS dtUpdatedAt

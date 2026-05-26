@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <!-- ============ 頁面基本 ============ -->
+  <data name="logicflow.title" xml:space="preserve"><value>流程圖控制</value></data>
+  <data name="logicflow.subtitle" xml:space="preserve"><value>LogicFlow 管理</value></data>
+  <data name="logicflow.tree.header" xml:space="preserve"><value>邏輯清單</value></data>
+  <data name="logicflow.tree.loading" xml:space="preserve"><value>載入中...</value></data>
+  <data name="logicflow.tree.empty" xml:space="preserve"><value>尚無邏輯項目，請點擊上方加號新增</value></data>
+  <data name="logicflow.tree.folder" xml:space="preserve"><value>資料夾</value></data>
+  <data name="logicflow.tree.folder_disabled" xml:space="preserve"><value>資料夾（已停用）</value></data>
+  <data name="logicflow.tree.logic_enabled" xml:space="preserve"><value>邏輯（已啟用）</value></data>
+  <data name="logicflow.tree.logic_disabled" xml:space="preserve"><value>邏輯（已停用）</value></data>
+  <data name="logicflow.default.new_folder" xml:space="preserve"><value>新資料夾</value></data>
+  <data name="logicflow.default.new_logic" xml:space="preserve"><value>新邏輯</value></data>
+
+  <!-- ============ 右側內容區 ============ -->
+  <data name="logicflow.hint.select_logic" xml:space="preserve"><value>請從左側選取邏輯項目</value></data>
+  <data name="logicflow.hint.select_to_edit" xml:space="preserve"><value>選取左側的邏輯項目後，即可在此編輯流程圖</value></data>
+  <data name="logicflow.btn.save" xml:space="preserve"><value>儲存</value></data>
+  <data name="logicflow.btn.saving" xml:space="preserve"><value>儲存中…</value></data>
+  <data name="logicflow.status.enabled" xml:space="preserve"><value>已啟用</value></data>
+  <data name="logicflow.status.disabled" xml:space="preserve"><value>已停用</value></data>
+  <data name="logicflow.folder.contains_items" xml:space="preserve"><value>包含 {count} 個項目</value></data>
+  <data name="logicflow.folder.disabled_warning" xml:space="preserve"><value>此資料夾已停用，底下所有項目皆不執行</value></data>
+  <data name="logicflow.folder.label" xml:space="preserve"><value>資料夾「{name}」</value></data>
+
+  <!-- ============ 樹節點動作 ============ -->
+  <data name="logicflow.action.add_folder" xml:space="preserve"><value>新增資料夾</value></data>
+  <data name="logicflow.action.add_logic" xml:space="preserve"><value>新增邏輯</value></data>
+  <data name="logicflow.action.enable" xml:space="preserve"><value>啟用</value></data>
+  <data name="logicflow.action.disable" xml:space="preserve"><value>停用</value></data>
+  <data name="logicflow.action.rename" xml:space="preserve"><value>重新命名</value></data>
+  <data name="logicflow.action.delete" xml:space="preserve"><value>刪除</value></data>
+
+  <!-- ============ 重新命名 Modal ============ -->
+  <data name="logicflow.modal.rename_title" xml:space="preserve"><value>重新命名</value></data>
+  <data name="logicflow.modal.rename_placeholder" xml:space="preserve"><value>輸入新名稱</value></data>
+  <data name="logicflow.modal.cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="logicflow.modal.confirm" xml:space="preserve"><value>確認</value></data>
+
+  <!-- ============ 右鍵選單 ============ -->
+  <data name="logicflow.ctx.add_node" xml:space="preserve"><value>新增節點</value></data>
+  <data name="logicflow.ctx.change_type" xml:space="preserve"><value>變更類型</value></data>
+  <data name="logicflow.ctx.clear_binding" xml:space="preserve"><value>清除綁定</value></data>
+  <data name="logicflow.ctx.delete_node" xml:space="preserve"><value>刪除節點</value></data>
+
+  <!-- ============ 節點類型 (NODE_META labels) ============ -->
+  <data name="logicflow.node.input" xml:space="preserve"><value>讀取點位</value></data>
+  <data name="logicflow.node.output" xml:space="preserve"><value>寫入點位</value></data>
+  <data name="logicflow.node.compare" xml:space="preserve"><value>比較</value></data>
+  <data name="logicflow.node.math" xml:space="preserve"><value>數學運算</value></data>
+  <data name="logicflow.node.constant" xml:space="preserve"><value>常數</value></data>
+  <data name="logicflow.node.and_gate" xml:space="preserve"><value>AND 閘</value></data>
+  <data name="logicflow.node.or_gate" xml:space="preserve"><value>OR 閘</value></data>
+  <data name="logicflow.node.not_gate" xml:space="preserve"><value>NOT 閘</value></data>
+  <data name="logicflow.node.xor_gate" xml:space="preserve"><value>XOR 閘</value></data>
+  <data name="logicflow.node.timer" xml:space="preserve"><value>計時器</value></data>
+  <data name="logicflow.node.counter" xml:space="preserve"><value>計數器</value></data>
+  <data name="logicflow.node.algorithm" xml:space="preserve"><value>演算法</value></data>
+  <data name="logicflow.node.contact_no" xml:space="preserve"><value>A接點</value></data>
+  <data name="logicflow.node.contact_nc" xml:space="preserve"><value>B接點</value></data>
+  <data name="logicflow.node.schedule" xml:space="preserve"><value>排程</value></data>
+  <data name="logicflow.node.logic_control" xml:space="preserve"><value>邏輯控制</value></data>
+
+  <!-- ============ 比較運算子 ============ -->
+  <data name="logicflow.compare.lt" xml:space="preserve"><value>小於</value></data>
+  <data name="logicflow.compare.gt" xml:space="preserve"><value>大於</value></data>
+  <data name="logicflow.compare.lte" xml:space="preserve"><value>小於等於</value></data>
+  <data name="logicflow.compare.gte" xml:space="preserve"><value>大於等於</value></data>
+  <data name="logicflow.compare.eq" xml:space="preserve"><value>等於</value></data>
+  <data name="logicflow.compare.neq" xml:space="preserve"><value>不等於</value></data>
+
+  <!-- ============ 數學運算 ============ -->
+  <data name="logicflow.math.add" xml:space="preserve"><value>加法</value></data>
+  <data name="logicflow.math.sub" xml:space="preserve"><value>減法</value></data>
+  <data name="logicflow.math.mul" xml:space="preserve"><value>乘法</value></data>
+  <data name="logicflow.math.div" xml:space="preserve"><value>除法</value></data>
+  <data name="logicflow.math.mod" xml:space="preserve"><value>取餘數</value></data>
+  <data name="logicflow.math.pow" xml:space="preserve"><value>次方</value></data>
+  <data name="logicflow.math.abs" xml:space="preserve"><value>絕對值</value></data>
+  <data name="logicflow.math.sqrt" xml:space="preserve"><value>平方根</value></data>
+  <data name="logicflow.math.round" xml:space="preserve"><value>四捨五入</value></data>
+
+  <!-- ============ 計時器 ============ -->
+  <data name="logicflow.timer.tp" xml:space="preserve"><value>脈衝</value></data>
+  <data name="logicflow.timer.ton" xml:space="preserve"><value>延時開啟</value></data>
+  <data name="logicflow.timer.tpr" xml:space="preserve"><value>重複脈衝</value></data>
+  <data name="logicflow.timer.delay_label" xml:space="preserve"><value>延</value></data>
+  <data name="logicflow.timer.hold_label" xml:space="preserve"><value>持</value></data>
+  <data name="logicflow.timer.second" xml:space="preserve"><value>秒</value></data>
+
+  <!-- ============ 計數器 ============ -->
+  <data name="logicflow.counter.ctu" xml:space="preserve"><value>計數器 (CTU)</value></data>
+  <data name="logicflow.counter.port.cu" xml:space="preserve"><value>計數脈衝 (cu)</value></data>
+  <data name="logicflow.counter.port.reset" xml:space="preserve"><value>重置 (reset)</value></data>
+  <data name="logicflow.counter.port.preset" xml:space="preserve"><value>目標值 (preset)</value></data>
+  <data name="logicflow.counter.port.q" xml:space="preserve"><value>達標輸出 (q)</value></data>
+  <data name="logicflow.counter.port.cv" xml:space="preserve"><value>目前計數 (cv)</value></data>
+  <data name="logicflow.counter.interval_label" xml:space="preserve"><value>間隔</value></data>
+  <data name="logicflow.counter.preset_tip" xml:space="preserve"><value>達到這個數字後 q=1</value></data>
+  <data name="logicflow.counter.interval_tip" xml:space="preserve"><value>cu 邊緣最小間隔（秒）</value></data>
+
+  <!-- ============ 演算法 ============ -->
+  <data name="logicflow.algorithm.label" xml:space="preserve"><value>演算法</value></data>
+  <data name="logicflow.algorithm.loading" xml:space="preserve"><value>載入中...</value></data>
+  <data name="logicflow.algorithm.no_algorithm" xml:space="preserve"><value>尚無演算法</value></data>
+  <data name="logicflow.algorithm.quantity" xml:space="preserve"><value>數量</value></data>
+  <data name="logicflow.algorithm.group_index" xml:space="preserve"><value>組 {index}</value></data>
+
+  <!-- ============ Ctx 子選單分類 ============ -->
+  <data name="logicflow.ctx.compare" xml:space="preserve"><value>比較</value></data>
+  <data name="logicflow.ctx.math" xml:space="preserve"><value>數學運算</value></data>
+  <data name="logicflow.ctx.gate" xml:space="preserve"><value>邏輯閘</value></data>
+  <data name="logicflow.ctx.timer" xml:space="preserve"><value>計時器</value></data>
+
+  <!-- ============ 狀態徽章 ============ -->
+  <data name="logicflow.state.on" xml:space="preserve"><value>● ON</value></data>
+  <data name="logicflow.state.off" xml:space="preserve"><value>○ OFF</value></data>
+  <data name="logicflow.mode.manual" xml:space="preserve"><value>手動</value></data>
+  <data name="logicflow.mode.auto" xml:space="preserve"><value>自動</value></data>
+  <data name="logicflow.edge.out_of_range" xml:space="preserve"><value>超限</value></data>
+
+  <!-- ============ 接點控制埠 ============ -->
+  <data name="logicflow.port.control" xml:space="preserve"><value>控制</value></data>
+  <data name="logicflow.port.bound_no_ctrl" xml:space="preserve"><value>已綁定點位/排程，不可使用</value></data>
+  <data name="logicflow.port.resize_tip" xml:space="preserve"><value>拖動調整高度</value></data>
+
+  <!-- ============ 錯誤 / 確認 ============ -->
+  <data name="logicflow.error.load_failed" xml:space="preserve"><value>載入失敗：{msg}</value></data>
+  <data name="logicflow.error.add_failed" xml:space="preserve"><value>新增失敗：{msg}</value></data>
+  <data name="logicflow.error.rename_failed" xml:space="preserve"><value>重新命名失敗：{msg}</value></data>
+  <data name="logicflow.error.delete_failed" xml:space="preserve"><value>刪除失敗：{msg}</value></data>
+  <data name="logicflow.error.toggle_failed" xml:space="preserve"><value>切換失敗：{msg}</value></data>
+  <data name="logicflow.error.save_failed" xml:space="preserve"><value>儲存失敗：{msg}</value></data>
+  <data name="logicflow.error.version_conflict" xml:space="preserve"><value>版本衝突，將重新載入最新資料</value></data>
+  <data name="logicflow.error.contact_ctrl_conflict" xml:space="preserve"><value>此接點已設定點位或排程，不可使用 ctrl 控制埠。
+請先移除點位/排程設定再連線。</value></data>
+  <data name="logicflow.error.schedule_load_failed" xml:space="preserve"><value>無法載入排程清單</value></data>
+  <data name="logicflow.error.device_load_failed" xml:space="preserve"><value>無法載入設備/點位清單</value></data>
+  <data name="logicflow.confirm.delete_item" xml:space="preserve"><value>確定要刪除此項目？（含所有子項目）</value></data>
+  <data name="logicflow.success.save" xml:space="preserve"><value>儲存成功！</value></data>
+
+  <!-- ============ 點位選擇 Modal ============ -->
+  <data name="logicflow.pp.title_select_source" xml:space="preserve"><value>選擇點位來源</value></data>
+  <data name="logicflow.pp.title_select_device" xml:space="preserve"><value>選擇設備</value></data>
+  <data name="logicflow.pp.title_select_calc_group" xml:space="preserve"><value>選擇計算點位群組</value></data>
+  <data name="logicflow.pp.title_select_calc_point" xml:space="preserve"><value>選擇計算點位</value></data>
+  <data name="logicflow.pp.title_select_db_device" xml:space="preserve"><value>選擇 DB 來源裝置</value></data>
+  <data name="logicflow.pp.title_select_db_point" xml:space="preserve"><value>選擇 DB 點位</value></data>
+  <data name="logicflow.pp.title_select_point" xml:space="preserve"><value>選擇點位</value></data>
+  <data name="logicflow.pp.title_select_schedule" xml:space="preserve"><value>選擇排程</value></data>
+
+  <data name="logicflow.pp.toggle.point" xml:space="preserve"><value>設備點位</value></data>
+  <data name="logicflow.pp.toggle.schedule" xml:space="preserve"><value>排程</value></data>
+  <data name="logicflow.pp.option.device_point" xml:space="preserve"><value>設備點位</value></data>
+  <data name="logicflow.pp.option.device_point_desc" xml:space="preserve"><value>從 Modbus 設備選擇原始點位</value></data>
+  <data name="logicflow.pp.option.calc_point" xml:space="preserve"><value>計算點位</value></data>
+  <data name="logicflow.pp.option.calc_point_desc" xml:space="preserve"><value>從公式衍生的計算點位</value></data>
+  <data name="logicflow.pp.option.db_point" xml:space="preserve"><value>DB 點位</value></data>
+  <data name="logicflow.pp.option.db_point_desc" xml:space="preserve"><value>從 DB 來源裝置選擇點位</value></data>
+
+  <data name="logicflow.pp.back" xml:space="preserve"><value>返回</value></data>
+  <data name="logicflow.pp.back_tip" xml:space="preserve"><value>返回來源選擇</value></data>
+  <data name="logicflow.pp.device_list_header" xml:space="preserve"><value>設備清單</value></data>
+  <data name="logicflow.pp.search_placeholder" xml:space="preserve"><value>搜尋點位名稱…</value></data>
+  <data name="logicflow.pp.cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="logicflow.pp.confirm" xml:space="preserve"><value>確認</value></data>
+
+  <data name="logicflow.pp.empty.no_devices" xml:space="preserve"><value>尚無設備</value></data>
+  <data name="logicflow.pp.empty.no_matching" xml:space="preserve"><value>無符合點位</value></data>
+  <data name="logicflow.pp.empty.no_schedules" xml:space="preserve"><value>尚無啟用的排程</value></data>
+  <data name="logicflow.pp.points_count" xml:space="preserve"><value>{count} 個點位</value></data>
+  <data name="logicflow.pp.ungrouped" xml:space="preserve"><value>未分組</value></data>
+  <data name="logicflow.pp.calc_points" xml:space="preserve"><value>計算點位</value></data>
+  <data name="logicflow.pp.db_points" xml:space="preserve"><value>DB 點位</value></data>
+
+  <data name="logicflow.pp.schedule.weekly" xml:space="preserve"><value>每週</value></data>
+  <data name="logicflow.pp.schedule.n_weekly" xml:space="preserve"><value>N週循環</value></data>
+  <data name="logicflow.pp.schedule.monthly" xml:space="preserve"><value>每月</value></data>
+  <data name="logicflow.pp.schedule.n_monthly" xml:space="preserve"><value>N月循環</value></data>
+</root>

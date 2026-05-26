@@ -1,5 +1,5 @@
 @{
-    ViewData["Title"] = "警報設定";
+    ViewData["Title"] = Localizer["alarm.title"].Value;
     Layout = "~/Views/Shared/_Layout.cshtml";
 
     var coordList = ViewBag.CoordinatorList as List<ScadaEngine.Engine.Models.CoordinatorModel>;
@@ -36,8 +36,15 @@
                 groupId = t.szGroupId,
                 label = t.szLabel,
                 maxSeverity = (int)t.nMaxSeverity,
+                language = t.szLanguage ?? "zh-TW",
                 isEnabled = t.isEnabled
             })
+    );
+    var emailGroups = ViewBag.EmailGroups as List<object> ?? new List<object>();
+    var emailGroupsJson = System.Text.Json.JsonSerializer.Serialize(emailGroups);
+    var emailSenderConfigJson = System.Text.Json.JsonSerializer.Serialize(ViewBag.EmailSenderConfig);
+    var alarmRulesForRoutingJson = System.Text.Json.JsonSerializer.Serialize(
+        rules!.Select(r => new { id = r.nId, sid = r.szSID, pointName = r.szPointName ?? r.szSID })
     );
     var diLabelMapJson = System.Text.Json.JsonSerializer.Serialize(diLabelMap);
 }
@@ -47,13 +54,19 @@
 <div class="container-fluid mt-4">
 
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="mb-0"><i class="fas fa-bell me-2"></i>警報設定</h4>
+        <h4 class="mb-0"><i class="fas fa-bell me-2"></i>@Localizer["alarm.title"]</h4>
         <div id="tabActionBar">
             <button class="btn btn-primary" id="btnAddRule" onclick="window._alarm.showAddModal()">
-                <i class="fas fa-plus me-1"></i>新增規則
+                <i class="fas fa-plus me-1"></i>@Localizer["alarm.button.add_rule"]
             </button>
             <button class="btn btn-primary d-none" id="btnAddLineTarget" onclick="window._alarmSetting.showAddLineModal()">
-                <i class="fas fa-plus me-1"></i>新增 Line 群組
+                <i class="fas fa-plus me-1"></i>@Localizer["alarm.button.add_line_group"]
+            </button>
+            <button class="btn btn-primary d-none" id="btnAddEmailGroup" onclick="window._alarmEmail.showAddGroupModal()">
+                <i class="fas fa-plus me-1"></i>@Localizer["alarm.button.add_email_group"]
+            </button>
+            <button class="btn btn-outline-secondary d-none" id="btnEmailConfig" onclick="window._alarmEmail.showConfigModal()">
+                <i class="fas fa-cog me-1"></i>@Localizer["alarm.button.email_smtp_settings"]
             </button>
         </div>
     </div>
@@ -63,13 +76,19 @@
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="tab-rules-btn" data-bs-toggle="tab"
                     data-bs-target="#tab-rules" type="button" role="tab">
-                <i class="fas fa-bell me-1"></i>警報規則
+                <i class="fas fa-bell me-1"></i>@Localizer["alarm.tab.rules"]
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="tab-line-btn" data-bs-toggle="tab"
                     data-bs-target="#tab-line" type="button" role="tab">
-                <i class="fab fa-line me-1"></i>Line 通知設定
+                <i class="fab fa-line me-1"></i>@Localizer["alarm.tab.line"]
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-email-btn" data-bs-toggle="tab"
+                    data-bs-target="#tab-email" type="button" role="tab">
+                <i class="fas fa-envelope me-1"></i>@Localizer["alarm.tab.email"]
             </button>
         </li>
     </ul>
@@ -84,20 +103,20 @@
                         <table class="table table-hover mb-0" id="rulesTable">
                             <thead class="table-dark">
                                 <tr>
-                                    <th style="width:50px">啟用</th>
-                                    <th>設備 / 點位</th>
-                                    <th>上限警報</th>
-                                    <th>下限警報</th>
-                                    <th>DI 警報</th>
-                                    <th>備註</th>
-                                    <th style="width:120px">操作</th>
+                                    <th style="width:50px">@Localizer["alarm.col.enabled"]</th>
+                                    <th>@Localizer["alarm.col.device_point"]</th>
+                                    <th>@Localizer["alarm.col.alarm_high"]</th>
+                                    <th>@Localizer["alarm.col.alarm_low"]</th>
+                                    <th>@Localizer["alarm.col.alarm_di"]</th>
+                                    <th>@Localizer["alarm.col.remarks"]</th>
+                                    <th style="width:120px">@Localizer["alarm.col.actions"]</th>
                                 </tr>
                             </thead>
                             <tbody id="rulesBody"></tbody>
                         </table>
                     </div>
                     <div id="emptyMsg" class="text-center text-muted py-4 d-none">
-                        <i class="fas fa-info-circle me-1"></i>尚無警報規則，請點擊「新增規則」
+                        <i class="fas fa-info-circle me-1"></i>@Localizer["alarm.empty.no_rules"]
                     </div>
                 </div>
             </div>
@@ -108,7 +127,7 @@
             <div class="alert alert-info py-2 mb-3 d-flex align-items-center">
                 <i class="fas fa-info-circle me-2"></i>
                 <div class="small">
-                    警報觸發時將推播至下列已啟用的 Line 群組。Critical（緊急）警報永遠單獨送、不受限流影響；其他嚴重度若每群組每分鐘超過 10 則，將自動合併為摘要訊息。
+                    @Localizer["alarm.line.info"]
                 </div>
             </div>
             <div class="card">
@@ -117,11 +136,12 @@
                         <table class="table table-hover mb-0" id="lineTargetsTable">
                             <thead class="table-dark">
                                 <tr>
-                                    <th style="width:50px">啟用</th>
-                                    <th>標籤</th>
-                                    <th>GroupID</th>
-                                    <th style="width:160px">接收嚴重度上限</th>
-                                    <th style="width:240px">操作</th>
+                                    <th style="width:50px">@Localizer["alarm.col.enabled"]</th>
+                                    <th>@Localizer["alarm.col.label"]</th>
+                                    <th>@Localizer["alarm.col.group_id"]</th>
+                                    <th style="width:120px">@Localizer["alarm.col.language"]</th>
+                                    <th style="width:160px">@Localizer["alarm.col.max_severity"]</th>
+                                    <th style="width:240px">@Localizer["alarm.col.actions"]</th>
                                 </tr>
                             </thead>
                             <tbody id="lineTargetsBody"></tbody>
@@ -129,7 +149,38 @@
                     </div>
                     <div id="lineEmptyMsg" class="text-center text-muted py-4 d-none">
                         <i class="fab fa-line fa-2x mb-2 d-block"></i>
-                        尚未設定 Line 通知群組，點擊上方「新增 Line 群組」建立第一筆。
+                        @Localizer["alarm.empty.no_line_groups"]
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Email 通知設定 Tab ── -->
+        <div class="tab-pane fade" id="tab-email" role="tabpanel">
+            <div class="alert alert-info py-2 mb-3 d-flex align-items-center">
+                <i class="fas fa-info-circle me-2"></i>
+                <div class="small">@Localizer["alarm.email.info"]</div>
+            </div>
+            <div class="card">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="emailGroupsTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th style="width:50px">@Localizer["alarm.col.enabled"]</th>
+                                    <th>@Localizer["alarm.col.label"]</th>
+                                    <th style="width:140px">@Localizer["alarm.col.recipients_count"]</th>
+                                    <th style="width:120px">@Localizer["alarm.col.language"]</th>
+                                    <th style="width:160px">@Localizer["alarm.col.max_severity"]</th>
+                                    <th style="width:340px">@Localizer["alarm.col.actions"]</th>
+                                </tr>
+                            </thead>
+                            <tbody id="emailGroupsBody"></tbody>
+                        </table>
+                    </div>
+                    <div id="emailEmptyMsg" class="text-center text-muted py-4 d-none">
+                        <i class="fas fa-envelope fa-2x mb-2 d-block"></i>
+                        @Localizer["alarm.empty.no_email_groups"]
                     </div>
                 </div>
             </div>
@@ -142,7 +193,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="ruleModalTitle">新增警報規則</h5>
+                <h5 class="modal-title" id="ruleModalTitle">@Localizer["alarm.modal.title_add"]</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -152,21 +203,21 @@
                 <input type="hidden" id="txtSid" />
                 <div class="row mb-3">
                     <div class="col-md-4">
-                        <label class="form-label">設備</label>
+                        <label class="form-label">@Localizer["alarm.field.device"]</label>
                         <select class="form-select" id="selCoord" onchange="window._alarm.onCoordChange()">
-                            <option value="">-- 請選擇 --</option>
+                            <option value="">@Localizer["alarm.select.placeholder"]</option>
                         </select>
                     </div>
                     <div class="col-md-4 d-none" id="subDeviceCol">
-                        <label class="form-label">子設備</label>
+                        <label class="form-label">@Localizer["alarm.field.sub_device"]</label>
                         <select class="form-select" id="selSubDevice" onchange="window._alarm.onSubDeviceChange()">
-                            <option value="">-- 請選擇子設備 --</option>
+                            <option value="">@Localizer["alarm.select.sub_device_placeholder"]</option>
                         </select>
                     </div>
                     <div class="col-md-4" id="pointCol">
-                        <label class="form-label">點位</label>
+                        <label class="form-label">@Localizer["alarm.field.point"]</label>
                         <select class="form-select" id="selPoint" onchange="window._alarm.onPointChange()">
-                            <option value="">-- 請先選擇設備 --</option>
+                            <option value="">@Localizer["alarm.select.point_placeholder"]</option>
                         </select>
                     </div>
                 </div>
@@ -179,24 +230,24 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="chkAlarmHigh"
                                    onchange="window._alarm.toggleSection('high')">
-                            <label class="form-check-label fw-bold">上限警報</label>
+                            <label class="form-check-label fw-bold">@Localizer["alarm.toggle.alarm_high"]</label>
                         </div>
                     </div>
                     <div class="col-md-3" id="secHighValue">
-                        <label class="form-label">閾值</label>
+                        <label class="form-label">@Localizer["alarm.field.threshold"]</label>
                         <input type="number" class="form-control" id="txtAlarmHighValue" step="any" />
                     </div>
                     <div class="col-md-3" id="secHighDeadband">
-                        <label class="form-label">死區</label>
+                        <label class="form-label">@Localizer["alarm.field.deadband"]</label>
                         <input type="number" class="form-control" id="txtDeadbandHigh" step="any" value="0" />
                     </div>
                     <div class="col-md-3" id="secHighSeverity">
-                        <label class="form-label">嚴重程度</label>
+                        <label class="form-label">@Localizer["alarm.field.severity"]</label>
                         <select class="form-select" id="selHighSeverity">
-                            <option value="0">緊急</option>
-                            <option value="1" selected>高</option>
-                            <option value="2">中</option>
-                            <option value="3">低</option>
+                            <option value="0">@Localizer["alarm.severity.critical"]</option>
+                            <option value="1" selected>@Localizer["alarm.severity.high"]</option>
+                            <option value="2">@Localizer["alarm.severity.medium"]</option>
+                            <option value="3">@Localizer["alarm.severity.low"]</option>
                         </select>
                     </div>
                 </div>
@@ -207,24 +258,24 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="chkAlarmLow"
                                    onchange="window._alarm.toggleSection('low')">
-                            <label class="form-check-label fw-bold">下限警報</label>
+                            <label class="form-check-label fw-bold">@Localizer["alarm.toggle.alarm_low"]</label>
                         </div>
                     </div>
                     <div class="col-md-3" id="secLowValue">
-                        <label class="form-label">閾值</label>
+                        <label class="form-label">@Localizer["alarm.field.threshold"]</label>
                         <input type="number" class="form-control" id="txtAlarmLowValue" step="any" />
                     </div>
                     <div class="col-md-3" id="secLowDeadband">
-                        <label class="form-label">死區</label>
+                        <label class="form-label">@Localizer["alarm.field.deadband"]</label>
                         <input type="number" class="form-control" id="txtDeadbandLow" step="any" value="0" />
                     </div>
                     <div class="col-md-3" id="secLowSeverity">
-                        <label class="form-label">嚴重程度</label>
+                        <label class="form-label">@Localizer["alarm.field.severity"]</label>
                         <select class="form-select" id="selLowSeverity">
-                            <option value="0">緊急</option>
-                            <option value="1" selected>高</option>
-                            <option value="2">中</option>
-                            <option value="3">低</option>
+                            <option value="0">@Localizer["alarm.severity.critical"]</option>
+                            <option value="1" selected>@Localizer["alarm.severity.high"]</option>
+                            <option value="2">@Localizer["alarm.severity.medium"]</option>
+                            <option value="3">@Localizer["alarm.severity.low"]</option>
                         </select>
                     </div>
                 </div>
@@ -235,39 +286,39 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="chkDiAlarm"
                                    onchange="window._alarm.toggleSection('di')">
-                            <label class="form-check-label fw-bold">DI 警報</label>
+                            <label class="form-check-label fw-bold">@Localizer["alarm.toggle.alarm_di"]</label>
                         </div>
                     </div>
                     <div class="col-md-3" id="secDiTrigger">
-                        <label class="form-label">觸發狀態</label>
+                        <label class="form-label">@Localizer["alarm.field.trigger_state"]</label>
                         <select class="form-select" id="selDiTrigger">
                             <option value="ON">ON</option>
                             <option value="OFF">OFF</option>
                         </select>
                     </div>
                     <div class="col-md-3" id="secDiSeverity">
-                        <label class="form-label">嚴重程度</label>
+                        <label class="form-label">@Localizer["alarm.field.severity"]</label>
                         <select class="form-select" id="selDiSeverity">
-                            <option value="0">緊急</option>
-                            <option value="1" selected>高</option>
-                            <option value="2">中</option>
-                            <option value="3">低</option>
+                            <option value="0">@Localizer["alarm.severity.critical"]</option>
+                            <option value="1" selected>@Localizer["alarm.severity.high"]</option>
+                            <option value="2">@Localizer["alarm.severity.medium"]</option>
+                            <option value="3">@Localizer["alarm.severity.low"]</option>
                         </select>
                     </div>
                 </div>
                 <div class="row mb-3" id="secDiLabels" style="display:none;">
                     <div class="col-md-2"></div>
                     <div class="col-md-3">
-                        <label class="form-label">ON 標籤</label>
+                        <label class="form-label">@Localizer["alarm.field.on_label"]</label>
                         <input type="text" class="form-control" id="txtDiOnLabel" placeholder="ON" maxlength="50" readonly />
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">OFF 標籤</label>
+                        <label class="form-label">@Localizer["alarm.field.off_label"]</label>
                         <input type="text" class="form-control" id="txtDiOffLabel" placeholder="OFF" maxlength="50" readonly />
                     </div>
                     <div class="col-md-4">
                         <label class="form-label d-block">&nbsp;</label>
-                        <small class="text-muted"><i class="fas fa-info-circle me-1"></i>由 Designer DI 點位設定自動帶入</small>
+                        <small class="text-muted"><i class="fas fa-info-circle me-1"></i>@Localizer["alarm.di_labels.hint"]</small>
                     </div>
                 </div>
 
@@ -275,23 +326,23 @@
 
                 <div class="row mb-3">
                     <div class="col-md-8">
-                        <label class="form-label">備註</label>
+                        <label class="form-label">@Localizer["alarm.field.remarks"]</label>
                         <input type="text" class="form-control" id="txtRemarks" maxlength="200" />
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">啟用</label>
+                        <label class="form-label">@Localizer["alarm.col.enabled"]</label>
                         <div class="form-check form-switch mt-2">
                             <input class="form-check-input" type="checkbox" id="chkEnabled" checked>
-                            <label class="form-check-label">啟用此規則</label>
+                            <label class="form-check-label">@Localizer["alarm.field.is_enabled"]</label>
                         </div>
                     </div>
                 </div>
 
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["alarm.button.cancel"]</button>
                 <button type="button" class="btn btn-primary" onclick="window._alarm.save()">
-                    <i class="fas fa-save me-1"></i>儲存
+                    <i class="fas fa-save me-1"></i>@Localizer["alarm.button.save"]
                 </button>
             </div>
         </div>
@@ -303,44 +354,259 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="lineTargetModalTitle">新增 Line 群組</h5>
+                <h5 class="modal-title" id="lineTargetModalTitle">@Localizer["alarm.line_modal.title_add"]</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="lineTargetEditId" />
 
                 <div class="mb-3">
-                    <label class="form-label fw-semibold"><i class="fas fa-tag me-1"></i>標籤</label>
+                    <label class="form-label fw-semibold"><i class="fas fa-tag me-1"></i>@Localizer["alarm.field.line_label"]</label>
                     <input type="text" class="form-control" id="txtLineLabel"
-                           maxlength="100" placeholder="例如：主管群、工程值班群" />
+                           maxlength="100" placeholder="@Localizer["alarm.field.line_label_placeholder"]" />
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label fw-semibold"><i class="fab fa-line me-1"></i>Line GroupID</label>
+                    <label class="form-label fw-semibold"><i class="fab fa-line me-1"></i>@Localizer["alarm.field.line_group_id"]</label>
                     <input type="text" class="form-control" id="txtLineGroupId"
-                           maxlength="64" placeholder="C 開頭 33 字元" />
-                    <div class="form-text">於 Line 群組加入 Bot 後，由 Webhook 取得。</div>
+                           maxlength="64" placeholder="@Localizer["alarm.field.line_group_id_placeholder"]" />
+                    <div class="form-text">@Localizer["alarm.field.line_group_id_hint"]</div>
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label fw-semibold"><i class="fas fa-filter me-1"></i>接收嚴重度上限</label>
+                    <label class="form-label fw-semibold"><i class="fas fa-filter me-1"></i>@Localizer["alarm.field.max_severity"]</label>
                     <select class="form-select" id="selLineMaxSeverity">
-                        <option value="0">只收 緊急（Critical）</option>
-                        <option value="1">收 緊急 + 高</option>
-                        <option value="2">收 緊急 + 高 + 中</option>
-                        <option value="3" selected>全收（緊急 / 高 / 中 / 低）</option>
+                        <option value="0">@Localizer["alarm.max_severity.0"]</option>
+                        <option value="1">@Localizer["alarm.max_severity.1"]</option>
+                        <option value="2">@Localizer["alarm.max_severity.2"]</option>
+                        <option value="3" selected>@Localizer["alarm.max_severity.3"]</option>
                     </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold"><i class="fas fa-language me-1"></i>@Localizer["alarm.field.language"]</label>
+                    <select class="form-select" id="selLineLanguage">
+                        <option value="zh-TW" selected>繁體中文 (zh-TW)</option>
+                        <option value="en">English (en)</option>
+                    </select>
+                    <div class="form-text">@Localizer["alarm.field.language_hint"]</div>
                 </div>
 
                 <div class="form-check form-switch">
                     <input class="form-check-input" type="checkbox" id="chkLineEnabled" checked />
-                    <label class="form-check-label" for="chkLineEnabled">啟用此群組</label>
+                    <label class="form-check-label" for="chkLineEnabled">@Localizer["alarm.field.is_line_enabled"]</label>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["alarm.button.cancel"]</button>
                 <button type="button" class="btn btn-primary" onclick="window._alarmSetting.saveLineTarget()">
-                    <i class="fas fa-save me-1"></i>儲存
+                    <i class="fas fa-save me-1"></i>@Localizer["alarm.button.save"]
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Email 群組新增/編輯 Modal -->
+<div class="modal fade" id="emailGroupModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="emailGroupModalTitle">@Localizer["alarm.email_modal.title_add_group"]</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="emailGroupEditId" />
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">@Localizer["alarm.field.email_group_name"]</label>
+                        <input type="text" class="form-control" id="txtEmailGroupName" maxlength="100" placeholder="@Localizer["alarm.field.email_group_name_placeholder"]" />
+                        <div class="form-text">@Localizer["alarm.field.email_group_name_hint"]</div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">@Localizer["alarm.field.email_group_label"]</label>
+                        <input type="text" class="form-control" id="txtEmailGroupLabel" maxlength="100" placeholder="@Localizer["alarm.field.email_group_label_placeholder"]" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-semibold">@Localizer["alarm.field.max_severity"]</label>
+                        <select class="form-select" id="selEmailMaxSeverity">
+                            <option value="0">@Localizer["alarm.max_severity.0"]</option>
+                            <option value="1">@Localizer["alarm.max_severity.1"]</option>
+                            <option value="2">@Localizer["alarm.max_severity.2"]</option>
+                            <option value="3" selected>@Localizer["alarm.max_severity.3"]</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-semibold">@Localizer["alarm.field.language"]</label>
+                        <select class="form-select" id="selEmailLanguage">
+                            <option value="zh-TW" selected>繁體中文 (zh-TW)</option>
+                            <option value="en">English (en)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-semibold">@Localizer["alarm.col.enabled"]</label>
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" id="chkEmailGroupEnabled" checked />
+                            <label class="form-check-label" for="chkEmailGroupEnabled">@Localizer["alarm.field.is_enabled"]</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">@Localizer["alarm.field.remarks"]</label>
+                    <input type="text" class="form-control" id="txtEmailGroupRemarks" maxlength="200" />
+                </div>
+
+                <hr/>
+                <h6 class="mb-2"><i class="fas fa-users me-1"></i>@Localizer["alarm.email.recipients_title"]</h6>
+                <div id="emailRecipientsSection" class="mb-3">
+                    <small id="emailRecipientsHint" class="text-muted">@Localizer["alarm.email.recipients_hint"]</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["alarm.button.cancel"]</button>
+                <button type="button" class="btn btn-primary" onclick="window._alarmEmail.saveGroup()">
+                    <i class="fas fa-save me-1"></i>@Localizer["alarm.button.save"]
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Email 收件人新增/編輯 Modal -->
+<div class="modal fade" id="emailRecipientModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="emailRecipientModalTitle">@Localizer["alarm.email_modal.title_add_recipient"]</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="emailRecipientEditId" />
+                <input type="hidden" id="emailRecipientGroupId" />
+                <div class="mb-3">
+                    <label class="form-label">@Localizer["alarm.field.recipient_email"]</label>
+                    <input type="email" class="form-control" id="txtRecipientEmail" maxlength="200" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">@Localizer["alarm.field.recipient_name"]</label>
+                    <input type="text" class="form-control" id="txtRecipientName" maxlength="100" />
+                </div>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="chkRecipientEnabled" checked />
+                    <label class="form-check-label" for="chkRecipientEnabled">@Localizer["alarm.field.is_enabled"]</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["alarm.button.cancel"]</button>
+                <button type="button" class="btn btn-primary" onclick="window._alarmEmail.saveRecipient()">
+                    <i class="fas fa-save me-1"></i>@Localizer["alarm.button.save"]
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SMTP 設定 Modal -->
+<div class="modal fade" id="emailConfigModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@Localizer["alarm.email_modal.title_config"]</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">@Localizer["alarm.field.smtp_host"]</label>
+                        <input type="text" class="form-control" id="txtSmtpHost" maxlength="200" placeholder="smtp.gmail.com" />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">@Localizer["alarm.field.smtp_port"]</label>
+                        <input type="number" class="form-control" id="txtSmtpPort" value="587" />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label d-block">&nbsp;</label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="chkSmtpStartTls" checked />
+                            <label class="form-check-label" for="chkSmtpStartTls">STARTTLS</label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="chkSmtpSsl" />
+                            <label class="form-check-label" for="chkSmtpSsl">SSL</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">@Localizer["alarm.field.smtp_username"]</label>
+                        <input type="text" class="form-control" id="txtSmtpUsername" maxlength="200" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">@Localizer["alarm.field.smtp_password"]</label>
+                        <input type="password" class="form-control" id="txtSmtpPassword" maxlength="200" placeholder="@Localizer["alarm.field.smtp_password_placeholder"]" />
+                        <div class="form-text" id="smtpPasswordHint"></div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">@Localizer["alarm.field.from_address"]</label>
+                        <input type="email" class="form-control" id="txtFromAddress" maxlength="200" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">@Localizer["alarm.field.from_display_name"]</label>
+                        <input type="text" class="form-control" id="txtFromDisplayName" maxlength="100" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">@Localizer["alarm.field.rate_per_minute"]</label>
+                        <input type="number" class="form-control" id="txtEmailRatePerMinute" value="10" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">@Localizer["alarm.field.test_throttle_seconds"]</label>
+                        <input type="number" class="form-control" id="txtEmailTestThrottle" value="10" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label d-block">&nbsp;</label>
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" id="chkEmailEnableNotification" checked />
+                            <label class="form-check-label" for="chkEmailEnableNotification">@Localizer["alarm.field.enable_notification"]</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["alarm.button.cancel"]</button>
+                <button type="button" class="btn btn-primary" onclick="window._alarmEmail.saveConfig()">
+                    <i class="fas fa-save me-1"></i>@Localizer["alarm.button.save"]
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 警報規則對應 Modal -->
+<div class="modal fade" id="emailRulesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="emailRulesModalTitle">@Localizer["alarm.email_modal.title_rules"]</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="emailRulesGroupId" />
+                <div class="alert alert-info py-2">
+                    <i class="fas fa-info-circle me-1"></i>
+                    @Localizer["alarm.email.rules_hint"]
+                </div>
+                <div id="emailRulesList" class="border rounded p-2" style="max-height:60vh;overflow:auto;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["alarm.button.cancel"]</button>
+                <button type="button" class="btn btn-primary" onclick="window._alarmEmail.saveRules()">
+                    <i class="fas fa-save me-1"></i>@Localizer["alarm.button.save"]
                 </button>
             </div>
         </div>
@@ -354,6 +620,9 @@
             points: @Html.Raw(pointJson),
             rules: @Html.Raw(rulesJson),
             lineTargets: @Html.Raw(lineTargetsJson),
+            emailGroups: @Html.Raw(emailGroupsJson),
+            emailSenderConfig: @Html.Raw(emailSenderConfigJson),
+            alarmRulesForRouting: @Html.Raw(alarmRulesForRoutingJson),
             diLabels: @Html.Raw(diLabelMapJson)
         };
     </script>

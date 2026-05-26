@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="logicflow.title" xml:space="preserve"><value>Logic Flow</value></data>
+  <data name="logicflow.subtitle" xml:space="preserve"><value>LogicFlow Management</value></data>
+  <data name="logicflow.tree.header" xml:space="preserve"><value>Logic List</value></data>
+  <data name="logicflow.tree.loading" xml:space="preserve"><value>Loading...</value></data>
+  <data name="logicflow.tree.empty" xml:space="preserve"><value>No logic items. Click the plus icon above to add.</value></data>
+  <data name="logicflow.tree.folder" xml:space="preserve"><value>Folder</value></data>
+  <data name="logicflow.tree.folder_disabled" xml:space="preserve"><value>Folder (Disabled)</value></data>
+  <data name="logicflow.tree.logic_enabled" xml:space="preserve"><value>Logic (Enabled)</value></data>
+  <data name="logicflow.tree.logic_disabled" xml:space="preserve"><value>Logic (Disabled)</value></data>
+  <data name="logicflow.default.new_folder" xml:space="preserve"><value>New Folder</value></data>
+  <data name="logicflow.default.new_logic" xml:space="preserve"><value>New Logic</value></data>
+
+  <data name="logicflow.hint.select_logic" xml:space="preserve"><value>Please select a logic item from the left</value></data>
+  <data name="logicflow.hint.select_to_edit" xml:space="preserve"><value>Select a logic item from the left to edit its flow chart</value></data>
+  <data name="logicflow.btn.save" xml:space="preserve"><value>Save</value></data>
+  <data name="logicflow.btn.saving" xml:space="preserve"><value>Saving…</value></data>
+  <data name="logicflow.status.enabled" xml:space="preserve"><value>Enabled</value></data>
+  <data name="logicflow.status.disabled" xml:space="preserve"><value>Disabled</value></data>
+  <data name="logicflow.folder.contains_items" xml:space="preserve"><value>Contains {count} item(s)</value></data>
+  <data name="logicflow.folder.disabled_warning" xml:space="preserve"><value>This folder is disabled. All items inside will not run.</value></data>
+  <data name="logicflow.folder.label" xml:space="preserve"><value>Folder "{name}"</value></data>
+
+  <data name="logicflow.action.add_folder" xml:space="preserve"><value>Add Folder</value></data>
+  <data name="logicflow.action.add_logic" xml:space="preserve"><value>Add Logic</value></data>
+  <data name="logicflow.action.enable" xml:space="preserve"><value>Enable</value></data>
+  <data name="logicflow.action.disable" xml:space="preserve"><value>Disable</value></data>
+  <data name="logicflow.action.rename" xml:space="preserve"><value>Rename</value></data>
+  <data name="logicflow.action.delete" xml:space="preserve"><value>Delete</value></data>
+
+  <data name="logicflow.modal.rename_title" xml:space="preserve"><value>Rename</value></data>
+  <data name="logicflow.modal.rename_placeholder" xml:space="preserve"><value>Enter new name</value></data>
+  <data name="logicflow.modal.cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="logicflow.modal.confirm" xml:space="preserve"><value>Confirm</value></data>
+
+  <data name="logicflow.ctx.add_node" xml:space="preserve"><value>Add Node</value></data>
+  <data name="logicflow.ctx.change_type" xml:space="preserve"><value>Change Type</value></data>
+  <data name="logicflow.ctx.clear_binding" xml:space="preserve"><value>Clear Binding</value></data>
+  <data name="logicflow.ctx.delete_node" xml:space="preserve"><value>Delete Node</value></data>
+
+  <data name="logicflow.node.input" xml:space="preserve"><value>Read Point</value></data>
+  <data name="logicflow.node.output" xml:space="preserve"><value>Write Point</value></data>
+  <data name="logicflow.node.compare" xml:space="preserve"><value>Compare</value></data>
+  <data name="logicflow.node.math" xml:space="preserve"><value>Math</value></data>
+  <data name="logicflow.node.constant" xml:space="preserve"><value>Constant</value></data>
+  <data name="logicflow.node.and_gate" xml:space="preserve"><value>AND Gate</value></data>
+  <data name="logicflow.node.or_gate" xml:space="preserve"><value>OR Gate</value></data>
+  <data name="logicflow.node.not_gate" xml:space="preserve"><value>NOT Gate</value></data>
+  <data name="logicflow.node.xor_gate" xml:space="preserve"><value>XOR Gate</value></data>
+  <data name="logicflow.node.timer" xml:space="preserve"><value>Timer</value></data>
+  <data name="logicflow.node.counter" xml:space="preserve"><value>Counter</value></data>
+  <data name="logicflow.node.algorithm" xml:space="preserve"><value>Algorithm</value></data>
+  <data name="logicflow.node.contact_no" xml:space="preserve"><value>NO Contact</value></data>
+  <data name="logicflow.node.contact_nc" xml:space="preserve"><value>NC Contact</value></data>
+  <data name="logicflow.node.schedule" xml:space="preserve"><value>Schedule</value></data>
+  <data name="logicflow.node.logic_control" xml:space="preserve"><value>Logic Control</value></data>
+
+  <data name="logicflow.compare.lt" xml:space="preserve"><value>Less Than</value></data>
+  <data name="logicflow.compare.gt" xml:space="preserve"><value>Greater Than</value></data>
+  <data name="logicflow.compare.lte" xml:space="preserve"><value>Less or Equal</value></data>
+  <data name="logicflow.compare.gte" xml:space="preserve"><value>Greater or Equal</value></data>
+  <data name="logicflow.compare.eq" xml:space="preserve"><value>Equal</value></data>
+  <data name="logicflow.compare.neq" xml:space="preserve"><value>Not Equal</value></data>
+
+  <data name="logicflow.math.add" xml:space="preserve"><value>Add</value></data>
+  <data name="logicflow.math.sub" xml:space="preserve"><value>Subtract</value></data>
+  <data name="logicflow.math.mul" xml:space="preserve"><value>Multiply</value></data>
+  <data name="logicflow.math.div" xml:space="preserve"><value>Divide</value></data>
+  <data name="logicflow.math.mod" xml:space="preserve"><value>Modulo</value></data>
+  <data name="logicflow.math.pow" xml:space="preserve"><value>Power</value></data>
+  <data name="logicflow.math.abs" xml:space="preserve"><value>Absolute</value></data>
+  <data name="logicflow.math.sqrt" xml:space="preserve"><value>Square Root</value></data>
+  <data name="logicflow.math.round" xml:space="preserve"><value>Round</value></data>
+
+  <data name="logicflow.timer.tp" xml:space="preserve"><value>Pulse</value></data>
+  <data name="logicflow.timer.ton" xml:space="preserve"><value>On-Delay</value></data>
+  <data name="logicflow.timer.tpr" xml:space="preserve"><value>Repeating Pulse</value></data>
+  <data name="logicflow.timer.delay_label" xml:space="preserve"><value>Delay</value></data>
+  <data name="logicflow.timer.hold_label" xml:space="preserve"><value>Hold</value></data>
+  <data name="logicflow.timer.second" xml:space="preserve"><value>sec</value></data>
+
+  <data name="logicflow.counter.ctu" xml:space="preserve"><value>Counter (CTU)</value></data>
+  <data name="logicflow.counter.port.cu" xml:space="preserve"><value>Count Pulse (cu)</value></data>
+  <data name="logicflow.counter.port.reset" xml:space="preserve"><value>Reset (reset)</value></data>
+  <data name="logicflow.counter.port.preset" xml:space="preserve"><value>Target (preset)</value></data>
+  <data name="logicflow.counter.port.q" xml:space="preserve"><value>Reached (q)</value></data>
+  <data name="logicflow.counter.port.cv" xml:space="preserve"><value>Current Count (cv)</value></data>
+  <data name="logicflow.counter.interval_label" xml:space="preserve"><value>Interval</value></data>
+  <data name="logicflow.counter.preset_tip" xml:space="preserve"><value>q=1 once this number is reached</value></data>
+  <data name="logicflow.counter.interval_tip" xml:space="preserve"><value>Minimum interval between cu edges (sec)</value></data>
+
+  <data name="logicflow.algorithm.label" xml:space="preserve"><value>Algorithm</value></data>
+  <data name="logicflow.algorithm.loading" xml:space="preserve"><value>Loading...</value></data>
+  <data name="logicflow.algorithm.no_algorithm" xml:space="preserve"><value>No algorithm available</value></data>
+  <data name="logicflow.algorithm.quantity" xml:space="preserve"><value>Count</value></data>
+  <data name="logicflow.algorithm.group_index" xml:space="preserve"><value>Group {index}</value></data>
+
+  <data name="logicflow.ctx.compare" xml:space="preserve"><value>Compare</value></data>
+  <data name="logicflow.ctx.math" xml:space="preserve"><value>Math</value></data>
+  <data name="logicflow.ctx.gate" xml:space="preserve"><value>Logic Gate</value></data>
+  <data name="logicflow.ctx.timer" xml:space="preserve"><value>Timer</value></data>
+
+  <data name="logicflow.state.on" xml:space="preserve"><value>● ON</value></data>
+  <data name="logicflow.state.off" xml:space="preserve"><value>○ OFF</value></data>
+  <data name="logicflow.mode.manual" xml:space="preserve"><value>Manual</value></data>
+  <data name="logicflow.mode.auto" xml:space="preserve"><value>Auto</value></data>
+  <data name="logicflow.edge.out_of_range" xml:space="preserve"><value>Out of range</value></data>
+
+  <data name="logicflow.port.control" xml:space="preserve"><value>Control</value></data>
+  <data name="logicflow.port.bound_no_ctrl" xml:space="preserve"><value>Bound to point/schedule, not available</value></data>
+  <data name="logicflow.port.resize_tip" xml:space="preserve"><value>Drag to resize height</value></data>
+
+  <data name="logicflow.error.load_failed" xml:space="preserve"><value>Load failed: {msg}</value></data>
+  <data name="logicflow.error.add_failed" xml:space="preserve"><value>Add failed: {msg}</value></data>
+  <data name="logicflow.error.rename_failed" xml:space="preserve"><value>Rename failed: {msg}</value></data>
+  <data name="logicflow.error.delete_failed" xml:space="preserve"><value>Delete failed: {msg}</value></data>
+  <data name="logicflow.error.toggle_failed" xml:space="preserve"><value>Toggle failed: {msg}</value></data>
+  <data name="logicflow.error.save_failed" xml:space="preserve"><value>Save failed: {msg}</value></data>
+  <data name="logicflow.error.version_conflict" xml:space="preserve"><value>Version conflict. Reloading latest data.</value></data>
+  <data name="logicflow.error.contact_ctrl_conflict" xml:space="preserve"><value>This contact is bound to a point or schedule. The ctrl control port cannot be used.
+Remove the point/schedule binding first.</value></data>
+  <data name="logicflow.error.schedule_load_failed" xml:space="preserve"><value>Failed to load schedule list</value></data>
+  <data name="logicflow.error.device_load_failed" xml:space="preserve"><value>Failed to load device/point list</value></data>
+  <data name="logicflow.confirm.delete_item" xml:space="preserve"><value>Delete this item? (Including all sub-items)</value></data>
+  <data name="logicflow.success.save" xml:space="preserve"><value>Saved successfully!</value></data>
+
+  <data name="logicflow.pp.title_select_source" xml:space="preserve"><value>Select Point Source</value></data>
+  <data name="logicflow.pp.title_select_device" xml:space="preserve"><value>Select Device</value></data>
+  <data name="logicflow.pp.title_select_calc_group" xml:space="preserve"><value>Select Calculated Group</value></data>
+  <data name="logicflow.pp.title_select_calc_point" xml:space="preserve"><value>Select Calculated Point</value></data>
+  <data name="logicflow.pp.title_select_db_device" xml:space="preserve"><value>Select DB Source Device</value></data>
+  <data name="logicflow.pp.title_select_db_point" xml:space="preserve"><value>Select DB Point</value></data>
+  <data name="logicflow.pp.title_select_point" xml:space="preserve"><value>Select Point</value></data>
+  <data name="logicflow.pp.title_select_schedule" xml:space="preserve"><value>Select Schedule</value></data>
+
+  <data name="logicflow.pp.toggle.point" xml:space="preserve"><value>Device Point</value></data>
+  <data name="logicflow.pp.toggle.schedule" xml:space="preserve"><value>Schedule</value></data>
+  <data name="logicflow.pp.option.device_point" xml:space="preserve"><value>Device Point</value></data>
+  <data name="logicflow.pp.option.device_point_desc" xml:space="preserve"><value>Select a raw point from a Modbus device</value></data>
+  <data name="logicflow.pp.option.calc_point" xml:space="preserve"><value>Calculated Point</value></data>
+  <data name="logicflow.pp.option.calc_point_desc" xml:space="preserve"><value>Points derived from formulas</value></data>
+  <data name="logicflow.pp.option.db_point" xml:space="preserve"><value>DB Point</value></data>
+  <data name="logicflow.pp.option.db_point_desc" xml:space="preserve"><value>Select a point from a DB source device</value></data>
+
+  <data name="logicflow.pp.back" xml:space="preserve"><value>Back</value></data>
+  <data name="logicflow.pp.back_tip" xml:space="preserve"><value>Back to source selection</value></data>
+  <data name="logicflow.pp.device_list_header" xml:space="preserve"><value>Device List</value></data>
+  <data name="logicflow.pp.search_placeholder" xml:space="preserve"><value>Search point name…</value></data>
+  <data name="logicflow.pp.cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="logicflow.pp.confirm" xml:space="preserve"><value>Confirm</value></data>
+
+  <data name="logicflow.pp.empty.no_devices" xml:space="preserve"><value>No devices</value></data>
+  <data name="logicflow.pp.empty.no_matching" xml:space="preserve"><value>No matching points</value></data>
+  <data name="logicflow.pp.empty.no_schedules" xml:space="preserve"><value>No enabled schedules</value></data>
+  <data name="logicflow.pp.points_count" xml:space="preserve"><value>{count} point(s)</value></data>
+  <data name="logicflow.pp.ungrouped" xml:space="preserve"><value>Ungrouped</value></data>
+  <data name="logicflow.pp.calc_points" xml:space="preserve"><value>Calculated Points</value></data>
+  <data name="logicflow.pp.db_points" xml:space="preserve"><value>DB Points</value></data>
+
+  <data name="logicflow.pp.schedule.weekly" xml:space="preserve"><value>Weekly</value></data>
+  <data name="logicflow.pp.schedule.n_weekly" xml:space="preserve"><value>N-Week Cycle</value></data>
+  <data name="logicflow.pp.schedule.monthly" xml:space="preserve"><value>Monthly</value></data>
+  <data name="logicflow.pp.schedule.n_monthly" xml:space="preserve"><value>N-Month Cycle</value></data>
+</root>

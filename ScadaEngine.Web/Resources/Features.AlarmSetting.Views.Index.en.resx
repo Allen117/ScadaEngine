@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="alarm.title" xml:space="preserve"><value>Alarm Settings</value></data>
+  <data name="alarm.button.add_rule" xml:space="preserve"><value>Add Rule</value></data>
+  <data name="alarm.button.add_line_group" xml:space="preserve"><value>Add Line Group</value></data>
+  <data name="alarm.button.save" xml:space="preserve"><value>Save</value></data>
+  <data name="alarm.button.cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="alarm.button.edit" xml:space="preserve"><value>Edit</value></data>
+  <data name="alarm.button.delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="alarm.button.test_send" xml:space="preserve"><value>Test Send</value></data>
+  <data name="alarm.button.sending" xml:space="preserve"><value>Sending</value></data>
+
+  <data name="alarm.tab.rules" xml:space="preserve"><value>Alarm Rules</value></data>
+  <data name="alarm.tab.line" xml:space="preserve"><value>Line Notification</value></data>
+
+  <data name="alarm.col.enabled" xml:space="preserve"><value>Enabled</value></data>
+  <data name="alarm.col.device_point" xml:space="preserve"><value>Device / Point</value></data>
+  <data name="alarm.col.alarm_high" xml:space="preserve"><value>High Alarm</value></data>
+  <data name="alarm.col.alarm_low" xml:space="preserve"><value>Low Alarm</value></data>
+  <data name="alarm.col.alarm_di" xml:space="preserve"><value>DI Alarm</value></data>
+  <data name="alarm.col.remarks" xml:space="preserve"><value>Remarks</value></data>
+  <data name="alarm.col.actions" xml:space="preserve"><value>Actions</value></data>
+  <data name="alarm.col.label" xml:space="preserve"><value>Label</value></data>
+  <data name="alarm.col.group_id" xml:space="preserve"><value>GroupID</value></data>
+  <data name="alarm.col.max_severity" xml:space="preserve"><value>Max Severity</value></data>
+
+  <data name="alarm.empty.no_rules" xml:space="preserve"><value>No alarm rules. Click "Add Rule" to create one.</value></data>
+  <data name="alarm.empty.no_line_groups" xml:space="preserve"><value>No Line notification group configured. Click "Add Line Group" above to create one.</value></data>
+
+  <data name="alarm.line.info" xml:space="preserve"><value>Alarms will be pushed to the following enabled Line groups when triggered. Critical alarms are always sent individually without rate limiting; for other severities, if more than 10 messages per minute per group are generated, they will be merged into a digest message.</value></data>
+
+  <data name="alarm.modal.title_add" xml:space="preserve"><value>Add Alarm Rule</value></data>
+  <data name="alarm.modal.title_edit" xml:space="preserve"><value>Edit Alarm Rule</value></data>
+  <data name="alarm.line_modal.title_add" xml:space="preserve"><value>Add Line Group</value></data>
+  <data name="alarm.line_modal.title_edit" xml:space="preserve"><value>Edit Line Group</value></data>
+
+  <data name="alarm.field.device" xml:space="preserve"><value>Device</value></data>
+  <data name="alarm.field.sub_device" xml:space="preserve"><value>Sub-Device</value></data>
+  <data name="alarm.field.point" xml:space="preserve"><value>Point</value></data>
+  <data name="alarm.field.threshold" xml:space="preserve"><value>Threshold</value></data>
+  <data name="alarm.field.deadband" xml:space="preserve"><value>Deadband</value></data>
+  <data name="alarm.field.severity" xml:space="preserve"><value>Severity</value></data>
+  <data name="alarm.field.trigger_state" xml:space="preserve"><value>Trigger State</value></data>
+  <data name="alarm.field.on_label" xml:space="preserve"><value>ON Label</value></data>
+  <data name="alarm.field.off_label" xml:space="preserve"><value>OFF Label</value></data>
+  <data name="alarm.field.remarks" xml:space="preserve"><value>Remarks</value></data>
+  <data name="alarm.field.is_enabled" xml:space="preserve"><value>Enable this rule</value></data>
+  <data name="alarm.field.is_line_enabled" xml:space="preserve"><value>Enable this group</value></data>
+  <data name="alarm.field.line_label" xml:space="preserve"><value>Label</value></data>
+  <data name="alarm.field.line_label_placeholder" xml:space="preserve"><value>e.g. Manager Group, Engineering On-Call</value></data>
+  <data name="alarm.field.line_group_id" xml:space="preserve"><value>Line GroupID</value></data>
+  <data name="alarm.field.line_group_id_placeholder" xml:space="preserve"><value>33 chars starting with C</value></data>
+  <data name="alarm.field.line_group_id_hint" xml:space="preserve"><value>Obtained from Webhook after adding the bot to the Line group.</value></data>
+  <data name="alarm.field.max_severity" xml:space="preserve"><value>Max Severity</value></data>
+
+  <data name="alarm.toggle.alarm_high" xml:space="preserve"><value>High Alarm</value></data>
+  <data name="alarm.toggle.alarm_low" xml:space="preserve"><value>Low Alarm</value></data>
+  <data name="alarm.toggle.alarm_di" xml:space="preserve"><value>DI Alarm</value></data>
+
+  <data name="alarm.di_labels.hint" xml:space="preserve"><value>Auto-populated from Designer DI point settings</value></data>
+
+  <data name="alarm.severity.critical" xml:space="preserve"><value>Critical</value></data>
+  <data name="alarm.severity.high" xml:space="preserve"><value>High</value></data>
+  <data name="alarm.severity.medium" xml:space="preserve"><value>Medium</value></data>
+  <data name="alarm.severity.low" xml:space="preserve"><value>Low</value></data>
+
+  <data name="alarm.max_severity.0" xml:space="preserve"><value>Critical only</value></data>
+  <data name="alarm.max_severity.1" xml:space="preserve"><value>Critical + High</value></data>
+  <data name="alarm.max_severity.2" xml:space="preserve"><value>Critical + High + Medium</value></data>
+  <data name="alarm.max_severity.3" xml:space="preserve"><value>All (Critical / High / Medium / Low)</value></data>
+
+  <data name="alarm.max_severity_pill.0" xml:space="preserve"><value>Critical only</value></data>
+  <data name="alarm.max_severity_pill.1" xml:space="preserve"><value>Critical + High</value></data>
+  <data name="alarm.max_severity_pill.2" xml:space="preserve"><value>Critical + High + Medium</value></data>
+  <data name="alarm.max_severity_pill.3" xml:space="preserve"><value>All</value></data>
+
+  <data name="alarm.select.placeholder" xml:space="preserve"><value>-- Select --</value></data>
+  <data name="alarm.select.sub_device_placeholder" xml:space="preserve"><value>-- Select Sub-Device --</value></data>
+  <data name="alarm.select.point_placeholder" xml:space="preserve"><value>-- Select a device first --</value></data>
+  <data name="alarm.option.calc_point" xml:space="preserve"><value>Calc Points</value></data>
+
+  <data name="alarm.alert.select_point" xml:space="preserve"><value>Please select a point</value></data>
+  <data name="alarm.alert.input_label" xml:space="preserve"><value>Please enter a label</value></data>
+  <data name="alarm.alert.input_group_id" xml:space="preserve"><value>Please enter a GroupID</value></data>
+  <data name="alarm.alert.save_failed" xml:space="preserve"><value>Save failed</value></data>
+  <data name="alarm.alert.delete_failed" xml:space="preserve"><value>Delete failed</value></data>
+  <data name="alarm.alert.toggle_failed" xml:space="preserve"><value>Toggle failed</value></data>
+  <data name="alarm.alert.send_failed" xml:space="preserve"><value>Send failed</value></data>
+  <data name="alarm.alert.send_failed_with_msg" xml:space="preserve"><value>Send failed: {message}</value></data>
+  <data name="alarm.alert.retry_later" xml:space="preserve"><value>Please retry later</value></data>
+  <data name="alarm.confirm.delete_rule" xml:space="preserve"><value>Are you sure you want to delete this alarm rule?</value></data>
+  <data name="alarm.confirm.delete_line_group" xml:space="preserve"><value>Are you sure you want to delete this Line group?</value></data>
+  <data name="alarm.confirm.delete_email_group" xml:space="preserve"><value>Delete this Email group? (All recipients will also be removed.)</value></data>
+  <data name="alarm.confirm.delete_recipient" xml:space="preserve"><value>Delete this recipient?</value></data>
+  <data name="alarm.toast.test_sent" xml:space="preserve"><value>Test message sent. Please check the group.</value></data>
+
+  <data name="alarm.tab.email" xml:space="preserve"><value>Email Notification</value></data>
+  <data name="alarm.button.add_email_group" xml:space="preserve"><value>Add Email Group</value></data>
+  <data name="alarm.button.add_recipient" xml:space="preserve"><value>Add Recipient</value></data>
+  <data name="alarm.button.email_smtp_settings" xml:space="preserve"><value>SMTP Settings</value></data>
+  <data name="alarm.col.language" xml:space="preserve"><value>Language</value></data>
+  <data name="alarm.col.recipients_count" xml:space="preserve"><value>Recipients</value></data>
+  <data name="alarm.empty.no_email_groups" xml:space="preserve"><value>No Email groups configured. Click "Add Email Group" above to start.</value></data>
+  <data name="alarm.email.info" xml:space="preserve"><value>When an alarm triggers, emails are sent to enabled recipients of the matched groups. Critical alarms are always sent individually, bypassing rate limits. Configure SMTP first, then create groups and recipients.</value></data>
+  <data name="alarm.email.recipients_title" xml:space="preserve"><value>Recipients</value></data>
+  <data name="alarm.email.recipients_hint" xml:space="preserve"><value>Save the group first to add recipients.</value></data>
+  <data name="alarm.email.button.rules" xml:space="preserve"><value>Map Rules</value></data>
+  <data name="alarm.email.rules_hint" xml:space="preserve"><value>Pick the alarm rules this group should receive. Empty selection means "all rules".</value></data>
+  <data name="alarm.email_modal.title_add_group" xml:space="preserve"><value>Add Email Group</value></data>
+  <data name="alarm.email_modal.title_edit_group" xml:space="preserve"><value>Edit Email Group</value></data>
+  <data name="alarm.email_modal.title_add_recipient" xml:space="preserve"><value>Add Recipient</value></data>
+  <data name="alarm.email_modal.title_config" xml:space="preserve"><value>SMTP Settings</value></data>
+  <data name="alarm.email_modal.title_rules" xml:space="preserve"><value>Rule Mapping</value></data>
+  <data name="alarm.field.language" xml:space="preserve"><value>Notification Language</value></data>
+  <data name="alarm.field.language_hint" xml:space="preserve"><value>This affects only push message language, not the Web UI culture.</value></data>
+  <data name="alarm.field.email_group_name" xml:space="preserve"><value>Group Identifier</value></data>
+  <data name="alarm.field.email_group_name_placeholder" xml:space="preserve"><value>shift_engineers</value></data>
+  <data name="alarm.field.email_group_name_hint" xml:space="preserve"><value>Internal identifier; alphanumeric, must be unique.</value></data>
+  <data name="alarm.field.email_group_label" xml:space="preserve"><value>Group Display Name</value></data>
+  <data name="alarm.field.email_group_label_placeholder" xml:space="preserve"><value>Shift Engineers</value></data>
+  <data name="alarm.field.recipient_email" xml:space="preserve"><value>Recipient Email</value></data>
+  <data name="alarm.field.recipient_name" xml:space="preserve"><value>Display Name</value></data>
+  <data name="alarm.field.smtp_host" xml:space="preserve"><value>SMTP Host</value></data>
+  <data name="alarm.field.smtp_port" xml:space="preserve"><value>Port</value></data>
+  <data name="alarm.field.smtp_username" xml:space="preserve"><value>SMTP Username</value></data>
+  <data name="alarm.field.smtp_password" xml:space="preserve"><value>SMTP Password</value></data>
+  <data name="alarm.field.smtp_password_placeholder" xml:space="preserve"><value>Leave empty to keep current</value></data>
+  <data name="alarm.field.smtp_password_already_set" xml:space="preserve"><value>Password is set. Leave empty to keep unchanged.</value></data>
+  <data name="alarm.field.smtp_password_not_set" xml:space="preserve"><value>Password not configured.</value></data>
+  <data name="alarm.field.from_address" xml:space="preserve"><value>From Address</value></data>
+  <data name="alarm.field.from_display_name" xml:space="preserve"><value>From Display Name</value></data>
+  <data name="alarm.field.rate_per_minute" xml:space="preserve"><value>Rate per minute per group</value></data>
+  <data name="alarm.field.test_throttle_seconds" xml:space="preserve"><value>Test send throttle (seconds)</value></data>
+  <data name="alarm.field.enable_notification" xml:space="preserve"><value>Enable Email notifications</value></data>
+  <data name="alarm.alert.input_group_name" xml:space="preserve"><value>Please enter a group identifier</value></data>
+  <data name="alarm.alert.input_email" xml:space="preserve"><value>Please enter an email address</value></data>
+  <data name="alarm.alert.save_group_first" xml:space="preserve"><value>Save the group before adding recipients.</value></data>
+</root>

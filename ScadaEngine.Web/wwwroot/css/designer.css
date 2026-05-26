@@ -762,3 +762,45 @@ main { padding: 0 !important; min-height: 0 !important; }
 .do-point-cid-label {
     font-size: 10px; color: #888; text-align: center;
 }
+
+/* ========== 對齊 / 等距分布 工具列群組（plan 2026-05-26-designer-multi-select-alignment） ========== */
+.align-tool-group,
+.dist-tool-group {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+.align-tool-sep,
+.align-tool-divider {
+    width: 1px;
+    height: 16px;
+    background: #555;
+    margin: 0 4px;
+    flex-shrink: 0;
+}
+.align-tool-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 22px;
+    padding: 0;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    color: #c8c8c8;
+    cursor: pointer;
+    transition: background .12s, border-color .12s, color .12s;
+}
+.align-tool-btn:hover {
+    background: #3a3a3a;
+    border-color: #666;
+    color: #fff;
+}
+.align-tool-btn:active {
+    background: #444;
+}
+.align-tool-btn[disabled] {
+    opacity: .4;
+    cursor: not-allowed;
+}

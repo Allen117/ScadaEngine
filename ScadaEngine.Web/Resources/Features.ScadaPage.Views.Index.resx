@@ -62,4 +62,10 @@
   <data name="scadapage.alarm.filter.unacked" xml:space="preserve"><value>僅未確認</value></data>
   <data name="scadapage.alarm.filter.acked" xml:space="preserve"><value>僅已確認</value></data>
   <data name="scadapage.alarm.empty" xml:space="preserve"><value>目前無未恢復警報</value></data>
+
+  <data name="scadapage.badge.manual_mode_tooltip" xml:space="preserve"><value>手動模式</value></data>
+
+  <!-- DI 點位排程綁定（plan 2026-05-26-di-point-bind-schedule） -->
+  <data name="scadapage.di.schedule_not_found" xml:space="preserve"><value>排程不存在</value></data>
+  <data name="scadapage.di.schedule_label" xml:space="preserve"><value>排程</value></data>
 </root>

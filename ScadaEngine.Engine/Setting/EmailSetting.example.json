@@ -1,0 +1,13 @@
+{
+  "EnableNotification": true,
+  "SmtpHost": "smtp.gmail.com",
+  "SmtpPort": 587,
+  "UseSsl": false,
+  "UseStartTls": true,
+  "Username": "your_account@gmail.com",
+  "Password": "PASTE_YOUR_SMTP_APP_PASSWORD_HERE",
+  "FromAddress": "your_account@gmail.com",
+  "FromDisplayName": "SCADA Engine",
+  "RatePerMinute": 10,
+  "TestSendThrottleSeconds": 10
+}

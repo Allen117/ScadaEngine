@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Localization;
 using NCalc;
 using ScadaEngine.Common.Data.Models;
 using ScadaEngine.Engine.Data.Interfaces;
@@ -13,11 +14,16 @@ public class CalcPointService
 {
     private readonly IDataRepository _repository;
     private readonly ILogger<CalcPointService> _logger;
+    private readonly IStringLocalizer<CalcPointService> _l;
 
-    public CalcPointService(IDataRepository repository, ILogger<CalcPointService> logger)
+    public CalcPointService(
+        IDataRepository repository,
+        ILogger<CalcPointService> logger,
+        IStringLocalizer<CalcPointService> localizer)
     {
         _repository = repository;
         _logger = logger;
+        _l = localizer;
     }
 
     /// <summary>
@@ -35,20 +41,20 @@ public class CalcPointService
         string szName, string? szUnit, string? szGroupName, string szFormula, string szInputMappings)
     {
         if (string.IsNullOrWhiteSpace(szName))
-            return (false, "名稱不可為空", null);
+            return (false, _l["calcpoint.svc.name_empty"].Value, null);
         if (string.IsNullOrWhiteSpace(szFormula))
-            return (false, "公式不可為空", null);
+            return (false, _l["calcpoint.svc.formula_empty"].Value, null);
 
         // 驗證 InputMappings JSON
         try
         {
             var mappings = JsonSerializer.Deserialize<Dictionary<string, string>>(szInputMappings);
             if (mappings == null || mappings.Count == 0)
-                return (false, "至少需要一個輸入變數", null);
+                return (false, _l["calcpoint.svc.no_variables"].Value, null);
         }
         catch (JsonException)
         {
-            return (false, "輸入變數對應格式錯誤", null);
+            return (false, _l["calcpoint.svc.input_format_error"].Value, null);
         }
 
         // 產生下一個 SID
@@ -68,8 +74,8 @@ public class CalcPointService
 
         var isSuccess = await _repository.CreateCalculatedPointAsync(model);
         return isSuccess
-            ? (true, "新增成功", szSID)
-            : (false, "新增失敗", null);
+            ? (true, _l["calcpoint.svc.add_success"].Value, szSID)
+            : (false, _l["calcpoint.svc.add_failed"].Value, null);
     }
 
     /// <summary>
@@ -80,11 +86,11 @@ public class CalcPointService
         string szFormula, string szInputMappings, bool isEnabled)
     {
         if (string.IsNullOrWhiteSpace(szSID))
-            return (false, "SID 不可為空");
+            return (false, _l["calcpoint.svc.sid_empty"].Value);
         if (string.IsNullOrWhiteSpace(szName))
-            return (false, "名稱不可為空");
+            return (false, _l["calcpoint.svc.name_empty"].Value);
         if (string.IsNullOrWhiteSpace(szFormula))
-            return (false, "公式不可為空");
+            return (false, _l["calcpoint.svc.formula_empty"].Value);
 
         var model = new CalculatedPointModel
         {
@@ -98,7 +104,9 @@ public class CalcPointService
         };
 
         var isSuccess = await _repository.UpdateCalculatedPointAsync(model);
-        return isSuccess ? (true, "更新成功") : (false, "更新失敗");
+        return isSuccess
+            ? (true, _l["calcpoint.svc.update_success"].Value)
+            : (false, _l["calcpoint.svc.update_failed"].Value);
     }
 
     /// <summary>
@@ -107,10 +115,12 @@ public class CalcPointService
     public async Task<(bool isSuccess, string szMessage)> DeleteAsync(string szSID)
     {
         if (string.IsNullOrWhiteSpace(szSID))
-            return (false, "SID 不可為空");
+            return (false, _l["calcpoint.svc.sid_empty"].Value);
 
         var isSuccess = await _repository.DeleteCalculatedPointAsync(szSID);
-        return isSuccess ? (true, "刪除成功") : (false, "刪除失敗");
+        return isSuccess
+            ? (true, _l["calcpoint.svc.delete_success"].Value)
+            : (false, _l["calcpoint.svc.delete_failed"].Value);
     }
 
     /// <summary>
@@ -122,7 +132,7 @@ public class CalcPointService
         {
             var mappings = JsonSerializer.Deserialize<Dictionary<string, string>>(szInputMappings);
             if (mappings == null || mappings.Count == 0)
-                return (false, "至少需要一個輸入變數", null);
+                return (false, _l["calcpoint.svc.no_variables"].Value, null);
 
             // 從 LatestData 取得最新值
             var latestDataList = await _repository.GetLatestDataAsync(10000);
@@ -146,14 +156,14 @@ public class CalcPointService
             var fResult = Convert.ToSingle(objResult);
 
             if (float.IsNaN(fResult) || float.IsInfinity(fResult))
-                return (false, "計算結果無效 (NaN/Infinity)", null);
+                return (false, _l["calcpoint.svc.calc_invalid"].Value, null);
 
-            return (true, "計算成功", fResult);
+            return (true, _l["calcpoint.svc.calc_success"].Value, fResult);
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "公式預覽失敗: {Formula}", szFormula);
-            return (false, $"公式計算失敗: {ex.Message}", null);
+            return (false, _l["calcpoint.svc.calc_failed_with", ex.Message].Value, null);
         }
     }
 

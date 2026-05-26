@@ -10,6 +10,7 @@ using ScadaEngine.Common.Data.Models;
 using ScadaEngine.Engine.Models;
 using ScadaEngine.Engine.Communication.Modbus.Services;
 using ScadaEngine.Engine.Communication.Modbus.Models;
+using ScadaEngine.Engine.Data.Interfaces;
 
 namespace ScadaEngine.Engine.Communication.Mqtt;
 
@@ -330,11 +331,19 @@ public class MqttControlSubscribeService : BackgroundService, IDisposable
                 szSourceTopic = szTopic
             };
 
-            // 解析 CID 格式 (XXX-SN)
-            ParseCIDInfo(controlCommand);
+            // DB 來源 SID（DB{coordId}-S{n}）— 改寫 DBLatestData，不走 Modbus 路徑
+            if (szCID.StartsWith("DB", StringComparison.Ordinal))
+            {
+                await ExecuteDbControlAsync(controlCommand);
+            }
+            else
+            {
+                // 解析 CID 格式 (XXX-SN)
+                ParseCIDInfo(controlCommand);
 
-            // 執行 Modbus 控制邏輯
-            await ExecuteModbusControlAsync(controlCommand);
+                // 執行 Modbus 控制邏輯
+                await ExecuteModbusControlAsync(controlCommand);
+            }
 
             // 將控制指令加入清單，以供後續查詢和統計
             _controlCommandList.Add(controlCommand);
@@ -398,6 +407,38 @@ public class MqttControlSubscribeService : BackgroundService, IDisposable
         {
             controlCommand.szParseError = $"CID 解析異常: {ex.Message}";
             _logger.LogError(ex, "解析 CID 時發生錯誤: {CID}", controlCommand.szCID);
+        }
+    }
+
+    /// <summary>
+    /// 執行 DB 來源點位控制操作（直接寫入 DBLatestData，對齊 LogicFlow 分流）
+    /// </summary>
+    /// <param name="controlCommand">控制指令物件</param>
+    private async Task ExecuteDbControlAsync(MqttControlCommandModel controlCommand)
+    {
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var repo = scope.ServiceProvider.GetRequiredService<IDataRepository>();
+            var isOk = await repo.UpdateDbLatestDataAsync(controlCommand.szCID, controlCommand.dValue);
+
+            controlCommand.isParsed = isOk;
+            if (isOk)
+            {
+                _logger.LogInformation("[DB 控制] DBLatestData 寫入成功: CID={CID}, Value={Value}",
+                                       controlCommand.szCID, controlCommand.dValue);
+            }
+            else
+            {
+                controlCommand.szParseError = "DBLatestData 寫入失敗（SID 不存在或無變更）";
+                _logger.LogWarning("[DB 控制] DBLatestData 寫入失敗: CID={CID}, Value={Value}",
+                                   controlCommand.szCID, controlCommand.dValue);
+            }
+        }
+        catch (Exception ex)
+        {
+            controlCommand.szParseError = $"DB 控制例外: {ex.Message}";
+            _logger.LogError(ex, "[DB 控制] 執行錯誤: CID={CID}", controlCommand.szCID);
         }
     }
 

@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="conditionctrl.title" xml:space="preserve"><value>Condition Control</value></data>
+  <data name="conditionctrl.subtitle" xml:space="preserve"><value>Condition Control Settings</value></data>
+
+  <data name="conditionctrl.card.add_rule" xml:space="preserve"><value>Add Condition Control Rule</value></data>
+  <data name="conditionctrl.card.rule_list" xml:space="preserve"><value>Condition Control Rules</value></data>
+
+  <data name="conditionctrl.label.device" xml:space="preserve"><value>Device</value></data>
+  <data name="conditionctrl.label.sub_device" xml:space="preserve"><value>Sub Device</value></data>
+  <data name="conditionctrl.label.reference_point" xml:space="preserve"><value>Reference Point</value></data>
+  <data name="conditionctrl.label.operator" xml:space="preserve"><value>Operator</value></data>
+  <data name="conditionctrl.label.value" xml:space="preserve"><value>Value</value></data>
+  <data name="conditionctrl.label.control_point" xml:space="preserve"><value>Control Point</value></data>
+  <data name="conditionctrl.label.control_value" xml:space="preserve"><value>Control Value</value></data>
+  <data name="conditionctrl.label.remarks" xml:space="preserve"><value>Remarks</value></data>
+  <data name="conditionctrl.label.remarks_hint" xml:space="preserve"><value>(Optional, up to 50 chars)</value></data>
+
+  <data name="conditionctrl.option.all_devices" xml:space="preserve"><value>— All Devices —</value></data>
+  <data name="conditionctrl.option.select_sub_device" xml:space="preserve"><value>— Select Sub Device —</value></data>
+  <data name="conditionctrl.option.select_point" xml:space="preserve"><value>— Select Point —</value></data>
+  <data name="conditionctrl.option.calc" xml:space="preserve"><value>Calculated Points</value></data>
+  <data name="conditionctrl.option.db_source_suffix" xml:space="preserve"><value> (DB Source)</value></data>
+
+  <data name="conditionctrl.op.gt" xml:space="preserve"><value>&gt;　(Greater Than)</value></data>
+  <data name="conditionctrl.op.lt" xml:space="preserve"><value>&lt;　(Less Than)</value></data>
+  <data name="conditionctrl.op.gte" xml:space="preserve"><value>&gt;=　(Greater or Equal)</value></data>
+  <data name="conditionctrl.op.lte" xml:space="preserve"><value>&lt;=　(Less or Equal)</value></data>
+  <data name="conditionctrl.op.eq" xml:space="preserve"><value>=　(Equal)</value></data>
+  <data name="conditionctrl.op.neq" xml:space="preserve"><value>≠　(Not Equal)</value></data>
+
+  <data name="conditionctrl.placeholder.value" xml:space="preserve"><value>Enter comparison value</value></data>
+  <data name="conditionctrl.placeholder.control_value" xml:space="preserve"><value>Enter control value</value></data>
+  <data name="conditionctrl.placeholder.remarks" xml:space="preserve"><value>Enter remarks</value></data>
+
+  <data name="conditionctrl.btn.add_rule" xml:space="preserve"><value>Add Rule</value></data>
+  <data name="conditionctrl.btn.clear" xml:space="preserve"><value>Clear</value></data>
+  <data name="conditionctrl.btn.save_edit" xml:space="preserve"><value>Save</value></data>
+  <data name="conditionctrl.btn.cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="conditionctrl.btn.save_to_db" xml:space="preserve"><value>Save Rules to DB</value></data>
+  <data name="conditionctrl.btn.clear_all" xml:space="preserve"><value>Clear All</value></data>
+
+  <data name="conditionctrl.col.index" xml:space="preserve"><value>#</value></data>
+  <data name="conditionctrl.col.condition_point" xml:space="preserve"><value>Condition Point</value></data>
+  <data name="conditionctrl.col.operator" xml:space="preserve"><value>Operator</value></data>
+  <data name="conditionctrl.col.value" xml:space="preserve"><value>Value</value></data>
+  <data name="conditionctrl.col.control_point" xml:space="preserve"><value>Control Point</value></data>
+  <data name="conditionctrl.col.control_value" xml:space="preserve"><value>Control Value</value></data>
+  <data name="conditionctrl.col.remarks" xml:space="preserve"><value>Remarks</value></data>
+  <data name="conditionctrl.col.actions" xml:space="preserve"><value>Actions</value></data>
+
+  <data name="conditionctrl.empty.title" xml:space="preserve"><value>No condition control rules yet</value></data>
+  <data name="conditionctrl.empty.hint" xml:space="preserve"><value>Fill the form above and click "Add Rule"</value></data>
+
+  <data name="conditionctrl.tooltip.load_to_form" xml:space="preserve"><value>Click to load into form</value></data>
+  <data name="conditionctrl.tooltip.edit" xml:space="preserve"><value>Edit</value></data>
+  <data name="conditionctrl.tooltip.delete" xml:space="preserve"><value>Delete</value></data>
+
+  <data name="conditionctrl.msg.select_condition_point" xml:space="preserve"><value>Please select a condition point</value></data>
+  <data name="conditionctrl.msg.enter_condition_value" xml:space="preserve"><value>Please enter condition value</value></data>
+  <data name="conditionctrl.msg.select_control_point" xml:space="preserve"><value>Please select a control point</value></data>
+  <data name="conditionctrl.msg.enter_control_value" xml:space="preserve"><value>Please enter control value</value></data>
+  <data name="conditionctrl.msg.points_must_differ" xml:space="preserve"><value>Condition and control points cannot be the same</value></data>
+  <data name="conditionctrl.msg.confirm_clear_all" xml:space="preserve"><value>Clear all rules?</value></data>
+  <data name="conditionctrl.msg.saving" xml:space="preserve"><value>Saving…</value></data>
+  <data name="conditionctrl.msg.save_failed" xml:space="preserve"><value>Save failed</value></data>
+  <data name="conditionctrl.msg.network_error" xml:space="preserve"><value>Network error. Please try again.</value></data>
+
+  <data name="conditionctrl.name.calc_points" xml:space="preserve"><value>Calculated Points</value></data>
+  <data name="conditionctrl.name.db_source" xml:space="preserve"><value>DB Source</value></data>
+</root>

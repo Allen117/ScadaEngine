@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="alarm.title" xml:space="preserve"><value>警報設定</value></data>
+  <data name="alarm.button.add_rule" xml:space="preserve"><value>新增規則</value></data>
+  <data name="alarm.button.add_line_group" xml:space="preserve"><value>新增 Line 群組</value></data>
+  <data name="alarm.button.save" xml:space="preserve"><value>儲存</value></data>
+  <data name="alarm.button.cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="alarm.button.edit" xml:space="preserve"><value>編輯</value></data>
+  <data name="alarm.button.delete" xml:space="preserve"><value>刪除</value></data>
+  <data name="alarm.button.test_send" xml:space="preserve"><value>測試發送</value></data>
+  <data name="alarm.button.sending" xml:space="preserve"><value>發送中</value></data>
+
+  <data name="alarm.tab.rules" xml:space="preserve"><value>警報規則</value></data>
+  <data name="alarm.tab.line" xml:space="preserve"><value>Line 通知設定</value></data>
+
+  <data name="alarm.col.enabled" xml:space="preserve"><value>啟用</value></data>
+  <data name="alarm.col.device_point" xml:space="preserve"><value>設備 / 點位</value></data>
+  <data name="alarm.col.alarm_high" xml:space="preserve"><value>上限警報</value></data>
+  <data name="alarm.col.alarm_low" xml:space="preserve"><value>下限警報</value></data>
+  <data name="alarm.col.alarm_di" xml:space="preserve"><value>DI 警報</value></data>
+  <data name="alarm.col.remarks" xml:space="preserve"><value>備註</value></data>
+  <data name="alarm.col.actions" xml:space="preserve"><value>操作</value></data>
+  <data name="alarm.col.label" xml:space="preserve"><value>標籤</value></data>
+  <data name="alarm.col.group_id" xml:space="preserve"><value>GroupID</value></data>
+  <data name="alarm.col.max_severity" xml:space="preserve"><value>接收嚴重度上限</value></data>
+
+  <data name="alarm.empty.no_rules" xml:space="preserve"><value>尚無警報規則，請點擊「新增規則」</value></data>
+  <data name="alarm.empty.no_line_groups" xml:space="preserve"><value>尚未設定 Line 通知群組，點擊上方「新增 Line 群組」建立第一筆。</value></data>
+
+  <data name="alarm.line.info" xml:space="preserve"><value>警報觸發時將推播至下列已啟用的 Line 群組。Critical（緊急）警報永遠單獨送、不受限流影響；其他嚴重度若每群組每分鐘超過 10 則，將自動合併為摘要訊息。</value></data>
+
+  <data name="alarm.modal.title_add" xml:space="preserve"><value>新增警報規則</value></data>
+  <data name="alarm.modal.title_edit" xml:space="preserve"><value>編輯警報規則</value></data>
+  <data name="alarm.line_modal.title_add" xml:space="preserve"><value>新增 Line 群組</value></data>
+  <data name="alarm.line_modal.title_edit" xml:space="preserve"><value>編輯 Line 群組</value></data>
+
+  <data name="alarm.field.device" xml:space="preserve"><value>設備</value></data>
+  <data name="alarm.field.sub_device" xml:space="preserve"><value>子設備</value></data>
+  <data name="alarm.field.point" xml:space="preserve"><value>點位</value></data>
+  <data name="alarm.field.threshold" xml:space="preserve"><value>閾值</value></data>
+  <data name="alarm.field.deadband" xml:space="preserve"><value>死區</value></data>
+  <data name="alarm.field.severity" xml:space="preserve"><value>嚴重程度</value></data>
+  <data name="alarm.field.trigger_state" xml:space="preserve"><value>觸發狀態</value></data>
+  <data name="alarm.field.on_label" xml:space="preserve"><value>ON 標籤</value></data>
+  <data name="alarm.field.off_label" xml:space="preserve"><value>OFF 標籤</value></data>
+  <data name="alarm.field.remarks" xml:space="preserve"><value>備註</value></data>
+  <data name="alarm.field.is_enabled" xml:space="preserve"><value>啟用此規則</value></data>
+  <data name="alarm.field.is_line_enabled" xml:space="preserve"><value>啟用此群組</value></data>
+  <data name="alarm.field.line_label" xml:space="preserve"><value>標籤</value></data>
+  <data name="alarm.field.line_label_placeholder" xml:space="preserve"><value>例如：主管群、工程值班群</value></data>
+  <data name="alarm.field.line_group_id" xml:space="preserve"><value>Line GroupID</value></data>
+  <data name="alarm.field.line_group_id_placeholder" xml:space="preserve"><value>C 開頭 33 字元</value></data>
+  <data name="alarm.field.line_group_id_hint" xml:space="preserve"><value>於 Line 群組加入 Bot 後，由 Webhook 取得。</value></data>
+  <data name="alarm.field.max_severity" xml:space="preserve"><value>接收嚴重度上限</value></data>
+
+  <data name="alarm.toggle.alarm_high" xml:space="preserve"><value>上限警報</value></data>
+  <data name="alarm.toggle.alarm_low" xml:space="preserve"><value>下限警報</value></data>
+  <data name="alarm.toggle.alarm_di" xml:space="preserve"><value>DI 警報</value></data>
+
+  <data name="alarm.di_labels.hint" xml:space="preserve"><value>由 Designer DI 點位設定自動帶入</value></data>
+
+  <data name="alarm.severity.critical" xml:space="preserve"><value>緊急</value></data>
+  <data name="alarm.severity.high" xml:space="preserve"><value>高</value></data>
+  <data name="alarm.severity.medium" xml:space="preserve"><value>中</value></data>
+  <data name="alarm.severity.low" xml:space="preserve"><value>低</value></data>
+
+  <data name="alarm.max_severity.0" xml:space="preserve"><value>只收 緊急（Critical）</value></data>
+  <data name="alarm.max_severity.1" xml:space="preserve"><value>收 緊急 + 高</value></data>
+  <data name="alarm.max_severity.2" xml:space="preserve"><value>收 緊急 + 高 + 中</value></data>
+  <data name="alarm.max_severity.3" xml:space="preserve"><value>全收（緊急 / 高 / 中 / 低）</value></data>
+
+  <data name="alarm.max_severity_pill.0" xml:space="preserve"><value>只收 緊急</value></data>
+  <data name="alarm.max_severity_pill.1" xml:space="preserve"><value>緊急 + 高</value></data>
+  <data name="alarm.max_severity_pill.2" xml:space="preserve"><value>緊急 + 高 + 中</value></data>
+  <data name="alarm.max_severity_pill.3" xml:space="preserve"><value>全收</value></data>
+
+  <data name="alarm.select.placeholder" xml:space="preserve"><value>-- 請選擇 --</value></data>
+  <data name="alarm.select.sub_device_placeholder" xml:space="preserve"><value>-- 請選擇子設備 --</value></data>
+  <data name="alarm.select.point_placeholder" xml:space="preserve"><value>-- 請先選擇設備 --</value></data>
+  <data name="alarm.option.calc_point" xml:space="preserve"><value>計算點位</value></data>
+
+  <data name="alarm.alert.select_point" xml:space="preserve"><value>請選擇點位</value></data>
+  <data name="alarm.alert.input_label" xml:space="preserve"><value>請填寫標籤</value></data>
+  <data name="alarm.alert.input_group_id" xml:space="preserve"><value>請填寫 GroupID</value></data>
+  <data name="alarm.alert.save_failed" xml:space="preserve"><value>儲存失敗</value></data>
+  <data name="alarm.alert.delete_failed" xml:space="preserve"><value>刪除失敗</value></data>
+  <data name="alarm.alert.toggle_failed" xml:space="preserve"><value>切換失敗</value></data>
+  <data name="alarm.alert.send_failed" xml:space="preserve"><value>發送失敗</value></data>
+  <data name="alarm.alert.send_failed_with_msg" xml:space="preserve"><value>發送失敗：{message}</value></data>
+  <data name="alarm.alert.retry_later" xml:space="preserve"><value>請稍候再試</value></data>
+  <data name="alarm.confirm.delete_rule" xml:space="preserve"><value>確定要刪除此警報規則？</value></data>
+  <data name="alarm.confirm.delete_line_group" xml:space="preserve"><value>確定要刪除此 Line 群組？</value></data>
+  <data name="alarm.confirm.delete_email_group" xml:space="preserve"><value>確定要刪除此 Email 群組？（同時刪除所有收件人）</value></data>
+  <data name="alarm.confirm.delete_recipient" xml:space="preserve"><value>確定要刪除此收件人？</value></data>
+  <data name="alarm.toast.test_sent" xml:space="preserve"><value>測試訊息已送出，請檢查群組</value></data>
+
+  <data name="alarm.tab.email" xml:space="preserve"><value>Email 通知設定</value></data>
+  <data name="alarm.button.add_email_group" xml:space="preserve"><value>新增 Email 群組</value></data>
+  <data name="alarm.button.add_recipient" xml:space="preserve"><value>新增收件人</value></data>
+  <data name="alarm.button.email_smtp_settings" xml:space="preserve"><value>SMTP 設定</value></data>
+  <data name="alarm.col.language" xml:space="preserve"><value>語系</value></data>
+  <data name="alarm.col.recipients_count" xml:space="preserve"><value>收件人數</value></data>
+  <data name="alarm.empty.no_email_groups" xml:space="preserve"><value>尚未設定 Email 通知群組，點擊上方「新增 Email 群組」建立第一筆。</value></data>
+  <data name="alarm.email.info" xml:space="preserve"><value>警報觸發時透過 SMTP 寄信給對應群組的啟用收件人。Critical（緊急）警報永遠單獨送、不受限流影響。先設定 SMTP 後再建立群組與收件人。</value></data>
+  <data name="alarm.email.recipients_title" xml:space="preserve"><value>群組收件人</value></data>
+  <data name="alarm.email.recipients_hint" xml:space="preserve"><value>儲存群組後可新增收件人。</value></data>
+  <data name="alarm.email.button.rules" xml:space="preserve"><value>對應規則</value></data>
+  <data name="alarm.email.rules_hint" xml:space="preserve"><value>勾選此群組要收到通知的警報規則；不勾選任何項目視為「全收」（所有規則觸發時都會收到）。</value></data>
+  <data name="alarm.email_modal.title_add_group" xml:space="preserve"><value>新增 Email 群組</value></data>
+  <data name="alarm.email_modal.title_edit_group" xml:space="preserve"><value>編輯 Email 群組</value></data>
+  <data name="alarm.email_modal.title_add_recipient" xml:space="preserve"><value>新增收件人</value></data>
+  <data name="alarm.email_modal.title_config" xml:space="preserve"><value>SMTP 設定</value></data>
+  <data name="alarm.email_modal.title_rules" xml:space="preserve"><value>規則對應</value></data>
+  <data name="alarm.field.language" xml:space="preserve"><value>通知語系</value></data>
+  <data name="alarm.field.language_hint" xml:space="preserve"><value>此設定僅影響推播訊息內容的語言，不影響 Web 介面語系。</value></data>
+  <data name="alarm.field.email_group_name" xml:space="preserve"><value>群組識別名稱</value></data>
+  <data name="alarm.field.email_group_name_placeholder" xml:space="preserve"><value>shift_engineers</value></data>
+  <data name="alarm.field.email_group_name_hint" xml:space="preserve"><value>系統識別用，建議英數，須唯一</value></data>
+  <data name="alarm.field.email_group_label" xml:space="preserve"><value>群組顯示名稱</value></data>
+  <data name="alarm.field.email_group_label_placeholder" xml:space="preserve"><value>值班工程師</value></data>
+  <data name="alarm.field.recipient_email" xml:space="preserve"><value>收件 Email</value></data>
+  <data name="alarm.field.recipient_name" xml:space="preserve"><value>顯示名稱</value></data>
+  <data name="alarm.field.smtp_host" xml:space="preserve"><value>SMTP 主機</value></data>
+  <data name="alarm.field.smtp_port" xml:space="preserve"><value>連接埠</value></data>
+  <data name="alarm.field.smtp_username" xml:space="preserve"><value>SMTP 帳號</value></data>
+  <data name="alarm.field.smtp_password" xml:space="preserve"><value>SMTP 密碼</value></data>
+  <data name="alarm.field.smtp_password_placeholder" xml:space="preserve"><value>不變更請留空</value></data>
+  <data name="alarm.field.smtp_password_already_set" xml:space="preserve"><value>已設定密碼，留空表示不變更。</value></data>
+  <data name="alarm.field.smtp_password_not_set" xml:space="preserve"><value>尚未設定密碼。</value></data>
+  <data name="alarm.field.from_address" xml:space="preserve"><value>寄件者 Email</value></data>
+  <data name="alarm.field.from_display_name" xml:space="preserve"><value>寄件者顯示名稱</value></data>
+  <data name="alarm.field.rate_per_minute" xml:space="preserve"><value>每群組每分鐘上限</value></data>
+  <data name="alarm.field.test_throttle_seconds" xml:space="preserve"><value>測試寄送節流（秒）</value></data>
+  <data name="alarm.field.enable_notification" xml:space="preserve"><value>啟用 Email 通知</value></data>
+  <data name="alarm.alert.input_group_name" xml:space="preserve"><value>請填寫群組識別名稱</value></data>
+  <data name="alarm.alert.input_email" xml:space="preserve"><value>請填寫 Email</value></data>
+  <data name="alarm.alert.save_group_first" xml:space="preserve"><value>請先儲存群組再新增收件人</value></data>
+</root>

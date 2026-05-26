@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="conditionctrl.title" xml:space="preserve"><value>條件控制</value></data>
+  <data name="conditionctrl.subtitle" xml:space="preserve"><value>條件控制設定</value></data>
+
+  <data name="conditionctrl.card.add_rule" xml:space="preserve"><value>新增條件控制規則</value></data>
+  <data name="conditionctrl.card.rule_list" xml:space="preserve"><value>條件控制規則清單</value></data>
+
+  <data name="conditionctrl.label.device" xml:space="preserve"><value>設備</value></data>
+  <data name="conditionctrl.label.sub_device" xml:space="preserve"><value>子設備</value></data>
+  <data name="conditionctrl.label.reference_point" xml:space="preserve"><value>參考點位</value></data>
+  <data name="conditionctrl.label.operator" xml:space="preserve"><value>運算子</value></data>
+  <data name="conditionctrl.label.value" xml:space="preserve"><value>數值</value></data>
+  <data name="conditionctrl.label.control_point" xml:space="preserve"><value>控制點位</value></data>
+  <data name="conditionctrl.label.control_value" xml:space="preserve"><value>控制值</value></data>
+  <data name="conditionctrl.label.remarks" xml:space="preserve"><value>備註</value></data>
+  <data name="conditionctrl.label.remarks_hint" xml:space="preserve"><value>（選填，最多 50 字）</value></data>
+
+  <data name="conditionctrl.option.all_devices" xml:space="preserve"><value>— 全部設備 —</value></data>
+  <data name="conditionctrl.option.select_sub_device" xml:space="preserve"><value>— 請選擇子設備 —</value></data>
+  <data name="conditionctrl.option.select_point" xml:space="preserve"><value>— 請選擇點位 —</value></data>
+  <data name="conditionctrl.option.calc" xml:space="preserve"><value>計算點位</value></data>
+  <data name="conditionctrl.option.db_source_suffix" xml:space="preserve"><value>（DB 來源）</value></data>
+
+  <data name="conditionctrl.op.gt" xml:space="preserve"><value>&gt;　（大於）</value></data>
+  <data name="conditionctrl.op.lt" xml:space="preserve"><value>&lt;　（小於）</value></data>
+  <data name="conditionctrl.op.gte" xml:space="preserve"><value>&gt;=　（大於等於）</value></data>
+  <data name="conditionctrl.op.lte" xml:space="preserve"><value>&lt;=　（小於等於）</value></data>
+  <data name="conditionctrl.op.eq" xml:space="preserve"><value>=　（等於）</value></data>
+  <data name="conditionctrl.op.neq" xml:space="preserve"><value>≠　（不等於）</value></data>
+
+  <data name="conditionctrl.placeholder.value" xml:space="preserve"><value>輸入比較數值</value></data>
+  <data name="conditionctrl.placeholder.control_value" xml:space="preserve"><value>輸入控制值</value></data>
+  <data name="conditionctrl.placeholder.remarks" xml:space="preserve"><value>輸入備註說明</value></data>
+
+  <data name="conditionctrl.btn.add_rule" xml:space="preserve"><value>新增規則</value></data>
+  <data name="conditionctrl.btn.clear" xml:space="preserve"><value>清除</value></data>
+  <data name="conditionctrl.btn.save_edit" xml:space="preserve"><value>編輯</value></data>
+  <data name="conditionctrl.btn.cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="conditionctrl.btn.save_to_db" xml:space="preserve"><value>儲存規則至資料庫</value></data>
+  <data name="conditionctrl.btn.clear_all" xml:space="preserve"><value>清除全部</value></data>
+
+  <data name="conditionctrl.col.index" xml:space="preserve"><value>#</value></data>
+  <data name="conditionctrl.col.condition_point" xml:space="preserve"><value>條件點位</value></data>
+  <data name="conditionctrl.col.operator" xml:space="preserve"><value>運算子</value></data>
+  <data name="conditionctrl.col.value" xml:space="preserve"><value>數值</value></data>
+  <data name="conditionctrl.col.control_point" xml:space="preserve"><value>控制點位</value></data>
+  <data name="conditionctrl.col.control_value" xml:space="preserve"><value>控制值</value></data>
+  <data name="conditionctrl.col.remarks" xml:space="preserve"><value>備註</value></data>
+  <data name="conditionctrl.col.actions" xml:space="preserve"><value>操作</value></data>
+
+  <data name="conditionctrl.empty.title" xml:space="preserve"><value>尚未新增任何條件控制規則</value></data>
+  <data name="conditionctrl.empty.hint" xml:space="preserve"><value>請填寫上方表單後按下「新增規則」</value></data>
+
+  <data name="conditionctrl.tooltip.load_to_form" xml:space="preserve"><value>點擊載入至表單</value></data>
+  <data name="conditionctrl.tooltip.edit" xml:space="preserve"><value>編輯</value></data>
+  <data name="conditionctrl.tooltip.delete" xml:space="preserve"><value>刪除</value></data>
+
+  <data name="conditionctrl.msg.select_condition_point" xml:space="preserve"><value>請選擇條件點位</value></data>
+  <data name="conditionctrl.msg.enter_condition_value" xml:space="preserve"><value>請輸入條件數值</value></data>
+  <data name="conditionctrl.msg.select_control_point" xml:space="preserve"><value>請選擇控制點位</value></data>
+  <data name="conditionctrl.msg.enter_control_value" xml:space="preserve"><value>請輸入控制值</value></data>
+  <data name="conditionctrl.msg.points_must_differ" xml:space="preserve"><value>條件點位與控制點位不能相同</value></data>
+  <data name="conditionctrl.msg.confirm_clear_all" xml:space="preserve"><value>確定要清除所有規則嗎？</value></data>
+  <data name="conditionctrl.msg.saving" xml:space="preserve"><value>儲存中…</value></data>
+  <data name="conditionctrl.msg.save_failed" xml:space="preserve"><value>儲存失敗</value></data>
+  <data name="conditionctrl.msg.network_error" xml:space="preserve"><value>網路錯誤，請稍後再試</value></data>
+
+  <data name="conditionctrl.name.calc_points" xml:space="preserve"><value>計算點位</value></data>
+  <data name="conditionctrl.name.db_source" xml:space="preserve"><value>DB 來源</value></data>
+</root>

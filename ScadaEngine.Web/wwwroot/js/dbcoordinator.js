@@ -1,6 +1,8 @@
 (function () {
     'use strict';
 
+    function t(key, args) { return (window.i18n && window.i18n.t) ? window.i18n.t(key, args) : key; }
+
     var coordinators = window._dbCoordData || [];
 
     function escapeHtml(s) {
@@ -25,13 +27,13 @@
         document.getElementById('emptyDetail').style.display = 'none';
         document.getElementById('fullDetail').style.display = '';
         document.getElementById('detailTitle').innerHTML =
-            '<i class="fas fa-info-circle me-1"></i>設備詳細資料 — ' + escapeHtml(c.name || '');
+            '<i class="fas fa-info-circle me-1"></i>' + t('dbcoord.card.device_detail') + ' — ' + escapeHtml(c.name || '');
 
         document.getElementById('fieldId').value              = c.id;
         document.getElementById('fieldName').value            = c.name || '';
         document.getElementById('fieldPollingInterval').value = c.pollingInterval;
         document.getElementById('fieldConnectTimeout').value  = c.connectTimeout;
-        document.getElementById('fieldMonitorEnabled').value  = c.monitorEnabled ? '是' : '否';
+        document.getElementById('fieldMonitorEnabled').value  = c.monitorEnabled ? t('dbcoord.value.yes') : t('dbcoord.value.no');
         document.getElementById('fieldPointCount').value      = (c.points || []).length;
     }
 
@@ -42,17 +44,16 @@
         if (!coordinators.length) {
             container.innerHTML = '<div class="text-center text-muted py-4">' +
                 '<i class="fas fa-inbox fa-2x mb-2 d-block"></i>' +
-                '尚無 DB 來源' +
+                escapeHtml(t('dbcoord.empty.no_source')) +
             '</div>';
             var empty = document.getElementById('emptyDetailMsg');
-            if (empty) empty.textContent = '尚未載入任何 DB 來源 Coordinator';
+            if (empty) empty.textContent = t('dbcoord.empty.not_loaded');
             return;
         }
 
+        var disabledBadge = '<span class="badge bg-secondary ms-1" style="font-size:.6rem;">' + escapeHtml(t('dbcoord.badge.disabled')) + '</span>';
         var html = coordinators.map(function (c, i) {
-            var badge = c.monitorEnabled
-                ? ''
-                : '<span class="badge bg-secondary ms-1" style="font-size:.6rem;">停用</span>';
+            var badge = c.monitorEnabled ? '' : disabledBadge;
             return '<a href="#" class="list-group-item list-group-item-action py-2 coordinator-item" data-index="' + i + '">' +
                 '<i class="fas fa-database me-1 text-secondary"></i>' +
                 '<span class="small">' + escapeHtml(c.name) + '</span>' +
@@ -87,7 +88,7 @@
         var btn = document.getElementById('btnReloadEngine');
         if (btn) {
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>通知中...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>' + escapeHtml(t('dbcoord.btn.notifying'));
         }
 
         fetch('/DbCoordinator/Reload', {
@@ -96,18 +97,19 @@
         })
             .then(function (r) { return r.json(); })
             .then(function (data) {
-                alert(data.message || (data.success ? '成功' : '失敗'));
+                var msg = data.message || (data.success ? t('dbcoord.msg.success_default') : t('dbcoord.msg.failure_default'));
+                alert(msg);
                 if (data.success) {
                     setTimeout(function () { window.location.reload(); }, 1500);
                 }
             })
             .catch(function (err) {
-                alert('呼叫失敗：' + err.message);
+                alert(t('dbcoord.msg.call_failed_with', { error: err.message }));
             })
             .finally(function () {
                 if (btn) {
                     btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-bolt me-1"></i>通知 Engine 重新載入 JSON';
+                    btn.innerHTML = '<i class="fas fa-bolt me-1"></i>' + escapeHtml(t('dbcoord.btn.reload_engine'));
                 }
             });
     }
@@ -117,5 +119,16 @@
         reloadEngine: reloadEngine
     };
 
-    document.addEventListener('DOMContentLoaded', renderSidebar);
+    // 等 i18n 字典載入完再 render，避免 sidebar 空狀態出現 key 名而非翻譯
+    if (window.i18n && window.i18n.ready) {
+        window.i18n.ready(function () {
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', renderSidebar);
+            } else {
+                renderSidebar();
+            }
+        });
+    } else {
+        document.addEventListener('DOMContentLoaded', renderSidebar);
+    }
 })();

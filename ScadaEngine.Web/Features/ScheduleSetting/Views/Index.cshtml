@@ -1,5 +1,5 @@
 @{
-    ViewData["Title"] = "排程設定";
+    ViewData["Title"] = Localizer["schedule.title"].Value;
     Layout = "~/Views/Shared/_Layout.cshtml";
 
     var schedules = ViewBag.Schedules as List<ScadaEngine.Web.Features.ScheduleSetting.Models.TimeScheduleModel>;
@@ -26,9 +26,9 @@
 <div class="container-fluid mt-4">
 
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>排程設定</h4>
+        <h4 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>@Localizer["schedule.title"]</h4>
         <button class="btn btn-primary" onclick="window._schedule.showAddModal()">
-            <i class="fas fa-plus me-1"></i>新增排程
+            <i class="fas fa-plus me-1"></i>@Localizer["schedule.button.add"]
         </button>
     </div>
 
@@ -39,14 +39,14 @@
                 <table class="table table-hover mb-0" id="scheduleTable">
                     <thead class="table-dark">
                         <tr>
-                            <th style="width:50px">啟用</th>
-                            <th>排程名稱</th>
-                            <th>模式</th>
-                            <th>日期條件</th>
-                            <th>時段</th>
-                            <th>目前狀態</th>
-                            <th>備註</th>
-                            <th style="width:120px">操作</th>
+                            <th style="width:50px">@Localizer["schedule.col.enabled"]</th>
+                            <th>@Localizer["schedule.col.name"]</th>
+                            <th>@Localizer["schedule.col.mode"]</th>
+                            <th>@Localizer["schedule.col.days"]</th>
+                            <th>@Localizer["schedule.col.timerange"]</th>
+                            <th>@Localizer["schedule.col.status"]</th>
+                            <th>@Localizer["schedule.col.remarks"]</th>
+                            <th style="width:120px">@Localizer["schedule.col.actions"]</th>
                         </tr>
                     </thead>
                     <tbody id="scheduleBody"></tbody>
@@ -54,7 +54,7 @@
             </div>
             <div id="emptyMsg" class="text-center text-muted py-4 d-none">
                 <i class="fas fa-inbox fa-3x mb-2 d-block"></i>
-                <div>尚無排程，請點擊「新增排程」</div>
+                <div>@Localizer["schedule.empty.no_data"]</div>
             </div>
         </div>
     </div>
@@ -62,7 +62,7 @@
     <div class="card mt-3">
         <div class="card-body py-2 px-3">
             <small class="text-muted">
-                <i class="fas fa-info-circle me-1"></i>排程建立後可在「流程圖控制」中的 A 接點選擇排程模式，當系統時間符合排程時段時接點將自動導通。
+                <i class="fas fa-info-circle me-1"></i>@Localizer["schedule.footer.note"]
             </small>
         </div>
     </div>
@@ -73,7 +73,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="modalTitle">新增排程</h5>
+                <h5 class="modal-title" id="modalTitle">@Localizer["schedule.modal.title_add"]</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -82,16 +82,16 @@
                 <!-- 名稱 + 模式 -->
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold"><i class="fas fa-tag me-1"></i>排程名稱</label>
-                        <input type="text" class="form-control" id="txtName" maxlength="100" placeholder="例如：上班時間" />
+                        <label class="form-label fw-semibold"><i class="fas fa-tag me-1"></i>@Localizer["schedule.field.name"]</label>
+                        <input type="text" class="form-control" id="txtName" maxlength="100" placeholder="@Localizer["schedule.field.name_placeholder"]" />
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold"><i class="fas fa-sync-alt me-1"></i>重複模式</label>
+                        <label class="form-label fw-semibold"><i class="fas fa-sync-alt me-1"></i>@Localizer["schedule.field.recurrence_type"]</label>
                         <select class="form-select" id="selRecurrenceType" onchange="window._schedule.onTypeChange()">
-                            <option value="0">每週</option>
-                            <option value="1">N 週循環</option>
-                            <option value="2">每月</option>
-                            <option value="3">N 月循環</option>
+                            <option value="0">@Localizer["schedule.recurrence.weekly"]</option>
+                            <option value="1">@Localizer["schedule.recurrence.n_week_cycle"]</option>
+                            <option value="2">@Localizer["schedule.recurrence.monthly"]</option>
+                            <option value="3">@Localizer["schedule.recurrence.n_month_cycle"]</option>
                         </select>
                     </div>
                 </div>
@@ -99,52 +99,52 @@
                 <!-- 週期參數區（type 1,3 時顯示） -->
                 <div class="row mb-3 d-none" id="cycleSection">
                     <div class="col-md-3">
-                        <label class="form-label fw-semibold"><i class="fas fa-play me-1"></i>跑</label>
+                        <label class="form-label fw-semibold"><i class="fas fa-play me-1"></i>@Localizer["schedule.cycle.run"]</label>
                         <div class="input-group">
                             <input type="number" class="form-control" id="txtRunLength" min="1" max="52" value="1" />
-                            <span class="input-group-text" id="runUnit">週</span>
+                            <span class="input-group-text" id="runUnit">@Localizer["schedule.unit.week"]</span>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label fw-semibold"><i class="fas fa-pause me-1"></i>休</label>
+                        <label class="form-label fw-semibold"><i class="fas fa-pause me-1"></i>@Localizer["schedule.cycle.rest"]</label>
                         <div class="input-group">
                             <input type="number" class="form-control" id="txtRestLength" min="1" max="52" value="1" />
-                            <span class="input-group-text" id="restUnit">週</span>
+                            <span class="input-group-text" id="restUnit">@Localizer["schedule.unit.week"]</span>
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold"><i class="fas fa-calendar-day me-1"></i>週期起算時間</label>
+                        <label class="form-label fw-semibold"><i class="fas fa-calendar-day me-1"></i>@Localizer["schedule.cycle.anchor_datetime"]</label>
                         <input type="datetime-local" class="form-control" id="txtAnchorDateTime" />
-                        <small class="text-muted">從此時刻開始計算跑/休交替</small>
+                        <small class="text-muted">@Localizer["schedule.cycle.anchor_hint"]</small>
                     </div>
                 </div>
 
                 <!-- 星期選擇（type 0,1 時顯示） -->
                 <div class="mb-3" id="daysOfWeekSection">
-                    <label class="form-label fw-semibold"><i class="fas fa-calendar-week me-1"></i>星期</label>
+                    <label class="form-label fw-semibold"><i class="fas fa-calendar-week me-1"></i>@Localizer["schedule.field.days_of_week"]</label>
                     <div class="d-flex gap-2 flex-wrap" id="dayCheckboxes">
-                        <label class="day-check"><input type="checkbox" value="1" /><span>一</span></label>
-                        <label class="day-check"><input type="checkbox" value="2" /><span>二</span></label>
-                        <label class="day-check"><input type="checkbox" value="3" /><span>三</span></label>
-                        <label class="day-check"><input type="checkbox" value="4" /><span>四</span></label>
-                        <label class="day-check"><input type="checkbox" value="5" /><span>五</span></label>
-                        <label class="day-check"><input type="checkbox" value="6" /><span>六</span></label>
-                        <label class="day-check"><input type="checkbox" value="7" /><span>日</span></label>
+                        <label class="day-check"><input type="checkbox" value="1" /><span>@Localizer["schedule.dayofweek.mon"]</span></label>
+                        <label class="day-check"><input type="checkbox" value="2" /><span>@Localizer["schedule.dayofweek.tue"]</span></label>
+                        <label class="day-check"><input type="checkbox" value="3" /><span>@Localizer["schedule.dayofweek.wed"]</span></label>
+                        <label class="day-check"><input type="checkbox" value="4" /><span>@Localizer["schedule.dayofweek.thu"]</span></label>
+                        <label class="day-check"><input type="checkbox" value="5" /><span>@Localizer["schedule.dayofweek.fri"]</span></label>
+                        <label class="day-check"><input type="checkbox" value="6" /><span>@Localizer["schedule.dayofweek.sat"]</span></label>
+                        <label class="day-check"><input type="checkbox" value="7" /><span>@Localizer["schedule.dayofweek.sun"]</span></label>
                     </div>
                     <div class="mt-1">
-                        <button type="button" class="btn btn-outline-secondary btn-xs" onclick="window._schedule.selectWeekdays()">週一至週五</button>
-                        <button type="button" class="btn btn-outline-secondary btn-xs" onclick="window._schedule.selectAll()">全選</button>
-                        <button type="button" class="btn btn-outline-secondary btn-xs" onclick="window._schedule.clearDays()">清除</button>
+                        <button type="button" class="btn btn-outline-secondary btn-xs" onclick="window._schedule.selectWeekdays()">@Localizer["schedule.button.weekdays"]</button>
+                        <button type="button" class="btn btn-outline-secondary btn-xs" onclick="window._schedule.selectAll()">@Localizer["schedule.button.select_all"]</button>
+                        <button type="button" class="btn btn-outline-secondary btn-xs" onclick="window._schedule.clearDays()">@Localizer["schedule.button.clear"]</button>
                     </div>
                 </div>
 
                 <!-- 日期選擇（type 2,3 時顯示） -->
                 <div class="mb-3 d-none" id="daysOfMonthSection">
-                    <label class="form-label fw-semibold"><i class="fas fa-calendar me-1"></i>每月幾號</label>
+                    <label class="form-label fw-semibold"><i class="fas fa-calendar me-1"></i>@Localizer["schedule.field.days_of_month"]</label>
                     <div class="d-flex gap-1 flex-wrap" id="domCheckboxes"></div>
                     <div class="mt-1">
-                        <button type="button" class="btn btn-outline-secondary btn-xs" onclick="window._schedule.selectAllDom()">全選</button>
-                        <button type="button" class="btn btn-outline-secondary btn-xs" onclick="window._schedule.clearDom()">清除</button>
+                        <button type="button" class="btn btn-outline-secondary btn-xs" onclick="window._schedule.selectAllDom()">@Localizer["schedule.button.select_all"]</button>
+                        <button type="button" class="btn btn-outline-secondary btn-xs" onclick="window._schedule.clearDom()">@Localizer["schedule.button.clear"]</button>
                     </div>
                 </div>
 
@@ -153,18 +153,18 @@
                 <!-- 時段 -->
                 <div class="row mb-3">
                     <div class="col-md-4">
-                        <label class="form-label fw-semibold"><i class="fas fa-clock me-1"></i>開始時間</label>
+                        <label class="form-label fw-semibold"><i class="fas fa-clock me-1"></i>@Localizer["schedule.field.start_time"]</label>
                         <input type="time" class="form-control" id="txtStartTime" value="08:00" />
                     </div>
                     <div class="col-md-4">
                         <label class="form-label fw-semibold">
-                            <i class="fas fa-clock me-1"></i>結束時間
-                            <small class="text-muted fw-normal">（可跨日）</small>
+                            <i class="fas fa-clock me-1"></i>@Localizer["schedule.field.end_time"]
+                            <small class="text-muted fw-normal">@Localizer["schedule.field.end_time_hint"]</small>
                         </label>
                         <input type="time" class="form-control" id="txtEndTime" value="17:00" />
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label fw-semibold"><i class="fas fa-comment me-1"></i>備註</label>
+                        <label class="form-label fw-semibold"><i class="fas fa-comment me-1"></i>@Localizer["schedule.field.remarks"]</label>
                         <input type="text" class="form-control" id="txtRemarks" maxlength="200" />
                     </div>
                 </div>
@@ -175,28 +175,28 @@
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">
-                            <i class="fas fa-ban me-1 text-danger"></i>例外日
-                            <small class="text-muted fw-normal">（當天整段不啟動）</small>
+                            <i class="fas fa-ban me-1 text-danger"></i>@Localizer["schedule.field.exclude_dates"]
+                            <small class="text-muted fw-normal">@Localizer["schedule.field.exclude_hint"]</small>
                         </label>
                         <div class="input-group">
                             <input type="text" class="form-control form-control-sm" id="txtExcludeDate"
                                    placeholder="yyyy/MM/dd" maxlength="10" inputmode="numeric" />
                             <button type="button" class="btn btn-outline-danger btn-sm" onclick="window._schedule.addExcludeDate()">
-                                <i class="fas fa-plus"></i> 加入
+                                <i class="fas fa-plus"></i> @Localizer["schedule.button.add_date"]
                             </button>
                         </div>
                         <div class="date-chip-list mt-2" id="excludeDateChips"></div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">
-                            <i class="fas fa-calendar-plus me-1 text-success"></i>加開日
-                            <small class="text-muted fw-normal">（當天無視規則強制啟動）</small>
+                            <i class="fas fa-calendar-plus me-1 text-success"></i>@Localizer["schedule.field.include_dates"]
+                            <small class="text-muted fw-normal">@Localizer["schedule.field.include_hint"]</small>
                         </label>
                         <div class="input-group">
                             <input type="text" class="form-control form-control-sm" id="txtIncludeDate"
                                    placeholder="yyyy/MM/dd" maxlength="10" inputmode="numeric" />
                             <button type="button" class="btn btn-outline-success btn-sm" onclick="window._schedule.addIncludeDate()">
-                                <i class="fas fa-plus"></i> 加入
+                                <i class="fas fa-plus"></i> @Localizer["schedule.button.add_date"]
                             </button>
                         </div>
                         <div class="date-chip-list mt-2" id="includeDateChips"></div>
@@ -205,13 +205,13 @@
 
                 <div class="form-check form-switch">
                     <input class="form-check-input" type="checkbox" id="chkEnabled" checked>
-                    <label class="form-check-label">啟用此排程</label>
+                    <label class="form-check-label">@Localizer["schedule.field.is_enabled"]</label>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["schedule.button.cancel"]</button>
                 <button type="button" class="btn btn-primary" onclick="window._schedule.save()">
-                    <i class="fas fa-save me-1"></i>儲存
+                    <i class="fas fa-save me-1"></i>@Localizer["schedule.button.save"]
                 </button>
             </div>
         </div>

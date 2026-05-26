@@ -13,6 +13,7 @@ public class AlarmMonitorService
     private readonly ILogger<AlarmMonitorService> _logger;
     private readonly AlarmEventLogRepository _repository;
     private readonly LineNotificationService _lineService;
+    private readonly EmailNotificationService _emailService;
     private readonly AlarmMqttPublisher _mqttPublisher;
     private readonly IDataRepository _dataRepository;
 
@@ -35,12 +36,14 @@ public class AlarmMonitorService
         ILogger<AlarmMonitorService> logger,
         AlarmEventLogRepository repository,
         LineNotificationService lineService,
+        EmailNotificationService emailService,
         AlarmMqttPublisher mqttPublisher,
         IDataRepository dataRepository)
     {
         _logger = logger;
         _repository = repository;
         _lineService = lineService;
+        _emailService = emailService;
         _mqttPublisher = mqttPublisher;
         _dataRepository = dataRepository;
 
@@ -319,11 +322,15 @@ public class AlarmMonitorService
                 double dDeadband = rule.dDeadbandHigh ?? 0;
                 bool isTriggered = dVal >= (dThreshold - dDeadband);
 
-                var args = BuildArgsJson(("name", szName), ("threshold", dThreshold.ToString()));
-                await CheckTransitionAsync(szSID, "high", isTriggered,
+                var argsDict = new Dictionary<string, string?>
+                {
+                    ["name"] = szName,
+                    ["threshold"] = dThreshold.ToString()
+                };
+                await CheckTransitionAsync(szSID, szName, rule.nId, "high", isTriggered,
                     dVal, dThreshold, 2, rule.nAlarmHighSeverity,
                     $"{szName} 超過上限 {dThreshold}",
-                    "alarm.high_exceed", args);
+                    "alarm.high_exceed", argsDict);
             }
 
             // ── 下限警報 ──
@@ -333,11 +340,15 @@ public class AlarmMonitorService
                 double dDeadband = rule.dDeadbandLow ?? 0;
                 bool isTriggered = dVal <= (dThreshold + dDeadband);
 
-                var args = BuildArgsJson(("name", szName), ("threshold", dThreshold.ToString()));
-                await CheckTransitionAsync(szSID, "low", isTriggered,
+                var argsDict = new Dictionary<string, string?>
+                {
+                    ["name"] = szName,
+                    ["threshold"] = dThreshold.ToString()
+                };
+                await CheckTransitionAsync(szSID, szName, rule.nId, "low", isTriggered,
                     dVal, dThreshold, 3, rule.nAlarmLowSeverity,
                     $"{szName} 低於下限 {dThreshold}",
-                    "alarm.low_below", args);
+                    "alarm.low_below", argsDict);
             }
 
             // ── DI 警報 ──
@@ -351,12 +362,15 @@ public class AlarmMonitorService
                     ? (rule.szDiOnLabel ?? "ON")
                     : (rule.szDiOffLabel ?? "OFF");
 
-                // szStateLabel 是使用者自填中文（如「啟動/停機」），視為 user input 直接帶入英文模板，不額外翻譯
-                var args = BuildArgsJson(("name", szName), ("state", szStateLabel));
-                await CheckTransitionAsync(szSID, "di", isTriggered,
+                var argsDict = new Dictionary<string, string?>
+                {
+                    ["name"] = szName,
+                    ["state"] = szStateLabel
+                };
+                await CheckTransitionAsync(szSID, szName, rule.nId, "di", isTriggered,
                     dVal, isOn ? 1 : 0, 4, rule.nDiAlarmSeverity,
                     $"{szName} 狀態為 {szStateLabel} 觸發警報",
-                    "alarm.di_triggered", args);
+                    "alarm.di_triggered", argsDict);
             }
         }
         catch (Exception ex)
@@ -366,17 +380,19 @@ public class AlarmMonitorService
     }
 
     /// <summary>
-    /// 把 (key, value) 對組成最小 JSON，避免引入 System.Text.Json 處理小型 dict 開銷。
+    /// 把 args dict 序列化成 JSON（EventLog.MessageArgs 用），與 Web AlarmMessageLocalizer 對齊。
     /// 簡單字串 escape：替換 backslash / 雙引號。
     /// </summary>
-    private static string BuildArgsJson(params (string key, string value)[] args)
+    private static string BuildArgsJson(IDictionary<string, string?> args)
     {
         var sb = new System.Text.StringBuilder("{");
-        for (int i = 0; i < args.Length; i++)
+        bool first = true;
+        foreach (var kv in args)
         {
-            if (i > 0) sb.Append(',');
-            sb.Append('"').Append(args[i].key).Append("\":\"")
-              .Append((args[i].value ?? string.Empty).Replace("\\", "\\\\").Replace("\"", "\\\""))
+            if (!first) sb.Append(',');
+            first = false;
+            sb.Append('"').Append(kv.Key).Append("\":\"")
+              .Append((kv.Value ?? string.Empty).Replace("\\", "\\\\").Replace("\"", "\\\""))
               .Append('"');
         }
         sb.Append('}');
@@ -384,10 +400,11 @@ public class AlarmMonitorService
     }
 
     private async Task CheckTransitionAsync(
-        string szSID, string szType, bool isTriggered,
+        string szSID, string szName, int nAlarmRuleId,
+        string szType, bool isTriggered,
         double dTriggerValue, double dThresholdValue, byte nOperator,
         byte nSeverity, string szMessage,
-        string szMessageKey, string szMessageArgsJson)
+        string szMessageKey, IDictionary<string, string?> argsDict)
     {
         string szKey = $"{szSID}:{szType}";
         _alarmStates.TryGetValue(szKey, out var prevState);
@@ -417,10 +434,10 @@ public class AlarmMonitorService
                 nOperator = nOperator,
                 szMessage = szMessage,
                 szMessageKey = szMessageKey,
-                szMessageArgs = szMessageArgsJson,
+                szMessageArgs = BuildArgsJson(argsDict),
                 dtOccurredAt = dtNow
             };
-            await _repository.InsertEventAsync(eventModel);
+            await _repository.InsertEventAsync(eventModel); // 寫入後 eventModel.nId 已填回
 
             // 發布 MQTT 警報觸發訊息（retained）
             try
@@ -432,15 +449,25 @@ public class AlarmMonitorService
                 _logger.LogError(ex, "發布警報觸發 MQTT 訊息失敗（不影響警報流程）: SID={SID}", szSID);
             }
 
-            // Line 通知（失敗不影響警報流程；服務內部會自行篩選符合嚴重度上限的群組）
-            try
+            var ctx = new NotifyContext
             {
-                await _lineService.NotifyAsync(nSeverity, szSID, szMessage, dtNow);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Line 通知派送失敗但警報流程繼續: SID={SID}", szSID);
-            }
+                nSeverity = nSeverity,
+                szSID = szSID,
+                szName = szName,
+                szMessageKey = szMessageKey,
+                args = argsDict,
+                dtTime = dtNow,
+                nRelatedEventId = eventModel.nId,
+                nAlarmRuleId = nAlarmRuleId
+            };
+
+            // Line 通知（失敗不影響警報流程）
+            try { await _lineService.NotifyAsync(ctx); }
+            catch (Exception ex) { _logger.LogError(ex, "Line 通知派送失敗但警報流程繼續: SID={SID}", szSID); }
+
+            // Email 通知（失敗不影響警報流程）
+            try { await _emailService.NotifyAsync(ctx); }
+            catch (Exception ex) { _logger.LogError(ex, "Email 通知派送失敗但警報流程繼續: SID={SID}", szSID); }
         }
         else if (!isTriggered && wasActive)
         {
@@ -465,6 +492,23 @@ public class AlarmMonitorService
             {
                 _logger.LogError(ex, "發布警報恢復 MQTT 訊息失敗（不影響警報流程）: SID={SID}", szSID);
             }
+
+            // 恢復通知（Line + Email）
+            var ctx = new NotifyContext
+            {
+                nSeverity = nSeverity,
+                szSID = szSID,
+                szName = szName,
+                szMessageKey = szMessageKey,
+                args = argsDict,
+                dtTime = DateTime.Now,
+                nRelatedEventId = 0,
+                nAlarmRuleId = nAlarmRuleId
+            };
+            try { await _lineService.NotifyClearedAsync(ctx); }
+            catch (Exception ex) { _logger.LogError(ex, "Line 恢復通知派送失敗: SID={SID}", szSID); }
+            try { await _emailService.NotifyClearedAsync(ctx); }
+            catch (Exception ex) { _logger.LogError(ex, "Email 恢復通知派送失敗: SID={SID}", szSID); }
         }
     }
 

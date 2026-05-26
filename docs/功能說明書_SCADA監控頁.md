@@ -77,7 +77,9 @@ wwwroot/
         ├─ DO 右鍵「ON/OFF」       → POST /api/control/write { cid, value }
         ├─ DO 右鍵「自動控制」     → POST /api/control/write { cid, mode:"auto" }
         ├─ Pump 啟動/停止          → POST /api/control/write { cid, value:1/0 }
-        ├─ Pump 頻率設定           → POST /api/control/write { cid, value:Hz值 }
+        ├─ Pump 啟停切自動         → POST /api/control/write { cidStartStop, mode:"auto" }
+        ├─ Pump 頻率設定           → POST /api/control/write { cidFreqSet, value:Hz值 }
+        ├─ Pump 頻率切自動         → POST /api/control/write { cidFreqSet, mode:"auto" }
         ├─ Pump Gauge 拖拽         → mouseup 時 POST /api/control/write { cid, value:Hz值 }
         └─ 右鍵「趨勢圖」         → 寫入 localStorage，導向歷史趨勢頁
 ```
@@ -328,8 +330,10 @@ DOMContentLoaded
 
 **右鍵選單**（二級結構）：
 - **啟動停止**（子選單）：啟動 / 停止 / 自動控制
-- **頻率設定**：輸入框 + 確定按鈕
+- **頻率設定**（子選單）：輸入框 + 確定按鈕 / 自動控制
 - **監控點位**（勾選框）：可勾選運轉、故障、模式、頻率等 SID 加入趨勢圖
+
+> 頻率設定的「確定」走手動模式（M 角標亮起），「自動控制」對 `szCidFreqSet` 標記為自動（M 角標熄滅）；與啟動停止的手/自切換相互獨立。
 
 **Gauge 拖拽**：
 - 滑鼠在頻率 Gauge 直條上拖拽可即時調整
@@ -405,6 +409,25 @@ DOMContentLoaded
 - 初始化時載入 `_aoManualValueMap`
 - 每次手動/自動控制成功後立即更新快取
 - 右鍵選單中以藍色外框高亮當前模式
+- **跨分頁同步**：`/api/realtime/latest` 每秒 polling 回傳的 `isAuto` 欄位會反向更新 `_aoManualValueMap`，所以別人在別處切手動 / 切自動時，本分頁在下一秒內看到狀態變化
+
+### 手動模式 M 角標（控制元件視覺指示）
+
+控制元件（AO / DO / Pump）在「手動模式」時右上角顯示橘色圓形 `M` badge，用以一眼分辨「目前由人工強制控制中」與「自動 / LogicFlow 控制中」。
+
+- **資料來源**：`ManualControlValue` 表的 `IsAuto` 欄位（false = 手動模式 → 顯示 badge）
+- **同步路徑**：
+  1. **Singleton 快取**：`MqttRealtimeSubscriberService._manualAutoMap`（`RefreshManualAutoMapAsync()` 在啟動時 + 每次 `/api/realtime/latest` 呼叫時刷新）
+  2. **API 投影**：`GetLatestData()` 回傳的每筆 `data[]` 元素加 `isAuto: true | false | null`（null = 該點位無 `ManualControlValue` 紀錄）
+  3. **前端 toggle**：`updateScadaWidgets` 從 polling 回傳建 `sidIsAutoMap`，掃 `.scada-mode-badge[data-cid]` 統一 toggle 顯示
+  4. **Optimistic 即時反饋**：8 個寫入路徑（AO 手動/自動、DO 手動/自動、Pump 啟停/頻率/變頻拖拽/切自動）在 `_aoManualValueMap` 更新後同步呼叫 `_toggleModeBadge(szCid, isAuto)`，操作者不必等 polling
+  5. **寫入路徑通知**：`ControlController` 寫完 DB 後呼叫 `_mqttService.UpdateManualAutoFlag()` 同步 Singleton 快取，避免 1 秒內其他分頁讀到舊狀態
+- **Pump 雙 badge**：
+  - 有頻率 gauge（`bHasFreq=true`）→ 泵本體（`szCidStartStop`）badge 在左上、變頻器（`szCidFreqSet`）badge 在右上
+  - 無頻率 gauge → 泵本體 badge 在右上（單一）
+- **PLC mode 顏色保留**：Pump 既有 `szSidMode` 來自 PLC 的「自動 / 手動」訊號（運維人員在現場面板切）控制泵身顏色（橘黃 = 手動、藍 = 自動），與 M badge 是兩個獨立語意層，互不覆蓋
+- **i18n**：badge 字面 `M` 中英通用不走 i18n；hover tooltip 走 `scadapage.badge.manual_mode_tooltip`（zh-TW「手動模式」/ en「Manual mode」）
+- **樣式**：`.scada-mode-badge` 定義於 `wwwroot/css/scadapage.css`（14×14 圓形、`#f59e0b` 橘、`top:-4px; right:-4px`，預設 `display:none`，由 JS 控制）
 
 ### 控制行為審計（EventLog）
 

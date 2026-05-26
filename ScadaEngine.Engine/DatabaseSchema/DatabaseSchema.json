@@ -144,7 +144,15 @@
         { "Name": "AcknowledgedAt", "Type": "datetime",                  "Nullable": true,
           "_comment": "確認時間" },
         { "Name": "Remarks",        "Type": "nvarchar",  "Length": 500,  "Nullable": true,
-          "_comment": "操作人員備註" }
+          "_comment": "操作人員備註" },
+        { "Name": "NotifyChannel",      "Type": "nvarchar",  "Length": 10,   "Nullable": true,
+          "_comment": "通知摘要專用：'Email' | 'Line'；普通 alarm 事件為 NULL" },
+        { "Name": "NotifyStatus",       "Type": "tinyint",                   "Nullable": true,
+          "_comment": "0=AllSent 1=PartialFailed 2=AllFailed 3=RateLimited 4=NoTarget 5=Disabled" },
+        { "Name": "NotifyDetail",       "Type": "nvarchar",  "Length": 500,  "Nullable": true,
+          "_comment": "人類可讀的通知結果摘要" },
+        { "Name": "NotifyRelatedEventId","Type": "bigint",                   "Nullable": true,
+          "_comment": "通知摘要事件關聯到的 alarm EventLog.Id" }
       ],
       "ClusteredIndex": ["OccurredAt", "SID"]
     },
@@ -375,9 +383,55 @@
           "_comment": "顯示名稱，例如 '主管群'、'值班工程群'" },
         { "Name": "MaxSeverity",  "Type": "tinyint",                 "Nullable": false, "Default": 3,
           "_comment": "接收上限：0=只收 Critical, 1=Critical+High, 2=Critical+High+Medium, 3=全收" },
+        { "Name": "Language",     "Type": "nvarchar", "Length": 10,  "Nullable": false, "Default": "zh-TW",
+          "_comment": "推播訊息語系：'zh-TW' 或 'en'" },
         { "Name": "IsEnabled",    "Type": "bit",                     "Nullable": false, "Default": 1 },
         { "Name": "CreatedAt",    "Type": "datetime",                "Nullable": false, "Default": "getdate()" },
         { "Name": "UpdatedAt",    "Type": "datetime",                "Nullable": true }
+      ]
+    },
+    {
+      "_comment": "Email 通知收件群組 — 警報觸發時寄信給此群組所有收件人",
+      "TableName": "EmailGroups",
+      "Columns": [
+        { "Name": "Id",           "Type": "int",      "IsPrimaryKey": true, "IsIdentity": true, "Nullable": false },
+        { "Name": "Name",         "Type": "nvarchar", "Length": 100, "Nullable": false, "IsUnique": true,
+          "_comment": "群組唯一識別名稱，例如 'shift_engineers'" },
+        { "Name": "Label",        "Type": "nvarchar", "Length": 100, "Nullable": false,
+          "_comment": "顯示名稱，例如 '值班工程師'" },
+        { "Name": "MaxSeverity",  "Type": "tinyint",                 "Nullable": false, "Default": 3,
+          "_comment": "0=只收 Critical, 1=Critical+High, 2=Critical+High+Medium, 3=全收" },
+        { "Name": "Language",     "Type": "nvarchar", "Length": 10,  "Nullable": false, "Default": "zh-TW",
+          "_comment": "通知訊息語系：'zh-TW' 或 'en'" },
+        { "Name": "IsEnabled",    "Type": "bit",                     "Nullable": false, "Default": 1 },
+        { "Name": "Remarks",      "Type": "nvarchar", "Length": 200, "Nullable": true },
+        { "Name": "CreatedAt",    "Type": "datetime",                "Nullable": false, "Default": "getdate()" },
+        { "Name": "UpdatedAt",    "Type": "datetime",                "Nullable": true }
+      ]
+    },
+    {
+      "_comment": "Email 收件人清單 — 一個群組可有多個收件人",
+      "TableName": "EmailRecipients",
+      "Columns": [
+        { "Name": "Id",           "Type": "int",      "IsPrimaryKey": true, "IsIdentity": true, "Nullable": false },
+        { "Name": "GroupId",      "Type": "int",                     "Nullable": false,
+          "_comment": "FK → EmailGroups.Id" },
+        { "Name": "EmailAddress", "Type": "nvarchar", "Length": 200, "Nullable": false },
+        { "Name": "DisplayName",  "Type": "nvarchar", "Length": 100, "Nullable": true },
+        { "Name": "IsEnabled",    "Type": "bit",                     "Nullable": false, "Default": 1 },
+        { "Name": "CreatedAt",    "Type": "datetime",                "Nullable": false, "Default": "getdate()" },
+        { "Name": "UpdatedAt",    "Type": "datetime",                "Nullable": true }
+      ]
+    },
+    {
+      "_comment": "Email 群組-警報規則 對應表（多對多）。空對應視同收所有規則的警報。",
+      "TableName": "EmailGroupRuleMap",
+      "Columns": [
+        { "Name": "GroupId",     "Type": "int", "IsPrimaryKey": true, "Nullable": false,
+          "_comment": "FK → EmailGroups.Id" },
+        { "Name": "AlarmRuleId", "Type": "int", "IsPrimaryKey": true, "Nullable": false,
+          "_comment": "FK → AlarmRules.Id" },
+        { "Name": "CreatedAt",   "Type": "datetime",                   "Nullable": false, "Default": "getdate()" }
       ]
     }
   ]

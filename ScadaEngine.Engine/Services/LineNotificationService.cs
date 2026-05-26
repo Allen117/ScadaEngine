@@ -1,22 +1,21 @@
 using System.Collections.Concurrent;
-using System.Net;
-using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using Microsoft.Extensions.DependencyInjection;
 using ScadaEngine.Common.Data.Models;
 
 namespace ScadaEngine.Engine.Services;
 
 /// <summary>
-/// Line Messaging API 推播服務 — 警報觸發時發送通知
+/// Line Messaging API 推播服務 — 警報觸發 / 恢復時發送通知
 /// 設計重點：
 ///   1. Critical (severity=0) 永遠單獨送、繞過限流
 ///   2. 其他嚴重度走「每群組獨立」的 1 分鐘滑動視窗（預設 10 則/分鐘），超過進 buffer
 ///   3. 視窗結束時若有 buffer，發送嚴重度計數摘要 + 最近 5 則明細
 ///   4. Line API 5xx / 網路錯誤最多重試 1 次（4xx 不重試）
-///   5. _isInitialized 旗標：Engine 啟動還原舊警報時呼叫的 Notify 一律 skip
+///   5. 訊息文字依群組 Language 欄位透過 NotificationLocalizer 翻譯（zh-TW / en）
+///   6. 寄送完寫一筆通知摘要 EventLog（共用 NotifyDeliveryLogger）
+///   7. _isInitialized 旗標：Engine 啟動還原舊警報時呼叫的 Notify 一律 skip
 /// </summary>
 public class LineNotificationService : IDisposable
 {
@@ -25,6 +24,8 @@ public class LineNotificationService : IDisposable
     private readonly ILogger<LineNotificationService> _logger;
     private readonly LineNotifyTargetRepository _targetRepo;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly NotificationLocalizer _localizer;
+    private readonly NotifyDeliveryLogger _deliveryLogger;
 
     private LineSettingModel _setting = new();
     private bool _isInitialized = false;
@@ -38,21 +39,20 @@ public class LineNotificationService : IDisposable
     public LineNotificationService(
         ILogger<LineNotificationService> logger,
         LineNotifyTargetRepository targetRepo,
-        IHttpClientFactory httpClientFactory)
+        IHttpClientFactory httpClientFactory,
+        NotificationLocalizer localizer,
+        NotifyDeliveryLogger deliveryLogger)
     {
         _logger = logger;
         _targetRepo = targetRepo;
         _httpClientFactory = httpClientFactory;
+        _localizer = localizer;
+        _deliveryLogger = deliveryLogger;
 
-        // 計時器先不啟動，等 InitializeAsync 完成後再 Change
         _flushTimer = new Timer(async _ => await FlushExpiredWindowsAsync(),
             null, Timeout.Infinite, Timeout.Infinite);
     }
 
-    /// <summary>
-    /// 初始化：載入設定、啟動 flush 計時器
-    /// 必須在 AlarmMonitorService.InitializeAsync 完成後呼叫，避免還原舊警報時誤發
-    /// </summary>
     public Task InitializeAsync(LineSettingModel setting)
     {
         _setting = setting ?? new LineSettingModel();
@@ -67,7 +67,6 @@ public class LineNotificationService : IDisposable
         if (_setting.RatePerMinute <= 0)
             _setting.RatePerMinute = 10;
 
-        // 每 5 秒檢查一次過期視窗
         _flushTimer.Change(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
 
         _isInitialized = true;
@@ -79,7 +78,7 @@ public class LineNotificationService : IDisposable
     /// <summary>
     /// 警報觸發時呼叫 — 對所有符合「MaxSeverity >= 此警報嚴重度」的群組推播
     /// </summary>
-    public async Task NotifyAsync(byte nSeverity, string szSID, string szMessage, DateTime dtTriggeredAt)
+    public async Task NotifyAsync(NotifyContext ctx)
     {
         if (!_isInitialized || !_setting.EnableNotification)
             return;
@@ -88,59 +87,101 @@ public class LineNotificationService : IDisposable
         {
             var targets = await _targetRepo.GetEnabledTargetsAsync();
             if (targets.Count == 0)
-                return;
-
-            // MaxSeverity 的語意：0=只收 Critical, 1=Critical+High, 2=Critical+High+Medium, 3=全收
-            // 嚴重度越「緊急」數值越小，所以 target 收到該警報的條件：target.nMaxSeverity >= nSeverity
-            var matched = targets.Where(t => t.nMaxSeverity >= nSeverity).ToList();
-            if (matched.Count == 0)
-                return;
-
-            var msg = new NotifyMessage
             {
-                nSeverity = nSeverity,
-                szSID = szSID,
-                szMessage = szMessage,
-                dtTriggeredAt = dtTriggeredAt
-            };
+                await _deliveryLogger.LogAsync(ctx.szSID, NotifyDeliveryLogger.Channel.Line,
+                    NotifyDeliveryLogger.Status.NoTarget, "無啟用的 Line 群組", ctx.nRelatedEventId);
+                return;
+            }
+
+            var matched = targets.Where(t => t.nMaxSeverity >= ctx.nSeverity).ToList();
+            if (matched.Count == 0)
+            {
+                await _deliveryLogger.LogAsync(ctx.szSID, NotifyDeliveryLogger.Channel.Line,
+                    NotifyDeliveryLogger.Status.NoTarget,
+                    $"無群組符合嚴重度 {ctx.nSeverity}", ctx.nRelatedEventId);
+                return;
+            }
+
+            int nSuccess = 0, nFailed = 0;
+            var failedLabels = new List<string>();
 
             foreach (var target in matched)
             {
-                if (nSeverity == 0)
+                bool isOk;
+                if (ctx.nSeverity == 0)
                 {
-                    // Critical：繞過限流，直接送
-                    var szText = FormatSingleAlert(msg);
-                    _ = PushWithRetryAsync(target.szGroupId, szText);
+                    var szText = FormatSingleAlert(ctx, target.szLanguage, isRecovery: false);
+                    isOk = await PushWithRetryAsync(target.szGroupId, szText);
                 }
                 else
                 {
-                    await EnqueueOrSendAsync(target.szGroupId, msg);
+                    isOk = await EnqueueOrSendAsync(target, ctx, isRecovery: false);
                 }
+
+                if (isOk) nSuccess++;
+                else { nFailed++; failedLabels.Add(target.szLabel); }
             }
+
+            await LogSummaryAsync(ctx, matched.Count, nSuccess, nFailed, failedLabels, isRecovery: false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Line 通知發送流程發生例外: SID={SID}", szSID);
+            _logger.LogError(ex, "Line 通知發送流程發生例外: SID={SID}", ctx.szSID);
         }
     }
 
-    private Task EnqueueOrSendAsync(string szGroupId, NotifyMessage msg)
+    /// <summary>
+    /// 警報恢復時呼叫 — 對符合嚴重度的群組推播恢復通知（不走 rate limit）
+    /// </summary>
+    public async Task NotifyClearedAsync(NotifyContext ctx)
     {
-        var state = _rateStates.GetOrAdd(szGroupId, _ => new GroupRateState());
+        if (!_isInitialized || !_setting.EnableNotification) return;
+
+        try
+        {
+            var targets = await _targetRepo.GetEnabledTargetsAsync();
+            var matched = targets.Where(t => t.nMaxSeverity >= ctx.nSeverity).ToList();
+            if (matched.Count == 0)
+            {
+                await _deliveryLogger.LogAsync(ctx.szSID, NotifyDeliveryLogger.Channel.Line,
+                    NotifyDeliveryLogger.Status.NoTarget, "無群組符合嚴重度（恢復通知）", ctx.nRelatedEventId);
+                return;
+            }
+
+            int nSuccess = 0, nFailed = 0;
+            var failedLabels = new List<string>();
+            foreach (var target in matched)
+            {
+                var szText = FormatSingleAlert(ctx, target.szLanguage, isRecovery: true);
+                var isOk = await PushWithRetryAsync(target.szGroupId, szText);
+                if (isOk) nSuccess++;
+                else { nFailed++; failedLabels.Add(target.szLabel); }
+            }
+
+            await LogSummaryAsync(ctx, matched.Count, nSuccess, nFailed, failedLabels, isRecovery: true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Line 恢復通知發送流程發生例外: SID={SID}", ctx.szSID);
+        }
+    }
+
+    private async Task<bool> EnqueueOrSendAsync(LineNotifyTargetModel target, NotifyContext ctx, bool isRecovery)
+    {
+        var state = _rateStates.GetOrAdd(target.szGroupId, _ => new GroupRateState());
 
         bool sendNow;
         bool flushSummary = false;
-        List<NotifyMessage>? snapshot = null;
+        List<BufferedMessage>? snapshot = null;
         DateTime windowStart;
 
         lock (state.Lock)
         {
-            // 檢查視窗是否已過期
             if (DateTime.UtcNow - state.WindowStart >= TimeSpan.FromMinutes(1))
             {
                 if (state.Buffer.Count > 0)
                 {
-                    snapshot = new List<NotifyMessage>(state.Buffer);
+                    snapshot = new List<BufferedMessage>(state.Buffer);
                     flushSummary = true;
                 }
                 state.WindowStart = DateTime.UtcNow;
@@ -155,7 +196,16 @@ public class LineNotificationService : IDisposable
             }
             else
             {
-                state.Buffer.Add(msg);
+                state.Buffer.Add(new BufferedMessage
+                {
+                    nSeverity = ctx.nSeverity,
+                    szSID = ctx.szSID,
+                    szName = ctx.szName,
+                    szMessageKey = ctx.szMessageKey,
+                    args = new Dictionary<string, string?>(ctx.args),
+                    dtTime = ctx.dtTime,
+                    szLanguage = target.szLanguage
+                });
                 sendNow = false;
             }
             windowStart = state.WindowStart;
@@ -163,17 +213,16 @@ public class LineNotificationService : IDisposable
 
         if (flushSummary && snapshot != null)
         {
-            var szSummary = FormatSummary(snapshot, windowStart);
-            _ = PushWithRetryAsync(szGroupId, szSummary);
+            var szSummary = FormatSummary(snapshot, windowStart, target.szLanguage);
+            _ = PushWithRetryAsync(target.szGroupId, szSummary);
         }
 
         if (sendNow)
         {
-            var szText = FormatSingleAlert(msg);
-            _ = PushWithRetryAsync(szGroupId, szText);
+            var szText = FormatSingleAlert(ctx, target.szLanguage, isRecovery);
+            return await PushWithRetryAsync(target.szGroupId, szText);
         }
-
-        return Task.CompletedTask;
+        return true; // 已 buffer，視為「將會發送」
     }
 
     private async Task FlushExpiredWindowsAsync()
@@ -182,34 +231,35 @@ public class LineNotificationService : IDisposable
 
         try
         {
+            // 需要在解鎖後查 target 取得 Language，所以分兩步：先快照
+            var pendingFlushes = new List<(string GroupId, List<BufferedMessage> Snapshot, DateTime WindowStart)>();
+
             foreach (var kv in _rateStates)
             {
-                var szGroupId = kv.Key;
                 var state = kv.Value;
-
-                List<NotifyMessage>? snapshot = null;
+                List<BufferedMessage>? snapshot = null;
                 DateTime windowStart;
-
                 lock (state.Lock)
                 {
                     if (DateTime.UtcNow - state.WindowStart < TimeSpan.FromMinutes(1))
                         continue;
-
                     if (state.Buffer.Count > 0)
-                    {
-                        snapshot = new List<NotifyMessage>(state.Buffer);
-                    }
+                        snapshot = new List<BufferedMessage>(state.Buffer);
                     windowStart = state.WindowStart;
                     state.WindowStart = DateTime.UtcNow;
                     state.Count = 0;
                     state.Buffer.Clear();
                 }
-
                 if (snapshot != null)
-                {
-                    var szSummary = FormatSummary(snapshot, windowStart);
-                    await PushWithRetryAsync(szGroupId, szSummary);
-                }
+                    pendingFlushes.Add((kv.Key, snapshot, windowStart));
+            }
+
+            foreach (var (szGroupId, snapshot, windowStart) in pendingFlushes)
+            {
+                // 用 buffer 內第一筆的 language 作為摘要語系
+                var szLanguage = snapshot[0].szLanguage;
+                var szSummary = FormatSummary(snapshot, windowStart, szLanguage);
+                await PushWithRetryAsync(szGroupId, szSummary);
             }
         }
         catch (Exception ex)
@@ -267,7 +317,6 @@ public class LineNotificationService : IDisposable
                 var szBody = await SafeReadBodyAsync(resp);
                 int nStatus = (int)resp.StatusCode;
 
-                // 4xx 不重試
                 if (nStatus >= 400 && nStatus < 500)
                 {
                     _logger.LogError("Line 推播被 API 拒絕（不重試）: GroupId={Group}, Status={Status}, Body={Body}",
@@ -275,7 +324,6 @@ public class LineNotificationService : IDisposable
                     return false;
                 }
 
-                // 5xx 重試（若還有機會）
                 _logger.LogWarning("Line 推播失敗（5xx）: GroupId={Group}, Status={Status}, Attempt={Attempt}",
                     szGroupId, nStatus, nAttempt);
             }
@@ -307,20 +355,27 @@ public class LineNotificationService : IDisposable
         catch { return "<unable to read body>"; }
     }
 
-    // ── 訊息格式化 ──
+    // ── 訊息格式化（依群組 Language）──
 
-    private static string FormatSingleAlert(NotifyMessage msg)
+    private string FormatSingleAlert(NotifyContext ctx, string szLanguage, bool isRecovery)
     {
-        string szIcon = SeverityIcon(msg.nSeverity);
-        string szLabel = SeverityLabel(msg.nSeverity);
-        var sb = new StringBuilder();
-        sb.AppendLine($"{szIcon} 警報觸發 [{szLabel}]");
-        sb.AppendLine($"時間: {msg.dtTriggeredAt:yyyy-MM-dd HH:mm:ss}");
-        sb.Append($"描述: {msg.szMessage}");
-        return sb.ToString();
+        var szIcon = _localizer.SeverityIcon(szLanguage, ctx.nSeverity);
+        var szSeverity = _localizer.SeverityLabel(szLanguage, ctx.nSeverity);
+        var szDescription = _localizer.Format(szLanguage, ctx.szMessageKey, ctx.args);
+
+        var args = new Dictionary<string, string?>
+        {
+            ["icon"] = szIcon,
+            ["severity"] = szSeverity,
+            ["time"] = ctx.dtTime.ToString("yyyy-MM-dd HH:mm:ss"),
+            ["message"] = szDescription
+        };
+
+        var szKey = isRecovery ? "notify.body.cleared.line" : "notify.body.triggered.line";
+        return _localizer.Format(szLanguage, szKey, args);
     }
 
-    private static string FormatSummary(List<NotifyMessage> messages, DateTime dtWindowStart)
+    private string FormatSummary(List<BufferedMessage> messages, DateTime dtWindowStart, string szLanguage)
     {
         var dtWindowEnd = dtWindowStart.Add(TimeSpan.FromMinutes(1));
         int nCritical = messages.Count(m => m.nSeverity == 0);
@@ -328,47 +383,49 @@ public class LineNotificationService : IDisposable
         int nMedium = messages.Count(m => m.nSeverity == 2);
         int nLow = messages.Count(m => m.nSeverity == 3);
 
-        var sb = new StringBuilder();
-        sb.AppendLine($"⚠️ 警報摘要 (近 1 分鐘共 {messages.Count} 則)");
-        sb.AppendLine($"視窗: {dtWindowStart.ToLocalTime():HH:mm:ss} – {dtWindowEnd.ToLocalTime():HH:mm:ss}");
-        sb.AppendLine($"緊急 {nCritical} | 高 {nHigh} | 中 {nMedium} | 低 {nLow}");
-        sb.AppendLine();
-        sb.AppendLine("最近 5 則：");
-
+        var sbRecent = new StringBuilder();
         var recent = messages
-            .OrderByDescending(m => m.dtTriggeredAt)
+            .OrderByDescending(m => m.dtTime)
             .Take(5)
             .ToList();
-
         foreach (var m in recent)
         {
-            sb.AppendLine($"• {m.dtTriggeredAt:HH:mm:ss} [{SeverityLabel(m.nSeverity)}] {m.szMessage} ({m.szSID})");
+            var szSev = _localizer.SeverityLabel(szLanguage, m.nSeverity);
+            var szDesc = _localizer.Format(szLanguage, m.szMessageKey, m.args);
+            sbRecent.AppendLine($"• {m.dtTime:HH:mm:ss} [{szSev}] {szDesc}");
         }
-        return sb.ToString().TrimEnd();
+
+        var args = new Dictionary<string, string?>
+        {
+            ["count"] = messages.Count.ToString(),
+            ["windowStart"] = dtWindowStart.ToLocalTime().ToString("HH:mm:ss"),
+            ["windowEnd"] = dtWindowEnd.ToLocalTime().ToString("HH:mm:ss"),
+            ["critical"] = nCritical.ToString(),
+            ["high"] = nHigh.ToString(),
+            ["medium"] = nMedium.ToString(),
+            ["low"] = nLow.ToString(),
+            ["recent"] = sbRecent.ToString().TrimEnd()
+        };
+        return _localizer.Format(szLanguage, "notify.body.summary.line", args);
     }
 
-    private static string SeverityLabel(byte n) => n switch
+    private async Task LogSummaryAsync(NotifyContext ctx, int nGroupCount, int nSuccess, int nFailed,
+        List<string> failedLabels, bool isRecovery)
     {
-        0 => "緊急",
-        1 => "高",
-        2 => "中",
-        3 => "低",
-        _ => "未知"
-    };
+        NotifyDeliveryLogger.Status status;
+        if (nFailed == 0) status = NotifyDeliveryLogger.Status.AllSent;
+        else if (nSuccess == 0) status = NotifyDeliveryLogger.Status.AllFailed;
+        else status = NotifyDeliveryLogger.Status.PartialFailed;
 
-    private static string SeverityIcon(byte n) => n switch
-    {
-        0 => "🚨", // 🚨
-        1 => "⚠️",  // ⚠
-        2 => "🔶", // 🔶
-        3 => "ℹ️",  // ℹ
-        _ => "❓"          // ❓
-    };
+        string szPrefix = isRecovery ? "[恢復] " : string.Empty;
+        string szDetail = nFailed == 0
+            ? $"{szPrefix}群組 {nGroupCount} 個，全部成功"
+            : $"{szPrefix}群組 {nGroupCount} 個，成功 {nSuccess}、失敗 {nFailed}（失敗：{string.Join(",", failedLabels)}）";
 
-    public void Dispose()
-    {
-        _flushTimer?.Dispose();
+        await _deliveryLogger.LogAsync(ctx.szSID, NotifyDeliveryLogger.Channel.Line, status, szDetail, ctx.nRelatedEventId);
     }
+
+    public void Dispose() => _flushTimer?.Dispose();
 
     // ── 內部狀態 ──
 
@@ -376,15 +433,18 @@ public class LineNotificationService : IDisposable
     {
         public DateTime WindowStart { get; set; } = DateTime.UtcNow;
         public int Count { get; set; }
-        public List<NotifyMessage> Buffer { get; } = new();
+        public List<BufferedMessage> Buffer { get; } = new();
         public object Lock { get; } = new();
     }
 
-    private class NotifyMessage
+    private class BufferedMessage
     {
         public byte nSeverity;
         public string szSID = string.Empty;
-        public string szMessage = string.Empty;
-        public DateTime dtTriggeredAt;
+        public string szName = string.Empty;
+        public string szMessageKey = string.Empty;
+        public IDictionary<string, string?> args = new Dictionary<string, string?>();
+        public DateTime dtTime;
+        public string szLanguage = "zh-TW";
     }
 }

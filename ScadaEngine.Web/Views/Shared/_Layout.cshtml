@@ -202,7 +202,7 @@
                             </li>
                         }
                         @{
-                            bool showPointSettings = canAccess("/CommSetting") || canAccess("/DbCoordinator") || canAccess("/CalcPoint");
+                            bool showPointSettings = canAccess("/ModbusCoordinator") || canAccess("/DbCoordinator") || canAccess("/CalcPoint");
                             bool showSettings = canAccess("/Designer") || canAccess("/AlarmSetting") || canAccess("/AccountSetting") || showPointSettings;
                         }
                         @if (showSettings)
@@ -228,9 +228,9 @@
                                                 <i class="fas fa-map-marker-alt me-2"></i>@Localizer["layout.menu.points"]
                                             </a>
                                             <ul class="dropdown-menu">
-                                                @if (canAccess("/CommSetting"))
+                                                @if (canAccess("/ModbusCoordinator"))
                                                 {
-                                                    <li><a class="dropdown-item" href="/CommSetting"><i class="fas fa-network-wired me-2"></i>@Localizer["layout.menu.commsetting"]</a></li>
+                                                    <li><a class="dropdown-item" href="/ModbusCoordinator"><i class="fas fa-network-wired me-2"></i>@Localizer["layout.menu.modbuscoordinator"]</a></li>
                                                 }
                                                 @if (canAccess("/DbCoordinator"))
                                                 {

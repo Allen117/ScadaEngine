@@ -251,6 +251,61 @@ public class DatabaseInitializationService
                         "ALTER TABLE [EventLog] ADD [MessageArgs] NVARCHAR(512) NULL");
                     _logger.LogInformation("欄位遷移完成: EventLog 新增 MessageArgs 欄位");
                 }
+
+                // EventLog: 補上通知摘要欄位（NotifyChannel / NotifyStatus / NotifyDetail / NotifyRelatedEventId）
+                var nHasNotifyChannel = await connection.QuerySingleAsync<int>(
+                    @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+                      WHERE TABLE_NAME = 'EventLog' AND COLUMN_NAME = 'NotifyChannel'");
+                if (nHasNotifyChannel == 0)
+                {
+                    await connection.ExecuteAsync(
+                        "ALTER TABLE [EventLog] ADD [NotifyChannel] NVARCHAR(10) NULL");
+                    _logger.LogInformation("欄位遷移完成: EventLog 新增 NotifyChannel 欄位");
+                }
+                var nHasNotifyStatus = await connection.QuerySingleAsync<int>(
+                    @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+                      WHERE TABLE_NAME = 'EventLog' AND COLUMN_NAME = 'NotifyStatus'");
+                if (nHasNotifyStatus == 0)
+                {
+                    await connection.ExecuteAsync(
+                        "ALTER TABLE [EventLog] ADD [NotifyStatus] TINYINT NULL");
+                    _logger.LogInformation("欄位遷移完成: EventLog 新增 NotifyStatus 欄位");
+                }
+                var nHasNotifyDetail = await connection.QuerySingleAsync<int>(
+                    @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+                      WHERE TABLE_NAME = 'EventLog' AND COLUMN_NAME = 'NotifyDetail'");
+                if (nHasNotifyDetail == 0)
+                {
+                    await connection.ExecuteAsync(
+                        "ALTER TABLE [EventLog] ADD [NotifyDetail] NVARCHAR(500) NULL");
+                    _logger.LogInformation("欄位遷移完成: EventLog 新增 NotifyDetail 欄位");
+                }
+                var nHasNotifyRelatedEventId = await connection.QuerySingleAsync<int>(
+                    @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+                      WHERE TABLE_NAME = 'EventLog' AND COLUMN_NAME = 'NotifyRelatedEventId'");
+                if (nHasNotifyRelatedEventId == 0)
+                {
+                    await connection.ExecuteAsync(
+                        "ALTER TABLE [EventLog] ADD [NotifyRelatedEventId] BIGINT NULL");
+                    _logger.LogInformation("欄位遷移完成: EventLog 新增 NotifyRelatedEventId 欄位");
+                }
+            }
+
+            // LineNotifyTargets: 補上 Language 欄位
+            var nHasLineTargetsTable = await connection.QuerySingleAsync<int>(
+                @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
+                  WHERE TABLE_NAME = 'LineNotifyTargets' AND TABLE_TYPE = 'BASE TABLE'");
+            if (nHasLineTargetsTable > 0)
+            {
+                var nHasLineLanguage = await connection.QuerySingleAsync<int>(
+                    @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+                      WHERE TABLE_NAME = 'LineNotifyTargets' AND COLUMN_NAME = 'Language'");
+                if (nHasLineLanguage == 0)
+                {
+                    await connection.ExecuteAsync(
+                        "ALTER TABLE [LineNotifyTargets] ADD [Language] NVARCHAR(10) NOT NULL DEFAULT 'zh-TW'");
+                    _logger.LogInformation("欄位遷移完成: LineNotifyTargets 新增 Language 欄位（預設 zh-TW）");
+                }
             }
         }
         catch (Exception ex)

@@ -57,6 +57,37 @@
         } catch (_) { /* ignore */ }
     }
 
+    // ── 排程快取（DI 點位綁定排程用，lazy 載入）──
+    // 切到包含排程型 DI 的頁面時 fetch 一次，後續即時更新迴圈直接讀此快取
+    var _scheduleCache = null;
+    var _scheduleCacheLoading = null;
+    async function _ensureScheduleCache() {
+        if (_scheduleCache) return _scheduleCache;
+        if (_scheduleCacheLoading) return _scheduleCacheLoading;
+        _scheduleCacheLoading = (async function () {
+            try {
+                var resp = await fetch('/api/schedules');
+                if (resp.ok) {
+                    _scheduleCache = await resp.json();
+                } else {
+                    _scheduleCache = [];
+                }
+            } catch (_) {
+                _scheduleCache = [];
+            } finally {
+                _scheduleCacheLoading = null;
+            }
+            return _scheduleCache;
+        })();
+        return _scheduleCacheLoading;
+    }
+    function _pageHasScheduleDi(page) {
+        if (!page || !page.arrWidgetState) return false;
+        return page.arrWidgetState.some(function (ws) {
+            return ws.szType === 'diPoint' && ws.props && ws.props.nScheduleId != null;
+        });
+    }
+
     // ── 初始化 ──
     document.addEventListener('DOMContentLoaded', async function () {
         await initScadaViewer();
@@ -200,7 +231,15 @@
         scadaCurrentId = szId;
         renderScadaPageTree();
         var page = findScadaPage(szId);
-        if (page) renderScadaCanvas(page);
+        if (!page) return;
+        // 若本頁含綁排程的 DI widget 才 fetch /api/schedules（lazy；plan 決策 + 使用者回覆）
+        if (_pageHasScheduleDi(page)) {
+            _ensureScheduleCache().then(function () {
+                renderScadaCanvas(page);
+            });
+        } else {
+            renderScadaCanvas(page);
+        }
     }
 
     // ── 畫布渲染 ──
@@ -334,7 +373,7 @@
             if (p.szSid) el.addEventListener('contextmenu', function (ev) { onTrendContextMenu(ev, el.dataset.sid); });
         } else if (ws.szType === 'diPoint') {
             var p = ws.props || {};
-            el.dataset.sid            = p.szSid          || '';
+            var bSchedule = p.nScheduleId != null;
             el.dataset.szDisplayMode  = p.szDisplayMode  || 'indicator';
             el.dataset.szOnColor      = p.szOnColor      || '#28a745';
             el.dataset.szOffColor     = p.szOffColor     || '#6c757d';
@@ -346,10 +385,19 @@
             el.dataset.szBgColor      = p.szBgColor      || 'transparent';
             el.dataset.szTitle        = p.szTitle        || '';
             el.dataset.szAlarmColor   = p.szAlarmColor   || '#dc3545';
-            el.classList.add('scada-di-point');
-            el.style.overflow = 'visible';
-            el.innerHTML = buildDiPointViewHtml(p, null);
-            if (p.szSid) el.addEventListener('contextmenu', function (ev) { onTrendContextMenu(ev, el.dataset.sid); });
+            if (bSchedule) {
+                el.dataset.scheduleId   = String(p.nScheduleId);
+                el.dataset.scheduleName = p.szScheduleName || '';
+                el.classList.add('scada-di-schedule');
+                el.style.overflow = 'visible';
+                el.innerHTML = buildDiPointViewHtml(p, null);
+            } else {
+                el.dataset.sid            = p.szSid          || '';
+                el.classList.add('scada-di-point');
+                el.style.overflow = 'visible';
+                el.innerHTML = buildDiPointViewHtml(p, null);
+                if (p.szSid) el.addEventListener('contextmenu', function (ev) { onTrendContextMenu(ev, el.dataset.sid); });
+            }
         } else if (ws.szType === 'aoPoint') {
             var p = ws.props || {};
             el.dataset.cid               = p.szCid              || '';
@@ -529,12 +577,16 @@
     function buildDiPointViewHtml(props, bIsOn) {
         var szMode = props.szDisplayMode || 'indicator';
         var szBg   = (props.szBgColor && props.szBgColor !== 'transparent') ? props.szBgColor : 'transparent';
-        var szTitle = props.szTitle || '';
-        var szTooltip = szTitle
+        var szScheduleName = props.szScheduleName || '';
+        var szTitle = szScheduleName ? '' : (props.szTitle || '');
+        var szTooltipInner = szScheduleName
+            ? escViewHtml(t('scadapage.di.schedule_label')) + ': ' + escViewHtml(szScheduleName)
+            : (szTitle ? escViewHtml(szTitle) : '');
+        var szTooltip = szTooltipInner
             ? '<div class="scada-hover-label" style="display:none;position:absolute;top:100%;margin-top:4px;left:50%;' +
                     'transform:translateX(-50%);background:rgba(33,37,41,.85);color:#fff;' +
                     'font-size:11px;padding:2px 8px;border-radius:4px;white-space:nowrap;' +
-                    'pointer-events:none;z-index:25;">' + escViewHtml(szTitle) + '</div>'
+                    'pointer-events:none;z-index:25;">' + szTooltipInner + '</div>'
             : '';
 
         var isAlarm = props.isAlarmEnabled &&
@@ -592,6 +644,7 @@
                                 'border-radius:6px;background:' + szBlock + ';cursor:context-menu;">' +
                         escViewHtml(szName) +
                     '</div>' +
+                    _buildModeBadgeHtml(szCid) +
                     '<div class="scada-hover-label"' +
                          ' style="display:none;position:absolute;top:100%;margin-top:4px;left:50%;' +
                                 'transform:translateX(-50%);white-space:nowrap;' +
@@ -601,6 +654,29 @@
                         szTooltipText +
                     '</div>' +
                 '</div>';
+    }
+
+    // ── 手動模式 M 角標 HTML（控制元件 AO/DO/Pump 共用）──
+    // 初始顯示狀態由 _aoManualValueMap 預判（page load 時已從 /api/control/manual-values 載入）
+    // 後續由 /api/realtime/latest polling 的 isAuto 欄位驅動 toggle
+    function _buildModeBadgeHtml(szCid, szExtraStyle) {
+        if (!szCid) return '';
+        var cached = _aoManualValueMap[szCid];
+        var bManual = !!(cached && cached.isAuto === false);
+        var szDisplay = bManual ? 'block' : 'none';
+        var szTitle = t('scadapage.badge.manual_mode_tooltip');
+        return '<div class="scada-mode-badge" data-cid="' + escViewHtml(szCid) + '"' +
+                    ' title="' + escViewHtml(szTitle) + '"' +
+                    ' style="display:' + szDisplay + ';' + (szExtraStyle || '') + '">M</div>';
+    }
+
+    // ── 切換指定 CID 對應的 M 角標顯示（optimistic / polling 共用）──
+    function _toggleModeBadge(szCid, isAuto) {
+        if (!szCid) return;
+        var nodes = document.querySelectorAll('.scada-mode-badge[data-cid="' + szCid + '"]');
+        for (var i = 0; i < nodes.length; i++) {
+            nodes[i].style.display = (isAuto === false) ? 'block' : 'none';
+        }
     }
 
     // ── 控制狀態高亮輔助 ──
@@ -795,6 +871,7 @@
             var result = await resp.json();
             if (result.success) {
                 _aoManualValueMap[szCid] = { value: fValue, isAuto: false };
+                _toggleModeBadge(szCid, false);
                 showControlToast('\u5df2\u9001\u51fa AO \u624b\u52d5\u63a7\u5236\uff1a' + szTitle + ' = ' + fValue);
             } else {
                 alert('\u5beb\u5165\u5931\u6557\uff1a' + (result.error || '\u672a\u77e5\u932f\u8aa4'));
@@ -820,6 +897,7 @@
             var result = await resp.json();
             if (result.success) {
                 _aoManualValueMap[szCid] = { value: 0, isAuto: true };
+                _toggleModeBadge(szCid, true);
                 showControlToast('\u5df2\u5207\u63db\u70ba\u81ea\u52d5\u63a7\u5236\uff1a' + szTitle);
             } else {
                 alert('\u81ea\u52d5\u63a7\u5236\u5207\u63db\u5931\u6557\uff1a' + (result.error || '\u672a\u77e5\u932f\u8aa4'));
@@ -854,6 +932,7 @@
                                 'user-select:none;">' +
                         escViewHtml(szName) +
                     '</div>' +
+                    _buildModeBadgeHtml(szCid) +
                     '<div class="scada-hover-label"' +
                          ' style="display:none;position:absolute;top:100%;margin-top:4px;left:50%;' +
                                 'transform:translateX(-50%);white-space:nowrap;' +
@@ -949,6 +1028,7 @@
             var result = await resp.json();
             if (result.success) {
                 _aoManualValueMap[szCid] = { value: nValue, isAuto: false };
+                _toggleModeBadge(szCid, false);
                 showControlToast('\u5df2\u9001\u51fa DO \u5beb\u5165\uff1a' + szTitle + ' \u2192 ' + szLabel + '\uff08\u503c ' + nValue + '\uff09');
             } else {
                 alert('\u5beb\u5165\u5931\u6557\uff1a' + (result.error || '\u672a\u77e5\u932f\u8aa4'));
@@ -973,6 +1053,7 @@
             var result = await resp.json();
             if (result.success) {
                 _aoManualValueMap[szCid] = { value: 0, isAuto: true };
+                _toggleModeBadge(szCid, true);
                 showControlToast('\u5df2\u5207\u63db\u70ba DO \u81ea\u52d5\u63a7\u5236\uff1a' + szTitle);
             } else {
                 alert('\u81ea\u52d5\u63a7\u5236\u5207\u63db\u5931\u6557\uff1a' + (result.error || '\u672a\u77e5\u932f\u8aa4'));
@@ -1049,6 +1130,21 @@
         if (szModeText) szTooltipParts.push(szModeText);
         if (szFreqText) szTooltipParts.push(szFreqText);
 
+        // 兩個 M badge：泵本體（szCidStartStop）+ 變頻器（szCidFreqSet）各自獨立顯示
+        // 有頻率 gauge 時：泵本體 badge 在左上、變頻器 badge 在右上；無 gauge 時：泵本體 badge 在右上
+        var szCidSS = props.szCidStartStop || '';
+        var szCidFQ = props.szCidFreqSet   || '';
+        var szBadgeSS = '';
+        var szBadgeFQ = '';
+        if (szCidSS) {
+            szBadgeSS = bHasFreq
+                ? _buildModeBadgeHtml(szCidSS, 'left:-4px;right:auto;')
+                : _buildModeBadgeHtml(szCidSS);
+        }
+        if (szCidFQ && bHasFreq) {
+            szBadgeFQ = _buildModeBadgeHtml(szCidFQ);
+        }
+
         return '<div style="position:relative;width:100%;height:100%;background:' + szBg + ';border-radius:4px;">' +
             '<svg viewBox="' + szViewBox + '" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block;">' +
                 '<rect x="38" y="86" width="44" height="6" rx="2" fill="#4a4a4a"/>' +
@@ -1075,6 +1171,8 @@
                     '</g>' +
                 '</g>' + szGaugeHtml +
             '</svg>' +
+            szBadgeSS +
+            szBadgeFQ +
             '<div class="scada-hover-label"' +
                  ' style="display:none;position:absolute;bottom:4px;left:50%;' +
                         'transform:translateX(-50%);white-space:nowrap;' +
@@ -1134,6 +1232,7 @@
                 var result = await resp.json();
                 if (result.success) {
                     _aoManualValueMap[szCid] = { value: fRound, isAuto: false };
+                    _toggleModeBadge(szCid, false);
                     showControlToast('\u5df2\u9001\u51fa\u983b\u7387\u8a2d\u5b9a\uff1a' + szTitle + ' \u2192 ' + fRound + ' Hz');
                 } else {
                     alert('\u983b\u7387\u8a2d\u5b9a\u5931\u6557\uff1a' + (result.error || '\u672a\u77e5\u932f\u8aa4'));
@@ -1246,31 +1345,57 @@
             var nFqMin = parseFloat(el.dataset.nFreqSetMin) || 0;
             var nFqMax = parseFloat(el.dataset.nFreqSetMax) || 60;
             var szLastFreq = (cachedFQ && !cachedFQ.isAuto && cachedFQ.value != null) ? String(cachedFQ.value) : '';
-            var row = document.createElement('div');
-            row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 10px;margin:2px 4px;';
-            row.innerHTML = '<i class="fas fa-tachometer-alt" style="color:#17a2b8;width:16px;text-align:center;font-size:13px;"></i>' +
-                             '<span style="white-space:nowrap;">\u983b\u7387\u8a2d\u5b9a</span>' +
-                             '<input type="number" class="pump-freq-input"' +
-                                    ' value="' + szLastFreq + '"' +
-                                    ' style="width:70px;padding:2px 5px;border:1px solid #adb5bd;border-radius:4px;' +
-                                           'font-size:12px;text-align:center;background:#fff;color:#212529;"' +
-                                    ' step="0.1" min="' + nFqMin + '" max="' + nFqMax + '"' +
-                                    ' placeholder="Hz">' +
-                             '<button class="pump-freq-btn"' +
-                                     ' style="padding:2px 8px;border:none;border-radius:4px;background:#17a2b8;color:#fff;' +
-                                            'font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;">' +
-                                 '\u78ba\u5b9a' +
-                             '</button>';
-            if (cachedFQ && !cachedFQ.isAuto) _applyActiveStyle(row);
-            row.addEventListener('click', function (ev) { ev.stopPropagation(); });
-            row.querySelector('.pump-freq-btn').addEventListener('click', function () {
-                var fVal = parseFloat(row.querySelector('.pump-freq-input').value);
+            var fqParentRow = document.createElement('div');
+            fqParentRow.style.cssText = 'position:relative;display:flex;align-items:center;gap:8px;padding:6px 10px;margin:2px 4px;cursor:pointer;' +
+                'transition:background .1s;';
+            fqParentRow.innerHTML = '<i class="fas fa-tachometer-alt" style="color:#17a2b8;width:16px;text-align:center;font-size:13px;"></i>' +
+                                     '<span style="white-space:nowrap;">頻率設定</span>' +
+                                     '<i class="fas fa-chevron-right" style="margin-left:auto;font-size:10px;color:#adb5bd;"></i>';
+
+            var fqSubMenu = document.createElement('div');
+            fqSubMenu.style.cssText = 'position:absolute;left:100%;top:-1px;background:#fff;border:1px solid #dee2e6;border-radius:6px;' +
+                'box-shadow:0 4px 12px rgba(0,0,0,.15);min-width:200px;padding:4px 0;font-size:13px;display:none;';
+
+            var fqInputRow = document.createElement('div');
+            fqInputRow.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 10px;margin:2px 4px;';
+            fqInputRow.innerHTML = '<i class="fas fa-sliders-h" style="color:#17a2b8;width:16px;text-align:center;font-size:13px;"></i>' +
+                                    '<input type="number" class="pump-freq-input"' +
+                                           ' value="' + szLastFreq + '"' +
+                                           ' style="width:70px;padding:2px 5px;border:1px solid #adb5bd;border-radius:4px;' +
+                                                  'font-size:12px;text-align:center;background:#fff;color:#212529;"' +
+                                           ' step="0.1" min="' + nFqMin + '" max="' + nFqMax + '"' +
+                                           ' placeholder="Hz">' +
+                                    '<button class="pump-freq-btn"' +
+                                            ' style="padding:2px 8px;border:none;border-radius:4px;background:#17a2b8;color:#fff;' +
+                                                   'font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;">' +
+                                        '\u78ba\u5b9a' +
+                                    '</button>';
+            if (cachedFQ && !cachedFQ.isAuto) _applyActiveStyle(fqInputRow);
+            fqInputRow.addEventListener('click', function (ev) { ev.stopPropagation(); });
+            fqInputRow.querySelector('.pump-freq-btn').addEventListener('click', function () {
+                var fVal = parseFloat(fqInputRow.querySelector('.pump-freq-input').value);
                 if (isNaN(fVal)) { alert('\u8acb\u8f38\u5165\u6709\u6548\u6578\u503c'); return; }
                 if (fVal < nFqMin || fVal > nFqMax) { alert('\u8f38\u5165\u503c ' + fVal + ' \u8d85\u51fa\u7bc4\u570d\uff0c\u5141\u8a31\u7bc4\u570d\uff1a' + nFqMin + ' ~ ' + nFqMax); return; }
                 _removePumpContextMenu();
                 _pumpFreqSet(szCidFQ, szTitle, fVal, nFqMax);
             });
-            menu.appendChild(row);
+            fqSubMenu.appendChild(fqInputRow);
+
+            var fqAutoRow = document.createElement('div');
+            fqAutoRow.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 10px;margin:2px 4px;cursor:pointer;transition:background .1s;';
+            fqAutoRow.innerHTML = '<i class="fas fa-sync-alt" style="color:#6c757d;width:16px;text-align:center;font-size:13px;"></i>' +
+                                   '<span>自動控制</span>';
+            var fqIsActiveAuto = !!(cachedFQ && cachedFQ.isAuto);
+            if (fqIsActiveAuto) _applyActiveStyle(fqAutoRow);
+            fqAutoRow.addEventListener('mouseenter', function () { if (!fqIsActiveAuto) fqAutoRow.style.background = '#f0f0f0'; });
+            fqAutoRow.addEventListener('mouseleave', function () { if (!fqIsActiveAuto) fqAutoRow.style.background = ''; });
+            fqAutoRow.addEventListener('click', function () { _removePumpContextMenu(); _pumpAutoControl(szCidFQ, szTitle); });
+            fqSubMenu.appendChild(fqAutoRow);
+
+            fqParentRow.appendChild(fqSubMenu);
+            fqParentRow.addEventListener('mouseenter', function () { fqParentRow.style.background = '#f0f0f0'; fqSubMenu.style.display = 'block'; });
+            fqParentRow.addEventListener('mouseleave', function () { fqParentRow.style.background = ''; fqSubMenu.style.display = 'none'; });
+            menu.appendChild(fqParentRow);
         }
 
         var monitorSids = [
@@ -1340,6 +1465,7 @@
             var result = await resp.json();
             if (result.success) {
                 _aoManualValueMap[szCid] = { value: nValue, isAuto: false };
+                _toggleModeBadge(szCid, false);
                 showControlToast('\u5df2\u9001\u51fa\u6c34\u6cf5\u63a7\u5236\uff1a' + szTitle + ' \u2192 ' + szLabel);
             } else {
                 alert('\u63a7\u5236\u5931\u6557\uff1a' + (result.error || '\u672a\u77e5\u932f\u8aa4'));
@@ -1360,6 +1486,7 @@
             var result = await resp.json();
             if (result.success) {
                 _aoManualValueMap[szCid] = { value: fValue, isAuto: false };
+                _toggleModeBadge(szCid, false);
                 showControlToast('\u5df2\u9001\u51fa\u983b\u7387\u8a2d\u5b9a\uff1a' + szTitle + ' \u2192 ' + fValue + ' Hz');
             } else {
                 alert('\u983b\u7387\u8a2d\u5b9a\u5931\u6557\uff1a' + (result.error || '\u672a\u77e5\u932f\u8aa4'));
@@ -1380,6 +1507,7 @@
             var result = await resp.json();
             if (result.success) {
                 _aoManualValueMap[szCid] = { value: 0, isAuto: true };
+                _toggleModeBadge(szCid, true);
                 showControlToast('\u5df2\u5207\u63db\u70ba\u81ea\u52d5\u63a7\u5236\uff1a' + szTitle);
             } else {
                 alert('\u81ea\u52d5\u63a7\u5236\u5207\u63db\u5931\u6557\uff1a' + (result.error || '\u672a\u77e5\u932f\u8aa4'));
@@ -1531,6 +1659,7 @@
         var sidMap = {};
         var sidValueMap = {};
         var sidQualityMap = {};
+        var sidIsAutoMap = {};
         data.forEach(function (item) {
             if (item.sid) {
                 sidValueMap[item.sid] = item.value;
@@ -1538,6 +1667,16 @@
                 if (item.value !== '--' && item.value !== null && item.value !== undefined) {
                     var fParsed = parseFloat(item.value);
                     if (!isNaN(fParsed)) sidMap[item.sid] = fParsed;
+                }
+                // 同步手動/自動旗標：null 代表非控制點位，不收進 map
+                if (item.isAuto === true || item.isAuto === false) {
+                    sidIsAutoMap[item.sid] = item.isAuto;
+                    // 同步 _aoManualValueMap 讓右鍵選單高亮狀態與 polling 一致
+                    if (_aoManualValueMap[item.sid]) {
+                        _aoManualValueMap[item.sid].isAuto = item.isAuto;
+                    } else {
+                        _aoManualValueMap[item.sid] = { value: 0, isAuto: item.isAuto };
+                    }
                 }
             }
         });
@@ -1617,6 +1756,44 @@
             }
         });
 
+        // 更新 DI 點位 — 排程綁定
+        document.querySelectorAll('.scada-di-schedule[data-schedule-id]').forEach(function (el) {
+            var nSchId = parseInt(el.dataset.scheduleId, 10);
+            if (isNaN(nSchId)) return;
+            var sch = (_scheduleCache || []).find(function (s) { return s.nId === nSchId; });
+            var szSchName = (sch && sch.szName) ? sch.szName : (el.dataset.scheduleName || '');
+            // 排程已刪除或停用 → 紅字提示（依使用者回覆 + plan 驗收條件）
+            if (!sch || !sch.isEnabled) {
+                var szTooltipNF = szSchName
+                    ? '<div class="scada-hover-label" style="display:none;position:absolute;top:100%;margin-top:4px;left:50%;' +
+                            'transform:translateX(-50%);background:rgba(33,37,41,.85);color:#fff;' +
+                            'font-size:11px;padding:2px 8px;border-radius:4px;white-space:nowrap;' +
+                            'pointer-events:none;z-index:25;">' +
+                        escViewHtml(t('scadapage.di.schedule_label')) + ': ' + escViewHtml(szSchName) + '</div>'
+                    : '';
+                el.innerHTML = '<div style="position:relative;width:100%;height:100%;display:flex;' +
+                    'align-items:center;justify-content:center;">' +
+                    '<span style="font-size:13px;color:#dc3545;font-weight:700;">' +
+                    escViewHtml(t('scadapage.di.schedule_not_found')) + '</span>' +
+                    szTooltipNF + '</div>';
+                return;
+            }
+            var bIsOn = (window.ScheduleEval && window.ScheduleEval.evalScheduleNow)
+                ? window.ScheduleEval.evalScheduleNow(nSchId, 'contact_no', _scheduleCache)
+                : null;
+            el.innerHTML = buildDiPointViewHtml({
+                szDisplayMode: el.dataset.szDisplayMode || 'indicator',
+                szOnColor: el.dataset.szOnColor || '#28a745', szOffColor: el.dataset.szOffColor || '#6c757d',
+                szOnLabel: el.dataset.szOnLabel || 'ON', szOffLabel: el.dataset.szOffLabel || 'OFF',
+                nIndicatorSize: parseInt(el.dataset.nIndicatorSize) || 28,
+                nFontSize: parseInt(el.dataset.nFontSize) || 24,
+                szBgColor: el.dataset.szBgColor || 'transparent', szTitle: el.dataset.szTitle || '',
+                szScheduleName: szSchName,
+                isAlarmEnabled: false,
+                szAlarmColor: el.dataset.szAlarmColor || '#dc3545'
+            }, bIsOn === true);
+        });
+
         // 更新 DI 點位
         document.querySelectorAll('.scada-di-point[data-sid]').forEach(function (el) {
             var sid = el.dataset.sid;
@@ -1691,7 +1868,8 @@
                     szFaultColor: el.dataset.szFaultColor || '#dc3545', szManualColor: el.dataset.szManualColor || '#ffc107',
                     szAutoColor: el.dataset.szAutoColor || '#0d6efd', szOutletDir: el.dataset.szOutletDir || 'right',
                     szBgColor: el.dataset.szBgColor || 'transparent', nFreqMax: parseFloat(el.dataset.nFreqMax) || 60,
-                    szSidFreq: sidFreq, szSidMode: sidMode
+                    szSidFreq: sidFreq, szSidMode: sidMode,
+                    szCidStartStop: el.dataset.cidStartStop || '', szCidFreqSet: el.dataset.cidFreqSet || ''
                 }, szState, szFreqVal, szModeVal);
             } else if (sidFreq) {
                 var nFreqMax = parseFloat(el.dataset.nFreqMax) || 60;
@@ -1762,6 +1940,15 @@
                     td.style.color = szOrigColor;
                 }
             }
+        });
+
+        // 更新所有控制元件（AO/DO/Pump x2）右上角的 M 角標
+        // 必須放在 pump rerender 之後，因 pump 換 innerHTML 會新建 badge DOM
+        document.querySelectorAll('.scada-mode-badge[data-cid]').forEach(function (badge) {
+            var cid = badge.dataset.cid;
+            if (!cid) return;
+            var ia = sidIsAutoMap[cid];
+            badge.style.display = (ia === false) ? 'block' : 'none';
         });
     }
 })();

@@ -1,0 +1,13 @@
+{
+  "EnableNotification": false,
+  "SmtpHost": "smtp.gmail.com",
+  "SmtpPort": 587,
+  "UseSsl": false,
+  "UseStartTls": true,
+  "Username": "",
+  "Password": "",
+  "FromAddress": "",
+  "FromDisplayName": "SCADA Engine",
+  "RatePerMinute": 10,
+  "TestSendThrottleSeconds": 10
+}

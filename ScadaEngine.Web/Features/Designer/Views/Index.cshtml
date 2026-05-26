@@ -1,5 +1,5 @@
 @{
-    ViewData["Title"] = "畫面設計";
+    ViewData["Title"] = Localizer["designer.title"].Value;
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
@@ -11,18 +11,18 @@
         <!-- ===== 工具列 ===== -->
         <div class="designer-toolbar">
             <i class="fas fa-paint-brush text-primary me-1"></i>
-            <span class="text-white fw-semibold" style="font-size:13px;">畫面設計</span>
+            <span class="text-white fw-semibold" style="font-size:13px;">@Localizer["designer.title"]</span>
 
             <div style="width:1px;height:16px;background:#555;margin:0 4px;"></div>
 
             <button class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size:12px;"
-                    onclick="clearCanvas()" title="清除所有元件">
-                <i class="fas fa-trash-alt me-1"></i>清除
+                    onclick="clearCanvas()" title="@Localizer["designer.toolbar.clear_tooltip"]">
+                <i class="fas fa-trash-alt me-1"></i>@Localizer["designer.toolbar.clear"]
             </button>
 
             <button class="btn btn-sm btn-outline-warning py-0 px-2" style="font-size:12px;"
-                    onclick="triggerImportImage()" title="匯入圖檔作為畫布背景">
-                <i class="fas fa-file-image me-1"></i>匯入圖片
+                    onclick="triggerImportImage()" title="@Localizer["designer.toolbar.import_image_tooltip"]">
+                <i class="fas fa-file-image me-1"></i>@Localizer["designer.toolbar.import_image"]
             </button>
 
             <!-- 隱藏的 file input，僅接受圖片格式 -->
@@ -38,17 +38,100 @@
                 <span id="bgImgSize" style="color:#aaa;"></span>
                 <button onclick="clearBgImage()" style="background:none;border:none;
                         color:#ff8888;cursor:pointer;padding:0 2px;font-size:12px;"
-                        title="移除背景圖">✕</button>
+                        title="@Localizer["designer.toolbar.bg_remove"]">✕</button>
             </span>
 
             <button id="btnSave" class="btn btn-sm btn-success py-0 px-2" style="font-size:12px;"
-                    onclick="saveDesign()" title="儲存所有頁面至資料庫">
-                <i class="fas fa-save me-1"></i>儲存
+                    onclick="saveDesign()" title="@Localizer["designer.toolbar.save_tooltip"]">
+                <i class="fas fa-save me-1"></i>@Localizer["designer.toolbar.save"]
             </button>
+
+            <!-- ===== 對齊工具群組（≥ 2 選取時顯示） ===== -->
+            <div id="alignToolGroup" class="align-tool-group" style="display:none;">
+                <div class="align-tool-sep"></div>
+                <button type="button" class="align-tool-btn" onclick="alignLeft()"
+                        title="@Localizer["designer.toolbar.align_left_tooltip"]"
+                        aria-label="@Localizer["designer.toolbar.align_left"]">
+                    <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <line x1="1" y1="1" x2="1" y2="15" stroke="currentColor" stroke-width="1.4"/>
+                        <rect x="2" y="3" width="11" height="3"/>
+                        <rect x="2" y="9" width="7" height="3"/>
+                    </svg>
+                </button>
+                <button type="button" class="align-tool-btn" onclick="alignCenterH()"
+                        title="@Localizer["designer.toolbar.align_center_h_tooltip"]"
+                        aria-label="@Localizer["designer.toolbar.align_center_h"]">
+                    <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <line x1="8" y1="1" x2="8" y2="15" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 1"/>
+                        <rect x="2" y="3" width="12" height="3"/>
+                        <rect x="4" y="9" width="8" height="3"/>
+                    </svg>
+                </button>
+                <button type="button" class="align-tool-btn" onclick="alignRight()"
+                        title="@Localizer["designer.toolbar.align_right_tooltip"]"
+                        aria-label="@Localizer["designer.toolbar.align_right"]">
+                    <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <line x1="15" y1="1" x2="15" y2="15" stroke="currentColor" stroke-width="1.4"/>
+                        <rect x="3" y="3" width="11" height="3"/>
+                        <rect x="7" y="9" width="7" height="3"/>
+                    </svg>
+                </button>
+                <div class="align-tool-divider"></div>
+                <button type="button" class="align-tool-btn" onclick="alignTop()"
+                        title="@Localizer["designer.toolbar.align_top_tooltip"]"
+                        aria-label="@Localizer["designer.toolbar.align_top"]">
+                    <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <line x1="1" y1="1" x2="15" y2="1" stroke="currentColor" stroke-width="1.4"/>
+                        <rect x="3" y="2" width="3" height="11"/>
+                        <rect x="9" y="2" width="3" height="7"/>
+                    </svg>
+                </button>
+                <button type="button" class="align-tool-btn" onclick="alignCenterV()"
+                        title="@Localizer["designer.toolbar.align_center_v_tooltip"]"
+                        aria-label="@Localizer["designer.toolbar.align_center_v"]">
+                    <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <line x1="1" y1="8" x2="15" y2="8" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 1"/>
+                        <rect x="3" y="2" width="3" height="12"/>
+                        <rect x="9" y="4" width="3" height="8"/>
+                    </svg>
+                </button>
+                <button type="button" class="align-tool-btn" onclick="alignBottom()"
+                        title="@Localizer["designer.toolbar.align_bottom_tooltip"]"
+                        aria-label="@Localizer["designer.toolbar.align_bottom"]">
+                    <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <line x1="1" y1="15" x2="15" y2="15" stroke="currentColor" stroke-width="1.4"/>
+                        <rect x="3" y="3" width="3" height="11"/>
+                        <rect x="9" y="7" width="3" height="7"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- ===== 等距分布工具群組（≥ 3 選取時顯示） ===== -->
+            <div id="distToolGroup" class="dist-tool-group" style="display:none;">
+                <div class="align-tool-divider"></div>
+                <button type="button" class="align-tool-btn" onclick="distributeHorizontally()"
+                        title="@Localizer["designer.toolbar.distribute_h_tooltip"]"
+                        aria-label="@Localizer["designer.toolbar.distribute_h"]">
+                    <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="1" y="3" width="2.5" height="10"/>
+                        <rect x="6.75" y="3" width="2.5" height="10"/>
+                        <rect x="12.5" y="3" width="2.5" height="10"/>
+                    </svg>
+                </button>
+                <button type="button" class="align-tool-btn" onclick="distributeVertically()"
+                        title="@Localizer["designer.toolbar.distribute_v_tooltip"]"
+                        aria-label="@Localizer["designer.toolbar.distribute_v"]">
+                    <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="3" y="1" width="10" height="2.5"/>
+                        <rect x="3" y="6.75" width="10" height="2.5"/>
+                        <rect x="3" y="12.5" width="10" height="2.5"/>
+                    </svg>
+                </button>
+            </div>
 
             <span class="ms-auto text-secondary" style="font-size:11px;">
                 <i class="fas fa-info-circle me-1"></i>
-                從左側拖曳元件至畫布 &bull; 點選元件可調整屬性 &bull; Del 鍵刪除
+                @Localizer["designer.toolbar.hint"]
             </span>
         </div>
 
@@ -58,8 +141,8 @@
             <!-- 頁面清單 -->
             <div class="page-panel">
                 <div class="page-panel-header">
-                    <i class="fas fa-sitemap me-1"></i> 頁面
-                    <button class="btn-add-root" onclick="addPage(null)" title="新增根頁面">＋</button>
+                    <i class="fas fa-sitemap me-1"></i> @Localizer["designer.page_panel.title"]
+                    <button class="btn-add-root" onclick="addPage(null)" title="@Localizer["designer.page_panel.add_root_tooltip"]">＋</button>
                 </div>
                 <div class="page-tree-wrap" id="pageTreeWrap">
                     <!-- 由 JS 動態產生 -->
@@ -67,16 +150,16 @@
             </div>
 
             <!-- 元件庫展開按鈕 -->
-            <div class="comp-expand-tab" id="compExpandTab" style="display:none;" onclick="toggleComponentPanel()" title="展開元件庫">
+            <div class="comp-expand-tab" id="compExpandTab" style="display:none;" onclick="toggleComponentPanel()" title="@Localizer["designer.component_panel.expand_tooltip"]">
                 <i class="fas fa-chevron-right"></i>
-                <span class="tab-label">元件庫</span>
+                <span class="tab-label">@Localizer["designer.component_panel.title"]</span>
             </div>
 
             <!-- 元件庫 -->
             <div class="component-panel" id="componentPanel">
                 <div class="panel-header" style="display:flex;align-items:center;">
-                    <i class="fas fa-th-large me-1"></i> 元件庫
-                    <button class="comp-panel-toggle" onclick="toggleComponentPanel()" title="收起元件庫">
+                    <i class="fas fa-th-large me-1"></i> @Localizer["designer.component_panel.title"]
+                    <button class="comp-panel-toggle" onclick="toggleComponentPanel()" title="@Localizer["designer.component_panel.collapse_tooltip"]">
                         <i class="fas fa-minus"></i>
                     </button>
                 </div>
@@ -85,79 +168,79 @@
                 <div class="widget-lib-item"
                      draggable="true"
                      data-widget-type="table"
-                     title="拖曳至畫布以新增資料表格">
+                     title="@Localizer["designer.widget_tooltip.table"]">
                     <i class="fas fa-table text-info"></i>
-                    <span>表格</span>
+                    <span>@Localizer["designer.widget.table"]</span>
                 </div>
 
                 <!-- 儀錶板 -->
                 <div class="widget-lib-item"
                      draggable="true"
                      data-widget-type="gauge"
-                     title="拖曳至畫布以新增儀錶板">
+                     title="@Localizer["designer.widget_tooltip.gauge"]">
                     <i class="fas fa-tachometer-alt text-warning"></i>
-                    <span>儀錶板</span>
+                    <span>@Localizer["designer.widget.gauge"]</span>
                 </div>
 
                 <!-- 文字 -->
                 <div class="widget-lib-item"
                      draggable="true"
                      data-widget-type="text"
-                     title="拖曳至畫布以新增文字標籤">
+                     title="@Localizer["designer.widget_tooltip.text"]">
                     <i class="fas fa-font" style="color:#a78bfa;"></i>
-                    <span>文字</span>
+                    <span>@Localizer["designer.widget.text"]</span>
                 </div>
 
                 <!-- 控制按鈕 -->
                 <div class="widget-lib-item"
                      draggable="true"
                      data-widget-type="controlBtn"
-                     title="拖曳至畫布以新增控制按鈕（可綁定 CID）">
+                     title="@Localizer["designer.widget_tooltip.controlBtn"]">
                     <i class="fas fa-toggle-on" style="color:#20c997;"></i>
-                    <span>控制按鈕</span>
+                    <span>@Localizer["designer.widget.controlBtn"]</span>
                 </div>
 
                 <!-- AI 點位 -->
                 <div class="widget-lib-item"
                      draggable="true"
                      data-widget-type="realtimeValue"
-                     title="拖曳至畫布以新增 AI 點位（可綁定 SID）">
+                     title="@Localizer["designer.widget_tooltip.realtimeValue"]">
                     <i class="fas fa-digital-tachograph" style="color:#ff6b6b;"></i>
-                    <span>AI 點位</span>
+                    <span>@Localizer["designer.widget.realtimeValue"]</span>
                 </div>
 
                 <!-- DI 點位 -->
                 <div class="widget-lib-item"
                      draggable="true"
                      data-widget-type="diPoint"
-                     title="拖曳至畫布以新增 DI 點位指示燈（可綁定 SID）">
+                     title="@Localizer["designer.widget_tooltip.diPoint"]">
                     <i class="fas fa-circle" style="color:#28a745;"></i>
-                    <span>DI 點位</span>
+                    <span>@Localizer["designer.widget.diPoint"]</span>
                 </div>
 
                 <!-- AO 點位 -->
                 <div class="widget-lib-item"
                      draggable="true"
                      data-widget-type="aoPoint"
-                     title="拖曳至畫布以新增 AO 點位（可綁定 CID，寫入類比輸出值）">
+                     title="@Localizer["designer.widget_tooltip.aoPoint"]">
                     <i class="fas fa-sliders-h" style="color:#0dcaf0;"></i>
-                    <span>AO 點位</span>
+                    <span>@Localizer["designer.widget.aoPoint"]</span>
                 </div>
 
                 <!-- DO 點位 -->
                 <div class="widget-lib-item"
                      draggable="true"
                      data-widget-type="doPoint"
-                     title="拖曳至畫布以新增 DO 點位（可綁定 CID，ON/OFF 切換寫入）">
+                     title="@Localizer["designer.widget_tooltip.doPoint"]">
                     <i class="fas fa-toggle-on" style="color:#ffc107;"></i>
-                    <span>DO 點位</span>
+                    <span>@Localizer["designer.widget.doPoint"]</span>
                 </div>
 
                 <!-- 水泵 -->
                 <div class="widget-lib-item"
                      draggable="true"
                      data-widget-type="pump"
-                     title="拖曳至畫布以新增水泵圖示（可綁定 SID，運轉時旋轉）">
+                     title="@Localizer["designer.widget_tooltip.pump"]">
                     <svg viewBox="0 0 50 40" width="28" height="23" xmlns="http://www.w3.org/2000/svg" style="display:block;">
                         <!-- 底座 -->
                         <rect x="12" y="33" width="16" height="2.5" rx="1" fill="#4a4a4a"/>
@@ -175,7 +258,7 @@
                         <path d="M 19.2,18.5 C 18,20 17,20.5 16.8,21 C 17.7,21.8 19,21 19.7,19.5 Z" fill="rgba(255,255,255,.4)"/>
                         <circle cx="20" cy="18" r="1.2" fill="#3a3a3a"/>
                     </svg>
-                    <span>水泵</span>
+                    <span>@Localizer["designer.widget.pump"]</span>
                 </div>
             </div>
 
@@ -188,12 +271,12 @@
             <!-- 屬性面板 -->
             <div class="property-panel collapsed">
                 <div class="panel-header">
-                    <i class="fas fa-sliders-h me-1"></i> 屬性
+                    <i class="fas fa-sliders-h me-1"></i> @Localizer["designer.property_panel.title"]
                 </div>
                 <div class="prop-body" id="propBody">
                     <div class="no-sel-hint" id="noSelHint">
                         <i class="fas fa-mouse-pointer"></i>
-                        點選元件<br>以編輯屬性
+                        @Localizer["designer.property_panel.no_sel"]
                     </div>
                 </div>
             </div>
@@ -211,11 +294,25 @@
             <div class="modal-header">
                 <h6 class="modal-title" style="font-size:13px;display:flex;align-items:center;gap:4px;">
                     <i class="fas fa-tachometer-alt text-warning"></i>
-                    <span id="ppModalTitle">選擇設備</span>
+                    <span id="ppModalTitle">@Localizer["designer.picker.title.device"]</span>
                 </h6>
                 <button type="button" class="btn-close btn-close-white btn-sm" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" style="padding:12px 16px;">
+
+                <!-- 來源類型切換（僅 DI widget 開啟 picker 時顯示，仿 LogicFlow） -->
+                <div id="ppSourceToggle" style="display:none;margin-bottom:8px;">
+                    <div class="btn-group btn-group-sm w-100">
+                        <button type="button" class="btn btn-outline-warning active" id="ppBtnPoint"
+                                onclick="switchPickerSource('point')">
+                            <i class="fas fa-server me-1"></i>@Localizer["designer.picker.toggle.point"]
+                        </button>
+                        <button type="button" class="btn btn-outline-warning" id="ppBtnSchedule"
+                                onclick="switchPickerSource('schedule')">
+                            <i class="fas fa-calendar-alt me-1"></i>@Localizer["designer.picker.toggle.schedule"]
+                        </button>
+                    </div>
+                </div>
 
                 <!-- Step 0: 選擇來源類型 -->
                 <div id="ppStep0">
@@ -223,24 +320,24 @@
                         <div class="point-list-item" onclick="showDeviceStep()" style="cursor:pointer;padding:14px 16px;">
                             <i class="fas fa-server" style="font-size:18px;color:#7ecfff;flex-shrink:0;"></i>
                             <div style="flex:1;min-width:0;">
-                                <div class="point-name" style="font-size:14px;">設備點位</div>
-                                <div class="point-sid">從 Modbus 設備選擇原始點位</div>
+                                <div class="point-name" style="font-size:14px;">@Localizer["designer.picker.source.device"]</div>
+                                <div class="point-sid">@Localizer["designer.picker.source.device_desc"]</div>
                             </div>
                             <i class="fas fa-chevron-right" style="color:#555;font-size:12px;"></i>
                         </div>
                         <div class="point-list-item" onclick="showCalcPointStep()" style="cursor:pointer;padding:14px 16px;">
                             <i class="fas fa-calculator" style="font-size:18px;color:#ffc107;flex-shrink:0;"></i>
                             <div style="flex:1;min-width:0;">
-                                <div class="point-name" style="font-size:14px;">計算點位</div>
-                                <div class="point-sid">從公式衍生的計算點位</div>
+                                <div class="point-name" style="font-size:14px;">@Localizer["designer.picker.source.calc"]</div>
+                                <div class="point-sid">@Localizer["designer.picker.source.calc_desc"]</div>
                             </div>
                             <i class="fas fa-chevron-right" style="color:#555;font-size:12px;"></i>
                         </div>
                         <div class="point-list-item" onclick="showDbPointStep()" style="cursor:pointer;padding:14px 16px;">
                             <i class="fas fa-database" style="font-size:18px;color:#6ec1a3;flex-shrink:0;"></i>
                             <div style="flex:1;min-width:0;">
-                                <div class="point-name" style="font-size:14px;">DB 來源點位</div>
-                                <div class="point-sid">從外部資料庫寫入的點位</div>
+                                <div class="point-name" style="font-size:14px;">@Localizer["designer.picker.source.db"]</div>
+                                <div class="point-sid">@Localizer["designer.picker.source.db_desc"]</div>
                             </div>
                             <i class="fas fa-chevron-right" style="color:#555;font-size:12px;"></i>
                         </div>
@@ -250,10 +347,10 @@
                 <!-- Step 1: 設備清單 -->
                 <div id="ppStep1" style="display:none;">
                     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                        <button class="pp-back-btn" onclick="goBackToStep0()" title="返回來源選擇">
-                            <i class="fas fa-arrow-left"></i> 返回
+                        <button class="pp-back-btn" onclick="goBackToStep0()" title="@Localizer["designer.picker.back_to_source"]">
+                            <i class="fas fa-arrow-left"></i> @Localizer["designer.picker.back"]
                         </button>
-                        <span class="pp-device-tag"><i class="fas fa-server me-1"></i>設備清單</span>
+                        <span class="pp-device-tag"><i class="fas fa-server me-1"></i>@Localizer["designer.picker.device_list"]</span>
                     </div>
                     <div id="deviceListContainer" style="max-height:290px;overflow-y:auto;"></div>
                 </div>
@@ -261,24 +358,32 @@
                 <!-- Step 2: 點位清單 -->
                 <div id="ppStep2" style="display:none;">
                     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                        <button class="pp-back-btn" onclick="goBackToDevices()" title="返回">
-                            <i class="fas fa-arrow-left"></i> 返回
+                        <button class="pp-back-btn" onclick="goBackToDevices()" title="@Localizer["designer.picker.back"]">
+                            <i class="fas fa-arrow-left"></i> @Localizer["designer.picker.back"]
                         </button>
                         <span class="pp-device-tag"><i class="fas fa-server me-1" id="ppDeviceIcon"></i><span id="ppDeviceName"></span></span>
                     </div>
                     <input type="text" id="ppPointSearch"
                            class="form-control form-control-sm mb-2"
-                           placeholder="搜尋點位名稱…"
+                           placeholder="@Localizer["designer.picker.search_placeholder"]"
                            style="background:#3c3c3c;border:1px solid #555;color:#c8c8c8;"
                            oninput="filterPointList(this.value)">
                     <div id="pointListContainer" style="max-height:270px;overflow-y:auto;"></div>
                 </div>
 
+                <!-- Step 3: 排程清單（DI widget 切「排程」分頁時顯示） -->
+                <div id="ppStep3" style="display:none;">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                        <span class="pp-device-tag"><i class="fas fa-calendar-alt me-1"></i>@Localizer["designer.picker.title.schedule"]</span>
+                    </div>
+                    <div id="scheduleListContainer" style="max-height:320px;overflow-y:auto;"></div>
+                </div>
+
             </div>
             <div class="modal-footer" style="gap:8px;">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">@Localizer["designer.picker.cancel"]</button>
                 <button type="button" class="btn btn-warning btn-sm" id="btnConfirmPoint"
-                        onclick="confirmPointPick()" disabled>確認</button>
+                        onclick="confirmPointPick()" disabled>@Localizer["designer.picker.confirm"]</button>
             </div>
         </div>
     </div>
@@ -290,31 +395,42 @@
         <div class="modal-content" style="background:#2d2d2d;border:1px solid #555;color:#c8c8c8;">
             <div class="modal-header" style="border-bottom:1px solid #444;padding:10px 16px;">
                 <h6 class="modal-title" style="font-size:13px;">
-                    <i class="fas fa-pen text-info me-2"></i>編輯頁面
+                    <i class="fas fa-pen text-info me-2"></i>@Localizer["designer.page_modal.title"]
                 </h6>
                 <button type="button" class="btn-close btn-close-white btn-sm" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" style="padding:12px 16px;">
                 <div style="margin-bottom:12px;">
-                    <div style="color:#9d9d9d;font-size:11px;margin-bottom:4px;">頁面名稱</div>
+                    <div style="color:#9d9d9d;font-size:11px;margin-bottom:4px;">@Localizer["designer.page_modal.name_label"]</div>
                     <input type="text" id="editPageNameInput"
                            class="form-control form-control-sm"
                            style="background:#3c3c3c;border:1px solid #555;color:#c8c8c8;"
-                           placeholder="輸入頁面名稱">
+                           placeholder="@Localizer["designer.page_modal.name_placeholder"]">
                 </div>
                 <div>
-                    <div style="color:#9d9d9d;font-size:11px;margin-bottom:6px;">頁面圖示</div>
+                    <div style="color:#9d9d9d;font-size:11px;margin-bottom:6px;">@Localizer["designer.page_modal.icon_label"]</div>
                     <div id="iconPickerGrid" class="icon-picker-grid"></div>
                 </div>
             </div>
             <div class="modal-footer" style="border-top:1px solid #444;padding:8px 16px;gap:8px;">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-info btn-sm" onclick="confirmPageEdit()">確認</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">@Localizer["designer.page_modal.cancel"]</button>
+                <button type="button" class="btn btn-info btn-sm" onclick="confirmPageEdit()">@Localizer["designer.page_modal.confirm"]</button>
             </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
-<script src="~/js/designer.js"></script>
+<script src="~/js/common/schedule-eval.js"></script>
+<script src="~/js/designer/state.js"></script>
+<script src="~/js/designer/widget-defs.js"></script>
+<script src="~/js/designer/widget-core.js"></script>
+<script src="~/js/designer/align.js"></script>
+<script src="~/js/designer/prop-panel.js"></script>
+<script src="~/js/designer/picker.js"></script>
+<script src="~/js/designer/canvas.js"></script>
+<script src="~/js/designer/page-tree.js"></script>
+<script src="~/js/designer/ctx-menu.js"></script>
+<script src="~/js/designer/io.js"></script>
+<script src="~/js/designer/index.js"></script>
 }

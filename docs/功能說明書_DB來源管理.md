@@ -175,7 +175,7 @@ DbCoordinatorReloadSubscriber (Engine BackgroundService)
 
 ### 8.1 Web 頁面 `/DbCoordinator`
 
-採用與 `/CommSetting` 一致的「左側清單 + 右側詳情」雙欄佈局：
+採用與 `/ModbusCoordinator` 一致的「左側清單 + 右側詳情」雙欄佈局：
 
 - **上方按鈕列**：「重新整理頁面」「通知 Engine 重新載入 JSON」
 - **左側「DB 通訊」卡**：列出所有已載入的 DB Coordinator（依 `DBPoint/*.json` 順序），停用者顯示灰色「停用」徽章
@@ -204,7 +204,7 @@ DB 來源 SID 已自動納入下列功能的「選擇 SID」下拉：
 |------|------|------|
 | 手動控制頁面對所有 DB SID 開放（每個 DB 點都可讀可寫） | 暫不開工 | 由手動控制頁未來擴充 |
 | **LogicFlow 節點輸出可寫** | **已實作** | output 節點綁 DB SID 時，`LogicFlowExecutionService.ExecuteControlWriteAsync` 以 SID 前綴 `DB` 分流走 `IDataRepository.UpdateDbLatestDataAsync`；ManualControl 互斥、啟動保護期、重試機制與 Modbus 寫入一致 |
-| MQTT `SCADA/Control/{SID}` 訂閱 | 暫不開工 | — |
+| **MQTT `SCADA/Control/{SID}` 訂閱** | **已實作** | ScadaPage 手動控制送出 MQTT 後，`MqttControlSubscribeService.OnMessageReceivedAsync` 以 SID 前綴 `DB` 分流呼叫 `ExecuteDbControlAsync`，走 `IDataRepository.UpdateDbLatestDataAsync` 寫入 `DBLatestData`，不進入 Modbus 寫入路徑 |
 
 ---
 

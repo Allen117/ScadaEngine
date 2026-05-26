@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using ScadaEngine.Engine.Services;
 using ScadaEngine.Web.Features.LogicFlow.Models;
 using ScadaEngine.Web.Services;
@@ -14,23 +15,25 @@ public class LogicFlowController : Controller
     private readonly MqttRealtimeSubscriberService _mqttService;
     private readonly CSharpAlgorithmService _csharpAlgoService;
     private readonly ILogger<LogicFlowController> _logger;
+    private readonly IStringLocalizer<LogicFlowController> _l;
 
     public LogicFlowController(
         LogicFlowService service,
         MqttRealtimeSubscriberService mqttService,
         CSharpAlgorithmService csharpAlgoService,
-        ILogger<LogicFlowController> logger)
+        ILogger<LogicFlowController> logger,
+        IStringLocalizer<LogicFlowController> localizer)
     {
         _service = service;
         _mqttService = mqttService;
         _csharpAlgoService = csharpAlgoService;
         _logger = logger;
+        _l = localizer;
     }
 
     [HttpGet("/LogicFlow")]
     public IActionResult Index()
     {
-        ViewData["Title"] = "流程圖控制";
         return View();
     }
 
@@ -93,7 +96,7 @@ public class LogicFlowController : Controller
     public async Task<IActionResult> SaveDiagram(int nTreeId, [FromBody] SaveDiagramDto dto)
     {
         var ok = await _service.SaveDiagramAsync(nTreeId, dto.DiagramJson, dto.Version);
-        if (!ok) return Conflict(new { success = false, message = "版本衝突，請重新載入" });
+        if (!ok) return Conflict(new { success = false, message = _l["logicflow.api.version_conflict"].Value });
         return Ok(new { success = true });
     }
 
@@ -173,17 +176,19 @@ public class LogicFlowController : Controller
 
         var algorithms = new List<object>();
 
-        // 掃描 .py（排除 main.py / __*.py）
+        // 掃描 .py（排除 main.py 與所有底線開頭的工具檔，如 _status.py / __pycache__）
         foreach (var szFilePath in Directory.GetFiles(szAlgoDir, "*.py", SearchOption.AllDirectories))
         {
             var szFileName = Path.GetFileName(szFilePath);
-            if (szFileName == "main.py" || szFileName.StartsWith("__")) continue;
+            if (szFileName == "main.py" || szFileName.StartsWith("_")) continue;
             algorithms.Add(ParseAlgorithmMetadata(szFilePath, szAlgoDir, "#", "python", _logger));
         }
 
-        // 掃描 .cs
+        // 掃描 .cs（排除所有底線開頭的工具檔，如 _AlgorithmStatus.cs）
         foreach (var szFilePath in Directory.GetFiles(szAlgoDir, "*.cs", SearchOption.AllDirectories))
         {
+            var szFileName = Path.GetFileName(szFilePath);
+            if (szFileName.StartsWith("_")) continue;
             algorithms.Add(ParseAlgorithmMetadata(szFilePath, szAlgoDir, "//", "csharp", _logger));
         }
 

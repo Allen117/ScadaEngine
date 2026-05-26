@@ -1,5 +1,5 @@
 @{
-    ViewData["Title"] = "計算點位";
+    ViewData["Title"] = Localizer["calcpoint.title"].Value;
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
@@ -7,28 +7,28 @@
 
 <div class="container-fluid px-4 py-3">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="mb-0"><i class="fas fa-calculator me-2"></i>計算點位設定</h5>
+        <h5 class="mb-0"><i class="fas fa-calculator me-2"></i>@Localizer["calcpoint.subtitle"]</h5>
         <button class="btn btn-primary btn-sm" onclick="window._calcPoint.openCreateModal()">
-            <i class="fas fa-plus me-1"></i>新增公式
+            <i class="fas fa-plus me-1"></i>@Localizer["calcpoint.btn.add"]
         </button>
     </div>
 
     <div class="card shadow-sm">
         <div class="card-header bg-dark text-white py-2">
-            <h6 class="mb-0"><i class="fas fa-list me-2"></i>已設定的計算點位</h6>
+            <h6 class="mb-0"><i class="fas fa-list me-2"></i>@Localizer["calcpoint.card.list_title"]</h6>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-striped table-hover table-bordered mb-0" id="calcPointTable">
                     <thead class="table-dark">
                         <tr>
-                            <th>名稱</th>
-                            <th>公式</th>
-                            <th style="width: 80px;">單位</th>
-                            <th style="width: 120px;">群組</th>
-                            <th style="width: 80px;">狀態</th>
-                            <th style="width: 100px;">建立時間</th>
-                            <th style="width: 120px;">操作</th>
+                            <th>@Localizer["calcpoint.col.name"]</th>
+                            <th>@Localizer["calcpoint.col.formula"]</th>
+                            <th style="width: 80px;">@Localizer["calcpoint.col.unit"]</th>
+                            <th style="width: 120px;">@Localizer["calcpoint.col.group"]</th>
+                            <th style="width: 80px;">@Localizer["calcpoint.col.status"]</th>
+                            <th style="width: 100px;">@Localizer["calcpoint.col.created_at"]</th>
+                            <th style="width: 120px;">@Localizer["calcpoint.col.actions"]</th>
                         </tr>
                     </thead>
                     <tbody id="calcPointTableBody">
@@ -37,12 +37,12 @@
             </div>
             <div id="emptyState" class="text-center text-muted py-4" style="display:none;">
                 <i class="fas fa-inbox fa-3x mb-2 d-block"></i>
-                <div>尚無計算點位，點擊「新增公式」開始設定</div>
+                <div>@Localizer["calcpoint.empty.hint"]</div>
             </div>
         </div>
         <div class="card-footer bg-light text-muted small">
-            <span id="calcPointCount">共 0 筆</span>
-            <span class="ms-3">Engine 每 60 秒自動重載設定</span>
+            <span id="calcPointCount"></span>
+            <span class="ms-3">@Localizer["calcpoint.footer.engine_reload_hint"]</span>
         </div>
     </div>
 </div>
@@ -52,23 +52,23 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="calcPointModalTitle">新增計算點位</h5>
+                <h5 class="modal-title" id="calcPointModalTitle">@Localizer["calcpoint.modal.add_title"]</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="editSID" />
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold"><i class="fas fa-tag me-1"></i>名稱</label>
-                        <input type="text" class="form-control form-control-sm" id="inputName" placeholder="例: 冷凍噸">
+                        <label class="form-label fw-semibold"><i class="fas fa-tag me-1"></i>@Localizer["calcpoint.label.name"]</label>
+                        <input type="text" class="form-control form-control-sm" id="inputName" placeholder="@Localizer["calcpoint.placeholder.name"]">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label fw-semibold"><i class="fas fa-ruler me-1"></i>單位</label>
-                        <input type="text" class="form-control form-control-sm" id="inputUnit" placeholder="例: RT">
+                        <label class="form-label fw-semibold"><i class="fas fa-ruler me-1"></i>@Localizer["calcpoint.label.unit"]</label>
+                        <input type="text" class="form-control form-control-sm" id="inputUnit" placeholder="@Localizer["calcpoint.placeholder.unit"]">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label fw-semibold"><i class="fas fa-layer-group me-1"></i>群組名稱</label>
-                        <input type="text" class="form-control form-control-sm" id="inputGroupName" placeholder="例: ChillerPlant">
+                        <label class="form-label fw-semibold"><i class="fas fa-layer-group me-1"></i>@Localizer["calcpoint.label.group_name"]</label>
+                        <input type="text" class="form-control form-control-sm" id="inputGroupName" placeholder="@Localizer["calcpoint.placeholder.group"]">
                     </div>
                 </div>
 
@@ -76,18 +76,18 @@
 
                 <div class="mb-3">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <label class="form-label fw-semibold mb-0"><i class="fas fa-link me-1"></i>輸入變數對應</label>
+                        <label class="form-label fw-semibold mb-0"><i class="fas fa-link me-1"></i>@Localizer["calcpoint.label.input_mapping"]</label>
                         <button class="btn btn-outline-primary btn-sm" onclick="window._calcPoint.addVariableRow()">
-                            <i class="fas fa-plus me-1"></i>新增變數
+                            <i class="fas fa-plus me-1"></i>@Localizer["calcpoint.btn.add_variable"]
                         </button>
                     </div>
                     <div class="table-responsive">
                         <table class="table table-bordered table-sm mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th style="width: 180px;">變數名稱</th>
-                                    <th>對應點位</th>
-                                    <th style="width: 60px;">操作</th>
+                                    <th style="width: 180px;">@Localizer["calcpoint.col.var_name"]</th>
+                                    <th>@Localizer["calcpoint.col.var_point"]</th>
+                                    <th style="width: 60px;">@Localizer["calcpoint.col.actions"]</th>
                                 </tr>
                             </thead>
                             <tbody id="variableTableBody">
@@ -97,24 +97,24 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label fw-semibold"><i class="fas fa-square-root-alt me-1"></i>計算公式</label>
+                    <label class="form-label fw-semibold"><i class="fas fa-square-root-alt me-1"></i>@Localizer["calcpoint.label.formula"]</label>
                     <input type="text" class="form-control form-control-sm font-monospace" id="inputFormula"
-                           placeholder="例: Flow * (ReturnT - SupplyT) * 4.186 / 211"
+                           placeholder="@Localizer["calcpoint.placeholder.formula"]"
                            data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
-                           title="&lt;b&gt;運算子&lt;/b&gt;: +、-、*、/、%&lt;br&gt;&lt;b&gt;比較&lt;/b&gt;: &gt;、&lt;、&gt;=、&lt;=、==、!=&lt;br&gt;&lt;b&gt;邏輯&lt;/b&gt;: &amp;&amp;、||、!&lt;br&gt;&lt;b&gt;條件&lt;/b&gt;: if(條件, 真值, 假值)&lt;br&gt;&lt;b&gt;數學&lt;/b&gt;: Pow(x,y)、Sqrt(x)、Abs(x)、Log(x)、Round(x,d)、Min(x,y)、Max(x,y)&lt;br&gt;&lt;b&gt;變數&lt;/b&gt;: 使用上方定義的變數名稱">
+                           title="@Localizer["calcpoint.tooltip.formula"]">
                 </div>
 
                 <div class="d-flex align-items-center gap-2">
                     <button class="btn btn-outline-info btn-sm" onclick="window._calcPoint.previewFormula()">
-                        <i class="fas fa-bolt me-1"></i>即時預覽
+                        <i class="fas fa-bolt me-1"></i>@Localizer["calcpoint.btn.preview"]
                     </button>
                     <span id="previewResult" class="fw-semibold"></span>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["calcpoint.btn.cancel"]</button>
                 <button type="button" class="btn btn-primary" onclick="window._calcPoint.saveCalcPoint()">
-                    <i class="fas fa-save me-1"></i>儲存
+                    <i class="fas fa-save me-1"></i>@Localizer["calcpoint.btn.save"]
                 </button>
             </div>
         </div>
@@ -126,17 +126,17 @@
     <div class="modal-dialog modal-sm">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">確認刪除</h5>
+                <h5 class="modal-title">@Localizer["calcpoint.modal.delete_title"]</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p>確定要刪除計算點位 <strong id="deleteSIDLabel"></strong> 嗎？</p>
-                <p class="text-danger small mb-0">此操作無法復原，相關歷史資料仍會保留。</p>
+                <p id="deleteMessage"></p>
+                <p class="text-danger small mb-0">@Localizer["calcpoint.modal.delete_warning"]</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["calcpoint.btn.cancel"]</button>
                 <button type="button" class="btn btn-danger" onclick="window._calcPoint.confirmDelete()">
-                    <i class="fas fa-trash-alt me-1"></i>確認刪除
+                    <i class="fas fa-trash-alt me-1"></i>@Localizer["calcpoint.btn.confirm_delete"]
                 </button>
             </div>
         </div>
@@ -150,7 +150,7 @@
             <div class="modal-header py-2">
                 <h6 class="modal-title" style="font-size:13px;display:flex;align-items:center;gap:4px;">
                     <i class="fas fa-tachometer-alt text-warning"></i>
-                    <span id="cpPkTitle">選擇點位來源</span>
+                    <span id="cpPkTitle">@Localizer["calcpoint.pk.title_source"]</span>
                 </h6>
                 <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
             </div>
@@ -162,16 +162,16 @@
                         <div class="cpPk-list-item cpPk-source-item" onclick="window._calcPoint.pkShowDeviceStep()">
                             <i class="fas fa-server" style="font-size:18px;color:#0d6efd;flex-shrink:0;"></i>
                             <div style="flex:1;min-width:0;">
-                                <div class="cpPk-item-name" style="font-size:14px;">設備點位</div>
-                                <div class="cpPk-item-sub">從 Modbus 設備選擇原始點位</div>
+                                <div class="cpPk-item-name" style="font-size:14px;">@Localizer["calcpoint.pk.source.device"]</div>
+                                <div class="cpPk-item-sub">@Localizer["calcpoint.pk.source.device_sub"]</div>
                             </div>
                             <i class="fas fa-chevron-right" style="color:#999;font-size:12px;"></i>
                         </div>
                         <div class="cpPk-list-item cpPk-source-item" onclick="window._calcPoint.pkShowCalcStep()">
                             <i class="fas fa-calculator" style="font-size:18px;color:#ffc107;flex-shrink:0;"></i>
                             <div style="flex:1;min-width:0;">
-                                <div class="cpPk-item-name" style="font-size:14px;">計算點位</div>
-                                <div class="cpPk-item-sub">從公式衍生的計算點位</div>
+                                <div class="cpPk-item-name" style="font-size:14px;">@Localizer["calcpoint.pk.source.calc"]</div>
+                                <div class="cpPk-item-sub">@Localizer["calcpoint.pk.source.calc_sub"]</div>
                             </div>
                             <i class="fas fa-chevron-right" style="color:#999;font-size:12px;"></i>
                         </div>
@@ -182,7 +182,7 @@
                 <div id="cpPkStep1" style="display:none;">
                     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
                         <button class="btn btn-link btn-sm text-decoration-none p-0" onclick="window._calcPoint.pkBackToStep0()">
-                            <i class="fas fa-arrow-left me-1"></i>返回
+                            <i class="fas fa-arrow-left me-1"></i>@Localizer["calcpoint.pk.back"]
                         </button>
                     </div>
                     <div id="cpPkDeviceList" style="max-height:290px;overflow-y:auto;"></div>
@@ -192,7 +192,7 @@
                 <div id="cpPkStep2" style="display:none;">
                     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
                         <button class="btn btn-link btn-sm text-decoration-none p-0" onclick="window._calcPoint.pkGoBack()">
-                            <i class="fas fa-arrow-left me-1"></i>返回
+                            <i class="fas fa-arrow-left me-1"></i>@Localizer["calcpoint.pk.back"]
                         </button>
                         <span class="badge bg-light text-dark border">
                             <i class="fas fa-server me-1" id="cpPkDevIcon"></i><span id="cpPkDevName"></span>
@@ -200,16 +200,16 @@
                     </div>
                     <input type="text" id="cpPkSearch"
                            class="form-control form-control-sm mb-2"
-                           placeholder="搜尋點位名稱…"
+                           placeholder="@Localizer["calcpoint.pk.search_placeholder"]"
                            oninput="window._calcPoint.pkFilterPoints(this.value)">
                     <div id="cpPkPointList" style="max-height:270px;overflow-y:auto;"></div>
                 </div>
 
             </div>
             <div class="modal-footer py-2">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">@Localizer["calcpoint.btn.cancel"]</button>
                 <button type="button" class="btn btn-primary btn-sm" id="cpPkBtnConfirm" disabled onclick="window._calcPoint.pkConfirm()">
-                    <i class="fas fa-check me-1"></i>確認選擇
+                    <i class="fas fa-check me-1"></i>@Localizer["calcpoint.pk.btn.confirm"]
                 </button>
             </div>
         </div>

@@ -22,7 +22,6 @@ public class CalcPointController : Controller
     [HttpGet("/CalcPoint")]
     public async Task<IActionResult> Index()
     {
-        ViewData["Title"] = "計算點位";
         var calcPoints = await _service.GetAllAsync();
         var szCalcPointsJson = JsonSerializer.Serialize(calcPoints.Select(p => new
         {

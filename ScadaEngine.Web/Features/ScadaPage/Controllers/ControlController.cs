@@ -54,6 +54,7 @@ public class ControlController : ControllerBase
                 return Ok(new { success = true, cid = dto.szCid, mode = "auto" });
             }
 
+            _mqttService.UpdateManualAutoFlag(dto.szCid, isAuto: true);
             await WriteEventLogAsync(dto);
             return Ok(new { success = true, cid = dto.szCid, mode = "auto" });
         }
@@ -78,6 +79,7 @@ public class ControlController : ControllerBase
             if (!isSaved)
                 _logger.LogWarning("手動控制值儲存失敗 CID={Cid}", dto.szCid);
 
+            _mqttService.UpdateManualAutoFlag(dto.szCid, isAuto: false);
             await WriteEventLogAsync(dto);
             return Ok(new { success = true, cid = dto.szCid, value = dto.nValue });
         }

@@ -20,6 +20,7 @@
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.1.66" />
     <PackageReference Include="FluentModbus" Version="5.3.2" />
+    <PackageReference Include="MailKit" Version="4.16.0" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.4" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="8.0.1" />
@@ -47,6 +48,18 @@
     <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
   </None>
     <None Update="Setting\LineSetting.example.json">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </None>
+    <None Update="Setting\EmailSetting.json">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </None>
+    <None Update="Setting\EmailSetting.example.json">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </None>
+    <None Update="Resources\notification.zh-TW.json">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </None>
+    <None Update="Resources\notification.en.json">
     <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
   </None>
 

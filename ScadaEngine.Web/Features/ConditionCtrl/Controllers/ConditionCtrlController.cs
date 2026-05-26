@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using ScadaEngine.Engine.Communication.Modbus.Models;
 using ScadaEngine.Engine.Data.Interfaces;
 using ScadaEngine.Engine.Models;
@@ -13,18 +14,21 @@ public class ConditionCtrlController : Controller
 {
     private readonly IDataRepository _dataRepository;
     private readonly ILogger<ConditionCtrlController> _logger;
+    private readonly IStringLocalizer<ConditionCtrlController> _l;
 
-    public ConditionCtrlController(IDataRepository dataRepository, ILogger<ConditionCtrlController> logger)
+    public ConditionCtrlController(
+        IDataRepository dataRepository,
+        ILogger<ConditionCtrlController> logger,
+        IStringLocalizer<ConditionCtrlController> localizer)
     {
         _dataRepository = dataRepository;
         _logger = logger;
+        _l = localizer;
     }
 
     [HttpGet("/ConditionCtrl")]
     public async Task<IActionResult> Index()
     {
-        ViewData["Title"] = "條件控制";
-
         var coordinatorList = (await _dataRepository.GetAllCoordinatorsAsync()).ToList();
         var dbCoordinatorList = (await _dataRepository.GetAllDbCoordinatorsAsync()).ToList();
         var pointList = (await _dataRepository.GetAllModbusPointsAsync())
@@ -70,8 +74,8 @@ public class ConditionCtrlController : Controller
         var isSuccess = await _dataRepository.SaveConditionControlRulesAsync(rules);
 
         if (isSuccess)
-            return Ok(new { success = true, message = $"已儲存 {dtoList.Count} 筆規則" });
+            return Ok(new { success = true, message = string.Format(_l["conditionctrl.api.save_success"].Value, dtoList.Count) });
 
-        return StatusCode(500, new { success = false, message = "儲存失敗，請查看 Engine 日誌" });
+        return StatusCode(500, new { success = false, message = _l["conditionctrl.api.save_failed"].Value });
     }
 }

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using ScadaEngine.Engine.Data.Interfaces;
 using ScadaEngine.Web.Features.Designer.Models;
 
@@ -10,17 +11,21 @@ public class DesignerController : Controller
 {
     private readonly IDataRepository _repository;
     private readonly ILogger<DesignerController> _logger;
+    private readonly IStringLocalizer<DesignerController> _l;
 
-    public DesignerController(IDataRepository repository, ILogger<DesignerController> logger)
+    public DesignerController(
+        IDataRepository repository,
+        ILogger<DesignerController> logger,
+        IStringLocalizer<DesignerController> localizer)
     {
         _repository = repository;
         _logger     = logger;
+        _l          = localizer;
     }
 
     [HttpGet("/Designer")]
     public IActionResult Index()
     {
-        ViewData["Title"] = "畫面設計";
         return View();
     }
 
@@ -100,12 +105,15 @@ public class DesignerController : Controller
     {
         try
         {
-            var isOk = await _repository.SaveDesignAsync(dto.szName, dto.pages);
+            var szName = string.IsNullOrWhiteSpace(dto.szName)
+                ? _l["designer.untitled_design"].Value
+                : dto.szName;
+            var isOk = await _repository.SaveDesignAsync(szName, dto.pages);
             return Json(new { success = isOk });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "儲存畫面設計時發生錯誤");
+            _logger.LogError(ex, _l["designer.save_error"].Value);
             return Json(new { success = false, error = ex.Message });
         }
     }

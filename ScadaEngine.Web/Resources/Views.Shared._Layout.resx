@@ -74,7 +74,7 @@
   <data name="layout.menu.designer" xml:space="preserve"><value>畫面設計</value></data>
   <data name="layout.menu.alarm" xml:space="preserve"><value>警報設定</value></data>
   <data name="layout.menu.points" xml:space="preserve"><value>點位設定</value></data>
-  <data name="layout.menu.commsetting" xml:space="preserve"><value>Modbus來源</value></data>
+  <data name="layout.menu.modbuscoordinator" xml:space="preserve"><value>Modbus來源</value></data>
   <data name="layout.menu.dbcoordinator" xml:space="preserve"><value>DB 來源</value></data>
   <data name="layout.menu.calcpoint" xml:space="preserve"><value>計算點位</value></data>
   <data name="layout.menu.account" xml:space="preserve"><value>帳號管理</value></data>

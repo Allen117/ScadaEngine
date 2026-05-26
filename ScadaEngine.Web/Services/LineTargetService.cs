@@ -37,6 +37,7 @@ namespace ScadaEngine.Web.Services
                            GroupId     AS szGroupId,
                            Label       AS szLabel,
                            MaxSeverity AS nMaxSeverity,
+                           Language    AS szLanguage,
                            IsEnabled   AS isEnabled,
                            CreatedAt   AS dtCreatedAt,
                            UpdatedAt   AS dtUpdatedAt
@@ -64,6 +65,7 @@ namespace ScadaEngine.Web.Services
                            GroupId     AS szGroupId,
                            Label       AS szLabel,
                            MaxSeverity AS nMaxSeverity,
+                           Language    AS szLanguage,
                            IsEnabled   AS isEnabled,
                            CreatedAt   AS dtCreatedAt,
                            UpdatedAt   AS dtUpdatedAt
@@ -94,6 +96,7 @@ namespace ScadaEngine.Web.Services
                             GroupId = @GroupId,
                             Label = @Label,
                             MaxSeverity = @MaxSeverity,
+                            Language = @Language,
                             IsEnabled = @IsEnabled,
                             UpdatedAt = GETDATE()
                         WHERE Id = @Id";
@@ -102,9 +105,9 @@ namespace ScadaEngine.Web.Services
                 {
                     szSql = @"
                         INSERT INTO LineNotifyTargets
-                            (GroupId, Label, MaxSeverity, IsEnabled)
+                            (GroupId, Label, MaxSeverity, Language, IsEnabled)
                         VALUES
-                            (@GroupId, @Label, @MaxSeverity, @IsEnabled)";
+                            (@GroupId, @Label, @MaxSeverity, @Language, @IsEnabled)";
                 }
 
                 using var connection = new SqlConnection(_szConnectionString);
@@ -115,6 +118,7 @@ namespace ScadaEngine.Web.Services
                     GroupId     = dto.groupId.Trim(),
                     Label       = dto.label.Trim(),
                     MaxSeverity = dto.maxSeverity,
+                    Language    = string.IsNullOrEmpty(dto.language) ? "zh-TW" : dto.language,
                     IsEnabled   = dto.isEnabled
                 });
 

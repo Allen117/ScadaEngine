@@ -1,6 +1,8 @@
 (function () {
     'use strict';
 
+    function t(key, args) { return (window.i18n && window.i18n.t) ? window.i18n.t(key, args) : key; }
+
     var _calcPoints = window._calcPointData || [];
     var _editMode = false;
     var _deleteSID = '';
@@ -25,7 +27,11 @@
         var formulaInput = document.getElementById('inputFormula');
         if (formulaInput) new bootstrap.Tooltip(formulaInput);
 
-        renderTable();
+        if (window.i18n && window.i18n.ready) {
+            window.i18n.ready(renderTable);
+        } else {
+            renderTable();
+        }
     }
 
     // ══════════════════════════════════════
@@ -40,19 +46,24 @@
         if (_calcPoints.length === 0) {
             tbody.innerHTML = '';
             emptyState.style.display = '';
-            countLabel.textContent = '\u5171 0 \u7b46';
+            countLabel.textContent = t('calcpoint.count.total', { n: 0 });
             return;
         }
 
         emptyState.style.display = 'none';
-        countLabel.textContent = '\u5171 ' + _calcPoints.length + ' \u7b46';
+        countLabel.textContent = t('calcpoint.count.total', { n: _calcPoints.length });
+
+        var szEnabled = t('calcpoint.status.enabled');
+        var szDisabled = t('calcpoint.status.disabled');
+        var szEdit = t('calcpoint.btn.edit');
+        var szDelete = t('calcpoint.btn.delete');
 
         var html = '';
         for (var i = 0; i < _calcPoints.length; i++) {
             var p = _calcPoints[i];
             var statusBadge = p.isEnabled
-                ? '<span class="badge bg-success">\u555f\u7528</span>'
-                : '<span class="badge bg-secondary">\u505c\u7528</span>';
+                ? '<span class="badge bg-success">' + escapeHtml(szEnabled) + '</span>'
+                : '<span class="badge bg-secondary">' + escapeHtml(szDisabled) + '</span>';
 
             html += '<tr>' +
                 '<td>' + escapeHtml(p.szName) + '</td>' +
@@ -63,9 +74,9 @@
                 '<td class="small">' + escapeHtml(p.szCreatedAt || '') + '</td>' +
                 '<td class="text-center">' +
                 '<button class="btn btn-outline-primary btn-sm me-1" onclick="window._calcPoint.openEditModal(\'' + escapeHtml(p.szSID) + '\')">' +
-                '<i class="fas fa-edit me-1"></i>\u7de8\u8f2f</button>' +
+                '<i class="fas fa-edit me-1"></i>' + escapeHtml(szEdit) + '</button>' +
                 '<button class="btn btn-outline-danger btn-sm" onclick="window._calcPoint.openDeleteModal(\'' + escapeHtml(p.szSID) + '\')">' +
-                '<i class="fas fa-trash-alt me-1"></i>\u522a\u9664</button>' +
+                '<i class="fas fa-trash-alt me-1"></i>' + escapeHtml(szDelete) + '</button>' +
                 '</td></tr>';
         }
         tbody.innerHTML = html;
@@ -80,20 +91,23 @@
         var tr = document.createElement('tr');
         var szDisplayName = pointName || '';
         if (!szDisplayName && sid) {
-            // 從已載入的點位清單中找名稱
             szDisplayName = _findPointName(sid);
         }
 
+        var szUnset = t('calcpoint.pk.unset');
+        var szSelect = t('calcpoint.btn.select');
+        var szVarPlaceholder = t('calcpoint.placeholder.var_name');
+
         tr.innerHTML =
-            '<td><input type="text" class="form-control form-control-sm var-name" value="' + escapeHtml(varName || '') + '" placeholder="\u4f8b: Flow"></td>' +
+            '<td><input type="text" class="form-control form-control-sm var-name" value="' + escapeHtml(varName || '') + '" placeholder="' + escapeHtml(szVarPlaceholder) + '"></td>' +
             '<td>' +
             '  <div class="d-flex align-items-center gap-2">' +
             '    <input type="hidden" class="var-sid" value="' + escapeHtml(sid || '') + '">' +
             '    <span class="var-point-label flex-grow-1 small' + (szDisplayName ? '' : ' text-muted') + '">' +
-                    (szDisplayName ? escapeHtml(szDisplayName) : '\u2014 \u672a\u9078\u64c7 \u2014') +
+                    (szDisplayName ? escapeHtml(szDisplayName) : escapeHtml(szUnset)) +
             '    </span>' +
             '    <button class="btn btn-outline-primary btn-sm flex-shrink-0" onclick="window._calcPoint.openVarPicker(this)">' +
-            '      <i class="fas fa-search me-1"></i>\u9078\u64c7' +
+            '      <i class="fas fa-search me-1"></i>' + escapeHtml(szSelect) +
             '    </button>' +
             '  </div>' +
             '</td>' +
@@ -139,7 +153,7 @@
 
     function openCreateModal() {
         _editMode = false;
-        document.getElementById('calcPointModalTitle').textContent = '\u65b0\u589e\u8a08\u7b97\u9ede\u4f4d';
+        document.getElementById('calcPointModalTitle').textContent = t('calcpoint.modal.add_title');
         document.getElementById('editSID').value = '';
         document.getElementById('inputName').value = '';
         document.getElementById('inputUnit').value = '';
@@ -158,7 +172,6 @@
         }
         if (!point) return;
 
-        // 先載入點位資料再填入變數列（確保顯示名稱而非 SID）
         _ensurePickerData(function () {
             _fillEditModal(point);
         });
@@ -166,7 +179,7 @@
 
     function _fillEditModal(point) {
         _editMode = true;
-        document.getElementById('calcPointModalTitle').textContent = '\u7de8\u8f2f\u8a08\u7b97\u9ede\u4f4d - ' + point.szSID;
+        document.getElementById('calcPointModalTitle').textContent = t('calcpoint.modal.edit_title') + ' - ' + point.szSID;
         document.getElementById('editSID').value = point.szSID;
         document.getElementById('inputName').value = point.szName;
         document.getElementById('inputUnit').value = point.szUnit || '';
@@ -195,11 +208,11 @@
     function saveCalcPoint() {
         var data = collectFormData();
 
-        if (!data.name) { alert('\u8acb\u8f38\u5165\u540d\u7a31'); return; }
-        if (!data.formula) { alert('\u8acb\u8f38\u5165\u516c\u5f0f'); return; }
+        if (!data.name) { alert(t('calcpoint.msg.enter_name')); return; }
+        if (!data.formula) { alert(t('calcpoint.msg.enter_formula')); return; }
 
         var mappings = JSON.parse(data.inputMappings);
-        if (Object.keys(mappings).length === 0) { alert('\u81f3\u5c11\u9700\u8981\u4e00\u500b\u8f38\u5165\u8b8a\u6578'); return; }
+        if (Object.keys(mappings).length === 0) { alert(t('calcpoint.msg.need_variable')); return; }
 
         var url, body;
         if (_editMode) {
@@ -235,18 +248,21 @@
                     _calcPointModal.hide();
                     location.reload();
                 } else {
-                    alert(result.message || '\u64cd\u4f5c\u5931\u6557');
+                    alert(result.message || t('calcpoint.msg.operation_failed'));
                 }
             })
             .catch(function (err) {
                 console.error(err);
-                alert('\u7db2\u8def\u932f\u8aa4');
+                alert(t('calcpoint.msg.network_error'));
             });
     }
 
     function openDeleteModal(sid) {
         _deleteSID = sid;
-        document.getElementById('deleteSIDLabel').textContent = sid;
+        var msgEl = document.getElementById('deleteMessage');
+        if (msgEl) {
+            msgEl.innerHTML = t('calcpoint.modal.delete_message', { sid: escapeHtml(sid) });
+        }
         _deleteModal.show();
     }
 
@@ -262,12 +278,12 @@
                     _deleteModal.hide();
                     location.reload();
                 } else {
-                    alert(result.message || '\u522a\u9664\u5931\u6557');
+                    alert(result.message || t('calcpoint.msg.delete_failed_default'));
                 }
             })
             .catch(function (err) {
                 console.error(err);
-                alert('\u7db2\u8def\u932f\u8aa4');
+                alert(t('calcpoint.msg.network_error'));
             });
     }
 
@@ -277,10 +293,10 @@
 
     function previewFormula() {
         var data = collectFormData();
-        if (!data.formula) { alert('\u8acb\u5148\u8f38\u5165\u516c\u5f0f'); return; }
+        if (!data.formula) { alert(t('calcpoint.msg.enter_formula_first')); return; }
 
         var resultSpan = document.getElementById('previewResult');
-        resultSpan.textContent = '\u8a08\u7b97\u4e2d...';
+        resultSpan.textContent = t('calcpoint.msg.calculating');
         resultSpan.className = 'fw-semibold text-muted';
 
         fetch('/CalcPoint/Preview', {
@@ -292,15 +308,15 @@
             .then(function (result) {
                 if (result.success) {
                     var unit = document.getElementById('inputUnit').value.trim();
-                    resultSpan.textContent = '\u2192 ' + result.result.toFixed(2) + (unit ? ' ' + unit : '');
+                    resultSpan.textContent = '→ ' + result.result.toFixed(2) + (unit ? ' ' + unit : '');
                     resultSpan.className = 'fw-semibold text-success';
                 } else {
-                    resultSpan.textContent = '\u2716 ' + result.message;
+                    resultSpan.textContent = '✖ ' + result.message;
                     resultSpan.className = 'fw-semibold text-danger';
                 }
             })
             .catch(function () {
-                resultSpan.textContent = '\u7db2\u8def\u932f\u8aa4';
+                resultSpan.textContent = t('calcpoint.msg.network_error');
                 resultSpan.className = 'fw-semibold text-danger';
             });
     }
@@ -331,15 +347,16 @@
             _enrichPointLabels();
             cb();
         }).catch(function (err) {
-            alert('\u7121\u6cd5\u8f09\u5165\u8a2d\u5099/\u9ede\u4f4d\u6e05\u55ae\n' + err.message);
+            alert(t('calcpoint.pk.load_failed') + '\n' + err.message);
         });
     }
 
     function _enrichPointLabels() {
         if (!_pickerDevices || !_pickerPoints) return;
+        var szCalcDefaultLabel = t('calcpoint.pk.calc_points_label');
         _pickerPoints.forEach(function (p) {
             if (_isCalcPoint(p.szSid)) {
-                p._deviceLabel = p.szGroupName || '\u8a08\u7b97\u9ede\u4f4d';
+                p._deviceLabel = p.szGroupName || szCalcDefaultLabel;
                 return;
             }
             var nPfx = _getSidPrefix(p.szSid);
@@ -385,7 +402,7 @@
         document.getElementById('cpPkStep0').style.display = '';
         document.getElementById('cpPkStep1').style.display = 'none';
         document.getElementById('cpPkStep2').style.display = 'none';
-        document.getElementById('cpPkTitle').textContent = '\u9078\u64c7\u9ede\u4f4d\u4f86\u6e90';
+        document.getElementById('cpPkTitle').textContent = t('calcpoint.pk.title_source');
         document.getElementById('cpPkBtnConfirm').disabled = true;
 
         if (!_pickerModal) {
@@ -398,7 +415,7 @@
         document.getElementById('cpPkStep0').style.display = 'none';
         document.getElementById('cpPkStep1').style.display = '';
         document.getElementById('cpPkStep2').style.display = 'none';
-        document.getElementById('cpPkTitle').textContent = '\u9078\u64c7\u8a2d\u5099';
+        document.getElementById('cpPkTitle').textContent = t('calcpoint.pk.title_select_device');
         _pkRenderDeviceList();
     }
 
@@ -413,7 +430,7 @@
             document.getElementById('cpPkStep0').style.display = 'none';
             document.getElementById('cpPkStep1').style.display = '';
             document.getElementById('cpPkStep2').style.display = 'none';
-            document.getElementById('cpPkTitle').textContent = '\u9078\u64c7\u8a08\u7b97\u9ede\u4f4d\u7fa4\u7d44';
+            document.getElementById('cpPkTitle').textContent = t('calcpoint.pk.title_select_calc_group');
             _pkRenderCalcGroupList(groups);
         } else {
             _pkShowCalcFlat();
@@ -444,7 +461,7 @@
                 '<i class="fas fa-layer-group" style="color:#ffc107;flex-shrink:0;"></i>' +
                 '<div style="flex:1;min-width:0;">' +
                 '<div class="cpPk-item-name">' + escapeHtml(g) + '</div>' +
-                '<div class="cpPk-item-sub">' + nPts + ' \u500b\u9ede\u4f4d</div>' +
+                '<div class="cpPk-item-sub">' + escapeHtml(t('calcpoint.pk.points_count', { n: nPts })) + '</div>' +
                 '</div>' +
                 '<i class="fas fa-chevron-right" style="color:#999;font-size:11px;"></i></div>';
         }
@@ -453,8 +470,8 @@
             html += '<div class="cpPk-list-item" onclick="window._calcPoint.pkSelectCalcGroup(\'\')">' +
                 '<i class="fas fa-inbox" style="color:#6c757d;flex-shrink:0;"></i>' +
                 '<div style="flex:1;min-width:0;">' +
-                '<div class="cpPk-item-name">\u672a\u5206\u7d44</div>' +
-                '<div class="cpPk-item-sub">' + nU + ' \u500b\u9ede\u4f4d</div>' +
+                '<div class="cpPk-item-name">' + escapeHtml(t('calcpoint.pk.ungrouped')) + '</div>' +
+                '<div class="cpPk-item-sub">' + escapeHtml(t('calcpoint.pk.points_count', { n: nU })) + '</div>' +
                 '</div>' +
                 '<i class="fas fa-chevron-right" style="color:#999;font-size:11px;"></i></div>';
         }
@@ -464,16 +481,16 @@
     function pkSelectCalcGroup(g) {
         _pickerCalcGroup = g;
         _pickerSelectedSid = null;
-        document.getElementById('cpPkDevName').textContent = g || '\u672a\u5206\u7d44';
+        document.getElementById('cpPkDevName').textContent = g || t('calcpoint.pk.ungrouped');
         document.getElementById('cpPkDevIcon').className = 'fas fa-layer-group me-1';
-        _pkShowPointList('\u9078\u64c7\u8a08\u7b97\u9ede\u4f4d');
+        _pkShowPointList(t('calcpoint.pk.title_select_calc_point'));
     }
 
     function _pkShowCalcFlat() {
         _pickerCalcGroup = null;
-        document.getElementById('cpPkDevName').textContent = '\u8a08\u7b97\u9ede\u4f4d';
+        document.getElementById('cpPkDevName').textContent = t('calcpoint.pk.calc_points_label');
         document.getElementById('cpPkDevIcon').className = 'fas fa-calculator me-1';
-        _pkShowPointList('\u9078\u64c7\u8a08\u7b97\u9ede\u4f4d');
+        _pkShowPointList(t('calcpoint.pk.title_select_calc_point'));
     }
 
     // ── 設備清單 ──
@@ -481,7 +498,7 @@
     function _pkRenderDeviceList() {
         var container = document.getElementById('cpPkDeviceList');
         if (!_pickerDevices || _pickerDevices.length === 0) {
-            container.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-plug fa-2x d-block mb-2"></i>\u5c1a\u7121\u8a2d\u5099</div>';
+            container.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-plug fa-2x d-block mb-2"></i>' + escapeHtml(t('calcpoint.pk.no_devices')) + '</div>';
             return;
         }
 
@@ -507,7 +524,7 @@
                     '<i class="fas fa-server" style="color:#0d6efd;flex-shrink:0;"></i>' +
                     '<div style="flex:1;min-width:0;">' +
                     '<div class="cpPk-item-name">' + escapeHtml(d.szName) + '</div>' +
-                    '<div class="cpPk-item-sub">' + nPts + ' \u500b\u9ede\u4f4d</div>' +
+                    '<div class="cpPk-item-sub">' + escapeHtml(t('calcpoint.pk.points_count', { n: nPts })) + '</div>' +
                     '</div>' +
                     '<i class="fas fa-chevron-down cpPk-toggle-icon" style="color:#999;font-size:11px;transition:transform .2s;"></i></div>' +
                     '<div class="cpPk-sub-menu" style="display:none;">' + subHtml + '</div>';
@@ -516,7 +533,7 @@
                     '<i class="fas fa-server" style="color:#0d6efd;flex-shrink:0;"></i>' +
                     '<div style="flex:1;min-width:0;">' +
                     '<div class="cpPk-item-name">' + escapeHtml(d.szName) + '</div>' +
-                    '<div class="cpPk-item-sub">' + nPts + ' \u500b\u9ede\u4f4d</div>' +
+                    '<div class="cpPk-item-sub">' + escapeHtml(t('calcpoint.pk.points_count', { n: nPts })) + '</div>' +
                     '</div>' +
                     '<i class="fas fa-chevron-right" style="color:#999;font-size:11px;"></i></div>';
             }
@@ -542,7 +559,7 @@
         _pickerSelectedSid = null;
         document.getElementById('cpPkDevName').textContent = szLabel || String(nDevId);
         document.getElementById('cpPkDevIcon').className = 'fas fa-server me-1';
-        _pkShowPointList('\u9078\u64c7\u9ede\u4f4d');
+        _pkShowPointList(t('calcpoint.pk.title_select_point'));
     }
 
     // ── 點位清單 ──
@@ -577,7 +594,7 @@
 
         var container = document.getElementById('cpPkPointList');
         if (filtered.length === 0) {
-            container.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x d-block mb-2"></i>\u7121\u7b26\u5408\u9ede\u4f4d</div>';
+            container.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x d-block mb-2"></i>' + escapeHtml(t('calcpoint.pk.no_points')) + '</div>';
             return;
         }
 
@@ -641,7 +658,6 @@
                 _pkShowStep0();
             }
         } else {
-            // 從點位列表返回設備列表
             _pkShowDeviceStep();
         }
     }
@@ -654,7 +670,7 @@
 
     function escapeHtml(str) {
         if (!str) return '';
-        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 

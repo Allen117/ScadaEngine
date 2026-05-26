@@ -46,7 +46,7 @@ namespace ScadaEngine.Web.Services
             return TestSendResult.Ok();
         }
 
-        public async Task<TestSendResult> SendTestAsync(string szGroupId, string szLabel)
+        public async Task<TestSendResult> SendTestAsync(string szGroupId, string szLabel, string szLanguage = "zh-TW")
         {
             var throttleCheck = CheckThrottle(szGroupId);
             if (!throttleCheck.isSuccess)
@@ -62,11 +62,16 @@ namespace ScadaEngine.Web.Services
             // 先記錄送出時間（即使後續 API 失敗也要記，避免重試風暴）
             _lastTestAt[szGroupId] = DateTime.UtcNow;
 
-            var szText =
-                $"📨 SCADA 測試訊息\n" +
-                $"群組: {szLabel}\n" +
-                $"時間: {DateTime.Now:yyyy-MM-dd HH:mm:ss}\n" +
-                $"若您看到這則訊息，代表 Line 通知設定正確。";
+            bool isEn = szLanguage == "en";
+            var szText = isEn
+                ? $"📨 SCADA Test Message\n" +
+                  $"Group: {szLabel}\n" +
+                  $"Time: {DateTime.Now:yyyy-MM-dd HH:mm:ss}\n" +
+                  $"If you receive this, your Line notification settings are correct."
+                : $"📨 SCADA 測試訊息\n" +
+                  $"群組: {szLabel}\n" +
+                  $"時間: {DateTime.Now:yyyy-MM-dd HH:mm:ss}\n" +
+                  $"若您看到這則訊息，代表 Line 通知設定正確。";
 
             try
             {

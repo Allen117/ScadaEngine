@@ -1,5 +1,5 @@
 @{
-    ViewData["Title"] = "DB 來源";
+    ViewData["Title"] = Localizer["dbcoord.title"].Value;
     Layout = "~/Views/Shared/_Layout.cshtml";
     var coordinatorListJson = ViewBag.CoordinatorListJson as string ?? "[]";
 }
@@ -8,13 +8,13 @@
 
 <div class="container-fluid mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="mb-0"><i class="fas fa-database me-2"></i>DB 來源</h4>
+        <h4 class="mb-0"><i class="fas fa-database me-2"></i>@Localizer["dbcoord.title"]</h4>
         <div>
             <button class="btn btn-secondary me-2" id="btnRefreshPage" onclick="window._dbCoord.refreshPage()">
-                <i class="fas fa-sync me-1"></i>重新整理頁面
+                <i class="fas fa-sync me-1"></i>@Localizer["dbcoord.btn.refresh_page"]
             </button>
             <button class="btn btn-primary" id="btnReloadEngine" onclick="window._dbCoord.reloadEngine()">
-                <i class="fas fa-bolt me-1"></i>通知 Engine 重新載入 JSON
+                <i class="fas fa-bolt me-1"></i>@Localizer["dbcoord.btn.reload_engine"]
             </button>
         </div>
     </div>
@@ -24,7 +24,7 @@
         <div class="col-md-3 pe-0">
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-dark text-white py-2">
-                    <h6 class="mb-0"><i class="fas fa-database me-1"></i> DB 通訊</h6>
+                    <h6 class="mb-0"><i class="fas fa-database me-1"></i> @Localizer["dbcoord.card.db_comm"]</h6>
                 </div>
                 <div id="dbCoordinatorList"></div>
             </div>
@@ -36,40 +36,40 @@
                 <div class="card-header bg-light d-flex align-items-center">
                     <h6 class="mb-0" id="detailTitle">
                         <i class="fas fa-info-circle me-1"></i>
-                        設備詳細資料
+                        @Localizer["dbcoord.card.device_detail"]
                     </h6>
                 </div>
                 <div class="card-body" id="detailBody">
                     <div id="fullDetail" class="row g-3" style="display:none;">
                         <div class="col-md-6">
-                            <label class="form-label fw-bold text-muted small">Id</label>
+                            <label class="form-label fw-bold text-muted small">@Localizer["dbcoord.label.id"]</label>
                             <input type="text" class="form-control form-control-sm" id="fieldId" readonly />
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold text-muted small">Name（設備名稱）</label>
+                            <label class="form-label fw-bold text-muted small">@Localizer["dbcoord.label.name"]</label>
                             <input type="text" class="form-control form-control-sm" id="fieldName" readonly />
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold text-muted small">PollingInterval（輪詢間隔 ms）</label>
+                            <label class="form-label fw-bold text-muted small">@Localizer["dbcoord.label.polling_interval"]</label>
                             <input type="text" class="form-control form-control-sm" id="fieldPollingInterval" readonly />
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold text-muted small">ConnectTimeout（連線逾時 ms）</label>
+                            <label class="form-label fw-bold text-muted small">@Localizer["dbcoord.label.connect_timeout"]</label>
                             <input type="text" class="form-control form-control-sm" id="fieldConnectTimeout" readonly />
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold text-muted small">MonitorEnabled（啟用監控）</label>
+                            <label class="form-label fw-bold text-muted small">@Localizer["dbcoord.label.monitor_enabled"]</label>
                             <input type="text" class="form-control form-control-sm" id="fieldMonitorEnabled" readonly />
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold text-muted small">點位數</label>
+                            <label class="form-label fw-bold text-muted small">@Localizer["dbcoord.label.point_count"]</label>
                             <input type="text" class="form-control form-control-sm" id="fieldPointCount" readonly />
                         </div>
                     </div>
 
                     <div id="emptyDetail" class="text-center text-muted py-5">
                         <i class="fas fa-hand-pointer fa-3x mb-3 d-block"></i>
-                        <p id="emptyDetailMsg">請從左側選擇 DB 來源</p>
+                        <p id="emptyDetailMsg">@Localizer["dbcoord.empty.select_source"]</p>
                     </div>
                 </div>
             </div>

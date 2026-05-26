@@ -1,0 +1,367 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <!-- Toolbar / Title -->
+  <data name="designer.title" xml:space="preserve"><value>畫面設計</value></data>
+  <data name="designer.toolbar.clear" xml:space="preserve"><value>清除</value></data>
+  <data name="designer.toolbar.clear_tooltip" xml:space="preserve"><value>清除所有元件</value></data>
+  <data name="designer.toolbar.import_image" xml:space="preserve"><value>匯入圖片</value></data>
+  <data name="designer.toolbar.import_image_tooltip" xml:space="preserve"><value>匯入圖檔作為畫布背景</value></data>
+  <data name="designer.toolbar.save" xml:space="preserve"><value>儲存</value></data>
+  <data name="designer.toolbar.save_tooltip" xml:space="preserve"><value>儲存所有頁面至資料庫</value></data>
+  <data name="designer.toolbar.saving" xml:space="preserve"><value>儲存中…</value></data>
+  <data name="designer.toolbar.bg_remove" xml:space="preserve"><value>移除背景圖</value></data>
+  <data name="designer.toolbar.hint" xml:space="preserve"><value>從左側拖曳元件至畫布 • 點選元件可調整屬性 • Del 鍵刪除</value></data>
+
+  <!-- Toolbar / Align + Distribute (plan 2026-05-26-designer-multi-select-alignment) -->
+  <data name="designer.toolbar.align_left" xml:space="preserve"><value>靠左</value></data>
+  <data name="designer.toolbar.align_left_tooltip" xml:space="preserve"><value>選取項目靠左對齊（取最小 X）</value></data>
+  <data name="designer.toolbar.align_right" xml:space="preserve"><value>靠右</value></data>
+  <data name="designer.toolbar.align_right_tooltip" xml:space="preserve"><value>選取項目靠右對齊（取最大右緣）</value></data>
+  <data name="designer.toolbar.align_top" xml:space="preserve"><value>靠上</value></data>
+  <data name="designer.toolbar.align_top_tooltip" xml:space="preserve"><value>選取項目靠上對齊（取最小 Y）</value></data>
+  <data name="designer.toolbar.align_bottom" xml:space="preserve"><value>靠下</value></data>
+  <data name="designer.toolbar.align_bottom_tooltip" xml:space="preserve"><value>選取項目靠下對齊（取最大下緣）</value></data>
+  <data name="designer.toolbar.align_center_h" xml:space="preserve"><value>水平置中</value></data>
+  <data name="designer.toolbar.align_center_h_tooltip" xml:space="preserve"><value>選取項目以群組水平中心對齊（同一 X 中心）</value></data>
+  <data name="designer.toolbar.align_center_v" xml:space="preserve"><value>垂直置中</value></data>
+  <data name="designer.toolbar.align_center_v_tooltip" xml:space="preserve"><value>選取項目以群組垂直中心對齊（同一 Y 中心）</value></data>
+  <data name="designer.toolbar.distribute_h" xml:space="preserve"><value>水平等距分布</value></data>
+  <data name="designer.toolbar.distribute_h_tooltip" xml:space="preserve"><value>固定最左 / 最右元件，中間元件水平等間距排列（≥ 3 選取）</value></data>
+  <data name="designer.toolbar.distribute_v" xml:space="preserve"><value>垂直等距分布</value></data>
+  <data name="designer.toolbar.distribute_v_tooltip" xml:space="preserve"><value>固定最上 / 最下元件，中間元件垂直等間距排列（≥ 3 選取）</value></data>
+
+  <!-- Page Panel -->
+  <data name="designer.page_panel.title" xml:space="preserve"><value>頁面</value></data>
+  <data name="designer.page_panel.add_root_tooltip" xml:space="preserve"><value>新增根頁面</value></data>
+
+  <!-- Component Library -->
+  <data name="designer.component_panel.title" xml:space="preserve"><value>元件庫</value></data>
+  <data name="designer.component_panel.expand_tooltip" xml:space="preserve"><value>展開元件庫</value></data>
+  <data name="designer.component_panel.collapse_tooltip" xml:space="preserve"><value>收起元件庫</value></data>
+
+  <data name="designer.widget.table" xml:space="preserve"><value>表格</value></data>
+  <data name="designer.widget.gauge" xml:space="preserve"><value>儀錶板</value></data>
+  <data name="designer.widget.text" xml:space="preserve"><value>文字</value></data>
+  <data name="designer.widget.controlBtn" xml:space="preserve"><value>控制按鈕</value></data>
+  <data name="designer.widget.realtimeValue" xml:space="preserve"><value>AI 點位</value></data>
+  <data name="designer.widget.diPoint" xml:space="preserve"><value>DI 點位</value></data>
+  <data name="designer.widget.aoPoint" xml:space="preserve"><value>AO 點位</value></data>
+  <data name="designer.widget.doPoint" xml:space="preserve"><value>DO 點位</value></data>
+  <data name="designer.widget.pump" xml:space="preserve"><value>水泵</value></data>
+
+  <data name="designer.widget_tooltip.table" xml:space="preserve"><value>拖曳至畫布以新增資料表格</value></data>
+  <data name="designer.widget_tooltip.gauge" xml:space="preserve"><value>拖曳至畫布以新增儀錶板</value></data>
+  <data name="designer.widget_tooltip.text" xml:space="preserve"><value>拖曳至畫布以新增文字標籤</value></data>
+  <data name="designer.widget_tooltip.controlBtn" xml:space="preserve"><value>拖曳至畫布以新增控制按鈕（可綁定 CID）</value></data>
+  <data name="designer.widget_tooltip.realtimeValue" xml:space="preserve"><value>拖曳至畫布以新增 AI 點位（可綁定 SID）</value></data>
+  <data name="designer.widget_tooltip.diPoint" xml:space="preserve"><value>拖曳至畫布以新增 DI 點位指示燈（可綁定 SID）</value></data>
+  <data name="designer.widget_tooltip.aoPoint" xml:space="preserve"><value>拖曳至畫布以新增 AO 點位（可綁定 CID，寫入類比輸出值）</value></data>
+  <data name="designer.widget_tooltip.doPoint" xml:space="preserve"><value>拖曳至畫布以新增 DO 點位（可綁定 CID，ON/OFF 切換寫入）</value></data>
+  <data name="designer.widget_tooltip.pump" xml:space="preserve"><value>拖曳至畫布以新增水泵圖示（可綁定 SID，運轉時旋轉）</value></data>
+
+  <!-- Property Panel -->
+  <data name="designer.property_panel.title" xml:space="preserve"><value>屬性</value></data>
+  <data name="designer.property_panel.no_sel" xml:space="preserve"><value>點選元件以編輯屬性</value></data>
+
+  <!-- Picker Modal -->
+  <data name="designer.picker.title.device" xml:space="preserve"><value>選擇設備</value></data>
+  <data name="designer.picker.title.source" xml:space="preserve"><value>選擇點位來源</value></data>
+  <data name="designer.picker.title.point" xml:space="preserve"><value>選擇點位</value></data>
+  <data name="designer.picker.title.calc_group" xml:space="preserve"><value>選擇計算點位群組</value></data>
+  <data name="designer.picker.title.calc_point" xml:space="preserve"><value>選擇計算點位</value></data>
+  <data name="designer.picker.title.db_source" xml:space="preserve"><value>選擇 DB 來源</value></data>
+  <data name="designer.picker.title.db_point" xml:space="preserve"><value>選擇 DB 來源點位</value></data>
+  <data name="designer.picker.source.device" xml:space="preserve"><value>設備點位</value></data>
+  <data name="designer.picker.source.device_desc" xml:space="preserve"><value>從 Modbus 設備選擇原始點位</value></data>
+  <data name="designer.picker.source.calc" xml:space="preserve"><value>計算點位</value></data>
+  <data name="designer.picker.source.calc_desc" xml:space="preserve"><value>從公式衍生的計算點位</value></data>
+  <data name="designer.picker.source.db" xml:space="preserve"><value>DB 來源點位</value></data>
+  <data name="designer.picker.source.db_desc" xml:space="preserve"><value>從外部資料庫寫入的點位</value></data>
+  <data name="designer.picker.back" xml:space="preserve"><value>返回</value></data>
+  <data name="designer.picker.back_to_source" xml:space="preserve"><value>返回來源選擇</value></data>
+  <data name="designer.picker.device_list" xml:space="preserve"><value>設備清單</value></data>
+  <data name="designer.picker.search_placeholder" xml:space="preserve"><value>搜尋點位名稱…</value></data>
+  <data name="designer.picker.cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="designer.picker.confirm" xml:space="preserve"><value>確認</value></data>
+  <data name="designer.picker.points_count" xml:space="preserve"><value>{count} 個點位</value></data>
+  <data name="designer.picker.ungrouped" xml:space="preserve"><value>未分組</value></data>
+  <data name="designer.picker.db_source_default" xml:space="preserve"><value>DB 來源</value></data>
+  <data name="designer.picker.no_db_points" xml:space="preserve"><value>尚無 DB 來源點位</value></data>
+  <data name="designer.picker.no_devices" xml:space="preserve"><value>尚無設備</value></data>
+  <data name="designer.picker.no_matching_points" xml:space="preserve"><value>無符合點位</value></data>
+  <data name="designer.picker.load_error" xml:space="preserve"><value>無法載入設備/點位清單，請確認資料庫連線。</value></data>
+  <data name="designer.picker.loading" xml:space="preserve"><value>載入中…</value></data>
+  <!-- DI 點位排程綁定（plan 2026-05-26-di-point-bind-schedule） -->
+  <data name="designer.picker.toggle.point" xml:space="preserve"><value>點位</value></data>
+  <data name="designer.picker.toggle.schedule" xml:space="preserve"><value>排程</value></data>
+  <data name="designer.picker.title.schedule" xml:space="preserve"><value>選擇排程</value></data>
+  <data name="designer.picker.no_schedules" xml:space="preserve"><value>沒有啟用中的排程</value></data>
+  <data name="designer.picker.schedule_load_error" xml:space="preserve"><value>無法載入排程清單</value></data>
+  <data name="designer.picker.schedule.weekly" xml:space="preserve"><value>每週</value></data>
+  <data name="designer.picker.schedule.n_weekly" xml:space="preserve"><value>N 週循環</value></data>
+  <data name="designer.picker.schedule.monthly" xml:space="preserve"><value>每月</value></data>
+  <data name="designer.picker.schedule.n_monthly" xml:space="preserve"><value>N 月循環</value></data>
+  <data name="designer.prop.source_schedule" xml:space="preserve"><value>來源：排程</value></data>
+  <data name="designer.prop.source_point" xml:space="preserve"><value>來源：點位</value></data>
+
+  <!-- Page Edit Modal -->
+  <data name="designer.page_modal.title" xml:space="preserve"><value>編輯頁面</value></data>
+  <data name="designer.page_modal.name_label" xml:space="preserve"><value>頁面名稱</value></data>
+  <data name="designer.page_modal.name_placeholder" xml:space="preserve"><value>輸入頁面名稱</value></data>
+  <data name="designer.page_modal.icon_label" xml:space="preserve"><value>頁面圖示</value></data>
+  <data name="designer.page_modal.cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="designer.page_modal.confirm" xml:space="preserve"><value>確認</value></data>
+
+  <!-- Page Tree -->
+  <data name="designer.page.default_name" xml:space="preserve"><value>主頁面</value></data>
+  <data name="designer.page.new_name" xml:space="preserve"><value>新頁面</value></data>
+  <data name="designer.page.prompt_name" xml:space="preserve"><value>請輸入頁面名稱：</value></data>
+  <data name="designer.page.must_keep_one" xml:space="preserve"><value>至少需要保留一個頁面。</value></data>
+  <data name="designer.page.confirm_delete" xml:space="preserve"><value>確定要刪除「{name}」？</value></data>
+  <data name="designer.page.confirm_delete_with_children" xml:space="preserve"><value>確定要刪除「{name}」及其所有子頁面？</value></data>
+
+  <!-- Icon Picker -->
+  <data name="designer.icon.home" xml:space="preserve"><value>首頁</value></data>
+  <data name="designer.icon.general" xml:space="preserve"><value>一般</value></data>
+  <data name="designer.icon.group" xml:space="preserve"><value>群組</value></data>
+  <data name="designer.icon.trend" xml:space="preserve"><value>趨勢</value></data>
+  <data name="designer.icon.gauge" xml:space="preserve"><value>儀錶板</value></data>
+  <data name="designer.icon.temperature" xml:space="preserve"><value>溫度</value></data>
+  <data name="designer.icon.power" xml:space="preserve"><value>電力</value></data>
+  <data name="designer.icon.water" xml:space="preserve"><value>水流</value></data>
+  <data name="designer.icon.hvac" xml:space="preserve"><value>空調</value></data>
+  <data name="designer.icon.combustion" xml:space="preserve"><value>燃燒</value></data>
+  <data name="designer.icon.refrigeration" xml:space="preserve"><value>冷凍</value></data>
+  <data name="designer.icon.fan" xml:space="preserve"><value>風機</value></data>
+  <data name="designer.icon.pump" xml:space="preserve"><value>幫浦</value></data>
+  <data name="designer.icon.device" xml:space="preserve"><value>設備</value></data>
+  <data name="designer.icon.factory" xml:space="preserve"><value>工廠</value></data>
+  <data name="designer.icon.server" xml:space="preserve"><value>伺服器</value></data>
+  <data name="designer.icon.network" xml:space="preserve"><value>網路</value></data>
+  <data name="designer.icon.plug" xml:space="preserve"><value>電源</value></data>
+  <data name="designer.icon.solar" xml:space="preserve"><value>太陽能</value></data>
+  <data name="designer.icon.map" xml:space="preserve"><value>地圖</value></data>
+  <data name="designer.icon.alarm" xml:space="preserve"><value>警報</value></data>
+  <data name="designer.icon.bell" xml:space="preserve"><value>通知</value></data>
+  <data name="designer.icon.eye" xml:space="preserve"><value>監控</value></data>
+  <data name="designer.icon.database" xml:space="preserve"><value>資料庫</value></data>
+  <data name="designer.icon.tools" xml:space="preserve"><value>維護</value></data>
+
+  <!-- Context Menus -->
+  <data name="designer.ctx.add_page" xml:space="preserve"><value>新增頁面</value></data>
+  <data name="designer.ctx.add_subpage" xml:space="preserve"><value>新增子頁面</value></data>
+  <data name="designer.ctx.edit" xml:space="preserve"><value>編輯</value></data>
+  <data name="designer.ctx.delete" xml:space="preserve"><value>刪除</value></data>
+  <data name="designer.ctx.edit_cell" xml:space="preserve"><value>編輯儲存格</value></data>
+  <data name="designer.ctx.bind_point" xml:space="preserve"><value>綁定點位</value></data>
+  <data name="designer.ctx.clear_binding" xml:space="preserve"><value>清除綁定</value></data>
+  <data name="designer.ctx.add_text" xml:space="preserve"><value>新增文字</value></data>
+
+  <!-- Widget defaults (snapshot at create-time per culture) -->
+  <data name="designer.default.table_title" xml:space="preserve"><value>數據表格</value></data>
+  <data name="designer.default.gauge_title" xml:space="preserve"><value>溫度</value></data>
+  <data name="designer.default.text_title" xml:space="preserve"><value>文字標籤</value></data>
+  <data name="designer.default.text_content" xml:space="preserve"><value>文字內容</value></data>
+  <data name="designer.default.controlBtn_title" xml:space="preserve"><value>控制</value></data>
+  <data name="designer.default.controlBtn_label" xml:space="preserve"><value>執行</value></data>
+  <data name="designer.default.realtimeValue_title" xml:space="preserve"><value>AI 點位</value></data>
+  <data name="designer.default.diPoint_title" xml:space="preserve"><value>DI 點位</value></data>
+  <data name="designer.default.aoPoint_title" xml:space="preserve"><value>AO 點位</value></data>
+  <data name="designer.default.aoPoint_menu_manual" xml:space="preserve"><value>手動控制</value></data>
+  <data name="designer.default.aoPoint_menu_auto" xml:space="preserve"><value>自動控制</value></data>
+  <data name="designer.default.doPoint_title" xml:space="preserve"><value>DO 點位</value></data>
+  <data name="designer.default.doPoint_menu_on" xml:space="preserve"><value>手動ON</value></data>
+  <data name="designer.default.doPoint_menu_off" xml:space="preserve"><value>手動OFF</value></data>
+  <data name="designer.default.doPoint_menu_auto" xml:space="preserve"><value>自動控制</value></data>
+  <data name="designer.default.pump_title" xml:space="preserve"><value>水泵</value></data>
+
+  <!-- Table sample data -->
+  <data name="designer.table.header.name" xml:space="preserve"><value>名稱</value></data>
+  <data name="designer.table.header.value" xml:space="preserve"><value>數值</value></data>
+  <data name="designer.table.header.status" xml:space="preserve"><value>狀態</value></data>
+  <data name="designer.table.header.timestamp" xml:space="preserve"><value>時間戳</value></data>
+
+  <!-- Widget HTML preview inline strings -->
+  <data name="designer.widget.unbound_cid" xml:space="preserve"><value>未綁定 CID</value></data>
+  <data name="designer.widget.unbound_sid" xml:space="preserve"><value>未綁定 SID</value></data>
+  <data name="designer.widget.unbound" xml:space="preserve"><value>（未綁定）</value></data>
+  <data name="designer.widget.delete_widget_tooltip" xml:space="preserve"><value>刪除元件</value></data>
+  <data name="designer.widget.resize_tooltip" xml:space="preserve"><value>拖曳縮放</value></data>
+  <data name="designer.widget.delete_text_tooltip" xml:space="preserve"><value>刪除文字</value></data>
+
+  <!-- Prop Panel - common -->
+  <data name="designer.prop.title" xml:space="preserve"><value>標題</value></data>
+  <data name="designer.prop.pos_x" xml:space="preserve"><value>X 位置</value></data>
+  <data name="designer.prop.pos_y" xml:space="preserve"><value>Y 位置</value></data>
+  <data name="designer.prop.width" xml:space="preserve"><value>寬度</value></data>
+  <data name="designer.prop.height" xml:space="preserve"><value>高度</value></data>
+  <data name="designer.prop.font_size" xml:space="preserve"><value>字體大小</value></data>
+  <data name="designer.prop.font_color" xml:space="preserve"><value>字色</value></data>
+  <data name="designer.prop.font_family" xml:space="preserve"><value>字體</value></data>
+  <data name="designer.prop.unit" xml:space="preserve"><value>單位</value></data>
+  <data name="designer.prop.unit_from_point" xml:space="preserve"><value>單位（來自點位）</value></data>
+  <data name="designer.prop.background_color" xml:space="preserve"><value>背景色</value></data>
+  <data name="designer.prop.transparent_bg" xml:space="preserve"><value>透明背景</value></data>
+  <data name="designer.prop.reselect" xml:space="preserve"><value>重選</value></data>
+  <data name="designer.prop.bind" xml:space="preserve"><value>綁定</value></data>
+  <data name="designer.prop.clear" xml:space="preserve"><value>清除</value></data>
+
+  <!-- Prop Panel - table -->
+  <data name="designer.prop.rows" xml:space="preserve"><value>列數</value></data>
+  <data name="designer.prop.cols" xml:space="preserve"><value>欄數</value></data>
+  <data name="designer.prop.header_color" xml:space="preserve"><value>標題列顏色</value></data>
+  <data name="designer.prop.text_content" xml:space="preserve"><value>文字內容</value></data>
+  <data name="designer.prop.alignment" xml:space="preserve"><value>對齊</value></data>
+  <data name="designer.prop.weight" xml:space="preserve"><value>粗細</value></data>
+  <data name="designer.prop.weight.normal" xml:space="preserve"><value>一般</value></data>
+  <data name="designer.prop.weight.bold" xml:space="preserve"><value>粗體</value></data>
+  <data name="designer.prop.weight.medium" xml:space="preserve"><value>中粗</value></data>
+  <data name="designer.prop.align.left" xml:space="preserve"><value>靠左</value></data>
+  <data name="designer.prop.align.center" xml:space="preserve"><value>置中</value></data>
+  <data name="designer.prop.align.right" xml:space="preserve"><value>靠右</value></data>
+  <data name="designer.prop.point_type" xml:space="preserve"><value>點位屬性</value></data>
+  <data name="designer.prop.point_type.ai" xml:space="preserve"><value>AI 點位</value></data>
+  <data name="designer.prop.point_type.di" xml:space="preserve"><value>DI 點位</value></data>
+  <data name="designer.prop.col_decimals" xml:space="preserve"><value>小數位數（整欄）</value></data>
+  <data name="designer.prop.col_decimals_placeholder" xml:space="preserve"><value>不限</value></data>
+  <data name="designer.prop.cell_back" xml:space="preserve"><value>返回表格屬性</value></data>
+  <data name="designer.prop.cell_header_row" xml:space="preserve"><value>標題列</value></data>
+  <data name="designer.prop.cell_data_row" xml:space="preserve"><value>資料列</value></data>
+  <data name="designer.prop.text_color" xml:space="preserve"><value>文字顏色</value></data>
+
+  <!-- Prop Panel - gauge -->
+  <data name="designer.prop.bound_point" xml:space="preserve"><value>綁定點位</value></data>
+  <data name="designer.prop.current_value" xml:space="preserve"><value>當前值</value></data>
+  <data name="designer.prop.min_value" xml:space="preserve"><value>最小值</value></data>
+  <data name="designer.prop.max_value" xml:space="preserve"><value>最大值</value></data>
+  <data name="designer.prop.main_color_normal" xml:space="preserve"><value>主色（正常範圍）</value></data>
+  <data name="designer.prop.high_color" xml:space="preserve"><value>上限顏色</value></data>
+  <data name="designer.prop.low_color" xml:space="preserve"><value>下限顏色</value></data>
+
+  <!-- Prop Panel - controlBtn -->
+  <data name="designer.prop.bound_cid" xml:space="preserve"><value>綁定 CID</value></data>
+  <data name="designer.prop.btn_label" xml:space="preserve"><value>按鈕文字</value></data>
+  <data name="designer.prop.btn_icon" xml:space="preserve"><value>按鈕圖示</value></data>
+  <data name="designer.prop.btn_icon.finger" xml:space="preserve"><value>✉ 手指</value></data>
+  <data name="designer.prop.btn_icon.play" xml:space="preserve"><value>▶ 啟動</value></data>
+  <data name="designer.prop.btn_icon.power" xml:space="preserve"><value>⏻ 電源</value></data>
+  <data name="designer.prop.btn_icon.send" xml:space="preserve"><value>✈ 發送</value></data>
+  <data name="designer.prop.btn_icon.bolt" xml:space="preserve"><value>⚡ 閃電</value></data>
+  <data name="designer.prop.ctrl_value" xml:space="preserve"><value>控制值</value></data>
+  <data name="designer.prop.btn_color" xml:space="preserve"><value>按鈕顏色</value></data>
+
+  <!-- Prop Panel - realtimeValue -->
+  <data name="designer.prop.bound_sid" xml:space="preserve"><value>綁定 SID</value></data>
+
+  <!-- Prop Panel - diPoint -->
+  <data name="designer.prop.display_mode" xml:space="preserve"><value>顯示模式</value></data>
+  <data name="designer.prop.display_mode.indicator" xml:space="preserve"><value>燈號</value></data>
+  <data name="designer.prop.display_mode.text" xml:space="preserve"><value>文字</value></data>
+  <data name="designer.prop.indicator_size" xml:space="preserve"><value>指示燈大小</value></data>
+  <data name="designer.prop.on_color" xml:space="preserve"><value>ON 顏色</value></data>
+  <data name="designer.prop.off_color" xml:space="preserve"><value>OFF 顏色</value></data>
+  <data name="designer.prop.on_label" xml:space="preserve"><value>ON 文字</value></data>
+  <data name="designer.prop.off_label" xml:space="preserve"><value>OFF 文字</value></data>
+  <data name="designer.prop.alarm_color" xml:space="preserve"><value>警報顏色</value></data>
+  <data name="designer.prop.alarm_text_color" xml:space="preserve"><value>警報字色</value></data>
+
+  <!-- Prop Panel - aoPoint / doPoint -->
+  <data name="designer.prop.display_name" xml:space="preserve"><value>顯示名稱</value></data>
+  <data name="designer.prop.default_write_value" xml:space="preserve"><value>預設寫入值</value></data>
+  <data name="designer.prop.step_value" xml:space="preserve"><value>步進值</value></data>
+  <data name="designer.prop.decimal_places" xml:space="preserve"><value>小數點位數</value></data>
+  <data name="designer.prop.menu_manual" xml:space="preserve"><value>「手動控制」選單文字</value></data>
+  <data name="designer.prop.menu_auto" xml:space="preserve"><value>「自動控制」選單文字</value></data>
+  <data name="designer.prop.menu_on" xml:space="preserve"><value>「手動ON」選單文字</value></data>
+  <data name="designer.prop.menu_off" xml:space="preserve"><value>「手動OFF」選單文字</value></data>
+  <data name="designer.prop.menu_blank_hint" xml:space="preserve"><value>留空則不顯示</value></data>
+  <data name="designer.prop.on_write_value" xml:space="preserve"><value>ON 寫入值</value></data>
+  <data name="designer.prop.off_write_value" xml:space="preserve"><value>OFF 寫入值</value></data>
+  <data name="designer.prop.block_color" xml:space="preserve"><value>方塊顏色</value></data>
+
+  <!-- Prop Panel - pump -->
+  <data name="designer.prop.pump.sid_monitor" xml:space="preserve"><value>SID 監控點位</value></data>
+  <data name="designer.prop.pump.cid_control" xml:space="preserve"><value>CID 控制點位</value></data>
+  <data name="designer.prop.pump.run_status" xml:space="preserve"><value>運轉狀態</value></data>
+  <data name="designer.prop.pump.fault_status" xml:space="preserve"><value>故障狀態</value></data>
+  <data name="designer.prop.pump.mode_status" xml:space="preserve"><value>手自動狀態</value></data>
+  <data name="designer.prop.pump.frequency" xml:space="preserve"><value>頻率</value></data>
+  <data name="designer.prop.pump.start_stop" xml:space="preserve"><value>啟動停止</value></data>
+  <data name="designer.prop.pump.freq_set" xml:space="preserve"><value>頻率設定</value></data>
+  <data name="designer.prop.pump.outlet_dir" xml:space="preserve"><value>出水口方向</value></data>
+  <data name="designer.prop.pump.outlet_right" xml:space="preserve"><value>右</value></data>
+  <data name="designer.prop.pump.outlet_left" xml:space="preserve"><value>左</value></data>
+  <data name="designer.prop.pump.outlet_up" xml:space="preserve"><value>上</value></data>
+  <data name="designer.prop.pump.run_color" xml:space="preserve"><value>運轉顏色</value></data>
+  <data name="designer.prop.pump.stop_color" xml:space="preserve"><value>停止顏色</value></data>
+  <data name="designer.prop.pump.fault_color" xml:space="preserve"><value>故障顏色</value></data>
+  <data name="designer.prop.pump.manual_color" xml:space="preserve"><value>手動顏色</value></data>
+  <data name="designer.prop.pump.auto_color" xml:space="preserve"><value>自動顏色</value></data>
+
+  <!-- Prop Panel - text -->
+  <data name="designer.prop.text.bold" xml:space="preserve"><value>粗體</value></data>
+  <data name="designer.prop.text.italic" xml:space="preserve"><value>斜體</value></data>
+  <data name="designer.prop.text.bold.normal" xml:space="preserve"><value>正常</value></data>
+  <data name="designer.prop.text.bold.bold" xml:space="preserve"><value>粗體</value></data>
+  <data name="designer.prop.text.italic.no" xml:space="preserve"><value>否</value></data>
+  <data name="designer.prop.text.italic.yes" xml:space="preserve"><value>是</value></data>
+  <data name="designer.prop.text.font.default" xml:space="preserve"><value>預設</value></data>
+  <data name="designer.prop.text.font.msjh" xml:space="preserve"><value>微軟正黑體</value></data>
+
+  <!-- IO / Save -->
+  <data name="designer.io.saved_success" xml:space="preserve"><value>已成功儲存至資料庫</value></data>
+  <data name="designer.io.save_failed" xml:space="preserve"><value>儲存失敗：{error}</value></data>
+  <data name="designer.io.network_error" xml:space="preserve"><value>網路錯誤：{error}</value></data>
+  <data name="designer.io.unknown_error" xml:space="preserve"><value>未知錯誤</value></data>
+  <data name="designer.io.load_failed" xml:space="preserve"><value>載入已發布設計失敗：{error}</value></data>
+
+  <!-- Canvas -->
+  <data name="designer.canvas.confirm_clear" xml:space="preserve"><value>確定要清除畫布上所有元件？</value></data>
+</root>

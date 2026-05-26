@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="dbcoord.title" xml:space="preserve"><value>DB Source</value></data>
+  <data name="dbcoord.card.db_comm" xml:space="preserve"><value>DB Communication</value></data>
+  <data name="dbcoord.card.device_detail" xml:space="preserve"><value>Device Details</value></data>
+
+  <data name="dbcoord.btn.refresh_page" xml:space="preserve"><value>Refresh Page</value></data>
+  <data name="dbcoord.btn.reload_engine" xml:space="preserve"><value>Notify Engine to Reload JSON</value></data>
+  <data name="dbcoord.btn.notifying" xml:space="preserve"><value>Notifying…</value></data>
+
+  <data name="dbcoord.label.id" xml:space="preserve"><value>Id</value></data>
+  <data name="dbcoord.label.name" xml:space="preserve"><value>Name (Device Name)</value></data>
+  <data name="dbcoord.label.polling_interval" xml:space="preserve"><value>PollingInterval (Polling ms)</value></data>
+  <data name="dbcoord.label.connect_timeout" xml:space="preserve"><value>ConnectTimeout (Timeout ms)</value></data>
+  <data name="dbcoord.label.monitor_enabled" xml:space="preserve"><value>MonitorEnabled (Monitoring Enabled)</value></data>
+  <data name="dbcoord.label.point_count" xml:space="preserve"><value>Point Count</value></data>
+
+  <data name="dbcoord.empty.select_source" xml:space="preserve"><value>Please select a DB source from the sidebar</value></data>
+  <data name="dbcoord.empty.no_source" xml:space="preserve"><value>No DB Source</value></data>
+  <data name="dbcoord.empty.not_loaded" xml:space="preserve"><value>No DB source coordinator loaded</value></data>
+
+  <data name="dbcoord.badge.disabled" xml:space="preserve"><value>Disabled</value></data>
+
+  <data name="dbcoord.value.yes" xml:space="preserve"><value>Yes</value></data>
+  <data name="dbcoord.value.no" xml:space="preserve"><value>No</value></data>
+
+  <data name="dbcoord.msg.success_default" xml:space="preserve"><value>Success</value></data>
+  <data name="dbcoord.msg.failure_default" xml:space="preserve"><value>Failed</value></data>
+  <data name="dbcoord.msg.call_failed_with" xml:space="preserve"><value>Call failed: {error}</value></data>
+</root>

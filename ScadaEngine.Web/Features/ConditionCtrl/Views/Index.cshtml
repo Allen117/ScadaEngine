@@ -1,6 +1,6 @@
 @model ScadaEngine.Web.Features.ConditionCtrl.Models.ConditionControlViewModel
 @{
-    ViewData["Title"] = "條件控制";
+    ViewData["Title"] = Localizer["conditionctrl.title"].Value;
     Layout = "~/Views/Shared/_Layout.cshtml";
 
     var pointJson = System.Text.Json.JsonSerializer.Serialize(
@@ -26,6 +26,8 @@
             remarks            = r.szRemarks ?? ""
         })
     );
+
+    var dbSourceSuffix = Localizer["conditionctrl.option.db_source_suffix"].Value;
 }
 
 <div class="container-fluid mt-4">
@@ -33,10 +35,10 @@
     <!-- 頁面標題 -->
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="mb-0">
-            <i class="fas fa-code-branch text-primary me-2"></i>條件控制
+            <i class="fas fa-code-branch text-primary me-2"></i>@Localizer["conditionctrl.title"]
         </h2>
         <span class="text-muted small">
-            <i class="fas fa-cogs me-1"></i>條件控制設定
+            <i class="fas fa-cogs me-1"></i>@Localizer["conditionctrl.subtitle"]
         </span>
     </div>
 
@@ -44,7 +46,7 @@
     <div class="card shadow-sm mb-3">
         <div class="card-header bg-light">
             <h5 class="mb-0">
-                <i class="fas fa-plus-circle text-success me-2"></i>新增條件控制規則
+                <i class="fas fa-plus-circle text-success me-2"></i>@Localizer["conditionctrl.card.add_rule"]
             </h5>
         </div>
         <div class="card-body">
@@ -55,39 +57,39 @@
                 <!-- 條件設備 -->
                 <div class="col-md-2">
                     <label class="form-label fw-semibold">
-                        <i class="fas fa-server text-dark me-1"></i>設備
+                        <i class="fas fa-server text-dark me-1"></i>@Localizer["conditionctrl.label.device"]
                     </label>
                     <select id="conditionCoordinator" class="form-select form-select-sm">
-                        <option value="0">— 全部設備 —</option>
+                        <option value="0">@Localizer["conditionctrl.option.all_devices"]</option>
                         @foreach (var c in Model.CoordinatorList)
                         {
                             <option value="@c.Id">@c.szName</option>
                         }
                         @foreach (var c in Model.DbCoordinatorList)
                         {
-                            <option value="DB:@c.Id">@c.szName（DB 來源）</option>
+                            <option value="DB:@c.Id">@(c.szName + dbSourceSuffix)</option>
                         }
-                        <option value="CALC">計算點位</option>
+                        <option value="CALC">@Localizer["conditionctrl.option.calc"]</option>
                     </select>
                 </div>
 
                 <!-- 條件子設備 (多ID時顯示) -->
                 <div class="col-md-2 d-none" id="conditionSubDeviceCol">
                     <label class="form-label fw-semibold">
-                        <i class="fas fa-sitemap text-dark me-1"></i>子設備
+                        <i class="fas fa-sitemap text-dark me-1"></i>@Localizer["conditionctrl.label.sub_device"]
                     </label>
                     <select id="conditionSubDevice" class="form-select form-select-sm">
-                        <option value="">— 請選擇子設備 —</option>
+                        <option value="">@Localizer["conditionctrl.option.select_sub_device"]</option>
                     </select>
                 </div>
 
                 <!-- 條件點位 -->
                 <div class="col-md-4" id="conditionPointCol">
                     <label class="form-label fw-semibold">
-                        <i class="fas fa-tag text-primary me-1"></i>參考點位
+                        <i class="fas fa-tag text-primary me-1"></i>@Localizer["conditionctrl.label.reference_point"]
                     </label>
                     <select id="conditionPoint" class="form-select form-select-sm">
-                        <option value="">— 請選擇點位 —</option>
+                        <option value="">@Localizer["conditionctrl.option.select_point"]</option>
                         @foreach (var p in Model.PointList)
                         {
                             <option value="@p.szSID" data-name="@p.szName" data-unit="@(p.szUnit ?? "")">
@@ -100,25 +102,25 @@
                 <!-- 運算子 -->
                 <div class="col-md-2">
                     <label class="form-label fw-semibold">
-                        <i class="fas fa-not-equal text-warning me-1"></i>運算子
+                        <i class="fas fa-not-equal text-warning me-1"></i>@Localizer["conditionctrl.label.operator"]
                     </label>
                     <select id="conditionOperator" class="form-select form-select-sm">
-                        <option value=">">&gt;　（大於）</option>
-                        <option value="<">&lt;　（小於）</option>
-                        <option value=">=">&gt;=　（大於等於）</option>
-                        <option value="<=">&lt;=　（小於等於）</option>
-                        <option value="==">=　（等於）</option>
-                        <option value="!=">≠　（不等於）</option>
+                        <option value=">">@Html.Raw(Localizer["conditionctrl.op.gt"].Value)</option>
+                        <option value="<">@Html.Raw(Localizer["conditionctrl.op.lt"].Value)</option>
+                        <option value=">=">@Html.Raw(Localizer["conditionctrl.op.gte"].Value)</option>
+                        <option value="<=">@Html.Raw(Localizer["conditionctrl.op.lte"].Value)</option>
+                        <option value="==">@Html.Raw(Localizer["conditionctrl.op.eq"].Value)</option>
+                        <option value="!=">@Html.Raw(Localizer["conditionctrl.op.neq"].Value)</option>
                     </select>
                 </div>
 
                 <!-- 數值 -->
                 <div class="col-md-2">
                     <label class="form-label fw-semibold">
-                        <i class="fas fa-hashtag text-info me-1"></i>數值
+                        <i class="fas fa-hashtag text-info me-1"></i>@Localizer["conditionctrl.label.value"]
                     </label>
                     <input type="number" id="conditionValue" class="form-control form-control-sm"
-                           placeholder="輸入比較數值" step="any" />
+                           placeholder="@Localizer["conditionctrl.placeholder.value"]" step="any" />
                 </div>
 
             </div>
@@ -129,39 +131,39 @@
                 <!-- 控制設備 -->
                 <div class="col-md-2">
                     <label class="form-label fw-semibold">
-                        <i class="fas fa-server text-dark me-1"></i>設備
+                        <i class="fas fa-server text-dark me-1"></i>@Localizer["conditionctrl.label.device"]
                     </label>
                     <select id="controlCoordinator" class="form-select form-select-sm">
-                        <option value="0">— 全部設備 —</option>
+                        <option value="0">@Localizer["conditionctrl.option.all_devices"]</option>
                         @foreach (var c in Model.CoordinatorList)
                         {
                             <option value="@c.Id">@c.szName</option>
                         }
                         @foreach (var c in Model.DbCoordinatorList)
                         {
-                            <option value="DB:@c.Id">@c.szName（DB 來源）</option>
+                            <option value="DB:@c.Id">@(c.szName + dbSourceSuffix)</option>
                         }
-                        <option value="CALC">計算點位</option>
+                        <option value="CALC">@Localizer["conditionctrl.option.calc"]</option>
                     </select>
                 </div>
 
                 <!-- 控制子設備 (多ID時顯示) -->
                 <div class="col-md-2 d-none" id="controlSubDeviceCol">
                     <label class="form-label fw-semibold">
-                        <i class="fas fa-sitemap text-dark me-1"></i>子設備
+                        <i class="fas fa-sitemap text-dark me-1"></i>@Localizer["conditionctrl.label.sub_device"]
                     </label>
                     <select id="controlSubDevice" class="form-select form-select-sm">
-                        <option value="">— 請選擇子設備 —</option>
+                        <option value="">@Localizer["conditionctrl.option.select_sub_device"]</option>
                     </select>
                 </div>
 
                 <!-- 控制點位 -->
                 <div class="col-md-4" id="controlPointCol">
                     <label class="form-label fw-semibold">
-                        <i class="fas fa-bolt text-danger me-1"></i>控制點位
+                        <i class="fas fa-bolt text-danger me-1"></i>@Localizer["conditionctrl.label.control_point"]
                     </label>
                     <select id="controlPoint" class="form-select form-select-sm">
-                        <option value="">— 請選擇點位 —</option>
+                        <option value="">@Localizer["conditionctrl.option.select_point"]</option>
                         @foreach (var p in Model.PointList)
                         {
                             <option value="@p.szSID" data-name="@p.szName" data-unit="@(p.szUnit ?? "")">
@@ -174,36 +176,36 @@
                 <!-- 控制值 -->
                 <div class="col-md-2">
                     <label class="form-label fw-semibold">
-                        <i class="fas fa-pen text-secondary me-1"></i>控制值
+                        <i class="fas fa-pen text-secondary me-1"></i>@Localizer["conditionctrl.label.control_value"]
                     </label>
                     <input type="number" id="controlValue" class="form-control form-control-sm"
-                           placeholder="輸入控制值" step="any" />
+                           placeholder="@Localizer["conditionctrl.placeholder.control_value"]" step="any" />
                 </div>
 
                 <!-- 備註 -->
                 <div class="col-md-4">
                     <label class="form-label fw-semibold">
-                        <i class="fas fa-comment-alt text-muted me-1"></i>備註
-                        <small class="text-muted fw-normal">（選填，最多 50 字）</small>
+                        <i class="fas fa-comment-alt text-muted me-1"></i>@Localizer["conditionctrl.label.remarks"]
+                        <small class="text-muted fw-normal">@Localizer["conditionctrl.label.remarks_hint"]</small>
                     </label>
                     <input type="text" id="remarksValue" class="form-control form-control-sm"
-                           placeholder="輸入備註說明" maxlength="50" />
+                           placeholder="@Localizer["conditionctrl.placeholder.remarks"]" maxlength="50" />
                 </div>
 
             </div>
 
             <div class="mt-3 d-flex align-items-center gap-2">
                 <button id="btnAddRule" class="btn btn-success btn-sm px-4">
-                    <i class="fas fa-plus me-1"></i>新增規則
+                    <i class="fas fa-plus me-1"></i>@Localizer["conditionctrl.btn.add_rule"]
                 </button>
                 <button id="btnClearForm" class="btn btn-outline-secondary btn-sm">
-                    <i class="fas fa-times me-1"></i>清除
+                    <i class="fas fa-times me-1"></i>@Localizer["conditionctrl.btn.clear"]
                 </button>
                 <button id="btnSaveEdit" class="btn btn-warning btn-sm px-4 d-none">
-                    <i class="fas fa-save me-1"></i>編輯
+                    <i class="fas fa-save me-1"></i>@Localizer["conditionctrl.btn.save_edit"]
                 </button>
                 <button id="btnCancelEdit" class="btn btn-outline-secondary btn-sm d-none">
-                    <i class="fas fa-ban me-1"></i>取消
+                    <i class="fas fa-ban me-1"></i>@Localizer["conditionctrl.btn.cancel"]
                 </button>
                 <div id="formAlert" class="alert alert-warning py-1 px-3 mb-0 d-none small">
                     <i class="fas fa-exclamation-triangle me-1"></i>
@@ -218,37 +220,37 @@
         <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
             <h5 class="mb-0">
                 <i class="fas fa-list text-primary me-2"></i>
-                條件控制規則清單
+                @Localizer["conditionctrl.card.rule_list"]
                 <span class="badge bg-secondary ms-1" id="ruleCount">0</span>
             </h5>
             <div class="d-flex align-items-center gap-2">
                 <div id="saveAlert" class="d-none small"></div>
                 <button id="btnSaveToDb" class="btn btn-primary btn-sm d-none">
-                    <i class="fas fa-database me-1"></i>儲存規則至資料庫
+                    <i class="fas fa-database me-1"></i>@Localizer["conditionctrl.btn.save_to_db"]
                 </button>
                 <button id="btnClearAll" class="btn btn-outline-danger btn-sm d-none">
-                    <i class="fas fa-trash-alt me-1"></i>清除全部
+                    <i class="fas fa-trash-alt me-1"></i>@Localizer["conditionctrl.btn.clear_all"]
                 </button>
             </div>
         </div>
         <div class="card-body p-0">
             <div id="emptyRuleMsg" class="text-center py-5 text-muted">
                 <i class="fas fa-clipboard-list fa-3x mb-3 d-block opacity-25"></i>
-                <div>尚未新增任何條件控制規則</div>
-                <small>請填寫上方表單後按下「新增規則」</small>
+                <div>@Localizer["conditionctrl.empty.title"]</div>
+                <small>@Localizer["conditionctrl.empty.hint"]</small>
             </div>
             <div class="table-responsive d-none" id="ruleTableWrapper">
                 <table class="table table-sm table-hover mb-0">
                     <thead class="table-dark">
                         <tr>
-                            <th class="text-center" style="width:50px">#</th>
-                            <th><i class="fas fa-tag me-1"></i>條件點位</th>
-                            <th class="text-center" style="width:90px">運算子</th>
-                            <th class="text-center" style="width:100px">數值</th>
-                            <th><i class="fas fa-bolt me-1"></i>控制點位</th>
-                            <th class="text-center" style="width:100px">控制值</th>
-                            <th>備註</th>
-                            <th class="text-center" style="width:70px">操作</th>
+                            <th class="text-center" style="width:50px">@Localizer["conditionctrl.col.index"]</th>
+                            <th><i class="fas fa-tag me-1"></i>@Localizer["conditionctrl.col.condition_point"]</th>
+                            <th class="text-center" style="width:90px">@Localizer["conditionctrl.col.operator"]</th>
+                            <th class="text-center" style="width:100px">@Localizer["conditionctrl.col.value"]</th>
+                            <th><i class="fas fa-bolt me-1"></i>@Localizer["conditionctrl.col.control_point"]</th>
+                            <th class="text-center" style="width:100px">@Localizer["conditionctrl.col.control_value"]</th>
+                            <th>@Localizer["conditionctrl.col.remarks"]</th>
+                            <th class="text-center" style="width:70px">@Localizer["conditionctrl.col.actions"]</th>
                         </tr>
                     </thead>
                     <tbody id="ruleTableBody"></tbody>

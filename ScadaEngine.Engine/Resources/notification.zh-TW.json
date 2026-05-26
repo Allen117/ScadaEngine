@@ -1,0 +1,34 @@
+{
+  "notify.subject.triggered": "[警報-{severity}] {name}",
+  "notify.subject.cleared": "[警報恢復] {name}",
+  "notify.subject.summary": "[警報摘要] 近 1 分鐘共 {count} 則",
+  "notify.subject.test": "[測試] SCADA 通知測試",
+
+  "notify.body.triggered.line": "{icon} 警報觸發 [{severity}]\n時間: {time}\n描述: {message}",
+  "notify.body.cleared.line": "✅ 警報恢復\n時間: {time}\n描述: {message}",
+  "notify.body.summary.line": "⚠️ 警報摘要 (近 1 分鐘共 {count} 則)\n視窗: {windowStart} – {windowEnd}\n緊急 {critical} | 高 {high} | 中 {medium} | 低 {low}\n\n最近 5 則：\n{recent}",
+  "notify.body.test.line": "📨 SCADA 測試訊息\n群組: {label}\n時間: {time}\n若您看到這則訊息，代表通知設定正確。",
+
+  "notify.body.triggered.html": "<!DOCTYPE html><html><body style='font-family:\"Microsoft JhengHei\",sans-serif;margin:0;padding:0;background:#f4f4f4;'><table cellpadding='0' cellspacing='0' style='width:100%;max-width:600px;margin:20px auto;background:#fff;border:1px solid #ddd;'><tr><td style='background:{color};color:#fff;padding:14px 20px;font-size:18px;font-weight:bold;'>{icon} 警報觸發 [{severity}]</td></tr><tr><td style='padding:20px;'><table style='width:100%;border-collapse:collapse;'><tr><td style='padding:8px 0;color:#666;width:90px;'>觸發時間</td><td style='padding:8px 0;'>{time}</td></tr><tr><td style='padding:8px 0;color:#666;'>點位名稱</td><td style='padding:8px 0;font-weight:bold;'>{name}</td></tr><tr><td style='padding:8px 0;color:#666;vertical-align:top;'>描述</td><td style='padding:8px 0;'>{message}</td></tr></table></td></tr><tr><td style='background:#f9f9f9;color:#999;padding:10px 20px;font-size:12px;text-align:center;'>此為 SCADA 系統自動發送，請勿直接回覆</td></tr></table></body></html>",
+  "notify.body.cleared.html": "<!DOCTYPE html><html><body style='font-family:\"Microsoft JhengHei\",sans-serif;margin:0;padding:0;background:#f4f4f4;'><table cellpadding='0' cellspacing='0' style='width:100%;max-width:600px;margin:20px auto;background:#fff;border:1px solid #ddd;'><tr><td style='background:#28a745;color:#fff;padding:14px 20px;font-size:18px;font-weight:bold;'>✅ 警報恢復</td></tr><tr><td style='padding:20px;'><table style='width:100%;border-collapse:collapse;'><tr><td style='padding:8px 0;color:#666;width:90px;'>恢復時間</td><td style='padding:8px 0;'>{time}</td></tr><tr><td style='padding:8px 0;color:#666;'>點位名稱</td><td style='padding:8px 0;font-weight:bold;'>{name}</td></tr><tr><td style='padding:8px 0;color:#666;vertical-align:top;'>描述</td><td style='padding:8px 0;'>{message}</td></tr></table></td></tr><tr><td style='background:#f9f9f9;color:#999;padding:10px 20px;font-size:12px;text-align:center;'>此為 SCADA 系統自動發送，請勿直接回覆</td></tr></table></body></html>",
+  "notify.body.test.html": "<!DOCTYPE html><html><body style='font-family:\"Microsoft JhengHei\",sans-serif;'><h3>📨 SCADA 測試訊息</h3><p>群組: <b>{label}</b></p><p>時間: {time}</p><p>若您看到這則訊息，代表 Email 通知設定正確。</p></body></html>",
+
+  "notify.severity.0": "緊急",
+  "notify.severity.1": "高",
+  "notify.severity.2": "中",
+  "notify.severity.3": "低",
+
+  "notify.icon.0": "🚨",
+  "notify.icon.1": "⚠️",
+  "notify.icon.2": "🔶",
+  "notify.icon.3": "ℹ️",
+
+  "notify.color.0": "#dc3545",
+  "notify.color.1": "#fd7e14",
+  "notify.color.2": "#ffc107",
+  "notify.color.3": "#0dcaf0",
+
+  "alarm.high_exceed": "{name} 超過上限 {threshold}",
+  "alarm.low_below": "{name} 低於下限 {threshold}",
+  "alarm.di_triggered": "{name} 狀態為 {state} 觸發警報"
+}

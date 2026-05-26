@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="dbcoord.title" xml:space="preserve"><value>DB 來源</value></data>
+  <data name="dbcoord.card.db_comm" xml:space="preserve"><value>DB 通訊</value></data>
+  <data name="dbcoord.card.device_detail" xml:space="preserve"><value>設備詳細資料</value></data>
+
+  <data name="dbcoord.btn.refresh_page" xml:space="preserve"><value>重新整理頁面</value></data>
+  <data name="dbcoord.btn.reload_engine" xml:space="preserve"><value>通知 Engine 重新載入 JSON</value></data>
+  <data name="dbcoord.btn.notifying" xml:space="preserve"><value>通知中…</value></data>
+
+  <data name="dbcoord.label.id" xml:space="preserve"><value>Id</value></data>
+  <data name="dbcoord.label.name" xml:space="preserve"><value>Name（設備名稱）</value></data>
+  <data name="dbcoord.label.polling_interval" xml:space="preserve"><value>PollingInterval（輪詢間隔 ms）</value></data>
+  <data name="dbcoord.label.connect_timeout" xml:space="preserve"><value>ConnectTimeout（連線逾時 ms）</value></data>
+  <data name="dbcoord.label.monitor_enabled" xml:space="preserve"><value>MonitorEnabled（啟用監控）</value></data>
+  <data name="dbcoord.label.point_count" xml:space="preserve"><value>點位數</value></data>
+
+  <data name="dbcoord.empty.select_source" xml:space="preserve"><value>請從左側選擇 DB 來源</value></data>
+  <data name="dbcoord.empty.no_source" xml:space="preserve"><value>尚無 DB 來源</value></data>
+  <data name="dbcoord.empty.not_loaded" xml:space="preserve"><value>尚未載入任何 DB 來源 Coordinator</value></data>
+
+  <data name="dbcoord.badge.disabled" xml:space="preserve"><value>停用</value></data>
+
+  <data name="dbcoord.value.yes" xml:space="preserve"><value>是</value></data>
+  <data name="dbcoord.value.no" xml:space="preserve"><value>否</value></data>
+
+  <data name="dbcoord.msg.success_default" xml:space="preserve"><value>成功</value></data>
+  <data name="dbcoord.msg.failure_default" xml:space="preserve"><value>失敗</value></data>
+  <data name="dbcoord.msg.call_failed_with" xml:space="preserve"><value>呼叫失敗：{error}</value></data>
+</root>

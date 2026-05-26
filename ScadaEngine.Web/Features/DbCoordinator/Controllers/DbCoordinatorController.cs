@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using ScadaEngine.Web.Features.DbCoordinator.Models;
 using ScadaEngine.Web.Services;
 
@@ -11,22 +12,23 @@ public class DbCoordinatorController : Controller
     private readonly DbCoordinatorService _service;
     private readonly DbCoordinatorReloadPublisher _reloadPublisher;
     private readonly ILogger<DbCoordinatorController> _logger;
+    private readonly IStringLocalizer<DbCoordinatorController> _l;
 
     public DbCoordinatorController(
         DbCoordinatorService service,
         DbCoordinatorReloadPublisher reloadPublisher,
-        ILogger<DbCoordinatorController> logger)
+        ILogger<DbCoordinatorController> logger,
+        IStringLocalizer<DbCoordinatorController> localizer)
     {
         _service = service;
         _reloadPublisher = reloadPublisher;
         _logger = logger;
+        _l = localizer;
     }
 
     [HttpGet("/DbCoordinator")]
     public async Task<IActionResult> Index()
     {
-        ViewData["Title"] = "DB 來源";
-
         var data = await _service.GetAllAsync();
         var dto = data.Select(d => new DbCoordinatorListItemDto
         {
@@ -60,7 +62,9 @@ public class DbCoordinatorController : Controller
         return Json(new
         {
             success = isSuccess,
-            message = isSuccess ? "已通知 Engine 重新載入 JSON" : "通知失敗（請確認 MQTT broker 是否運作）"
+            message = isSuccess
+                ? _l["dbcoord.api.reload_success"].Value
+                : _l["dbcoord.api.reload_failure"].Value
         });
     }
 }

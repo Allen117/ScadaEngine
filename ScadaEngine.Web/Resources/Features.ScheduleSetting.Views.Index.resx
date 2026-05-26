@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="schedule.title" xml:space="preserve"><value>排程設定</value></data>
+  <data name="schedule.button.add" xml:space="preserve"><value>新增排程</value></data>
+  <data name="schedule.footer.note" xml:space="preserve"><value>排程建立後可在「流程圖控制」中的 A 接點選擇排程模式，當系統時間符合排程時段時接點將自動導通。</value></data>
+
+  <data name="schedule.col.enabled" xml:space="preserve"><value>啟用</value></data>
+  <data name="schedule.col.name" xml:space="preserve"><value>排程名稱</value></data>
+  <data name="schedule.col.mode" xml:space="preserve"><value>模式</value></data>
+  <data name="schedule.col.days" xml:space="preserve"><value>日期條件</value></data>
+  <data name="schedule.col.timerange" xml:space="preserve"><value>時段</value></data>
+  <data name="schedule.col.status" xml:space="preserve"><value>目前狀態</value></data>
+  <data name="schedule.col.remarks" xml:space="preserve"><value>備註</value></data>
+  <data name="schedule.col.actions" xml:space="preserve"><value>操作</value></data>
+
+  <data name="schedule.empty.no_data" xml:space="preserve"><value>尚無排程，請點擊「新增排程」</value></data>
+  <data name="schedule.empty.no_dates" xml:space="preserve"><value>尚未加入</value></data>
+
+  <data name="schedule.modal.title_add" xml:space="preserve"><value>新增排程</value></data>
+  <data name="schedule.modal.title_edit" xml:space="preserve"><value>編輯排程</value></data>
+
+  <data name="schedule.field.name" xml:space="preserve"><value>排程名稱</value></data>
+  <data name="schedule.field.name_placeholder" xml:space="preserve"><value>例如：上班時間</value></data>
+  <data name="schedule.field.recurrence_type" xml:space="preserve"><value>重複模式</value></data>
+  <data name="schedule.field.days_of_week" xml:space="preserve"><value>星期</value></data>
+  <data name="schedule.field.days_of_month" xml:space="preserve"><value>每月幾號</value></data>
+  <data name="schedule.field.start_time" xml:space="preserve"><value>開始時間</value></data>
+  <data name="schedule.field.end_time" xml:space="preserve"><value>結束時間</value></data>
+  <data name="schedule.field.end_time_hint" xml:space="preserve"><value>（可跨日）</value></data>
+  <data name="schedule.field.remarks" xml:space="preserve"><value>備註</value></data>
+  <data name="schedule.field.exclude_dates" xml:space="preserve"><value>例外日</value></data>
+  <data name="schedule.field.exclude_hint" xml:space="preserve"><value>（當天整段不啟動）</value></data>
+  <data name="schedule.field.include_dates" xml:space="preserve"><value>加開日</value></data>
+  <data name="schedule.field.include_hint" xml:space="preserve"><value>（當天無視規則強制啟動）</value></data>
+  <data name="schedule.field.is_enabled" xml:space="preserve"><value>啟用此排程</value></data>
+
+  <data name="schedule.recurrence.weekly" xml:space="preserve"><value>每週</value></data>
+  <data name="schedule.recurrence.n_week_cycle" xml:space="preserve"><value>N 週循環</value></data>
+  <data name="schedule.recurrence.monthly" xml:space="preserve"><value>每月</value></data>
+  <data name="schedule.recurrence.n_month_cycle" xml:space="preserve"><value>N 月循環</value></data>
+
+  <data name="schedule.cycle.run" xml:space="preserve"><value>跑</value></data>
+  <data name="schedule.cycle.rest" xml:space="preserve"><value>休</value></data>
+  <data name="schedule.cycle.anchor_datetime" xml:space="preserve"><value>週期起算時間</value></data>
+  <data name="schedule.cycle.anchor_hint" xml:space="preserve"><value>從此時刻開始計算跑/休交替</value></data>
+  <data name="schedule.cycle.run_rest_info" xml:space="preserve"><value>跑 {run}{unit} 休 {rest}{unit}</value></data>
+
+  <data name="schedule.unit.week" xml:space="preserve"><value>週</value></data>
+  <data name="schedule.unit.month" xml:space="preserve"><value>月</value></data>
+
+  <data name="schedule.dayofweek.mon" xml:space="preserve"><value>一</value></data>
+  <data name="schedule.dayofweek.tue" xml:space="preserve"><value>二</value></data>
+  <data name="schedule.dayofweek.wed" xml:space="preserve"><value>三</value></data>
+  <data name="schedule.dayofweek.thu" xml:space="preserve"><value>四</value></data>
+  <data name="schedule.dayofweek.fri" xml:space="preserve"><value>五</value></data>
+  <data name="schedule.dayofweek.sat" xml:space="preserve"><value>六</value></data>
+  <data name="schedule.dayofweek.sun" xml:space="preserve"><value>日</value></data>
+
+  <data name="schedule.dom.day_suffix" xml:space="preserve"><value>{day}號</value></data>
+
+  <data name="schedule.button.weekdays" xml:space="preserve"><value>週一至週五</value></data>
+  <data name="schedule.button.select_all" xml:space="preserve"><value>全選</value></data>
+  <data name="schedule.button.clear" xml:space="preserve"><value>清除</value></data>
+  <data name="schedule.button.add_date" xml:space="preserve"><value>加入</value></data>
+  <data name="schedule.button.save" xml:space="preserve"><value>儲存</value></data>
+  <data name="schedule.button.cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="schedule.button.edit" xml:space="preserve"><value>編輯</value></data>
+  <data name="schedule.button.delete" xml:space="preserve"><value>刪除</value></data>
+
+  <data name="schedule.tooltip.remove" xml:space="preserve"><value>移除</value></data>
+
+  <data name="schedule.status.enabled" xml:space="preserve"><value>啟用</value></data>
+  <data name="schedule.status.disabled" xml:space="preserve"><value>停用</value></data>
+  <data name="schedule.status.waiting" xml:space="preserve"><value>等待中</value></data>
+  <data name="schedule.status.not_scheduled" xml:space="preserve"><value>非排程日</value></data>
+  <data name="schedule.status.active" xml:space="preserve"><value>導通中</value></data>
+
+  <data name="schedule.hint.exclude_count" xml:space="preserve"><value>例外 {count} 日</value></data>
+  <data name="schedule.hint.include_count" xml:space="preserve"><value>加開 {count} 日</value></data>
+
+  <data name="schedule.label.exclude_date" xml:space="preserve"><value>例外日</value></data>
+  <data name="schedule.label.include_date" xml:space="preserve"><value>加開日</value></data>
+
+  <data name="schedule.alert.input_name" xml:space="preserve"><value>請輸入排程名稱</value></data>
+  <data name="schedule.alert.select_dayofweek" xml:space="preserve"><value>請至少選擇一天</value></data>
+  <data name="schedule.alert.select_dayofmonth" xml:space="preserve"><value>請至少選擇一個日期</value></data>
+  <data name="schedule.alert.run_invalid" xml:space="preserve"><value>跑的週/月數必須 ≥ 1</value></data>
+  <data name="schedule.alert.rest_invalid" xml:space="preserve"><value>休的週/月數必須 ≥ 1</value></data>
+  <data name="schedule.alert.anchor_required" xml:space="preserve"><value>請設定週期起算時間</value></data>
+  <data name="schedule.alert.time_required" xml:space="preserve"><value>請設定開始和結束時間</value></data>
+  <data name="schedule.alert.time_same" xml:space="preserve"><value>開始和結束時間不可相同</value></data>
+  <data name="schedule.alert.input_date" xml:space="preserve"><value>請先輸入日期</value></data>
+  <data name="schedule.alert.invalid_date_format" xml:space="preserve"><value>日期格式錯誤，請輸入 yyyy/MM/dd（例如 2026/05/15）</value></data>
+  <data name="schedule.alert.date_already_in_list" xml:space="preserve"><value>{date} 已在{label}清單中</value></data>
+  <data name="schedule.confirm.move_date" xml:space="preserve"><value>此日期已在{other}，是否改為{own}？（會自動從{other}移除）</value></data>
+  <data name="schedule.confirm.delete" xml:space="preserve"><value>確定要刪除此排程？</value></data>
+  <data name="schedule.alert.save_failed" xml:space="preserve"><value>儲存失敗</value></data>
+  <data name="schedule.alert.delete_failed" xml:space="preserve"><value>刪除失敗</value></data>
+  <data name="schedule.alert.network_failed" xml:space="preserve"><value>網路錯誤</value></data>
+</root>

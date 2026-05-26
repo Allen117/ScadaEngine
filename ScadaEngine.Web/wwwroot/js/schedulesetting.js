@@ -1,8 +1,14 @@
 (function () {
     'use strict';
 
-    var DAY_NAMES = ['', '一', '二', '三', '四', '五', '六', '日'];
-    var TYPE_LABELS = ['每週', 'N週循環', '每月', 'N月循環'];
+    function t(key, args) { return (window.i18n && window.i18n.t) ? window.i18n.t(key, args) : key; }
+
+    var DAY_KEYS = ['', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+    var TYPE_KEYS = ['weekly', 'n_week_cycle', 'monthly', 'n_month_cycle'];
+    function dayName(d) { return t('schedule.dayofweek.' + DAY_KEYS[d]); }
+    function typeLabel(n) { return t('schedule.recurrence.' + TYPE_KEYS[n]); }
+    function unitLabel(type) { return (type === 1) ? t('schedule.unit.week') : t('schedule.unit.month'); }
+
     var schedules = [];
     var modal = null;
     // Modal 編輯中的例外日 / 加開日清單yyyy-MM-dd 陣列
@@ -16,7 +22,11 @@
         schedules = data.schedules || [];
         modal = new bootstrap.Modal(document.getElementById('scheduleModal'));
         buildDomCheckboxes();
-        renderTable();
+        if (window.i18n && window.i18n.ready) {
+            window.i18n.ready(renderTable);
+        } else {
+            renderTable();
+        }
     }
 
     function buildDomCheckboxes() {
@@ -52,16 +62,17 @@
 
     function buildRow(s) {
         var enabledHtml = s.isEnabled
-            ? '<span class="badge bg-success">啟用</span>'
-            : '<span class="badge bg-secondary">停用</span>';
+            ? '<span class="badge bg-success">' + escHtml(t('schedule.status.enabled')) + '</span>'
+            : '<span class="badge bg-secondary">' + escHtml(t('schedule.status.disabled')) + '</span>';
 
-        var typeHtml = '<span class="type-badge type-' + s.recurrenceType + '">' + TYPE_LABELS[s.recurrenceType] + '</span>';
+        var typeHtml = '<span class="type-badge type-' + s.recurrenceType + '">' + escHtml(typeLabel(s.recurrenceType)) + '</span>';
 
         // 跟休參數說明
         if (s.recurrenceType === 1 || s.recurrenceType === 3) {
-            var unit = s.recurrenceType === 1 ? '週' : '月';
-            typeHtml += '<div class="cycle-info">跟' + s.runLength + unit
-                + ' 休' + s.restLength + unit + '</div>';
+            var unit = unitLabel(s.recurrenceType);
+            typeHtml += '<div class="cycle-info">'
+                + escHtml(t('schedule.cycle.run_rest_info', { run: s.runLength, rest: s.restLength, unit: unit }))
+                + '</div>';
         }
 
         var daysHtml = buildDateDisplay(s);
@@ -71,9 +82,9 @@
         var includeCount = s.includeDates ? s.includeDates.split(',').filter(Boolean).length : 0;
         if (excludeCount > 0 || includeCount > 0) {
             var hintParts = [];
-            if (excludeCount > 0) hintParts.push('例外 ' + excludeCount + ' 日');
-            if (includeCount > 0) hintParts.push('加開 ' + includeCount + ' 日');
-            daysHtml += '<div class="date-override-hint">（' + hintParts.join('｜') + '）</div>';
+            if (excludeCount > 0) hintParts.push(t('schedule.hint.exclude_count', { count: excludeCount }));
+            if (includeCount > 0) hintParts.push(t('schedule.hint.include_count', { count: includeCount }));
+            daysHtml += '<div class="date-override-hint">（' + escHtml(hintParts.join('｜')) + '）</div>';
         }
 
         var timeHtml = '<span class="time-display">' + escHtml(s.startTime) + ' - ' + escHtml(s.endTime) + '</span>';
@@ -89,9 +100,9 @@
             + '<td>' + escHtml(s.remarks || '') + '</td>'
             + '<td>'
             + '  <button class="btn btn-sm btn-outline-primary me-1" onclick="window._schedule.edit(' + s.id + ')">'
-            + '    <i class="fas fa-edit me-1"></i>編輯</button>'
+            + '    <i class="fas fa-edit me-1"></i>' + escHtml(t('schedule.button.edit')) + '</button>'
             + '  <button class="btn btn-sm btn-outline-danger" onclick="window._schedule.remove(' + s.id + ')">'
-            + '    <i class="fas fa-trash-alt me-1"></i>刪除</button>'
+            + '    <i class="fas fa-trash-alt me-1"></i>' + escHtml(t('schedule.button.delete')) + '</button>'
             + '</td></tr>';
     }
 
@@ -103,7 +114,9 @@
         var nums = s.daysOfMonth ? s.daysOfMonth.split(',') : [];
         var html = '';
         for (var i = 0; i < nums.length; i++) {
-            html += '<span class="dom-badge">' + nums[i].trim() + '號</span>';
+            html += '<span class="dom-badge">'
+                + escHtml(t('schedule.dom.day_suffix', { day: nums[i].trim() }))
+                + '</span>';
         }
         return html;
     }
@@ -115,7 +128,7 @@
         for (var i = 0; i < all.length; i++) {
             var d = all[i];
             var isActive = selected.indexOf(d) >= 0;
-            html += '<span class="day-badge' + (isActive ? '' : ' day-off') + '">' + DAY_NAMES[d] + '</span>';
+            html += '<span class="day-badge' + (isActive ? '' : ' day-off') + '">' + escHtml(dayName(d)) + '</span>';
         }
         return html;
     }
@@ -126,7 +139,7 @@
 
     function getScheduleStatus(s) {
         if (!s.isEnabled) {
-            return '<span class="status-inactive"><i class="fas fa-pause-circle me-1"></i>停用</span>';
+            return '<span class="status-inactive"><i class="fas fa-pause-circle me-1"></i>' + escHtml(t('schedule.status.disabled')) + '</span>';
         }
 
         var now = new Date();
@@ -145,23 +158,23 @@
             } else if (nowMin < endMin) {
                 baseDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
             } else {
-                return '<span class="status-inactive"><i class="fas fa-clock me-1"></i>等待中</span>';
+                return '<span class="status-inactive"><i class="fas fa-clock me-1"></i>' + escHtml(t('schedule.status.waiting')) + '</span>';
             }
         } else {
             if (nowMin < startMin || nowMin >= endMin) {
                 baseDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
                 if (!checkDayMatch(s, baseDate)) {
-                    return '<span class="status-inactive"><i class="fas fa-moon me-1"></i>非排程日</span>';
+                    return '<span class="status-inactive"><i class="fas fa-moon me-1"></i>' + escHtml(t('schedule.status.not_scheduled')) + '</span>';
                 }
-                return '<span class="status-inactive"><i class="fas fa-clock me-1"></i>等待中</span>';
+                return '<span class="status-inactive"><i class="fas fa-clock me-1"></i>' + escHtml(t('schedule.status.waiting')) + '</span>';
             }
             baseDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         }
 
         if (checkDayMatch(s, baseDate)) {
-            return '<span class="status-active"><i class="fas fa-check-circle me-1"></i>導通中</span>';
+            return '<span class="status-active"><i class="fas fa-check-circle me-1"></i>' + escHtml(t('schedule.status.active')) + '</span>';
         }
-        return '<span class="status-inactive"><i class="fas fa-moon me-1"></i>非排程日</span>';
+        return '<span class="status-inactive"><i class="fas fa-moon me-1"></i>' + escHtml(t('schedule.status.not_scheduled')) + '</span>';
     }
 
     function checkDayMatch(s, baseDate) {
@@ -234,7 +247,7 @@
         toggle('daysOfWeekSection', isWeekBased);
         toggle('daysOfMonthSection', isMonthBased);
 
-        var unitText = (type === 1) ? '週' : '月';
+        var unitText = unitLabel(type);
         document.getElementById('runUnit').textContent = unitText;
         document.getElementById('restUnit').textContent = unitText;
     }
@@ -247,7 +260,7 @@
 
     function showAddModal() {
         document.getElementById('editId').value = '';
-        document.getElementById('modalTitle').textContent = '新增排程';
+        document.getElementById('modalTitle').textContent = t('schedule.modal.title_add');
         document.getElementById('txtName').value = '';
         document.getElementById('selRecurrenceType').value = '0';
         document.getElementById('txtRunLength').value = '1';
@@ -273,7 +286,7 @@
         if (!s) return;
 
         document.getElementById('editId').value = s.id;
-        document.getElementById('modalTitle').textContent = '編輯排程';
+        document.getElementById('modalTitle').textContent = t('schedule.modal.title_edit');
         document.getElementById('txtName').value = s.name;
         document.getElementById('selRecurrenceType').value = String(s.recurrenceType);
 
@@ -327,23 +340,23 @@
     function addDateToList(target) {
         var inputId = (target === 'exclude') ? 'txtExcludeDate' : 'txtIncludeDate';
         var raw = document.getElementById(inputId).value.trim();
-        if (!raw) { alert('請先輸入日期'); return; }
+        if (!raw) { alert(t('schedule.alert.input_date')); return; }
 
         var date = parseDateInput(raw);
-        if (!date) { alert('日期格式錯誤，請輸入 yyyy/MM/dd（例如 2026/05/15）'); return; }
+        if (!date) { alert(t('schedule.alert.invalid_date_format')); return; }
 
         var ownList = (target === 'exclude') ? editExcludeDates : editIncludeDates;
         var otherList = (target === 'exclude') ? editIncludeDates : editExcludeDates;
-        var otherLabel = (target === 'exclude') ? '加開日' : '例外日';
-        var ownLabel = (target === 'exclude') ? '例外日' : '加開日';
+        var otherLabel = (target === 'exclude') ? t('schedule.label.include_date') : t('schedule.label.exclude_date');
+        var ownLabel = (target === 'exclude') ? t('schedule.label.exclude_date') : t('schedule.label.include_date');
 
         if (ownList.indexOf(date) >= 0) {
-            alert(formatDateDisplay(date) + ' 已在' + ownLabel + '清單中');
+            alert(t('schedule.alert.date_already_in_list', { date: formatDateDisplay(date), label: ownLabel }));
             return;
         }
 
         if (otherList.indexOf(date) >= 0) {
-            var msg = '此日期已在' + otherLabel + '，是否改為' + ownLabel + '？（會自動從' + otherLabel + '移除）';
+            var msg = t('schedule.confirm.move_date', { other: otherLabel, own: ownLabel });
             if (!confirm(msg)) return;
             var idx = otherList.indexOf(date);
             otherList.splice(idx, 1);
@@ -372,14 +385,15 @@
     function renderChipList(containerId, list, target, chipClass) {
         var container = document.getElementById(containerId);
         if (list.length === 0) {
-            container.innerHTML = '<small class="text-muted">尚未加入</small>';
+            container.innerHTML = '<small class="text-muted">' + escHtml(t('schedule.empty.no_dates')) + '</small>';
             return;
         }
+        var removeTitle = escHtml(t('schedule.tooltip.remove'));
         var html = '';
         for (var i = 0; i < list.length; i++) {
             var d = list[i];
             html += '<span class="date-chip ' + chipClass + '">' + escHtml(formatDateDisplay(d))
-                + '<button type="button" class="date-chip-remove" onclick="window._schedule.removeDate(\'' + target + '\', \'' + d + '\')" title="移除">×</button></span>';
+                + '<button type="button" class="date-chip-remove" onclick="window._schedule.removeDate(\'' + target + '\', \'' + d + '\')" title="' + removeTitle + '">×</button></span>';
         }
         container.innerHTML = html;
     }
@@ -390,7 +404,7 @@
 
     function save() {
         var name = document.getElementById('txtName').value.trim();
-        if (!name) { alert('請輸入排程名稱'); return; }
+        if (!name) { alert(t('schedule.alert.input_name')); return; }
 
         var type = parseInt(document.getElementById('selRecurrenceType').value);
         var isWeekBased = (type === 0 || type === 1);
@@ -399,13 +413,13 @@
         var daysOfWeek = null, daysOfMonth = null;
         if (isWeekBased) {
             var dowChecked = document.querySelectorAll('#dayCheckboxes input:checked');
-            if (dowChecked.length === 0) { alert('請至少選擇一天'); return; }
+            if (dowChecked.length === 0) { alert(t('schedule.alert.select_dayofweek')); return; }
             var dowArr = [];
             for (var i = 0; i < dowChecked.length; i++) dowArr.push(dowChecked[i].value);
             daysOfWeek = dowArr.join(',');
         } else {
             var domChecked = document.querySelectorAll('#domCheckboxes input:checked');
-            if (domChecked.length === 0) { alert('請至少選擇一個日期'); return; }
+            if (domChecked.length === 0) { alert(t('schedule.alert.select_dayofmonth')); return; }
             var domArr = [];
             for (var j = 0; j < domChecked.length; j++) domArr.push(domChecked[j].value);
             daysOfMonth = domArr.join(',');
@@ -415,17 +429,17 @@
         var runLength = null, restLength = null, anchorDateTime = null;
         if (type === 1 || type === 3) {
             runLength = parseInt(document.getElementById('txtRunLength').value);
-            if (!runLength || runLength < 1) { alert('跟的週/月數必須 ≥ 1'); return; }
+            if (!runLength || runLength < 1) { alert(t('schedule.alert.run_invalid')); return; }
             restLength = parseInt(document.getElementById('txtRestLength').value);
-            if (!restLength || restLength < 1) { alert('休的週/月數必須 ≥ 1'); return; }
+            if (!restLength || restLength < 1) { alert(t('schedule.alert.rest_invalid')); return; }
             anchorDateTime = document.getElementById('txtAnchorDateTime').value;
-            if (!anchorDateTime) { alert('請設定週期起算時間'); return; }
+            if (!anchorDateTime) { alert(t('schedule.alert.anchor_required')); return; }
         }
 
         var startTime = document.getElementById('txtStartTime').value;
         var endTime = document.getElementById('txtEndTime').value;
-        if (!startTime || !endTime) { alert('請設定開始和結束時間'); return; }
-        if (startTime === endTime) { alert('開始和結束時間不可相同'); return; }
+        if (!startTime || !endTime) { alert(t('schedule.alert.time_required')); return; }
+        if (startTime === endTime) { alert(t('schedule.alert.time_same')); return; }
 
         var editId = document.getElementById('editId').value;
         var dto = {
@@ -456,22 +470,22 @@
                 modal.hide();
                 location.reload();
             } else {
-                alert(result.message || '儲存失敗');
+                alert(result.message || t('schedule.alert.save_failed'));
             }
         })
-        .catch(function () { alert('網路錯誤'); });
+        .catch(function () { alert(t('schedule.alert.network_failed')); });
     }
 
     function remove(id) {
-        if (!confirm('確定要刪除此排程？')) return;
+        if (!confirm(t('schedule.confirm.delete'))) return;
 
         fetch('/api/schedules/' + id, { method: 'DELETE' })
             .then(function (r) { return r.json(); })
             .then(function (result) {
                 if (result.success) location.reload();
-                else alert(result.message || '刪除失敗');
+                else alert(result.message || t('schedule.alert.delete_failed'));
             })
-            .catch(function () { alert('網路錯誤'); });
+            .catch(function () { alert(t('schedule.alert.network_failed')); });
     }
 
     // ════════════════════════════════════════════════════════════════
@@ -552,7 +566,7 @@
     }
 
     function escHtml(s) {
-        if (!s) return '';
+        if (s === null || s === undefined) return '';
         return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 

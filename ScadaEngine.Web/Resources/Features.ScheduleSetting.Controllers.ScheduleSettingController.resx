@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="schedule.error.name_required" xml:space="preserve"><value>排程名稱不可為空</value></data>
+  <data name="schedule.error.time_required" xml:space="preserve"><value>開始/結束時間不可為空</value></data>
+  <data name="schedule.error.select_dayofweek" xml:space="preserve"><value>請至少選擇一個星期</value></data>
+  <data name="schedule.error.select_dayofmonth" xml:space="preserve"><value>請至少選擇一個日期</value></data>
+  <data name="schedule.error.run_invalid" xml:space="preserve"><value>跑的週/月數必須 &gt;= 1</value></data>
+  <data name="schedule.error.rest_invalid" xml:space="preserve"><value>休的週/月數必須 &gt;= 1</value></data>
+  <data name="schedule.error.anchor_required" xml:space="preserve"><value>請設定週期起算時間</value></data>
+  <data name="schedule.error.exclude_invalid" xml:space="preserve"><value>例外日格式錯誤：{0}</value></data>
+  <data name="schedule.error.include_invalid" xml:space="preserve"><value>加開日格式錯誤：{0}</value></data>
+  <data name="schedule.error.date_conflict" xml:space="preserve"><value>日期 {0} 同時出現在例外日與加開日，請擇一</value></data>
+  <data name="schedule.error.invalid_date" xml:space="preserve"><value>"{0}" 不是合法日期（須為 yyyy-MM-dd）</value></data>
+  <data name="schedule.error.save_failed" xml:space="preserve"><value>儲存失敗</value></data>
+  <data name="schedule.error.not_found" xml:space="preserve"><value>排程不存在</value></data>
+  <data name="schedule.success.saved" xml:space="preserve"><value>排程已儲存</value></data>
+  <data name="schedule.success.deleted" xml:space="preserve"><value>已刪除</value></data>
+</root>

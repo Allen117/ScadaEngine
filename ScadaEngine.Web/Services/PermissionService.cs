@@ -25,7 +25,7 @@ public static class PermissionService
         ("/EnergyReport",   "用電報表"),
         ("/Designer",       "畫面設計"),
         ("/Config",         "系統參數"),
-        ("/CommSetting",    "Modbus來源"),
+        ("/ModbusCoordinator", "Modbus來源"),
         ("/DbCoordinator",  "DB 來源"),
         ("/AccountSetting", "帳號管理"),
     ];

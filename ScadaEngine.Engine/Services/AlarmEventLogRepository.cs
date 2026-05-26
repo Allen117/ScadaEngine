@@ -66,8 +66,11 @@ public class AlarmEventLogRepository
         }
     }
 
-    /// <summary>新增一筆事件記錄（警報觸發時呼叫）</summary>
-    public async Task<bool> InsertEventAsync(EventLogModel model)
+    /// <summary>
+    /// 新增一筆事件記錄（警報觸發時呼叫），回傳新插入的 EventLog.Id；失敗回傳 0。
+    /// 同時更新 model.nId 便於呼叫端後續關聯使用（例如通知摘要的 NotifyRelatedEventId）。
+    /// </summary>
+    public async Task<long> InsertEventAsync(EventLogModel model)
     {
         await EnsureConnectionStringAsync();
         try
@@ -76,13 +79,14 @@ public class AlarmEventLogRepository
                 INSERT INTO EventLog
                     (SID, EventType, Severity, TriggerValue, ThresholdValue,
                      Operator, Message, MessageKey, MessageArgs, OccurredAt)
+                OUTPUT INSERTED.Id
                 VALUES
                     (@SID, @EventType, @Severity, @TriggerValue, @ThresholdValue,
                      @Operator, @Message, @MessageKey, @MessageArgs, @OccurredAt)";
 
             using var connection = new SqlConnection(_szConnectionString);
             await connection.OpenAsync();
-            var nAffected = await connection.ExecuteAsync(szSql, new
+            var nInsertedId = await connection.ExecuteScalarAsync<long>(szSql, new
             {
                 SID            = model.szSID,
                 EventType      = model.nEventType,
@@ -96,14 +100,15 @@ public class AlarmEventLogRepository
                 OccurredAt     = model.dtOccurredAt
             });
 
-            _logger.LogInformation("已寫入事件記錄: SID={SID}, Message={Message}",
-                model.szSID, model.szMessage);
-            return nAffected > 0;
+            model.nId = nInsertedId;
+            _logger.LogInformation("已寫入事件記錄: Id={Id}, SID={SID}, Message={Message}",
+                nInsertedId, model.szSID, model.szMessage);
+            return nInsertedId;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "寫入事件記錄失敗: SID={SID}", model.szSID);
-            return false;
+            return 0;
         }
     }
 

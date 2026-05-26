@@ -62,4 +62,10 @@
   <data name="scadapage.alarm.filter.unacked" xml:space="preserve"><value>Unacknowledged only</value></data>
   <data name="scadapage.alarm.filter.acked" xml:space="preserve"><value>Acknowledged only</value></data>
   <data name="scadapage.alarm.empty" xml:space="preserve"><value>No active alarms</value></data>
+
+  <data name="scadapage.badge.manual_mode_tooltip" xml:space="preserve"><value>Manual mode</value></data>
+
+  <!-- DI point schedule binding (plan 2026-05-26-di-point-bind-schedule) -->
+  <data name="scadapage.di.schedule_not_found" xml:space="preserve"><value>Schedule not found</value></data>
+  <data name="scadapage.di.schedule_label" xml:space="preserve"><value>Schedule</value></data>
 </root>

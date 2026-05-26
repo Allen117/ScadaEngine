@@ -1,7 +1,0 @@
-namespace ScadaEngine.Web.Features.CommSetting.Models;
-
-public class UpdateDeviceNameRequest
-{
-    public int Id { get; set; }
-    public string? DeviceName { get; set; }
-}
