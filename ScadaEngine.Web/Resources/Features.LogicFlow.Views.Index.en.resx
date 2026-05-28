@@ -209,4 +209,22 @@ Remove the point/schedule binding first.</value></data>
   <data name="logicflow.pp.schedule.n_weekly" xml:space="preserve"><value>N-Week Cycle</value></data>
   <data name="logicflow.pp.schedule.monthly" xml:space="preserve"><value>Monthly</value></data>
   <data name="logicflow.pp.schedule.n_monthly" xml:space="preserve"><value>N-Month Cycle</value></data>
+
+  <!-- ============ Align / Distribute toolbar ============ -->
+  <data name="logicflow.toolbar.align_left" xml:space="preserve"><value>Align Left</value></data>
+  <data name="logicflow.toolbar.align_left_tooltip" xml:space="preserve"><value>Align Left (select ≥ 2)</value></data>
+  <data name="logicflow.toolbar.align_center_h" xml:space="preserve"><value>Center Horizontally</value></data>
+  <data name="logicflow.toolbar.align_center_h_tooltip" xml:space="preserve"><value>Center horizontally (align X centers)</value></data>
+  <data name="logicflow.toolbar.align_right" xml:space="preserve"><value>Align Right</value></data>
+  <data name="logicflow.toolbar.align_right_tooltip" xml:space="preserve"><value>Align Right (select ≥ 2)</value></data>
+  <data name="logicflow.toolbar.align_top" xml:space="preserve"><value>Align Top</value></data>
+  <data name="logicflow.toolbar.align_top_tooltip" xml:space="preserve"><value>Align Top (select ≥ 2)</value></data>
+  <data name="logicflow.toolbar.align_center_v" xml:space="preserve"><value>Center Vertically</value></data>
+  <data name="logicflow.toolbar.align_center_v_tooltip" xml:space="preserve"><value>Center vertically (align Y centers)</value></data>
+  <data name="logicflow.toolbar.align_bottom" xml:space="preserve"><value>Align Bottom</value></data>
+  <data name="logicflow.toolbar.align_bottom_tooltip" xml:space="preserve"><value>Align Bottom (select ≥ 2)</value></data>
+  <data name="logicflow.toolbar.distribute_h" xml:space="preserve"><value>Distribute Horizontally</value></data>
+  <data name="logicflow.toolbar.distribute_h_tooltip" xml:space="preserve"><value>Distribute horizontally (select ≥ 3, endpoints fixed)</value></data>
+  <data name="logicflow.toolbar.distribute_v" xml:space="preserve"><value>Distribute Vertically</value></data>
+  <data name="logicflow.toolbar.distribute_v_tooltip" xml:space="preserve"><value>Distribute vertically (select ≥ 3, endpoints fixed)</value></data>
 </root>

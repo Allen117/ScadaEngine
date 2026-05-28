@@ -143,6 +143,7 @@ builder.Services.AddScoped<ScadaEngine.Web.Services.ScheduleSettingService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.LineTargetService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.EmailGroupService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyCircuitService>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.WaterCircuitService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyReportService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.DbCoordinatorService>();
 // Scoped：依賴 IStringLocalizer<T>（Scoped），且 exporter 本身無狀態

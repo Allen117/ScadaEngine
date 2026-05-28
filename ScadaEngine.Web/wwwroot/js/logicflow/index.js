@@ -27,7 +27,15 @@
         ppBackToStep0: S.ppBackToStep0,
         ppSelectCalcGroup: S.ppSelectCalcGroup,
         ppShowDbStep: S.ppShowDbStep,
-        ppSelectDbCoordinator: S.ppSelectDbCoordinator
+        ppSelectDbCoordinator: S.ppSelectDbCoordinator,
+        alignLeft: S.alignLeft,
+        alignRight: S.alignRight,
+        alignTop: S.alignTop,
+        alignBottom: S.alignBottom,
+        alignCenterH: S.alignCenterH,
+        alignCenterV: S.alignCenterV,
+        distributeHorizontally: S.distributeHorizontally,
+        distributeVertically: S.distributeVertically
     };
 
     // 一次性綁定全域事件（keydown / 右鍵選單項目 / 全域點擊關選單）

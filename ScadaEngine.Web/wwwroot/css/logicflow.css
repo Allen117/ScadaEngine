@@ -282,3 +282,45 @@
     border-color: #dc3545 !important;
     border-style: dashed !important;
 }
+
+/* ========== 對齊 / 分布工具列（card-header 內，淺底主題） ========== */
+.lf-align-tool-group,
+.lf-dist-tool-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    margin-left: 12px;
+}
+.lf-align-tool-divider {
+    width: 1px;
+    height: 16px;
+    background: #ced4da;
+    margin: 0 6px;
+    flex-shrink: 0;
+}
+.lf-align-tool-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 24px;
+    padding: 0;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    color: #6c757d;
+    cursor: pointer;
+    transition: background-color .12s, color .12s, border-color .12s;
+}
+.lf-align-tool-btn:hover {
+    background: #e9ecef;
+    border-color: #ced4da;
+    color: #212529;
+}
+.lf-align-tool-btn:active {
+    background: #dee2e6;
+}
+.lf-align-tool-btn[disabled] {
+    opacity: .4;
+    cursor: not-allowed;
+}

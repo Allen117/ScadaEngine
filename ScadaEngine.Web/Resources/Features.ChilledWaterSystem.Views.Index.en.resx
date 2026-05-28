@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="chilledwater.title" xml:space="preserve"><value>Chilled Water Circuit Settings</value></data>
+  <data name="chilledwater.subtitle" xml:space="preserve"><value>Energy Management</value></data>
+  <data name="chilledwater.tree.header" xml:space="preserve"><value>Circuit Hierarchy</value></data>
+  <data name="chilledwater.tree.loading" xml:space="preserve"><value>Loading...</value></data>
+  <data name="chilledwater.tree.empty" xml:space="preserve"><value>No circuits yet — click the + button to add one</value></data>
+  <data name="chilledwater.btn.add_root" xml:space="preserve"><value>Add Circuit</value></data>
+
+  <data name="chilledwater.hint.select_node" xml:space="preserve"><value>Please select a circuit on the left</value></data>
+  <data name="chilledwater.hint.select_to_view" xml:space="preserve"><value>Select a node on the left to view or edit details</value></data>
+
+  <data name="chilledwater.action.add_child" xml:space="preserve"><value>Add Child</value></data>
+  <data name="chilledwater.action.edit" xml:space="preserve"><value>Edit</value></data>
+  <data name="chilledwater.action.delete" xml:space="preserve"><value>Delete</value></data>
+
+  <data name="chilledwater.modal.title_create" xml:space="preserve"><value>Add Circuit</value></data>
+  <data name="chilledwater.modal.title_create_child" xml:space="preserve"><value>Add Child Node</value></data>
+  <data name="chilledwater.modal.title_edit" xml:space="preserve"><value>Edit</value></data>
+  <data name="chilledwater.modal.name_label" xml:space="preserve"><value>Name</value></data>
+  <data name="chilledwater.modal.name_placeholder" xml:space="preserve"><value>e.g., Chilled Water System / Chiller 1</value></data>
+  <data name="chilledwater.modal.type_label" xml:space="preserve"><value>Node Type</value></data>
+  <data name="chilledwater.modal.type_virtual" xml:space="preserve"><value>Virtual Circuit</value></data>
+  <data name="chilledwater.modal.type_point" xml:space="preserve"><value>Physical Point</value></data>
+  <data name="chilledwater.modal.device_label" xml:space="preserve"><value>Device</value></data>
+  <data name="chilledwater.modal.device_placeholder" xml:space="preserve"><value>-- Select a device --</value></data>
+  <data name="chilledwater.modal.sid_label" xml:space="preserve"><value>Point</value></data>
+  <data name="chilledwater.modal.sid_placeholder" xml:space="preserve"><value>-- Select a device first --</value></data>
+  <data name="chilledwater.modal.sid_select" xml:space="preserve"><value>-- Select a point --</value></data>
+  <data name="chilledwater.modal.sid_hint" xml:space="preserve"><value>Only RT-family units are listed (RT / USRT / 噸 / 頓 / 冷凍噸)</value></data>
+  <data name="chilledwater.modal.desc_label" xml:space="preserve"><value>Description</value></data>
+  <data name="chilledwater.modal.desc_placeholder" xml:space="preserve"><value>Optional</value></data>
+  <data name="chilledwater.modal.cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="chilledwater.modal.save" xml:space="preserve"><value>Save</value></data>
+
+  <data name="chilledwater.detail.type" xml:space="preserve"><value>Type</value></data>
+  <data name="chilledwater.detail.name" xml:space="preserve"><value>Name</value></data>
+  <data name="chilledwater.detail.point" xml:space="preserve"><value>Point Name</value></data>
+  <data name="chilledwater.detail.unit" xml:space="preserve"><value>Unit</value></data>
+  <data name="chilledwater.detail.desc" xml:space="preserve"><value>Description</value></data>
+  <data name="chilledwater.detail.none" xml:space="preserve"><value>None</value></data>
+  <data name="chilledwater.detail.sid_missing" xml:space="preserve"><value>⚠ Point not found</value></data>
+
+  <data name="chilledwater.option.unassigned" xml:space="preserve"><value>Unassigned</value></data>
+
+  <data name="chilledwater.confirm.delete" xml:space="preserve"><value>Delete "{name}"?</value></data>
+  <data name="chilledwater.confirm.delete_with_children" xml:space="preserve"><value>This circuit has children. Deleting will remove all descendants. Continue?</value></data>
+
+  <data name="chilledwater.error.load_tree" xml:space="preserve"><value>Failed to load: {msg}</value></data>
+  <data name="chilledwater.error.name_required" xml:space="preserve"><value>Please enter a name</value></data>
+  <data name="chilledwater.error.sid_required" xml:space="preserve"><value>A physical point must select an SID</value></data>
+  <data name="chilledwater.error.save_failed" xml:space="preserve"><value>Save failed: {msg}</value></data>
+  <data name="chilledwater.error.delete_failed" xml:space="preserve"><value>Delete failed: {msg}</value></data>
+</root>

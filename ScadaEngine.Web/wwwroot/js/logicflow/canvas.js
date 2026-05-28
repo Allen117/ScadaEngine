@@ -76,6 +76,7 @@
         S.renderCanvasNodes();
         bindCanvasEvents();
         S.startRealtimePolling();
+        if (S.updateAlignToolbarState) S.updateAlignToolbarState();
     }
 
     function bindCanvasEvents() {
@@ -461,6 +462,7 @@
         canvas.querySelectorAll('.flow-node').forEach(el => {
             el.classList.toggle('node-selected', S.selectedNodeIds.has(parseInt(el.dataset.nodeId)));
         });
+        if (S.updateAlignToolbarState) S.updateAlignToolbarState();
     }
 
     // 複製選取的節點 + 內部連線 → localStorage（支援跨邏輯貼上）

@@ -44,7 +44,90 @@
             <div class="card shadow-sm">
                 <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
                     <span id="contentTitle"><i class="fas fa-hand-pointer me-1"></i>@Localizer["logicflow.hint.select_logic"]</span>
-                    <button id="btnSaveDiagram" class="btn btn-sm btn-success" style="display:none;" onclick="window._lf.saveDiagram()">
+
+                    <!-- ===== 對齊工具群組（≥ 2 選取時顯示） ===== -->
+                    <div id="alignToolGroup" class="lf-align-tool-group" style="display:none;">
+                        <button type="button" class="lf-align-tool-btn" onclick="window._lf.alignLeft()"
+                                title="@Localizer["logicflow.toolbar.align_left_tooltip"]"
+                                aria-label="@Localizer["logicflow.toolbar.align_left"]">
+                            <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                <line x1="1" y1="1" x2="1" y2="15" stroke="currentColor" stroke-width="1.4" />
+                                <rect x="2" y="3" width="11" height="3" />
+                                <rect x="2" y="9" width="7" height="3" />
+                            </svg>
+                        </button>
+                        <button type="button" class="lf-align-tool-btn" onclick="window._lf.alignCenterH()"
+                                title="@Localizer["logicflow.toolbar.align_center_h_tooltip"]"
+                                aria-label="@Localizer["logicflow.toolbar.align_center_h"]">
+                            <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                <line x1="8" y1="1" x2="8" y2="15" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 1" />
+                                <rect x="2" y="3" width="12" height="3" />
+                                <rect x="4" y="9" width="8" height="3" />
+                            </svg>
+                        </button>
+                        <button type="button" class="lf-align-tool-btn" onclick="window._lf.alignRight()"
+                                title="@Localizer["logicflow.toolbar.align_right_tooltip"]"
+                                aria-label="@Localizer["logicflow.toolbar.align_right"]">
+                            <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                <line x1="15" y1="1" x2="15" y2="15" stroke="currentColor" stroke-width="1.4" />
+                                <rect x="3" y="3" width="11" height="3" />
+                                <rect x="7" y="9" width="7" height="3" />
+                            </svg>
+                        </button>
+                        <div class="lf-align-tool-divider"></div>
+                        <button type="button" class="lf-align-tool-btn" onclick="window._lf.alignTop()"
+                                title="@Localizer["logicflow.toolbar.align_top_tooltip"]"
+                                aria-label="@Localizer["logicflow.toolbar.align_top"]">
+                            <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                <line x1="1" y1="1" x2="15" y2="1" stroke="currentColor" stroke-width="1.4" />
+                                <rect x="3" y="2" width="3" height="11" />
+                                <rect x="9" y="2" width="3" height="7" />
+                            </svg>
+                        </button>
+                        <button type="button" class="lf-align-tool-btn" onclick="window._lf.alignCenterV()"
+                                title="@Localizer["logicflow.toolbar.align_center_v_tooltip"]"
+                                aria-label="@Localizer["logicflow.toolbar.align_center_v"]">
+                            <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                <line x1="1" y1="8" x2="15" y2="8" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 1" />
+                                <rect x="3" y="2" width="3" height="12" />
+                                <rect x="9" y="4" width="3" height="8" />
+                            </svg>
+                        </button>
+                        <button type="button" class="lf-align-tool-btn" onclick="window._lf.alignBottom()"
+                                title="@Localizer["logicflow.toolbar.align_bottom_tooltip"]"
+                                aria-label="@Localizer["logicflow.toolbar.align_bottom"]">
+                            <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                <line x1="1" y1="15" x2="15" y2="15" stroke="currentColor" stroke-width="1.4" />
+                                <rect x="3" y="3" width="3" height="11" />
+                                <rect x="9" y="7" width="3" height="7" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- ===== 等距分布工具群組（≥ 3 選取時顯示） ===== -->
+                    <div id="distToolGroup" class="lf-dist-tool-group" style="display:none;">
+                        <div class="lf-align-tool-divider"></div>
+                        <button type="button" class="lf-align-tool-btn" onclick="window._lf.distributeHorizontally()"
+                                title="@Localizer["logicflow.toolbar.distribute_h_tooltip"]"
+                                aria-label="@Localizer["logicflow.toolbar.distribute_h"]">
+                            <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="1" y="3" width="2.5" height="10" />
+                                <rect x="6.75" y="3" width="2.5" height="10" />
+                                <rect x="12.5" y="3" width="2.5" height="10" />
+                            </svg>
+                        </button>
+                        <button type="button" class="lf-align-tool-btn" onclick="window._lf.distributeVertically()"
+                                title="@Localizer["logicflow.toolbar.distribute_v_tooltip"]"
+                                aria-label="@Localizer["logicflow.toolbar.distribute_v"]">
+                            <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="3" y="1" width="10" height="2.5" />
+                                <rect x="3" y="6.75" width="10" height="2.5" />
+                                <rect x="3" y="12.5" width="10" height="2.5" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <button id="btnSaveDiagram" class="btn btn-sm btn-success ms-auto" style="display:none;" onclick="window._lf.saveDiagram()">
                         <i class="fas fa-save me-1"></i>@Localizer["logicflow.btn.save"]
                     </button>
                 </div>
@@ -297,6 +380,7 @@
 <script src="~/js/logicflow/eval.js"></script>
 <script src="~/js/logicflow/render.js"></script>
 <script src="~/js/logicflow/canvas.js"></script>
+<script src="~/js/logicflow/align.js"></script>
 <script src="~/js/logicflow/tree.js"></script>
 <script src="~/js/logicflow/picker.js"></script>
 <script src="~/js/logicflow/index.js"></script>

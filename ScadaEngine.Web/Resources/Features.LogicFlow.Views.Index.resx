@@ -225,4 +225,22 @@
   <data name="logicflow.pp.schedule.n_weekly" xml:space="preserve"><value>N週循環</value></data>
   <data name="logicflow.pp.schedule.monthly" xml:space="preserve"><value>每月</value></data>
   <data name="logicflow.pp.schedule.n_monthly" xml:space="preserve"><value>N月循環</value></data>
+
+  <!-- ============ 對齊 / 等距分布工具列 ============ -->
+  <data name="logicflow.toolbar.align_left" xml:space="preserve"><value>靠左對齊</value></data>
+  <data name="logicflow.toolbar.align_left_tooltip" xml:space="preserve"><value>靠左對齊（多選 ≥ 2）</value></data>
+  <data name="logicflow.toolbar.align_center_h" xml:space="preserve"><value>水平置中</value></data>
+  <data name="logicflow.toolbar.align_center_h_tooltip" xml:space="preserve"><value>水平置中（X 中心對齊）</value></data>
+  <data name="logicflow.toolbar.align_right" xml:space="preserve"><value>靠右對齊</value></data>
+  <data name="logicflow.toolbar.align_right_tooltip" xml:space="preserve"><value>靠右對齊（多選 ≥ 2）</value></data>
+  <data name="logicflow.toolbar.align_top" xml:space="preserve"><value>靠上對齊</value></data>
+  <data name="logicflow.toolbar.align_top_tooltip" xml:space="preserve"><value>靠上對齊（多選 ≥ 2）</value></data>
+  <data name="logicflow.toolbar.align_center_v" xml:space="preserve"><value>垂直置中</value></data>
+  <data name="logicflow.toolbar.align_center_v_tooltip" xml:space="preserve"><value>垂直置中（Y 中心對齊）</value></data>
+  <data name="logicflow.toolbar.align_bottom" xml:space="preserve"><value>靠下對齊</value></data>
+  <data name="logicflow.toolbar.align_bottom_tooltip" xml:space="preserve"><value>靠下對齊（多選 ≥ 2）</value></data>
+  <data name="logicflow.toolbar.distribute_h" xml:space="preserve"><value>水平等距分布</value></data>
+  <data name="logicflow.toolbar.distribute_h_tooltip" xml:space="preserve"><value>水平等距分布（多選 ≥ 3，首尾不動）</value></data>
+  <data name="logicflow.toolbar.distribute_v" xml:space="preserve"><value>垂直等距分布</value></data>
+  <data name="logicflow.toolbar.distribute_v_tooltip" xml:space="preserve"><value>垂直等距分布（多選 ≥ 3，首尾不動）</value></data>
 </root>

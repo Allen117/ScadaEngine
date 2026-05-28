@@ -294,6 +294,23 @@
       ]
     },
     {
+      "_comment": "水系統迴路階層（自參照樹）。葉子綁 RT 系列點位的 SID，虛擬節點不綁 SID。獨立於 EnergyCircuit — 領域分離。",
+      "TableName": "WaterCircuit",
+      "Columns": [
+        { "Name": "Id",          "Type": "int",      "IsPrimaryKey": true, "IsIdentity": true, "Nullable": false },
+        { "Name": "Name",        "Type": "nvarchar", "Length": 100, "Nullable": false },
+        { "Name": "ParentId",    "Type": "int",                     "Nullable": true,
+          "_comment": "父節點 Id；NULL 表示根層級（self-FK，由應用程式保證一致性）" },
+        { "Name": "SortOrder",   "Type": "int",                     "Nullable": false, "Default": 0,
+          "_comment": "同層排序（由 0 起算）" },
+        { "Name": "SID",         "Type": "nvarchar", "Length": 100, "Nullable": true,
+          "_comment": "葉子綁實體點位（Modbus / Calculated / DB）；虛擬迴路為 NULL。下拉僅列 RT 系列單位" },
+        { "Name": "Description", "Type": "nvarchar", "Length": 500, "Nullable": true },
+        { "Name": "CreatedAt",   "Type": "datetime",                "Nullable": false, "Default": "getdate()" },
+        { "Name": "UpdatedAt",   "Type": "datetime",                "Nullable": true }
+      ]
+    },
+    {
       "_comment": "能源管理 — 電表/迴路階層（自參照樹）。葉子綁 SID + MaxKwh，虛擬節點不綁 SID。",
       "TableName": "EnergyCircuit",
       "Columns": [

@@ -1,0 +1,114 @@
+@{
+    ViewData["Title"] = Localizer["chilledwater.title"].Value;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-2">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="mb-0">
+            <i class="fas fa-tint text-primary me-2"></i>@Localizer["chilledwater.title"]
+        </h2>
+        <span class="text-muted small">
+            <i class="fas fa-leaf me-1"></i>@Localizer["chilledwater.subtitle"]
+        </span>
+    </div>
+
+    <div class="row g-3">
+        <!-- 左側樹狀清單 -->
+        <div class="col-md-5">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-2">
+                    <span><i class="fas fa-folder-tree me-1"></i>@Localizer["chilledwater.tree.header"]</span>
+                    <button class="btn btn-sm btn-outline-light py-0" onclick="window._cw.openCreateModal(null)">
+                        <i class="fas fa-plus me-1"></i>@Localizer["chilledwater.btn.add_root"]
+                    </button>
+                </div>
+                <div class="card-body p-2" style="height: calc(100vh - 250px); overflow-y: auto;">
+                    <div id="treeContainer">
+                        <div class="text-center mt-5"><div class="spinner-border spinner-border-sm text-primary"></div> @Localizer["chilledwater.tree.loading"]</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右側詳情 -->
+        <div class="col-md-7">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light py-2">
+                    <span id="detailTitle"><i class="fas fa-hand-pointer me-1"></i>@Localizer["chilledwater.hint.select_node"]</span>
+                </div>
+                <div class="card-body" id="detailArea">
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-tint fa-4x mb-3 d-block" style="opacity:.3"></i>
+                        <p>@Localizer["chilledwater.hint.select_to_view"]</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 新增/編輯 Modal -->
+<div class="modal fade" id="circuitModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title"><i class="fas fa-edit me-1"></i><span id="modalTitle">@Localizer["chilledwater.modal.title_create"]</span></h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="cwId">
+                <input type="hidden" id="cwParentId">
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold"><i class="fas fa-tag me-1"></i>@Localizer["chilledwater.modal.name_label"]</label>
+                    <input type="text" class="form-control form-control-sm" id="cwName" placeholder="@Localizer["chilledwater.modal.name_placeholder"]">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold"><i class="fas fa-cog me-1"></i>@Localizer["chilledwater.modal.type_label"]</label>
+                    <div class="btn-group btn-group-sm w-100" role="group">
+                        <input type="radio" class="btn-check" name="cwType" id="cwTypeVirtual" value="virtual" checked>
+                        <label class="btn btn-outline-primary" for="cwTypeVirtual">
+                            <i class="fas fa-folder me-1"></i>@Localizer["chilledwater.modal.type_virtual"]
+                        </label>
+                        <input type="radio" class="btn-check" name="cwType" id="cwTypePoint" value="point">
+                        <label class="btn btn-outline-primary" for="cwTypePoint">
+                            <i class="fas fa-snowflake me-1"></i>@Localizer["chilledwater.modal.type_point"]
+                        </label>
+                    </div>
+                </div>
+
+                <div class="mb-3" id="cwPointFields" style="display:none;">
+                    <label class="form-label fw-semibold"><i class="fas fa-server me-1"></i>@Localizer["chilledwater.modal.device_label"]</label>
+                    <select class="form-select form-select-sm" id="cwDevice">
+                        <option value="">@Localizer["chilledwater.modal.device_placeholder"]</option>
+                    </select>
+
+                    <label class="form-label fw-semibold mt-3"><i class="fas fa-plug me-1"></i>@Localizer["chilledwater.modal.sid_label"]</label>
+                    <select class="form-select form-select-sm" id="cwSid" disabled>
+                        <option value="">@Localizer["chilledwater.modal.sid_placeholder"]</option>
+                    </select>
+                    <small class="text-muted d-block mt-1">@Localizer["chilledwater.modal.sid_hint"]</small>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold"><i class="fas fa-comment me-1"></i>@Localizer["chilledwater.modal.desc_label"]</label>
+                    <textarea class="form-control form-control-sm" id="cwDesc" rows="2" placeholder="@Localizer["chilledwater.modal.desc_placeholder"]"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer py-1">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">@Localizer["chilledwater.modal.cancel"]</button>
+                <button type="button" class="btn btn-sm btn-primary" onclick="window._cw.saveCircuit()">
+                    <i class="fas fa-save me-1"></i>@Localizer["chilledwater.modal.save"]
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="~/css/chilledwater.css" />
+
+@section Scripts {
+    <script src="~/js/chilledwater.js"></script>
+}

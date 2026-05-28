@@ -1,0 +1,116 @@
+/* 水系統迴路設定頁專屬樣式（仿 energymeter.css，配色貼合「水」主題） */
+
+#treeContainer .tree-node {
+    padding: 4px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+    transition: background-color 0.15s;
+}
+
+#treeContainer .tree-node:hover {
+    background-color: #e9ecef;
+}
+
+#treeContainer .tree-node.active {
+    background-color: #cfe2ff;
+    border-left: 3px solid #0d6efd;
+    padding-left: 3px;
+}
+
+#treeContainer .tree-children {
+    margin-left: 16px;
+    border-left: 1px dashed #dee2e6;
+    padding-left: 8px;
+}
+
+#treeContainer .tree-toggle {
+    width: 14px;
+    color: #6c757d;
+    font-size: 0.7rem;
+}
+
+#treeContainer .tree-toggle.invisible {
+    visibility: hidden;
+}
+
+#treeContainer .tree-icon {
+    color: #6c757d;
+    width: 16px;
+    text-align: center;
+}
+
+#treeContainer .tree-icon.is-point {
+    color: #0dcaf0;
+}
+
+#treeContainer .tree-name {
+    flex: 1;
+    font-size: 0.9rem;
+}
+
+#treeContainer .tree-actions {
+    display: none;
+    gap: 4px;
+}
+
+#treeContainer .tree-node:hover .tree-actions,
+#treeContainer .tree-node.active .tree-actions {
+    display: flex;
+}
+
+#treeContainer .tree-actions button {
+    border: none;
+    background: transparent;
+    color: #6c757d;
+    padding: 0 4px;
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+
+#treeContainer .tree-actions button:hover {
+    color: #0d6efd;
+}
+
+#treeContainer .tree-actions button.del:hover {
+    color: #dc3545;
+}
+
+/* 詳情區塊 */
+.cw-detail-row {
+    display: flex;
+    padding: 6px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.cw-detail-row .cw-detail-label {
+    width: 130px;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.cw-detail-row .cw-detail-value {
+    flex: 1;
+    color: #212529;
+}
+
+.cw-badge-virtual {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #e9ecef;
+    color: #6c757d;
+    font-size: 0.75rem;
+}
+
+.cw-badge-point {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #cff4fc;
+    color: #055160;
+    font-size: 0.75rem;
+}

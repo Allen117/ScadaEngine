@@ -176,7 +176,7 @@
                                 </ul>
                             </li>
                         }
-                        @if (canAccess("/EnergyMeter") || canAccess("/EnergyReport"))
+                        @if (canAccess("/ChilledWaterSystem") || canAccess("/EnergyMeter") || canAccess("/EnergyReport"))
                         {
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
@@ -184,12 +184,10 @@
                                     @Localizer["layout.menu.energy"]
                                 </a>
                                 <ul class="dropdown-menu">
-                                    @* 暫時隱藏：水系統效率管理
-                                    @if (canAccess("/ChilledWaterSystem/Efficiency"))
+                                    @if (canAccess("/ChilledWaterSystem"))
                                     {
-                                        <li><a class="dropdown-item" href="/ChilledWaterSystem/Efficiency"><i class="fas fa-tint me-2"></i>@Localizer["layout.menu.chilled_water"]</a></li>
+                                        <li><a class="dropdown-item" href="/ChilledWaterSystem"><i class="fas fa-tint me-2"></i>@Localizer["layout.menu.chilled_water"]</a></li>
                                     }
-                                    *@
                                     @if (canAccess("/EnergyMeter"))
                                     {
                                         <li><a class="dropdown-item" href="/EnergyMeter"><i class="fas fa-sitemap me-2"></i>@Localizer["layout.menu.energy_meter"]</a></li>

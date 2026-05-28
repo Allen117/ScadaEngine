@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="chilledwater.title" xml:space="preserve"><value>水系統迴路設定</value></data>
+  <data name="chilledwater.subtitle" xml:space="preserve"><value>能源管理</value></data>
+  <data name="chilledwater.tree.header" xml:space="preserve"><value>迴路階層</value></data>
+  <data name="chilledwater.tree.loading" xml:space="preserve"><value>載入中...</value></data>
+  <data name="chilledwater.tree.empty" xml:space="preserve"><value>尚無迴路，請點右上角新增</value></data>
+  <data name="chilledwater.btn.add_root" xml:space="preserve"><value>新增迴路</value></data>
+
+  <data name="chilledwater.hint.select_node" xml:space="preserve"><value>請從左側選取迴路</value></data>
+  <data name="chilledwater.hint.select_to_view" xml:space="preserve"><value>選取左側的節點即可檢視/編輯詳細資訊</value></data>
+
+  <data name="chilledwater.action.add_child" xml:space="preserve"><value>新增子節點</value></data>
+  <data name="chilledwater.action.edit" xml:space="preserve"><value>編輯</value></data>
+  <data name="chilledwater.action.delete" xml:space="preserve"><value>刪除</value></data>
+
+  <data name="chilledwater.modal.title_create" xml:space="preserve"><value>新增迴路</value></data>
+  <data name="chilledwater.modal.title_create_child" xml:space="preserve"><value>新增子節點</value></data>
+  <data name="chilledwater.modal.title_edit" xml:space="preserve"><value>編輯</value></data>
+  <data name="chilledwater.modal.name_label" xml:space="preserve"><value>名稱</value></data>
+  <data name="chilledwater.modal.name_placeholder" xml:space="preserve"><value>例如：冰水系統 / 冰機 1</value></data>
+  <data name="chilledwater.modal.type_label" xml:space="preserve"><value>節點類型</value></data>
+  <data name="chilledwater.modal.type_virtual" xml:space="preserve"><value>虛擬迴路</value></data>
+  <data name="chilledwater.modal.type_point" xml:space="preserve"><value>實體點位</value></data>
+  <data name="chilledwater.modal.device_label" xml:space="preserve"><value>通訊設備</value></data>
+  <data name="chilledwater.modal.device_placeholder" xml:space="preserve"><value>-- 請選擇設備 --</value></data>
+  <data name="chilledwater.modal.sid_label" xml:space="preserve"><value>對應點位</value></data>
+  <data name="chilledwater.modal.sid_placeholder" xml:space="preserve"><value>-- 請先選擇設備 --</value></data>
+  <data name="chilledwater.modal.sid_select" xml:space="preserve"><value>-- 請選擇點位 --</value></data>
+  <data name="chilledwater.modal.sid_hint" xml:space="preserve"><value>僅列出單位為 RT 系列（RT / USRT / 噸 / 頓 / 冷凍噸）的點位</value></data>
+  <data name="chilledwater.modal.desc_label" xml:space="preserve"><value>說明</value></data>
+  <data name="chilledwater.modal.desc_placeholder" xml:space="preserve"><value>選填</value></data>
+  <data name="chilledwater.modal.cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="chilledwater.modal.save" xml:space="preserve"><value>儲存</value></data>
+
+  <data name="chilledwater.detail.type" xml:space="preserve"><value>類型</value></data>
+  <data name="chilledwater.detail.name" xml:space="preserve"><value>名稱</value></data>
+  <data name="chilledwater.detail.point" xml:space="preserve"><value>點位名稱</value></data>
+  <data name="chilledwater.detail.unit" xml:space="preserve"><value>單位</value></data>
+  <data name="chilledwater.detail.desc" xml:space="preserve"><value>說明</value></data>
+  <data name="chilledwater.detail.none" xml:space="preserve"><value>無</value></data>
+  <data name="chilledwater.detail.sid_missing" xml:space="preserve"><value>⚠ 找不到對應的點位</value></data>
+
+  <data name="chilledwater.option.unassigned" xml:space="preserve"><value>未指定</value></data>
+
+  <data name="chilledwater.confirm.delete" xml:space="preserve"><value>確定要刪除「{name}」嗎？</value></data>
+  <data name="chilledwater.confirm.delete_with_children" xml:space="preserve"><value>此迴路含有子節點，刪除會一併移除所有子孫，確定繼續？</value></data>
+
+  <data name="chilledwater.error.load_tree" xml:space="preserve"><value>載入失敗：{msg}</value></data>
+  <data name="chilledwater.error.name_required" xml:space="preserve"><value>請輸入名稱</value></data>
+  <data name="chilledwater.error.sid_required" xml:space="preserve"><value>實體點位必須選擇對應 SID</value></data>
+  <data name="chilledwater.error.save_failed" xml:space="preserve"><value>儲存失敗：{msg}</value></data>
+  <data name="chilledwater.error.delete_failed" xml:space="preserve"><value>刪除失敗：{msg}</value></data>
+</root>

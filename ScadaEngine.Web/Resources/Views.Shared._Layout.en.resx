@@ -68,7 +68,7 @@
   <data name="layout.menu.energy" xml:space="preserve"><value>Energy Management</value></data>
   <data name="layout.menu.energy_meter" xml:space="preserve"><value>Energy Meter / Circuit</value></data>
   <data name="layout.menu.energy_report" xml:space="preserve"><value>Energy Report</value></data>
-  <data name="layout.menu.chilled_water" xml:space="preserve"><value>Chilled Water Efficiency</value></data>
+  <data name="layout.menu.chilled_water" xml:space="preserve"><value>Chilled Water Circuit Settings</value></data>
 
   <data name="layout.menu.system" xml:space="preserve"><value>System Settings</value></data>
   <data name="layout.menu.designer" xml:space="preserve"><value>Designer</value></data>

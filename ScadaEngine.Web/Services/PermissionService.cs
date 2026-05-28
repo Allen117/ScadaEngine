@@ -20,7 +20,7 @@ public static class PermissionService
         ("/LogicFlow",      "流程圖控制"),
         ("/History/Trend",  "趨勢圖"),
         ("/EventLog",       "事件記錄"),
-        ("/ChilledWaterSystem/Efficiency", "水系統效率管理"),
+        ("/ChilledWaterSystem", "水系統迴路設定"),
         ("/EnergyMeter",    "電表/迴路設定"),
         ("/EnergyReport",   "用電報表"),
         ("/Designer",       "畫面設計"),
