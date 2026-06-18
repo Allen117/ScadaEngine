@@ -15,16 +15,23 @@ const WIDGET_DEFS = {
     table: {
         szLabel: '表格',
         szIcon: 'fas fa-table',
+        // table widget 大小由結構決定（computeTableWidgetSize）— nDefaultW/H 僅作為 fallback
         nDefaultW: 360,
-        nDefaultH: 220,
+        nDefaultH: 150,
         nMinW: 120, nMinH: 60,
         defaultProps: {
             szTitle: '__i18n__:designer.default.table_title',
             nRows: 5,
-            nCols: 3,
+            nCols: 6,
             szHeaderColor: '#343a40',
             arrCells: null,
-            arrColDecimals: null
+            arrColDecimals: null,
+            // ─ 表格大小由結構決定（plan 2026-06-01）─
+            nDefaultRowH: 20,            // 預設列高（含 header）
+            nDefaultColW: 80,            // 預設欄寬
+            arrColWidths: null,          // 長度 = nCols，null = 用 nDefaultColW
+            arrRowHeights: null,         // 長度 = nRows（僅資料列；header 永遠用 nDefaultRowH）
+            bTableSizeLocked: false      // false = 沿用舊 width/height（舊檔遷移）；true = 由 computeTableWidgetSize 接管
         }
     },
     gauge: {
@@ -58,7 +65,7 @@ const WIDGET_DEFS = {
             szText:       '__i18n__:designer.default.text_content',
             szFontFamily: 'inherit',
             szFontColor:  '#212529',
-            nFontSize:    18,
+            nFontSize:    14,
             szFontWeight: 'normal',
             isItalic:     false,
             szBgColor:    'transparent'
@@ -79,7 +86,7 @@ const WIDGET_DEFS = {
             fCtrlValue:  1,
             szBtnColor:  '#198754',
             szBgColor:   'transparent',
-            nFontSize:   12
+            nFontSize:   14
         }
     },
     realtimeValue: {
@@ -93,7 +100,7 @@ const WIDGET_DEFS = {
             szSid:       '',
             szPointName: '',
             szUnit:      '',
-            nFontSize:   12,
+            nFontSize:   14,
             szFontColor: '#212529',
             szBgColor:   'transparent',
             szHighColor: '#dc3545',
@@ -119,7 +126,7 @@ const WIDGET_DEFS = {
             szOnLabel:      'ON',
             szOffLabel:     'OFF',
             nIndicatorSize: 14,
-            nFontSize:      12,
+            nFontSize:      14,
             szFontColor:    '#212529',
             szBgColor:      'transparent',
             szAlarmColor:   '#dc3545'
@@ -142,7 +149,7 @@ const WIDGET_DEFS = {
             fMax:               100,
             fStep:              1,
             nDecimalPlaces:     2,
-            nFontSize:          12,
+            nFontSize:          14,
             szFontColor:        '#ffffff',
             szMenuManualLabel:  '__i18n__:designer.default.aoPoint_menu_manual',
             szMenuAutoLabel:    '__i18n__:designer.default.aoPoint_menu_auto',
@@ -165,7 +172,7 @@ const WIDGET_DEFS = {
             szOffLabel:       'OFF',
             szOnColor:        '#28a745',
             szOffColor:       '#dc3545',
-            nFontSize:        12,
+            nFontSize:        14,
             szFontColor:      '#ffffff',
             nOnValue:         1,
             nOffValue:        0,
@@ -288,11 +295,11 @@ function getDefaultColHeaders() {
 
 // ── 儲存格預設值 ──
 function _defaultHeaderCell(ci) {
-    return { szText: '', szFontColor: '#fff', szFontWeight: '500', szAlign: 'left', nFontSize: 11 };
+    return { szText: '', szFontColor: '#fff', szFontWeight: '500', szAlign: 'left', nFontSize: 14 };
 }
 function _defaultDataCell(ri, ci) {
     return {
-        szText: '', szFontColor: '#444', szFontWeight: 'normal', szAlign: 'left', nFontSize: 12,
+        szText: '', szFontColor: '#444', szFontWeight: 'normal', szAlign: 'left', nFontSize: 14,
         szSid: '', szPointName: '', szPointType: 'AI',
         szOnLabel: 'ON', szOffLabel: 'OFF',
         szHighColor: '#dc3545', szLowColor: '#fd7e14',
@@ -316,6 +323,12 @@ function initArrCells(props) {
     if (!props.arrColDecimals) {
         props.arrColDecimals = Array.from({ length: nC }, () => null);
     }
+    // ─ 表格大小：舊檔可能無這些欄位，填補預設 ─
+    if (props.nDefaultRowH == null) props.nDefaultRowH = 20;
+    if (props.nDefaultColW == null) props.nDefaultColW = 80;
+    if (!Array.isArray(props.arrColWidths))  props.arrColWidths  = Array.from({ length: nC }, () => null);
+    if (!Array.isArray(props.arrRowHeights)) props.arrRowHeights = Array.from({ length: nR }, () => null);
+    if (typeof props.bTableSizeLocked !== 'boolean') props.bTableSizeLocked = false;
 }
 
 // ── 當 nRows/nCols 改變時同步 arrCells 大小 ──
@@ -341,6 +354,32 @@ function syncArrCellsSize(props) {
     // 同步 arrColDecimals
     while (props.arrColDecimals.length < nC) props.arrColDecimals.push(null);
     while (props.arrColDecimals.length > nC) props.arrColDecimals.pop();
+    // 同步 arrColWidths（長度 = nCols）
+    if (!Array.isArray(props.arrColWidths)) props.arrColWidths = [];
+    while (props.arrColWidths.length < nC) props.arrColWidths.push(null);
+    while (props.arrColWidths.length > nC) props.arrColWidths.pop();
+    // 同步 arrRowHeights（長度 = nRows，僅資料列）
+    if (!Array.isArray(props.arrRowHeights)) props.arrRowHeights = [];
+    while (props.arrRowHeights.length < nR) props.arrRowHeights.push(null);
+    while (props.arrRowHeights.length > nR) props.arrRowHeights.pop();
+}
+
+// ── 計算 table widget 整體外框尺寸（由欄列尺寸決定）──
+// chrome（border + widget-body padding）：水平 10px、垂直 24px（含 widget-header 預留 18px）
+const TABLE_CHROME_W = 10;
+const TABLE_CHROME_H = 24;
+function computeTableWidgetSize(props) {
+    const nC = Math.max(1, props.nCols || 1);
+    const nR = Math.max(1, props.nRows || 1);
+    const nDefW = Math.max(1, props.nDefaultColW || 80);
+    const nDefH = Math.max(1, props.nDefaultRowH || 20);
+    const arrCW = Array.isArray(props.arrColWidths) ? props.arrColWidths : [];
+    const arrRH = Array.isArray(props.arrRowHeights) ? props.arrRowHeights : [];
+    let nW = TABLE_CHROME_W;
+    for (let i = 0; i < nC; i++) nW += (arrCW[i] != null ? +arrCW[i] : nDefW);
+    let nH = TABLE_CHROME_H + nDefH; // header row 固定 = nDefaultRowH
+    for (let i = 0; i < nR; i++) nH += (arrRH[i] != null ? +arrRH[i] : nDefH);
+    return { nW: Math.round(nW), nH: Math.round(nH) };
 }
 
 function buildTableHtml(props) {
@@ -348,20 +387,31 @@ function buildTableHtml(props) {
     const nC = Math.max(1, props.nCols || 3);
     const nR = Math.max(1, props.nRows || 5);
     const arrCells = props.arrCells;
+    const nDefW = props.nDefaultColW || 80;
+    const nDefH = props.nDefaultRowH || 20;
+    const arrCW = props.arrColWidths || [];
+    const arrRH = props.arrRowHeights || [];
 
-    // 標題列 (row 0)
+    // colgroup — 控制各欄寬度
+    const szColgroup = '<colgroup>' + Array.from({ length: nC }, (_, ci) => {
+        const w = arrCW[ci] != null ? +arrCW[ci] : nDefW;
+        return `<col style="width:${w}px">`;
+    }).join('') + '</colgroup>';
+
+    // 標題列 (row 0) — 高度永遠 = nDefaultRowH
     const szHeaders = arrCells[0].slice(0, nC).map((cell, ci) =>
         `<th data-row="0" data-col="${ci}" style="background:${props.szHeaderColor};
             color:${cell.szFontColor || '#fff'};font-weight:${cell.szFontWeight || '500'};
-            font-size:${cell.nFontSize || 11}px;text-align:${cell.szAlign || 'left'};
+            font-size:${cell.nFontSize || 12}px;text-align:${cell.szAlign || 'left'};
             cursor:pointer;">${escHtml(cell.szText || '')}</th>`
     ).join('');
 
-    // 資料列 (row 1..nR)
+    // 資料列 (row 1..nR) — tr 帶 inline height
     const szRows = Array.from({ length: nR }, (_, ri) => {
         const rowIdx = ri + 1;
         if (rowIdx >= arrCells.length) return '';
         const row = arrCells[rowIdx];
+        const nRowH = arrRH[ri] != null ? +arrRH[ri] : nDefH;
         const szCells = row.slice(0, nC).map((cell, ci) => {
             const szSidAttr = cell.szSid ? `data-sid="${escHtml(cell.szSid)}"` : '';
             const szSidLabel = cell.szSid
@@ -371,11 +421,12 @@ function buildTableHtml(props) {
                        font-size:${cell.nFontSize || 12}px;text-align:${cell.szAlign || 'left'};
                        cursor:pointer;position:relative;">${escHtml(cell.szText || '')}${szSidLabel}</td>`;
         }).join('');
-        return `<tr>${szCells}</tr>`;
+        return `<tr style="height:${nRowH}px">${szCells}</tr>`;
     }).join('');
 
     return `<table class="w-table">
-        <thead><tr>${szHeaders}</tr></thead>
+        ${szColgroup}
+        <thead><tr style="height:${nDefH}px">${szHeaders}</tr></thead>
         <tbody>${szRows}</tbody>
     </table>`;
 }

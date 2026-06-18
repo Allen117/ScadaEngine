@@ -54,7 +54,7 @@ public class EnergyReportController : Controller
     {
         try
         {
-            var result = await _reportService.GetReportAsync(dto.circuitId, dto.granularity, dto.start, dto.end);
+            var result = await _reportService.GetReportWithChildrenAsync(dto.circuitId, dto.granularity, dto.start, dto.end);
             return Ok(result);
         }
         catch (Exception ex)

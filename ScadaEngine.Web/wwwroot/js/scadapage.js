@@ -317,7 +317,23 @@
             if (p.szSid) el.addEventListener('contextmenu', function (ev) { onTrendContextMenu(ev, el.dataset.sid); });
         } else if (ws.szType === 'table') {
             el.classList.add('scada-table');
-            el.innerHTML = buildTableHtml(ws.props || {});
+            // 鎖定尺寸的 table 改用 props 重算 widget 外框，確保與 Designer 一致（plan 2026-06-01）
+            var tProps = ws.props || {};
+            if (tProps.bTableSizeLocked === true) {
+                var nTC = Math.max(1, Math.min(tProps.nCols || 3, 4));
+                var nTR = Math.max(1, tProps.nRows || 5);
+                var nTDefW = tProps.nDefaultColW || 80;
+                var nTDefH = tProps.nDefaultRowH || 20;
+                var arrTCW = tProps.arrColWidths || [];
+                var arrTRH = tProps.arrRowHeights || [];
+                var nNetW = 0;
+                for (var iC = 0; iC < nTC; iC++) nNetW += (arrTCW[iC] != null ? +arrTCW[iC] : nTDefW);
+                var nNetH = nTDefH; // header row
+                for (var iR = 0; iR < nTR; iR++) nNetH += (arrTRH[iR] != null ? +arrTRH[iR] : nTDefH);
+                el.style.width  = nNetW + 'px';
+                el.style.height = nNetH + 'px';
+            }
+            el.innerHTML = buildTableHtml(tProps);
             el.addEventListener('contextmenu', function (ev) {
                 var td = ev.target.closest('td[data-sid]');
                 if (td && td.dataset.sid) onTrendContextMenu(ev, td.dataset.sid);
@@ -1573,6 +1589,25 @@
         var nR = Math.max(1, props.nRows || 5);
         var hdrColor = props.szHeaderColor || '#343a40';
         var arrColDec = props.arrColDecimals || [];
+        // 表格大小：colgroup + per-row inline height（plan 2026-06-01）
+        var nDefW = props.nDefaultColW || 80;
+        var nDefH = props.nDefaultRowH || 20;
+        var arrCW = props.arrColWidths || [];
+        var arrRH = props.arrRowHeights || [];
+        var bLocked = props.bTableSizeLocked === true;
+        // 鎖定 → 用結構欄寬；未鎖定（舊檔）→ 用 table width:100% 等比例
+        var szTableStyle = bLocked
+            ? 'border-collapse:collapse;table-layout:fixed;'
+            : 'width:100%;border-collapse:collapse;';
+        var szColgroup = '';
+        if (bLocked) {
+            szColgroup = '<colgroup>';
+            for (var ci2 = 0; ci2 < nC; ci2++) {
+                var w = arrCW[ci2] != null ? +arrCW[ci2] : nDefW;
+                szColgroup += '<col style="width:' + w + 'px">';
+            }
+            szColgroup += '</colgroup>';
+        }
 
         if (props.arrCells && props.arrCells.length > 0) {
             var headerRow = props.arrCells[0] || [];
@@ -1587,6 +1622,8 @@
                 var rowIdx = ri + 1;
                 if (rowIdx >= props.arrCells.length) return '';
                 var row = props.arrCells[rowIdx];
+                var nRowH = arrRH[ri] != null ? +arrRH[ri] : nDefH;
+                var szRowStyle = bLocked ? ' style="height:' + nRowH + 'px"' : '';
                 var szCells = row.slice(0, nC).map(function (cell, ci) {
                     var nDec = arrColDec[ci];
                     var szPT = cell.szPointType || 'AI';
@@ -1611,10 +1648,11 @@
                         'text-align:' + (cell.szAlign || 'left') + ';' +
                         'border-bottom:1px solid #f0f0f0;">' + szDisplay + '</td>';
                 }).join('');
-                return '<tr>' + szCells + '</tr>';
+                return '<tr' + szRowStyle + '>' + szCells + '</tr>';
             }).join('');
 
-            return '<table style="width:100%;border-collapse:collapse;"><thead><tr>' + szHdr + '</tr></thead><tbody>' + szRows + '</tbody></table>';
+            var szHdrRowStyle = bLocked ? ' style="height:' + nDefH + 'px"' : '';
+            return '<table style="' + szTableStyle + '">' + szColgroup + '<thead><tr' + szHdrRowStyle + '>' + szHdr + '</tr></thead><tbody>' + szRows + '</tbody></table>';
         }
 
         var HEADERS = ['\u540d\u7a31', '\u6578\u503c', '\u72c0\u614b', '\u6642\u9593\u6233'];

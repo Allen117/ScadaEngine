@@ -13,8 +13,8 @@
                     symbol: a.label.substring(0, 3),
                     label: a.label,
                     group: a.group || '',
-                    inputs: a.inputs || ['in'],
-                    outputs: a.outputs || ['out'],
+                    inputs: a.inputs || [{ key: 'in', label: 'in' }],
+                    outputs: a.outputs || [{ key: 'out', label: 'out' }],
                     description: a.description || '',
                     language: a.language || 'python',
                     variadic: !!a.variadic,
@@ -52,10 +52,13 @@
                 outputs: expandAlgoPorts(op.outputsRepeat, op.outputsFixed, inputCount)
             };
         }
-        // 非 variadic：沿用 inputs/outputs 字串陣列，包成 {key, label} 對齊新格式
+        // 非 variadic：op.inputs/outputs 為 [{key, label}, ...]（兼容舊版純字串陣列）
+        const normalize = p => typeof p === 'string'
+            ? { key: p, label: p }
+            : { key: p.key, label: p.label || p.key };
         return {
-            inputs: (op.inputs || ['in']).map(k => ({ key: k, label: k })),
-            outputs: (op.outputs || ['out']).map(k => ({ key: k, label: k }))
+            inputs: (op.inputs || [{ key: 'in', label: 'in' }]).map(normalize),
+            outputs: (op.outputs || [{ key: 'out', label: 'out' }]).map(normalize)
         };
     }
 
@@ -92,7 +95,7 @@
         const langBadge = op.language === 'csharp'
             ? '<span style="font-size:.6rem;background:#178600;color:#fff;padding:0 3px;border-radius:2px;margin-left:4px;">C#</span>'
             : '';
-        item.innerHTML = `<span class="ctx-op-symbol ctx-op-wide" style="color:#9b59b6;">${S.escHtml(op.symbol)}</span>${S.escHtml(op.label)}${langBadge}`;
+        item.innerHTML = `<span class="ctx-op-symbol ctx-op-wide" style="color:#9b59b6;"><i class="fas fa-microchip"></i></span>${S.escHtml(op.label)}${langBadge}`;
         if (isNodeMenu) {
             item.addEventListener('click', (e) => {
                 e.stopPropagation();

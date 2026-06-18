@@ -49,4 +49,5 @@
 
   <data name="designer.save_error" xml:space="preserve"><value>儲存畫面設計時發生錯誤</value></data>
   <data name="designer.untitled_design" xml:space="preserve"><value>未命名設計</value></data>
+  <data name="designer.row_template.invalid_payload" xml:space="preserve"><value>列範本內容無效</value></data>
 </root>

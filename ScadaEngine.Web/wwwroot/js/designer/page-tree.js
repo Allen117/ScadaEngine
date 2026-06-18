@@ -138,9 +138,17 @@ function restoreWidget(ws) {
     el.dataset.type = ws.szType;
     el.style.left   = ws.nX + 'px';
     el.style.top    = ws.nY + 'px';
-    el.style.width  = ws.nW + 'px';
-    el.style.height = ws.nH + 'px';
     el.widgetProps  = { ...ws.props };
+    // table widget：若已鎖定（新模式），改用 computed size；否則沿用存檔尺寸（plan 決策 7 候選 C）
+    if (ws.szType === 'table' && el.widgetProps.bTableSizeLocked) {
+        initArrCells(el.widgetProps);
+        const sz = computeTableWidgetSize(el.widgetProps);
+        el.style.width  = sz.nW + 'px';
+        el.style.height = sz.nH + 'px';
+    } else {
+        el.style.width  = ws.nW + 'px';
+        el.style.height = ws.nH + 'px';
+    }
     renderWidget(el);
     canvas.appendChild(el);
 }

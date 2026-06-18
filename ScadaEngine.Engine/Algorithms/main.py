@@ -67,8 +67,8 @@ def _parse_metadata(filepath: str) -> dict:
     """解析 .py 前 15 行的 @metadata comment（含 variadic 標記）"""
     meta = {
         "label": "",
-        "inputs": ["in"],
-        "outputs": ["out"],
+        "inputs": [{"key": "in", "label": "in"}],
+        "outputs": [{"key": "out", "label": "out"}],
         "description": "",
         "variadic": False,
         "inputs_repeat": [],   # [{key, label}, ...]
@@ -84,9 +84,9 @@ def _parse_metadata(filepath: str) -> dict:
             if line.startswith("# @algorithm:"):
                 meta["label"] = line[len("# @algorithm:"):].strip()
             elif line.startswith("# @inputs:"):
-                meta["inputs"] = [s.strip() for s in line[len("# @inputs:"):].split(",") if s.strip()]
+                meta["inputs"] = _parse_kv_list(line[len("# @inputs:"):])
             elif line.startswith("# @outputs:"):
-                meta["outputs"] = [s.strip() for s in line[len("# @outputs:"):].split(",") if s.strip()]
+                meta["outputs"] = _parse_kv_list(line[len("# @outputs:"):])
             elif line.startswith("# @description:"):
                 meta["description"] = line[len("# @description:"):].strip()
             elif line.startswith("# @variadic:"):
@@ -206,8 +206,8 @@ def _zero_fill(info: dict, suffix: str) -> dict:
         for item in info["outputs_fixed"]:
             out[item["key"]] = 0
     else:
-        for k in info["outputs"]:
-            out[k] = 0
+        for item in info["outputs"]:
+            out[item["key"]] = 0
     return out
 
 
@@ -275,7 +275,7 @@ def _output_keys_for_iter(info: dict, suffix: str) -> list[str]:
         keys = [f'{item["key"]}{suffix}' for item in info["outputs_repeat"]]
         keys.extend(item["key"] for item in info["outputs_fixed"])
         return keys
-    return [f'{k}{suffix}' if suffix else k for k in info["outputs"]]
+    return [f'{item["key"]}{suffix}' if suffix else item["key"] for item in info["outputs"]]
 
 
 @app.post("/algorithms/{name}/evaluate")

@@ -26,6 +26,14 @@ function renderPropPanel(el) {
 
     // 共用欄位
     const szUnboundLabel = `<span style="color:#888;font-size:11px;">${escHtml(t('designer.widget.unbound'))}</span>`;
+    // table 鎖定尺寸時，寬高改為 readonly 並顯示說明（plan 決策 4）
+    const bSizeLocked   = (szType === 'table' && props.bTableSizeLocked === true);
+    const szSizeRO      = bSizeLocked ? 'readonly style="background:#f1f3f5;color:#888;"' : '';
+    const szSizeOninput = bSizeLocked ? '' : `oninput="setSize('width', +this.value)"`;
+    const szSizeOninputH= bSizeLocked ? '' : `oninput="setSize('height', +this.value)"`;
+    const szSizeLockedHint = bSizeLocked
+        ? `<div style="font-size:10px;color:#888;margin-top:-4px;margin-bottom:6px;">${escHtml(t('designer.prop.table_size_locked'))}</div>`
+        : '';
     let szHtml = `
         <div class="prop-group">
             <label>${escHtml(t('designer.prop.title'))}</label>
@@ -44,14 +52,13 @@ function renderPropPanel(el) {
         </div>
         <div class="prop-group">
             <label>${escHtml(t('designer.prop.width'))}</label>
-            <input type="number" id="pW" value="${el.offsetWidth}" step="20"
-                   oninput="setSize('width', +this.value)">
+            <input type="number" id="pW" value="${el.offsetWidth}" step="20" ${szSizeRO} ${szSizeOninput}>
         </div>
         <div class="prop-group">
             <label>${escHtml(t('designer.prop.height'))}</label>
-            <input type="number" id="pH" value="${el.offsetHeight}" step="20"
-                   oninput="setSize('height', +this.value)">
+            <input type="number" id="pH" value="${el.offsetHeight}" step="20" ${szSizeRO} ${szSizeOninputH}>
         </div>
+        ${szSizeLockedHint}
         <hr class="prop-divider">
     `;
 
@@ -66,6 +73,16 @@ function renderPropPanel(el) {
             <label>${escHtml(t('designer.prop.cols'))}</label>
             <input type="number" value="${props.nCols}" min="1"
                    oninput="setProp('nCols', +this.value)">
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.default_row_height'))}</label>
+            <input type="number" value="${props.nDefaultRowH ?? 20}" min="10" max="200"
+                   oninput="setProp('nDefaultRowH', +this.value)">
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.default_col_width'))}</label>
+            <input type="number" value="${props.nDefaultColW ?? 80}" min="20" max="500"
+                   oninput="setProp('nDefaultColW', +this.value)">
         </div>
         <div class="prop-group">
             <label>${escHtml(t('designer.prop.header_color'))}</label>
@@ -890,6 +907,18 @@ function setProp(szKey, val) {
         nSelectedCellRow = -1;
         nSelectedCellCol = -1;
     }
+    // table 結構性屬性改變 → 翻 bTableSizeLocked，由 computeTableWidgetSize 接管尺寸（plan 決策 7）
+    let bJustLockedTable = false;
+    if (selectedEl.dataset.type === 'table' &&
+        (szKey === 'nRows' || szKey === 'nCols' || szKey === 'nDefaultRowH' || szKey === 'nDefaultColW')) {
+        const p = selectedEl.widgetProps;
+        bJustLockedTable = !p.bTableSizeLocked;
+        p.bTableSizeLocked = true;
+        const sz = computeTableWidgetSize(p);
+        selectedEl.style.width  = sz.nW + 'px';
+        selectedEl.style.height = sz.nH + 'px';
+        syncSizeInputs(sz.nW, sz.nH);
+    }
     // DI ON/OFF 標籤修改時，同步到所有同 SID 的 DI Widget
     if (selectedEl.dataset.type === 'diPoint' && (szKey === 'szOnLabel' || szKey === 'szOffLabel')) {
         const p = selectedEl.widgetProps;
@@ -910,6 +939,10 @@ function setProp(szKey, val) {
     if (selectedEl.dataset.type === 'diPoint' && szKey === 'szDisplayMode') {
         renderPropPanel(selectedEl);
     }
+    // table 第一次鎖定時重新渲染屬性面板（讓寬高 input 變 readonly + 出現說明）
+    if (bJustLockedTable) {
+        renderPropPanel(selectedEl);
+    }
 }
 
 function setPos(szSide, nVal) {
@@ -919,6 +952,8 @@ function setPos(szSide, nVal) {
 
 function setSize(szSide, nVal) {
     if (!selectedEl) return;
+    // table 鎖定尺寸時禁止外部 setSize（plan 決策 4）
+    if (selectedEl.dataset.type === 'table' && selectedEl.widgetProps?.bTableSizeLocked) return;
     const def = WIDGET_DEFS[selectedEl.dataset.type];
     const nMin = szSide === 'width' ? (def?.nMinW || 40) : (def?.nMinH || 30);
     selectedEl.style[szSide] = Math.max(nMin, nVal) + 'px';
@@ -1062,6 +1097,33 @@ function renderTableCellPropPanel(el, nRow, nCol) {
         }
     }
 
+    // ─ 該欄寬（header）/ 該列高（資料列）─ plan 決策 1
+    const szSizePh = escHtml(t('designer.prop.size_placeholder_default'));
+    if (isHeader) {
+        const arrCW = props.arrColWidths || [];
+        const vCW   = (arrCW[nCol] != null) ? arrCW[nCol] : '';
+        szHtml += `
+        <hr class="prop-divider">
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.col_width'))}</label>
+            <input type="number" value="${vCW}" min="10" max="500"
+                   placeholder="${szSizePh}"
+                   oninput="setColWidth(${nCol}, this.value)">
+        </div>`;
+    } else {
+        const nDataRow = nRow - 1; // arrRowHeights 只含資料列
+        const arrRH = props.arrRowHeights || [];
+        const vRH   = (arrRH[nDataRow] != null) ? arrRH[nDataRow] : '';
+        szHtml += `
+        <hr class="prop-divider">
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.row_height'))}</label>
+            <input type="number" value="${vRH}" min="10" max="500"
+                   placeholder="${szSizePh}"
+                   oninput="setRowHeight(${nDataRow}, this.value)">
+        </div>`;
+    }
+
     document.getElementById('propBody').innerHTML = szHtml;
 }
 
@@ -1123,6 +1185,43 @@ function setColDecimals(nCol, val) {
     initArrCells(props);
     props.arrColDecimals[nCol] = val === '' ? null : Math.max(0, Math.min(6, parseInt(val)));
     // 不需重新渲染，小數位數僅影響 ScadaPage 即時顯示
+}
+
+// 該欄寬度（空值=用 nDefaultColW）— 翻 bTableSizeLocked、重算 widget 大小
+function setColWidth(nCol, val) {
+    if (!selectedEl) return;
+    const props = selectedEl.widgetProps;
+    initArrCells(props);
+    if (!Array.isArray(props.arrColWidths)) props.arrColWidths = [];
+    const v = (val === '' || val == null) ? null : Math.max(10, Math.min(500, parseInt(val) || 0));
+    props.arrColWidths[nCol] = v;
+    props.bTableSizeLocked = true;
+    const sz = computeTableWidgetSize(props);
+    selectedEl.style.width  = sz.nW + 'px';
+    selectedEl.style.height = sz.nH + 'px';
+    syncSizeInputs(sz.nW, sz.nH);
+    renderWidget(selectedEl);
+    // 保留選中 cell 高亮
+    const sel = selectedEl.querySelector(`.w-table [data-row="${nSelectedCellRow}"][data-col="${nSelectedCellCol}"]`);
+    if (sel) sel.classList.add('selected-cell');
+}
+
+// 該列高度（資料列 0..nRows-1；空值=用 nDefaultRowH）
+function setRowHeight(nDataRow, val) {
+    if (!selectedEl) return;
+    const props = selectedEl.widgetProps;
+    initArrCells(props);
+    if (!Array.isArray(props.arrRowHeights)) props.arrRowHeights = [];
+    const v = (val === '' || val == null) ? null : Math.max(10, Math.min(500, parseInt(val) || 0));
+    props.arrRowHeights[nDataRow] = v;
+    props.bTableSizeLocked = true;
+    const sz = computeTableWidgetSize(props);
+    selectedEl.style.width  = sz.nW + 'px';
+    selectedEl.style.height = sz.nH + 'px';
+    syncSizeInputs(sz.nW, sz.nH);
+    renderWidget(selectedEl);
+    const sel = selectedEl.querySelector(`.w-table [data-row="${nSelectedCellRow}"][data-col="${nSelectedCellCol}"]`);
+    if (sel) sel.classList.add('selected-cell');
 }
 
 function clearCellSid(nRow, nCol) {

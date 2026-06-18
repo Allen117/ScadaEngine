@@ -66,10 +66,20 @@ function createWidget(szType, x, y) {
     el.dataset.type = szType;
     el.style.left = x + 'px';
     el.style.top  = y + 'px';
-    el.style.width  = def.nDefaultW + 'px';
-    el.style.height = def.nDefaultH + 'px';
     // 透過 getWidgetDefaultProps() 解析 __i18n__ 預設值為當前 culture 字串
     el.widgetProps = getWidgetDefaultProps(szType);
+
+    // table widget：新建即套用「由結構決定大小」（plan 決策 8）
+    if (szType === 'table') {
+        initArrCells(el.widgetProps);
+        el.widgetProps.bTableSizeLocked = true;
+        const sz = computeTableWidgetSize(el.widgetProps);
+        el.style.width  = sz.nW + 'px';
+        el.style.height = sz.nH + 'px';
+    } else {
+        el.style.width  = def.nDefaultW + 'px';
+        el.style.height = def.nDefaultH + 'px';
+    }
 
     renderWidget(el);
     canvas.appendChild(el);
@@ -130,6 +140,11 @@ function renderWidget(el) {
     } else if ('szBgColor' in props) {
         const isBgTransparent = !props.szBgColor || props.szBgColor === 'transparent';
         el.classList.toggle('widget-transparent', isBgTransparent);
+    }
+
+    // table 鎖定尺寸時隱藏 resize knob（雙保險，搭配 startResize 短路）
+    if (szType === 'table') {
+        el.classList.toggle('widget-size-locked', !!props.bTableSizeLocked);
     }
 
     // 控制按鈕：整個 body 可拖移
@@ -318,6 +333,8 @@ function startMove(e, el) {
 // 縮放 Widget（右下角拖把）
 // ============================================================
 function startResize(e, el) {
+    // table widget 大小由結構決定，禁止手動 resize（plan 決策 3）
+    if (el && el.dataset.type === 'table' && el.widgetProps && el.widgetProps.bTableSizeLocked) return;
     isResizing  = true;
     resizingEl  = el;
     document.querySelector('.property-panel')?.classList.add('collapsed');

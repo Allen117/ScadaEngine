@@ -221,8 +221,8 @@ public class LogicFlowController : Controller
     {
         var szName = Path.GetFileNameWithoutExtension(szFilePath);
         var szLabel = szName;
-        var inputs = new List<string> { "in" };
-        var outputs = new List<string> { "out" };
+        var inputs = new List<object> { new { key = "in", label = "in" } };
+        var outputs = new List<object> { new { key = "out", label = "out" } };
         var szDescription = "";
         var isVariadic = false;
         var inputsRepeat = new List<object>();
@@ -258,9 +258,9 @@ public class LogicFlowController : Controller
             else if (trimmed.StartsWith(szOutFixed))
                 outputsFixed = ParseKeyLabelList(trimmed[szOutFixed.Length..]);
             else if (trimmed.StartsWith(szIn))
-                inputs = trimmed[szIn.Length..].Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList();
+                inputs = ParseKeyLabelList(trimmed[szIn.Length..]);
             else if (trimmed.StartsWith(szOut))
-                outputs = trimmed[szOut.Length..].Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList();
+                outputs = ParseKeyLabelList(trimmed[szOut.Length..]);
             else if (trimmed.StartsWith(szDesc))
                 szDescription = trimmed[szDesc.Length..].Trim();
             else if (trimmed.StartsWith(szVariadic))

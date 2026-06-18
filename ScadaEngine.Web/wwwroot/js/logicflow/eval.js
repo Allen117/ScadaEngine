@@ -750,21 +750,57 @@
         if (nd.type === 'algorithm' && nd.operator && S.ALGO_OPS[nd.operator]) {
             nd._algoResult = null;
             nd._algoReady = false;
+            nd._algoUnreadyGroups = null;
             if (hasUpstreamBad(nd.id)) return false;
             var algo = S.ALGO_OPS[nd.operator];
             var ports = S.getAlgoPorts(algo, nd.inputCount);
             var algoInputs = ports.inputs;
             var inputValues = {};
-            for (var i = 0; i < algoInputs.length; i++) {
-                var portKey = algoInputs[i].key;
-                var v = getInputValue(nd.id, portKey);
-                if (v == null) return false;
-                inputValues[portKey] = v;
+
+            if (algo.variadic) {
+                // variadic：fixed 全要齊；repeat 逐組檢查，至少一組備齊就送 API。
+                // 未備齊的組記錄在 _algoUnreadyGroups，render 時其對應輸出埠強制反灰。
+                var fixedKeys = (algo.inputsFixed || []).map(function(p) { return p.key; });
+                var repeatKeys = (algo.inputsRepeat || []).map(function(p) { return p.key; });
+                var N = nd.inputCount || 1;
+                for (var fi = 0; fi < fixedKeys.length; fi++) {
+                    var fv = getInputValue(nd.id, fixedKeys[fi]);
+                    if (fv == null) return false;
+                    inputValues[fixedKeys[fi]] = fv;
+                }
+                var unreadyGroups = new Set();
+                var anyGroupReady = false;
+                for (var g = 1; g <= N; g++) {
+                    var groupOK = true;
+                    var groupVals = {};
+                    for (var ri = 0; ri < repeatKeys.length; ri++) {
+                        var rkey = repeatKeys[ri] + g;
+                        var rv = getInputValue(nd.id, rkey);
+                        if (rv == null) { groupOK = false; break; }
+                        groupVals[rkey] = rv;
+                    }
+                    if (groupOK) {
+                        Object.assign(inputValues, groupVals);
+                        anyGroupReady = true;
+                    } else {
+                        unreadyGroups.add(g);
+                    }
+                }
+                if (!anyGroupReady) return false;
+                nd._algoUnreadyGroups = unreadyGroups;
+            } else {
+                for (var i = 0; i < algoInputs.length; i++) {
+                    var portKey = algoInputs[i].key;
+                    var v = getInputValue(nd.id, portKey);
+                    if (v == null) return false;
+                    inputValues[portKey] = v;
+                }
             }
             nd._algoReady = true;
 
             var nForCache = algo.variadic ? (nd.inputCount || 1) : '_';
-            var cacheKey = nd.operator + '|N' + nForCache + '|' + algoInputs.map(function(p) { return p.key + '=' + inputValues[p.key]; }).join('|');
+            var sortedInputKeys = Object.keys(inputValues).sort();
+            var cacheKey = nd.operator + '|N' + nForCache + '|' + sortedInputKeys.map(function(k) { return k + '=' + inputValues[k]; }).join('|');
             if (nd._algoCacheKey === cacheKey && nd._algoCachedResult != null) {
                 nd._algoResult = nd._algoCachedResult;
                 return true;
@@ -851,6 +887,7 @@
             nd._contactResult = null;
             nd._algoResult = null;
             nd._algoReady = false;
+            nd._algoUnreadyGroups = null;
             // counter._counterQ 跨 tick 保留以支援 q→reset 自回授；不清掉。
             nd._evalDone = false;
         }

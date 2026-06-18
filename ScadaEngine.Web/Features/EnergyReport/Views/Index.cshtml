@@ -37,20 +37,30 @@
                     </select>
                 </div>
 
-                <!-- 時粒度：單日 -->
-                <div class="er-narrow-date er-period er-period-hour">
-                    <label class="form-label fw-semibold"><i class="fas fa-calendar-day me-1"></i>@Localizer["energyreport.filter.date"]</label>
-                    <input type="date" id="erDate" class="form-control form-control-sm">
+                <!-- 時粒度：起訖時（日期 + 0~23 時，無分鐘） -->
+                <div class="er-wide-date er-period er-period-hour">
+                    <label class="form-label fw-semibold"><i class="fas fa-calendar-day me-1"></i>@Localizer["energyreport.filter.hour_start"]</label>
+                    <div class="input-group input-group-sm er-hour-group">
+                        <input type="date" id="erHourStartDate" class="form-control form-control-sm">
+                        <select id="erHourStartHour" class="form-select form-select-sm er-hour-select"></select>
+                    </div>
+                </div>
+                <div class="er-wide-date er-period er-period-hour">
+                    <label class="form-label fw-semibold"><i class="fas fa-calendar-day me-1"></i>@Localizer["energyreport.filter.hour_end"]</label>
+                    <div class="input-group input-group-sm er-hour-group">
+                        <input type="date" id="erHourEndDate" class="form-control form-control-sm">
+                        <select id="erHourEndHour" class="form-select form-select-sm er-hour-select"></select>
+                    </div>
                 </div>
 
-                <!-- 日粒度：起訖月 -->
+                <!-- 日粒度：起訖日 -->
                 <div class="er-narrow-date er-period er-period-day">
-                    <label class="form-label fw-semibold"><i class="fas fa-calendar me-1"></i>@Localizer["energyreport.filter.month_start"]</label>
-                    <input type="month" id="erDayMonthStart" class="form-control form-control-sm">
+                    <label class="form-label fw-semibold"><i class="fas fa-calendar me-1"></i>@Localizer["energyreport.filter.day_start"]</label>
+                    <input type="date" id="erDayStart" class="form-control form-control-sm">
                 </div>
                 <div class="er-narrow-date er-period er-period-day">
-                    <label class="form-label fw-semibold"><i class="fas fa-calendar me-1"></i>@Localizer["energyreport.filter.month_end"]</label>
-                    <input type="month" id="erDayMonthEnd" class="form-control form-control-sm">
+                    <label class="form-label fw-semibold"><i class="fas fa-calendar me-1"></i>@Localizer["energyreport.filter.day_end"]</label>
+                    <input type="date" id="erDayEnd" class="form-control form-control-sm">
                 </div>
 
                 <!-- 月粒度：起訖月 -->
@@ -93,7 +103,12 @@
             <div class="card shadow-sm">
                 <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
                     <span><i class="fas fa-chart-bar me-1"></i>@Localizer["energyreport.chart.title"]</span>
-                    <span class="text-muted small" id="erWarnText"></span>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="text-muted small" id="erWarnText"></span>
+                        <button type="button" id="btnToggleBreakdown" class="btn btn-sm btn-outline-secondary d-none" onclick="window._er.toggleBreakdown()">
+                            <i class="fas fa-layer-group me-1"></i><span id="btnToggleBreakdownText">@Localizer["energyreport.button.show_breakdown"]</span>
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div style="height:360px;">

@@ -275,6 +275,13 @@
   <data name="designer.prop.cell_header_row" xml:space="preserve"><value>標題列</value></data>
   <data name="designer.prop.cell_data_row" xml:space="preserve"><value>資料列</value></data>
   <data name="designer.prop.text_color" xml:space="preserve"><value>文字顏色</value></data>
+  <!-- Prop Panel - table 大小（plan 2026-06-01） -->
+  <data name="designer.prop.default_row_height" xml:space="preserve"><value>預設列高</value></data>
+  <data name="designer.prop.default_col_width" xml:space="preserve"><value>預設欄寬</value></data>
+  <data name="designer.prop.col_width" xml:space="preserve"><value>該欄寬度</value></data>
+  <data name="designer.prop.row_height" xml:space="preserve"><value>該列高度</value></data>
+  <data name="designer.prop.size_placeholder_default" xml:space="preserve"><value>留空=用預設</value></data>
+  <data name="designer.prop.table_size_locked" xml:space="preserve"><value>大小由欄列決定</value></data>
 
   <!-- Prop Panel - gauge -->
   <data name="designer.prop.bound_point" xml:space="preserve"><value>綁定點位</value></data>
@@ -364,4 +371,27 @@
 
   <!-- Canvas -->
   <data name="designer.canvas.confirm_clear" xml:space="preserve"><value>確定要清除畫布上所有元件？</value></data>
+
+  <!-- Row Template (建議面板，plan 2026-06-01-designer-row-template) -->
+  <data name="designer.row_template.modal_title" xml:space="preserve"><value>列範本建議</value></data>
+  <data name="designer.row_template.detected_role" xml:space="preserve"><value>已偵測到角色「{role}」於前綴「{prefix}」</value></data>
+  <data name="designer.row_template.preview_title" xml:space="preserve"><value>預覽（依目前範本順序）</value></data>
+  <data name="designer.row_template.preview_found" xml:space="preserve"><value>找到</value></data>
+  <data name="designer.row_template.preview_missing" xml:space="preserve"><value>未找到</value></data>
+  <data name="designer.row_template.btn_fill" xml:space="preserve"><value>直接帶入</value></data>
+  <data name="designer.row_template.btn_adjust" xml:space="preserve"><value>調整順序</value></data>
+  <data name="designer.row_template.btn_skip" xml:space="preserve"><value>不帶入</value></data>
+  <data name="designer.row_template.adjust_title" xml:space="preserve"><value>角色順序</value></data>
+  <data name="designer.row_template.adjust_hint" xml:space="preserve"><value>使用上下箭頭調整順序，或從下方未使用角色追加</value></data>
+  <data name="designer.row_template.unused_roles" xml:space="preserve"><value>未使用角色</value></data>
+  <data name="designer.row_template.btn_apply_once" xml:space="preserve"><value>套用一次</value></data>
+  <data name="designer.row_template.btn_apply_save" xml:space="preserve"><value>套用並存為預設</value></data>
+  <data name="designer.row_template.btn_back" xml:space="preserve"><value>返回</value></data>
+  <data name="designer.row_template.toast_filled" xml:space="preserve"><value>已帶入 {count} 格</value></data>
+  <data name="designer.row_template.toast_filled_with_missing" xml:space="preserve"><value>已帶入 {count} 格，{missing} 格未找到對應點位</value></data>
+  <data name="designer.row_template.save_failed" xml:space="preserve"><value>範本儲存失敗</value></data>
+  <data name="designer.row_template.move_up" xml:space="preserve"><value>上移</value></data>
+  <data name="designer.row_template.move_down" xml:space="preserve"><value>下移</value></data>
+  <data name="designer.row_template.remove_role" xml:space="preserve"><value>移除</value></data>
+  <data name="designer.row_template.add_role" xml:space="preserve"><value>加入</value></data>
 </root>

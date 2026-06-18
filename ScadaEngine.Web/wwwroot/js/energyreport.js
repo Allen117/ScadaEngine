@@ -5,6 +5,7 @@
     let g_circuits = [];
     let g_chart = null;
     let g_lastResult = null;
+    let g_chartMode = 'total'; // 'total' | 'breakdown'
 
     document.addEventListener('DOMContentLoaded', () => {
         initDefaults();
@@ -26,9 +27,22 @@
         const today = (window._erInit && window._erInit.today) || new Date().toISOString().slice(0, 10);
         const d = new Date(today);
         const ym = today.slice(0, 7);
-        document.getElementById('erDate').value = today;
-        document.getElementById('erDayMonthStart').value = ym;
-        document.getElementById('erDayMonthEnd').value = ym;
+        const ymStart = ym + '-01';
+        // 時粒度：日期 + 0~23 時下拉（只顯示兩位數小時，無分鐘）
+        const hourOptions = Array.from({ length: 24 }, (_, i) => {
+            const hh = String(i).padStart(2, '0');
+            return `<option value="${i}">${hh}</option>`;
+        }).join('');
+        const startHourSel = document.getElementById('erHourStartHour');
+        const endHourSel = document.getElementById('erHourEndHour');
+        startHourSel.innerHTML = hourOptions;
+        endHourSel.innerHTML = hourOptions;
+        document.getElementById('erHourStartDate').value = today;
+        startHourSel.value = '0';
+        document.getElementById('erHourEndDate').value = today;
+        endHourSel.value = '23';
+        document.getElementById('erDayStart').value = ymStart;
+        document.getElementById('erDayEnd').value = today;
         document.getElementById('erMonthStart').value = ym;
         document.getElementById('erMonthEnd').value = ym;
         document.getElementById('erYearStart').value = d.getFullYear();
@@ -85,12 +99,25 @@
         const g = document.getElementById('erGranularity').value;
         let startStr, endStr;
         if (g === 'hour') {
-            startStr = document.getElementById('erDate').value + 'T00:00:00';
-            endStr = startStr;
+            const hsDate = document.getElementById('erHourStartDate').value;
+            const heDate = document.getElementById('erHourEndDate').value;
+            const hsHour = document.getElementById('erHourStartHour').value;
+            const heHour = document.getElementById('erHourEndHour').value;
+            if (!hsDate || !heDate || hsHour === '' || heHour === '') {
+                alert(t('energyreport.alert.hour_order')); return null;
+            }
+            const hsHH = String(parseInt(hsHour, 10)).padStart(2, '0');
+            const heHH = String(parseInt(heHour, 10)).padStart(2, '0');
+            startStr = `${hsDate}T${hsHH}:00:00`;
+            endStr = `${heDate}T${heHH}:00:00`;
+            if (new Date(endStr) < new Date(startStr)) { alert(t('energyreport.alert.hour_order')); return null; }
         } else if (g === 'day') {
-            startStr = document.getElementById('erDayMonthStart').value + '-01T00:00:00';
-            endStr = document.getElementById('erDayMonthEnd').value + '-01T00:00:00';
-            if (new Date(endStr) < new Date(startStr)) { alert(t('energyreport.alert.month_order')); return null; }
+            const ds = document.getElementById('erDayStart').value;
+            const de = document.getElementById('erDayEnd').value;
+            if (!ds || !de) { alert(t('energyreport.alert.day_order')); return null; }
+            startStr = ds + 'T00:00:00';
+            endStr = de + 'T00:00:00';
+            if (new Date(endStr) < new Date(startStr)) { alert(t('energyreport.alert.day_order')); return null; }
         } else if (g === 'month') {
             startStr = document.getElementById('erMonthStart').value + '-01T00:00:00';
             endStr = document.getElementById('erMonthEnd').value + '-01T00:00:00';
@@ -125,7 +152,11 @@
             }
             const data = await res.json();
             g_lastResult = data;
-            renderResult(data);
+            // 每次重查重置為「合計」預設，避免上次明細狀態殘留
+            g_chartMode = 'total';
+            updateToggleButton();
+            renderTable(data);
+            renderChart(data);
             document.getElementById('btnExport').disabled = false;
         } catch (err) {
             document.getElementById('erTableBody').innerHTML =
@@ -133,8 +164,7 @@
         }
     }
 
-    function renderResult(data) {
-        // 表格
+    function renderTable(data) {
         const tbody = document.getElementById('erTableBody');
         if (!data.buckets || data.buckets.length === 0) {
             tbody.innerHTML = `<tr><td colspan="2" class="text-center text-muted py-3">${escapeHtml(t('energyreport.table.no_data'))}</td></tr>`;
@@ -150,32 +180,96 @@
         document.getElementById('erTotal').textContent = data.dTotalKwh.toFixed(3);
         document.getElementById('erWarnText').textContent = data.isHasWarning
             ? t('energyreport.warning.kwh_overflow') : '';
+    }
 
-        // 圖表
+    // HSL 等距 12 色循環調色盤；超出時取模重用
+    function pickColor(i, alpha) {
+        const n = 12;
+        const h = Math.round((i % n) * (360 / n));
+        const a = (alpha == null) ? 0.7 : alpha;
+        return `hsla(${h}, 65%, 50%, ${a})`;
+    }
+
+    // 切換按鈕顯示條件：data.children 存在且 > 1
+    function updateToggleButton() {
+        const btn = document.getElementById('btnToggleBreakdown');
+        const text = document.getElementById('btnToggleBreakdownText');
+        if (!btn || !text) return;
+        const hasBreakdown = g_lastResult && Array.isArray(g_lastResult.children) && g_lastResult.children.length > 1;
+        btn.classList.toggle('d-none', !hasBreakdown);
+        text.textContent = g_chartMode === 'breakdown'
+            ? t('energyreport.button.show_total')
+            : t('energyreport.button.show_breakdown');
+    }
+
+    function toggleBreakdown() {
+        if (!g_lastResult) return;
+        g_chartMode = (g_chartMode === 'total') ? 'breakdown' : 'total';
+        updateToggleButton();
+        renderChart(g_lastResult);
+    }
+
+    function renderChart(data) {
         const labels = data.buckets.map(b => b.szLabel);
-        const values = data.buckets.map(b => b.dKwh);
         if (g_chart) g_chart.destroy();
         const ctx = document.getElementById('erChart').getContext('2d');
+
+        const bBreakdown = g_chartMode === 'breakdown'
+            && Array.isArray(data.children) && data.children.length > 1;
+
+        let datasets;
+        let tooltipCallbacks;
+        let bStacked;
+
+        if (bBreakdown) {
+            bStacked = true;
+            datasets = data.children.map((child, i) => ({
+                label: child.szName,
+                data: child.dKwhPerBucket,
+                backgroundColor: pickColor(i, 0.7),
+                borderColor: pickColor(i, 1),
+                borderWidth: 1
+            }));
+            tooltipCallbacks = {
+                // 每根 bar 顯示「子名稱: 值 kWh」
+                label: function (ctx) {
+                    const v = ctx.parsed.y;
+                    return `${ctx.dataset.label}: ${(v == null ? 0 : v).toFixed(3)} kWh`;
+                },
+                // footer 顯示該 bucket 的合計
+                footer: function (items) {
+                    let sum = 0;
+                    items.forEach(it => { if (it.parsed && it.parsed.y != null) sum += it.parsed.y; });
+                    return t('energyreport.chart.breakdown_total_label', { 0: sum.toFixed(3) });
+                }
+            };
+        } else {
+            bStacked = false;
+            const values = data.buckets.map(b => b.dKwh);
+            datasets = [{
+                label: t('energyreport.chart.dataset_label', { 0: data.szCircuitName }),
+                data: values,
+                backgroundColor: 'rgba(13, 110, 253, 0.6)',
+                borderColor: 'rgba(13, 110, 253, 1)',
+                borderWidth: 1
+            }];
+        }
+
         g_chart = new Chart(ctx, {
             type: 'bar',
-            data: {
-                labels,
-                datasets: [{
-                    label: t('energyreport.chart.dataset_label', { 0: data.szCircuitName }),
-                    data: values,
-                    backgroundColor: 'rgba(13, 110, 253, 0.6)',
-                    borderColor: 'rgba(13, 110, 253, 1)',
-                    borderWidth: 1
-                }]
-            },
+            data: { labels, datasets },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: true } },
+                plugins: {
+                    legend: { display: true },
+                    tooltip: tooltipCallbacks ? { mode: 'index', intersect: false, callbacks: tooltipCallbacks } : undefined
+                },
+                interaction: bBreakdown ? { mode: 'index', intersect: false } : undefined,
                 scales: {
                     // 不指定 beginAtZero — 含負值的虛擬迴路（A+B+C-D）需正確顯示負 bar
-                    y: { title: { display: true, text: t('energyreport.chart.y_axis') } },
-                    x: { title: { display: true, text: t('energyreport.chart.x_axis') } }
+                    y: { stacked: bStacked, title: { display: true, text: t('energyreport.chart.y_axis') } },
+                    x: { stacked: bStacked, title: { display: true, text: t('energyreport.chart.x_axis') } }
                 }
             }
         });
@@ -220,5 +314,5 @@
             .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
 
-    window._er = { query, exportExcel };
+    window._er = { query, exportExcel, toggleBreakdown };
 })();

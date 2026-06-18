@@ -250,25 +250,45 @@ main { padding: 0 !important; min-height: 0 !important; }
     opacity: 1;
 }
 
+/* 鎖定尺寸的 widget（table 由結構決定大小）— 隱藏 resize knob */
+.canvas-widget.widget-size-locked .resize-knob {
+    display: none !important;
+}
+
 /* ========== 表格 Widget ========== */
+/* 預留 widget-header (絕對定位於 top:0) 的空間，避免標題列疊在表頭上 */
+.canvas-widget[data-type="table"] .widget-body {
+    padding-top: 18px;
+}
+
 .w-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 12px;
+    table-layout: fixed;
 }
 
+/* 列高由 <tr style="height"> 控制（plan 2026-06-01），th/td 不固定高度 */
 .w-table th {
-    padding: 5px 8px;
+    padding: 0 8px;
     text-align: left;
     font-weight: 500;
     color: #fff;
-    font-size: 11px;
+    font-size: 12px;
+    box-sizing: border-box;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .w-table td {
-    padding: 4px 8px;
+    padding: 0 8px;
     border-bottom: 1px solid #f0f0f0;
     color: #444;
+    box-sizing: border-box;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .w-table tr:last-child td { border-bottom: none; }
@@ -803,4 +823,163 @@ main { padding: 0 !important; min-height: 0 !important; }
 .align-tool-btn[disabled] {
     opacity: .4;
     cursor: not-allowed;
+}
+
+/* ========== 列範本建議面板（plan 2026-06-01-designer-row-template） ========== */
+.row-template-body { color: #c8c8c8; }
+.row-template-body .rt-detected {
+    font-size: 12px;
+    color: #ffc107;
+    background: #3a2f10;
+    border: 1px solid #6b5a2f;
+    border-radius: 4px;
+    padding: 6px 10px;
+    margin-bottom: 10px;
+}
+.row-template-body .rt-preview-title,
+.row-template-body .rt-section-title {
+    font-size: 11px;
+    color: #9d9d9d;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin-bottom: 6px;
+}
+.row-template-body .rt-mt { margin-top: 12px; }
+.row-template-body .rt-adjust-hint {
+    font-size: 11px;
+    color: #888;
+    margin-bottom: 8px;
+}
+.row-template-body .rt-preview-list,
+.row-template-body .rt-role-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: #1e1e1e;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 6px;
+    max-height: 220px;
+    overflow-y: auto;
+}
+.row-template-body .rt-preview-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px;
+    background: #2d2d2d;
+    border-radius: 3px;
+    font-size: 12px;
+}
+.row-template-body .rt-preview-row.rt-row-missing { opacity: .6; }
+.row-template-body .rt-role {
+    flex: 0 0 60px;
+    font-weight: 600;
+    color: #7ecfff;
+}
+.row-template-body .rt-arrow {
+    color: #555;
+    font-size: 13px;
+}
+.row-template-body .rt-point {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11px;
+}
+.row-template-body .rt-prefix {
+    color: #6ea8fe;
+    font-size: 10px;
+}
+.row-template-body .rt-na { color: #666; }
+.row-template-body .rt-tag {
+    flex: 0 0 auto;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 2px;
+    border: 1px solid transparent;
+}
+.row-template-body .rt-tag.rt-found {
+    color: #6ec1a3;
+    border-color: #2f5c4d;
+    background: #1c3329;
+}
+.row-template-body .rt-tag.rt-missing {
+    color: #ff8888;
+    border-color: #6b2f2f;
+    background: #3a1c1c;
+}
+.row-template-body .rt-empty {
+    text-align: center;
+    color: #666;
+    font-size: 11px;
+    padding: 8px;
+}
+.row-template-body .rt-role-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px;
+    background: #2d2d2d;
+    border-radius: 3px;
+    font-size: 12px;
+}
+.row-template-body .rt-role-name {
+    flex: 1;
+    font-weight: 600;
+    color: #c8c8c8;
+}
+.row-template-body .rt-icon-btn {
+    background: #3a3a3a;
+    border: 1px solid #555;
+    border-radius: 3px;
+    color: #c8c8c8;
+    cursor: pointer;
+    width: 24px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    transition: background .12s, color .12s, border-color .12s;
+}
+.row-template-body .rt-icon-btn:hover {
+    background: #4a4a4a;
+    border-color: #666;
+    color: #fff;
+}
+.row-template-body .rt-icon-btn[disabled] {
+    opacity: .35;
+    cursor: not-allowed;
+}
+.row-template-body .rt-icon-btn.rt-icon-danger:hover {
+    background: #5c2a2a;
+    color: #ff8888;
+    border-color: #843838;
+}
+.row-template-body .rt-unused-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px;
+    background: #1e1e1e;
+    border: 1px solid #444;
+    border-radius: 4px;
+}
+.row-template-body .rt-add-chip {
+    background: #2d2d2d;
+    border: 1px dashed #555;
+    border-radius: 12px;
+    color: #c8c8c8;
+    font-size: 11px;
+    padding: 2px 10px;
+    cursor: pointer;
+    transition: background .12s, color .12s, border-color .12s;
+}
+.row-template-body .rt-add-chip:hover {
+    background: #3a3a3a;
+    color: #7ecfff;
+    border-color: #6ea8fe;
 }

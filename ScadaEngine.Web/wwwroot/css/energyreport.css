@@ -19,6 +19,16 @@
     flex: 0 0 130px;
 }
 
+.er-filter-bar .er-wide-date {
+    flex: 0 0 200px;
+}
+
+.er-hour-group .er-hour-select {
+    flex: 0 0 72px;
+    padding-right: 1.5rem;
+    background-position: right 0.4rem center;
+}
+
 .er-filter-bar .er-btn .btn {
     white-space: nowrap;
 }
@@ -49,4 +59,10 @@
 #erWarnText {
     color: #fd7e14;
     font-weight: 500;
+}
+
+#btnToggleBreakdown {
+    white-space: nowrap;
+    font-size: 0.8rem;
+    padding: 0.2rem 0.55rem;
 }

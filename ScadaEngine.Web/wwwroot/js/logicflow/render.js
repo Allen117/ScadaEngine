@@ -86,7 +86,7 @@
             } else if (n.type === 'algorithm' && n.operator && S.ALGO_OPS[n.operator]) {
                 const aop = S.ALGO_OPS[n.operator];
                 const langIcon = aop.language === 'csharp' ? ' ⚡' : '';
-                let aHtml = `<span class="algo-op-badge">${S.escHtml(aop.symbol)}</span>`
+                let aHtml = `<span class="algo-op-badge" title="${S.escHtml(aop.label)}"><i class="fas fa-microchip"></i></span>`
                     + `<span style="font-size:.75rem">${S.escHtml(aop.label)}${langIcon}</span>`;
                 if (aop.variadic) {
                     const nVal = n.inputCount || 1;
@@ -352,6 +352,9 @@
                     nd._algoCacheKey = null;
                     nd._algoFetching = false;
                     nd._algoStatus = null;
+                    // N 變動 → 重算節點高度，避免埠位被擠在一起
+                    const newH = S.computeAlgoNodeHeight(nd);
+                    if (newH != null) nd.height = newH;
                     renderCanvasNodes();
                 });
             });
@@ -545,31 +548,50 @@
                     } else if (srcNode.type === 'algorithm') {
                         // 演算法節點：per-output 反灰／顏色／tooltip。依 edge.sourcePort 取對應輸出值與 status。
                         var portKey = edge.sourcePort || 'out';
-                        var algoOutVal = null;
-                        var resObj = srcNode._algoResult || srcNode._algoCachedResult;
-                        if (resObj && typeof resObj === 'object') {
-                            algoOutVal = resObj[portKey];
+
+                        // variadic 部分組未備齊：對應 repeat 輸出埠（key 結尾數字）強制反灰；
+                        // 結尾無數字 = fixed 輸出，只要有任何組沒備齊，整體結果不可靠，一併反灰。
+                        var unreadyGroups = srcNode._algoUnreadyGroups;
+                        var isUnreadyGroupPort = false;
+                        if (unreadyGroups && unreadyGroups.size > 0) {
+                            var mGroup = portKey.match(/(\d+)$/);
+                            if (mGroup) {
+                                if (unreadyGroups.has(parseInt(mGroup[1], 10))) isUnreadyGroupPort = true;
+                            } else {
+                                isUnreadyGroupPort = true;
+                            }
                         }
-                        var portStatus = (srcNode._algoStatus && srcNode._algoStatus.perOutput)
-                            ? srcNode._algoStatus.perOutput[portKey] : null;
-                        var portSev = portStatus ? (portStatus.severity || 'Info') : 'Info';
-                        if (portSev === 'Error') {
-                            edgeColor = '#dc3545'; edgeMarker = 'ah-bad';
-                            if (algoOutVal != null) edgeLabel = S.fmtNum(algoOutVal);
-                        } else if (portSev === 'Warning') {
-                            edgeColor = '#fd7e14'; edgeMarker = 'ah-warn';
-                            if (algoOutVal != null) edgeLabel = S.fmtNum(algoOutVal);
-                        } else if (algoOutVal != null) {
-                            edgeColor = '#198754'; edgeMarker = 'ah-ok';
-                            edgeLabel = S.fmtNum(algoOutVal);
-                        } else if (srcNode._algoReady) {
-                            edgeColor = '#198754'; edgeMarker = 'ah-ok';
-                        } else {
+
+                        if (isUnreadyGroupPort) {
                             edgeColor = '#adb5bd';
-                        }
-                        if (portStatus && portStatus.statusCodeId !== 0) {
-                            var algoLbl = (S.ALGO_OPS[srcNode.operator] && S.ALGO_OPS[srcNode.operator].label) || srcNode.operator || '';
-                            edgeTooltip = algoLbl + ' : ' + portKey + ' : ' + portStatus.statusCodeName + ' (' + portSev + ')';
+                        } else {
+                            var algoOutVal = null;
+                            var resObj = srcNode._algoResult || srcNode._algoCachedResult;
+                            if (resObj && typeof resObj === 'object') {
+                                algoOutVal = resObj[portKey];
+                            }
+                            var portStatus = (srcNode._algoStatus && srcNode._algoStatus.perOutput)
+                                ? srcNode._algoStatus.perOutput[portKey] : null;
+                            var portSev = portStatus ? (portStatus.severity || 'Info') : 'Info';
+                            if (portSev === 'Error') {
+                                // Error：線不斷、僅變淡（灰色 + 預設箭頭），值維持顯示
+                                edgeColor = '#adb5bd';
+                                if (algoOutVal != null) edgeLabel = S.fmtNum(algoOutVal);
+                            } else if (portSev === 'Warning') {
+                                edgeColor = '#fd7e14'; edgeMarker = 'ah-warn';
+                                if (algoOutVal != null) edgeLabel = S.fmtNum(algoOutVal);
+                            } else if (algoOutVal != null) {
+                                edgeColor = '#198754'; edgeMarker = 'ah-ok';
+                                edgeLabel = S.fmtNum(algoOutVal);
+                            } else if (srcNode._algoReady) {
+                                edgeColor = '#198754'; edgeMarker = 'ah-ok';
+                            } else {
+                                edgeColor = '#adb5bd';
+                            }
+                            if (portStatus && portStatus.statusCodeId !== 0) {
+                                var algoLbl = (S.ALGO_OPS[srcNode.operator] && S.ALGO_OPS[srcNode.operator].label) || srcNode.operator || '';
+                                edgeTooltip = algoLbl + ' : ' + portKey + ' : ' + portStatus.statusCodeName + ' (' + portSev + ')';
+                            }
                         }
                     }
                 }

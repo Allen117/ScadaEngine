@@ -146,6 +146,8 @@ builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyCircuitService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.WaterCircuitService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyReportService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.DbCoordinatorService>();
+// Designer 列範本 JSON 讀寫（Singleton：內含 SemaphoreSlim 檔案鎖）
+builder.Services.AddSingleton<ScadaEngine.Web.Services.DesignerTemplateService>();
 // Scoped：依賴 IStringLocalizer<T>（Scoped），且 exporter 本身無狀態
 builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyReportExcelExporter>();
 

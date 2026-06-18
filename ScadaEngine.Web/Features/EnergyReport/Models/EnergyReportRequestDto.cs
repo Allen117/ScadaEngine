@@ -10,8 +10,8 @@ public class EnergyReportRequestDto
 
     /// <summary>
     /// 期間起點：
-    /// - hour: 任意時間，會被截到當天 00:00
-    /// - day:  起月（會被截到當月 1 日 00:00）
+    /// - hour: 起時（會被截到整點，分鐘秒歸零）
+    /// - day:  起日（會被截到當日 00:00）
     /// - month: 起月（會被截到當月 1 日）
     /// - year: 起年（會被截到當年 1/1）
     /// </summary>
@@ -19,8 +19,8 @@ public class EnergyReportRequestDto
 
     /// <summary>
     /// 期間終點：
-    /// - hour: 不使用（由 start 推 24h）
-    /// - day:  訖月（會被截到當月 1 日，產出至訖月隔月 1 日）
+    /// - hour: 訖時（會被截到整點，產出至訖時隔小時）
+    /// - day:  訖日（會被截到當日 00:00，產出至訖日隔日 00:00）
     /// - month: 訖月
     /// - year: 訖年
     /// </summary>

@@ -2,6 +2,20 @@
 (function () {
     const S = window.__lfNS;
 
+    // 依埠位數量計算演算法節點建議高度（埠分佈於節點 20%~80% 區間）
+    // — 確保相鄰埠中心距至少 PORT_MIN_GAP_PX，避免 N 大時擠在一起
+    function computeAlgoNodeHeight(node) {
+        if (!node || node.type !== 'algorithm' || !node.operator) return null;
+        const aop = S.ALGO_OPS[node.operator];
+        if (!aop) return null;
+        const ports = S.getAlgoPorts(aop, node.inputCount);
+        const maxPorts = Math.max(ports.inputs.length, ports.outputs.length, 1);
+        const PORT_MIN_GAP_PX = 30;
+        const BASE_H = 50;
+        if (maxPorts <= 1) return BASE_H;
+        return Math.max(BASE_H, Math.ceil(PORT_MIN_GAP_PX * (maxPorts - 1) / 0.6));
+    }
+
     async function initCanvas(treeId) {
         // 清理舊 timer 的 setTimeout，避免殘留排程
         for (const nd of S.canvasNodes) {
@@ -204,12 +218,12 @@
         const keepValPort = newType === 'math' && operator && S.MATH_OPS[operator] && S.MATH_OPS[operator].hasValue;
         const keepTimerPorts = newType === 'timer';
         const isTon = newType === 'timer' && operator === 'ton';
-        // algorithm 切換：依新演算法 + 既有 inputCount 展開埠（variadic 沿用 node.inputCount，不存在則 2）
+        // algorithm 切換：依新演算法 + 既有 inputCount 展開埠（variadic 沿用 node.inputCount，不存在則 1）
         let algoInputPortKeys = [];
         let algoOutputPortKeys = [];
         if (newType === 'algorithm' && operator && S.ALGO_OPS[operator]) {
             const newAop = S.ALGO_OPS[operator];
-            const newN = newAop.variadic ? (node.inputCount || 2) : null;
+            const newN = newAop.variadic ? (node.inputCount || 1) : null;
             const newPorts = S.getAlgoPorts(newAop, newN);
             algoInputPortKeys = newPorts.inputs.map(p => p.key);
             algoOutputPortKeys = newPorts.outputs.map(p => p.key);
@@ -251,7 +265,7 @@
             const algo = S.ALGO_OPS[operator];
             if (algo) {
                 if (algo.variadic) {
-                    if (node.inputCount == null) node.inputCount = 2;
+                    if (node.inputCount == null) node.inputCount = 1;
                     const ports = S.getAlgoPorts(algo, node.inputCount);
                     node.algoInputs = ports.inputs.map(p => p.key);
                 } else {
@@ -259,6 +273,9 @@
                     node.algoInputs = [...algo.inputs];
                 }
             }
+            // 切換為演算法 → 依埠數重算高度（覆蓋舊節點高度）
+            const algoH2 = computeAlgoNodeHeight(node);
+            if (algoH2 != null) node.height = algoH2;
         } else if (newType !== 'compare' && newType !== 'math' && newType !== 'timer' && newType !== 'algorithm') {
             delete node.operator;
         }
@@ -359,13 +376,15 @@
             const algo = S.ALGO_OPS[operator];
             if (algo) {
                 if (algo.variadic) {
-                    node.inputCount = 2;
-                    const ports = S.getAlgoPorts(algo, 2);
+                    node.inputCount = 1;
+                    const ports = S.getAlgoPorts(algo, 1);
                     node.algoInputs = ports.inputs.map(p => p.key);
                 } else {
                     node.algoInputs = [...algo.inputs];
                 }
             }
+            const algoH = computeAlgoNodeHeight(node);
+            if (algoH != null) node.height = algoH;
         }
         S.canvasNodes.push(node);
         S.renderCanvasNodes();
@@ -653,6 +672,7 @@
     }
 
     // 暴露給其他模組
+    S.computeAlgoNodeHeight = computeAlgoNodeHeight;
     S.initCanvas = initCanvas;
     S.bindCanvasEvents = bindCanvasEvents;
     S.hideCtxMenu = hideCtxMenu;

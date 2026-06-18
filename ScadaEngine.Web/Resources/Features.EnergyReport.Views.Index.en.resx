@@ -58,8 +58,12 @@
   <data name="energyreport.filter.circuit" xml:space="preserve"><value>Circuit</value></data>
   <data name="energyreport.filter.granularity" xml:space="preserve"><value>Granularity</value></data>
   <data name="energyreport.filter.date" xml:space="preserve"><value>Date</value></data>
+  <data name="energyreport.filter.hour_start" xml:space="preserve"><value>From Hour</value></data>
+  <data name="energyreport.filter.hour_end" xml:space="preserve"><value>To Hour</value></data>
   <data name="energyreport.filter.month_start" xml:space="preserve"><value>From Month</value></data>
   <data name="energyreport.filter.month_end" xml:space="preserve"><value>To Month</value></data>
+  <data name="energyreport.filter.day_start" xml:space="preserve"><value>From Date</value></data>
+  <data name="energyreport.filter.day_end" xml:space="preserve"><value>To Date</value></data>
   <data name="energyreport.filter.year_start" xml:space="preserve"><value>From Year</value></data>
   <data name="energyreport.filter.year_end" xml:space="preserve"><value>To Year</value></data>
 
@@ -70,11 +74,15 @@
 
   <data name="energyreport.button.query" xml:space="preserve"><value>Query</value></data>
   <data name="energyreport.button.export" xml:space="preserve"><value>Export Excel</value></data>
+  <data name="energyreport.button.show_breakdown" xml:space="preserve"><value>Show breakdown</value></data>
+  <data name="energyreport.button.show_total" xml:space="preserve"><value>Show total</value></data>
 
   <data name="energyreport.chart.title" xml:space="preserve"><value>Energy Consumption</value></data>
   <data name="energyreport.chart.y_axis" xml:space="preserve"><value>kWh</value></data>
   <data name="energyreport.chart.x_axis" xml:space="preserve"><value>Period</value></data>
   <data name="energyreport.chart.dataset_label" xml:space="preserve"><value>{0} (kWh)</value></data>
+  <data name="energyreport.chart.dataset_total_label" xml:space="preserve"><value>{0} Total (kWh)</value></data>
+  <data name="energyreport.chart.breakdown_total_label" xml:space="preserve"><value>Total: {0} kWh</value></data>
 
   <data name="energyreport.table.title" xml:space="preserve"><value>Data Detail</value></data>
   <data name="energyreport.table.col_period" xml:space="preserve"><value>Period</value></data>
@@ -93,6 +101,8 @@
 
   <data name="energyreport.alert.select_circuit" xml:space="preserve"><value>Please select a circuit</value></data>
   <data name="energyreport.alert.month_order" xml:space="preserve"><value>End month must not be earlier than start month</value></data>
+  <data name="energyreport.alert.day_order" xml:space="preserve"><value>End date must not be earlier than start date</value></data>
+  <data name="energyreport.alert.hour_order" xml:space="preserve"><value>End hour must not be earlier than start hour</value></data>
   <data name="energyreport.alert.year_order" xml:space="preserve"><value>End year must not be earlier than start year</value></data>
   <data name="energyreport.alert.query_failed" xml:space="preserve"><value>Query failed: {0}</value></data>
   <data name="energyreport.alert.export_failed" xml:space="preserve"><value>Export failed: {0}</value></data>

@@ -49,4 +49,5 @@
 
   <data name="designer.save_error" xml:space="preserve"><value>Error occurred while saving the design</value></data>
   <data name="designer.untitled_design" xml:space="preserve"><value>Untitled Design</value></data>
+  <data name="designer.row_template.invalid_payload" xml:space="preserve"><value>Invalid row template payload</value></data>
 </root>

@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
-# @algorithm: kW計算
-# @inputs: V,A,PF
-# @outputs: out
-# @description: 三相功率計算 kW = V * A * PF * 1.732 / 1000
-
+# @algorithm: kW 計算
+# @variadic: true
+# @inputs_repeat: V:Voltage, A:Current, PF:Power Factor
+# @outputs_repeat: out:kW
+# @description: 三相 kW = V * A * PF * 1.732 / 1000
 from _status import AlgoStatus, make_status, make_result
 
 

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 using ScadaEngine.Engine.Data.Interfaces;
 using ScadaEngine.Web.Features.Designer.Models;
+using ScadaEngine.Web.Services;
 
 namespace ScadaEngine.Web.Features.Designer.Controllers;
 
@@ -12,15 +13,18 @@ public class DesignerController : Controller
     private readonly IDataRepository _repository;
     private readonly ILogger<DesignerController> _logger;
     private readonly IStringLocalizer<DesignerController> _l;
+    private readonly DesignerTemplateService _templateService;
 
     public DesignerController(
         IDataRepository repository,
         ILogger<DesignerController> logger,
-        IStringLocalizer<DesignerController> localizer)
+        IStringLocalizer<DesignerController> localizer,
+        DesignerTemplateService templateService)
     {
-        _repository = repository;
-        _logger     = logger;
-        _l          = localizer;
+        _repository      = repository;
+        _logger          = logger;
+        _l               = localizer;
+        _templateService = templateService;
     }
 
     [HttpGet("/Designer")]
@@ -116,5 +120,29 @@ public class DesignerController : Controller
             _logger.LogError(ex, _l["designer.save_error"].Value);
             return Json(new { success = false, error = ex.Message });
         }
+    }
+
+    /// <summary>
+    /// 取得列範本（分隔符 + 角色順序）
+    /// </summary>
+    [HttpGet("/Designer/Templates")]
+    public async Task<IActionResult> GetTemplates()
+    {
+        var dto = await _templateService.ReadAsync();
+        return Json(new { szSeparator = dto.szSeparator, arrRoles = dto.arrRoles });
+    }
+
+    /// <summary>
+    /// 整批覆寫列範本（用於「套用並存為預設」）
+    /// </summary>
+    [HttpPost("/Designer/Templates")]
+    public async Task<IActionResult> SaveTemplates([FromBody] DesignerTemplateFileDto dto)
+    {
+        if (dto == null || dto.arrRoles == null || dto.arrRoles.Count == 0)
+        {
+            return Json(new { success = false, error = _l["designer.row_template.invalid_payload"].Value });
+        }
+        var isOk = await _templateService.WriteAsync(dto);
+        return Json(new { success = isOk });
     }
 }

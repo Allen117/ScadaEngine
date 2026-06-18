@@ -721,6 +721,15 @@ function confirmPointPick() {
         const sel = selectedEl.querySelector(`.w-table [data-row="${nSelectedCellRow}"][data-col="${nSelectedCellCol}"]`);
         if (sel) sel.classList.add('selected-cell');
         renderTableCellPropPanel(selectedEl, nSelectedCellRow, nSelectedCellCol);
+        // 列範本（plan 2026-06-01-designer-row-template）— 待 picker 動畫收完再彈
+        if (window._rowTemplate && typeof window._rowTemplate.tryAutoFill === 'function') {
+            const widgetEl   = selectedEl;
+            const nRowIdx    = nSelectedCellRow;
+            const nPickedCol = nSelectedCellCol;
+            setTimeout(() => {
+                window._rowTemplate.tryAutoFill(widgetEl, nRowIdx, nPickedCol, point);
+            }, 300);
+        }
     } else if (pendingGaugeX === -1) {
         // 重選模式：更新目前選取的 widget
         if (!selectedEl) return;

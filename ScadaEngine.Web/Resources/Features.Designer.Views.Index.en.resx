@@ -275,6 +275,13 @@
   <data name="designer.prop.cell_header_row" xml:space="preserve"><value>Header Row</value></data>
   <data name="designer.prop.cell_data_row" xml:space="preserve"><value>Data Row</value></data>
   <data name="designer.prop.text_color" xml:space="preserve"><value>Text Color</value></data>
+  <!-- Prop Panel - table size (plan 2026-06-01) -->
+  <data name="designer.prop.default_row_height" xml:space="preserve"><value>Default Row Height</value></data>
+  <data name="designer.prop.default_col_width" xml:space="preserve"><value>Default Column Width</value></data>
+  <data name="designer.prop.col_width" xml:space="preserve"><value>Column Width</value></data>
+  <data name="designer.prop.row_height" xml:space="preserve"><value>Row Height</value></data>
+  <data name="designer.prop.size_placeholder_default" xml:space="preserve"><value>Leave empty for default</value></data>
+  <data name="designer.prop.table_size_locked" xml:space="preserve"><value>Size determined by rows &amp; cols</value></data>
 
   <!-- Prop Panel - gauge -->
   <data name="designer.prop.bound_point" xml:space="preserve"><value>Bound Point</value></data>
@@ -364,4 +371,27 @@
 
   <!-- Canvas -->
   <data name="designer.canvas.confirm_clear" xml:space="preserve"><value>Are you sure you want to clear all widgets from the canvas?</value></data>
+
+  <!-- Row Template (suggestion panel, plan 2026-06-01-designer-row-template) -->
+  <data name="designer.row_template.modal_title" xml:space="preserve"><value>Row Template Suggestion</value></data>
+  <data name="designer.row_template.detected_role" xml:space="preserve"><value>Detected role "{role}" with prefix "{prefix}"</value></data>
+  <data name="designer.row_template.preview_title" xml:space="preserve"><value>Preview (using current template order)</value></data>
+  <data name="designer.row_template.preview_found" xml:space="preserve"><value>Found</value></data>
+  <data name="designer.row_template.preview_missing" xml:space="preserve"><value>Not found</value></data>
+  <data name="designer.row_template.btn_fill" xml:space="preserve"><value>Auto-fill</value></data>
+  <data name="designer.row_template.btn_adjust" xml:space="preserve"><value>Adjust Order</value></data>
+  <data name="designer.row_template.btn_skip" xml:space="preserve"><value>Skip</value></data>
+  <data name="designer.row_template.adjust_title" xml:space="preserve"><value>Role Order</value></data>
+  <data name="designer.row_template.adjust_hint" xml:space="preserve"><value>Use up/down arrows to reorder, or add from unused roles below</value></data>
+  <data name="designer.row_template.unused_roles" xml:space="preserve"><value>Unused Roles</value></data>
+  <data name="designer.row_template.btn_apply_once" xml:space="preserve"><value>Apply Once</value></data>
+  <data name="designer.row_template.btn_apply_save" xml:space="preserve"><value>Apply &amp; Save as Default</value></data>
+  <data name="designer.row_template.btn_back" xml:space="preserve"><value>Back</value></data>
+  <data name="designer.row_template.toast_filled" xml:space="preserve"><value>Filled {count} cells</value></data>
+  <data name="designer.row_template.toast_filled_with_missing" xml:space="preserve"><value>Filled {count} cells; {missing} roles had no matching point</value></data>
+  <data name="designer.row_template.save_failed" xml:space="preserve"><value>Failed to save template</value></data>
+  <data name="designer.row_template.move_up" xml:space="preserve"><value>Move Up</value></data>
+  <data name="designer.row_template.move_down" xml:space="preserve"><value>Move Down</value></data>
+  <data name="designer.row_template.remove_role" xml:space="preserve"><value>Remove</value></data>
+  <data name="designer.row_template.add_role" xml:space="preserve"><value>Add</value></data>
 </root>

@@ -249,19 +249,24 @@ public class EnergyReportService
         {
             case "hour":
                 {
-                    // dtStart 通常是某天 00:00；產出 25 個邊界（00:00 ~ 隔日 00:00）
-                    var t = new DateTime(dtStart.Year, dtStart.Month, dtStart.Day, 0, 0, 0);
-                    for (var i = 0; i <= 24; i++) list.Add(t.AddHours(i));
+                    // dtStart=起時、dtEnd=訖時（皆截到整點）；產出起時 ~ 訖時隔小時的每小時邊界
+                    var hourStart = new DateTime(dtStart.Year, dtStart.Month, dtStart.Day, dtStart.Hour, 0, 0);
+                    var hourEndInclusive = new DateTime(dtEnd.Year, dtEnd.Month, dtEnd.Day, dtEnd.Hour, 0, 0);
+                    var hourEndExclusive = hourEndInclusive.AddHours(1);
+                    if (hourEndExclusive <= hourStart)
+                        hourEndExclusive = hourStart.AddHours(1);
+                    for (var t = hourStart; t <= hourEndExclusive; t = t.AddHours(1))
+                        list.Add(t);
                     break;
                 }
             case "day":
                 {
-                    // dtStart=起月 1 日，dtEnd=訖月 1 日；產出起月 1 日 ~ 訖月隔月 1 日的每日邊界
-                    var monthStart = new DateTime(dtStart.Year, dtStart.Month, 1);
-                    var monthEndExclusive = new DateTime(dtEnd.Year, dtEnd.Month, 1).AddMonths(1);
-                    if (monthEndExclusive <= monthStart)
-                        monthEndExclusive = monthStart.AddMonths(1);
-                    for (var t = monthStart; t <= monthEndExclusive; t = t.AddDays(1))
+                    // dtStart=起日，dtEnd=訖日；產出起日 00:00 ~ 訖日隔日 00:00 的每日邊界
+                    var dayStart = dtStart.Date;
+                    var dayEndExclusive = dtEnd.Date.AddDays(1);
+                    if (dayEndExclusive <= dayStart)
+                        dayEndExclusive = dayStart.AddDays(1);
+                    for (var t = dayStart; t <= dayEndExclusive; t = t.AddDays(1))
                         list.Add(t);
                     break;
                 }
@@ -306,12 +311,19 @@ public class EnergyReportService
         var bDayCrossYear = szGranularity == "day"
             && boundaries.Count >= 2
             && boundaries[0].Year != boundaries[^2].Year;
+        // 時粒度跨日時加上日期前綴避免 HH:00 重複（同年用 MM/dd HH:00，跨年用 yyyy-MM-dd HH:00）
+        var bHourCrossDay = szGranularity == "hour"
+            && boundaries.Count >= 2
+            && boundaries[0].Date != boundaries[^2].Date;
+        var bHourCrossYear = bHourCrossDay && boundaries[0].Year != boundaries[^2].Year;
         for (var i = 0; i < boundaries.Count - 1; i++)
         {
             var t = boundaries[i];
             labels.Add(szGranularity switch
             {
-                "hour" => t.ToString("HH:00", ci),
+                "hour" => bHourCrossYear ? t.ToString("yyyy-MM-dd HH:00", ci)
+                        : bHourCrossDay ? t.ToString("MM/dd HH:00", ci)
+                        : t.ToString("HH:00", ci),
                 "day" => bDayCrossYear ? t.ToString("yyyy-MM-dd", ci) : t.ToString("MM/dd", ci),
                 "month" => t.ToString("yyyy-MM", ci),
                 "year" => t.ToString("yyyy", ci),
