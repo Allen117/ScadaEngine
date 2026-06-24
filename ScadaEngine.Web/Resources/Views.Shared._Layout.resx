@@ -53,6 +53,7 @@
 
   <data name="layout.brand" xml:space="preserve"><value>SCADA 監控系統</value></data>
   <data name="layout.brand.ems" xml:space="preserve"><value>EMS 能源管理</value></data>
+  <data name="layout.ems.back_scada" xml:space="preserve"><value>回 SCADA</value></data>
 
   <data name="layout.menu.scadapage" xml:space="preserve"><value>即時監控</value></data>
   <data name="layout.menu.realtime" xml:space="preserve"><value>即時數據</value></data>

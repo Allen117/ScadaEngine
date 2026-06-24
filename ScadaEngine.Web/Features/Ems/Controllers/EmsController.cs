@@ -10,25 +10,18 @@ namespace ScadaEngine.Web.Features.Ems.Controllers;
 [Authorize]
 public class EmsController : Controller
 {
-    private static readonly string[] _aEnergySubPages =
-    [
-        "/ChilledWaterSystem",
-        "/EnergyMeter",
-        "/EnergyReport",
-        "/RefrigerationTonReport",
-    ];
-
     [HttpGet("/EMS")]
     public IActionResult Index()
     {
         if (!PermissionService.IsAdmin(User))
         {
-            bool hasAny = _aEnergySubPages.Any(route => PermissionService.CanAccessPage(User, route));
+            bool hasAny = PermissionService.EmsRoutes
+                .Where(r => !string.Equals(r, "/EMS", StringComparison.OrdinalIgnoreCase))
+                .Any(r => PermissionService.CanAccessPage(User, r));
             if (!hasAny)
                 return Redirect("/ScadaPage");
         }
 
-        ViewData["EmsMode"] = true;
         return View();
     }
 }

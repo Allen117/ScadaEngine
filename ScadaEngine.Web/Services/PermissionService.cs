@@ -41,15 +41,27 @@ public static class PermissionService
     }
 
     /// <summary>
-    /// 能源管理 Hub 的子頁面（其中任一可看 → /EMS 也可看）
+    /// EMS 體系所有頁面（含 hub 與子頁）。
+    /// 新增 EMS 族頁面時加進這裡，_Layout 會自動套 EmsMode（淡綠主題 + EMS brand）。
+    /// 第一個元素固定為 /EMS（hub），其餘為子頁。
     /// </summary>
-    private static readonly string[] _aEmsChildren =
+    public static readonly string[] EmsRoutes =
     [
+        "/EMS",
         "/ChilledWaterSystem",
         "/EnergyMeter",
         "/EnergyReport",
         "/RefrigerationTonReport",
     ];
+
+    /// <summary>
+    /// 路徑是否屬於 EMS 體系（_Layout 判斷是否套淡綠主題用）
+    /// </summary>
+    public static bool IsEmsRoute(string? szPath)
+    {
+        if (string.IsNullOrEmpty(szPath)) return false;
+        return EmsRoutes.Contains(szPath, StringComparer.OrdinalIgnoreCase);
+    }
 
     /// <summary>
     /// 檢查使用者是否可存取指定主頁面路由
@@ -69,7 +81,12 @@ public static class PermissionService
         // /EMS 為 Hub 頁，子頁任一可看就放行（避免使用者要繞道才能到子頁）
         if (string.Equals(szRoute, "/EMS", StringComparison.OrdinalIgnoreCase))
         {
-            return _aEmsChildren.Any(r => permData.pages.Contains(r, StringComparer.OrdinalIgnoreCase));
+            foreach (var r in EmsRoutes)
+            {
+                if (string.Equals(r, "/EMS", StringComparison.OrdinalIgnoreCase)) continue;
+                if (permData.pages.Contains(r, StringComparer.OrdinalIgnoreCase)) return true;
+            }
+            return false;
         }
 
         return false;

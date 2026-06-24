@@ -43,20 +43,37 @@
 
 ## 4. Layout 模式切換
 
-共用 `Views/Shared/_Layout.cshtml` + `ViewData["EmsMode"] = true` 開關（決策 1）。`_Layout` 內：
+共用 `Views/Shared/_Layout.cshtml`，靠**路由表自動偵測** + ViewData fallback。`_Layout` 內：
 
 ```csharp
-bool isEmsMode = ViewData["EmsMode"] as bool? == true;
+bool isEmsMode = ViewData["EmsMode"] as bool? == true
+    || PermissionService.IsEmsRoute(Context.Request.Path.Value);
 ```
 
-開關控制四件事：
+`PermissionService.EmsRoutes` 為「EMS 體系」的權威清單：
 
-1. `<body>` 加 `ems-mode` class，吃 `ems.css` 樣式覆蓋
+```csharp
+public static readonly string[] EmsRoutes =
+[
+    "/EMS",
+    "/ChilledWaterSystem",
+    "/EnergyMeter",
+    "/EnergyReport",
+    "/RefrigerationTonReport",
+];
+```
+
+只要 `Context.Request.Path` 命中清單，`_Layout` 就會自動套淡綠主題、改 brand、隱藏其他模組選單。**未來新增 EMS 體系的頁面，只要把路由加進這個陣列即可**，不需要動 Controller 或 Layout。
+
+EmsMode 開關控制五件事：
+
+1. `<body>` 加 `ems-mode` class，吃 `ems.css` 樣式覆蓋（navbar + footer）
 2. `<nav>` class 從 `navbar-dark bg-primary` 換成 `navbar-light`
 3. brand href 從 `/ScadaPage` 換成 `/EMS`、icon 從 `fa-industry` 換成 `fa-leaf`、字串走 `layout.brand.ems` 而非 `layout.brand`
 4. navbar 主選單清單從「ScadaPage/RealTime/控制邏輯/歷史資料/能源管理/系統設定」整個改成「水系統迴路設定/電表迴路設定/用電報表/冷凍噸報表」4 個直接 nav-link
+5. navbar 右側「語系」左邊加上「← 回 SCADA」連結（`layout.ems.back_scada`，直連 `/ScadaPage`），讓使用者隨時跳回主模組
 
-footer / 語系切換 / 使用者選單 / 登出 modal 完全共用，未做差異化。
+footer 在 EmsMode 下背景換成 `linear-gradient(135deg, #66bb6a → #43a047)` 配白字；語系切換 / 使用者選單 / 登出 modal / 版本資訊完全共用。
 
 ## 5. 主 navbar 對 /EMS 的入口改造
 

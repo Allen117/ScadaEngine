@@ -6,7 +6,8 @@
     var szCurrentCulture = CultureInfo.CurrentUICulture.Name;
     var szCurrentLangLabel = szCurrentCulture.StartsWith("en") ? "EN" : "台灣";
     var szReturnUrl = Context.Request.Path + Context.Request.QueryString;
-    bool isEmsMode = ViewData["EmsMode"] as bool? == true;
+    bool isEmsMode = ViewData["EmsMode"] as bool? == true
+        || PermissionService.IsEmsRoute(Context.Request.Path.Value);
     var szBodyClass = isEmsMode ? "d-flex flex-column ems-mode" : "d-flex flex-column";
     var szNavbarClass = isEmsMode
         ? "navbar navbar-expand-lg navbar-light"
@@ -289,6 +290,15 @@
                     </ul>
 
                     <ul class="navbar-nav flex-shrink-0 ms-auto">
+                        @if (isEmsMode && canAccess("/ScadaPage"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" href="/ScadaPage">
+                                    <i class="fas fa-arrow-left me-1"></i>
+                                    @Localizer["layout.ems.back_scada"]
+                                </a>
+                            </li>
+                        }
                         <!-- 語系切換 -->
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-label="@Localizer["layout.lang.label"]">

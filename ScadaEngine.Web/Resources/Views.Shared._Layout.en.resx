@@ -53,6 +53,7 @@
 
   <data name="layout.brand" xml:space="preserve"><value>SCADA Monitoring System</value></data>
   <data name="layout.brand.ems" xml:space="preserve"><value>EMS Energy Management</value></data>
+  <data name="layout.ems.back_scada" xml:space="preserve"><value>Back to SCADA</value></data>
 
   <data name="layout.menu.scadapage" xml:space="preserve"><value>SCADA Page</value></data>
   <data name="layout.menu.realtime" xml:space="preserve"><value>Realtime Data</value></data>
