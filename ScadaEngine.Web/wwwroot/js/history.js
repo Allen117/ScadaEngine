@@ -54,6 +54,19 @@
         });
     })();
 
+    // ── KWH 單位別名（與 designer/row-template.js KWH 列表對齊）── 用於決定是否顯示「差值」統計
+    var KWH_UNIT_ALIASES = [
+        'kwh', 'kw_h', 'wh', 'mwh', 'kilowatthour', 'kilowatthours',
+        'energy', 'consumption', 'accumulated',
+        'kwh_total', 'kwhtotal', 'total_kwh',
+        '度數', '用電量', '電能', '累計用電', '累積電能', '總電能',
+        '用電度數', '總耗電'
+    ];
+    function isKwhUnit(szUnit) {
+        if (!szUnit) return false;
+        return KWH_UNIT_ALIASES.indexOf(String(szUnit).trim().toLowerCase()) >= 0;
+    }
+
     // ── 常數 ─────────────────────────────────────────────────────────────
     var CHART_COLORS = [
         { border: 'rgba(13,110,253,0.9)',  bg: 'rgba(13,110,253,0.12)'  },
@@ -539,18 +552,35 @@
                 document.getElementById('statMax').textContent    = fmt(json.dMax);
                 document.getElementById('statAvg').textContent    = fmt(json.dAvg);
                 document.getElementById('statStdDev').textContent = fmt(json.dStdDev);
+                var statDiffCol = document.getElementById('statDiffCol');
+                if (isKwhUnit(json.szUnit) && json.dMin != null && json.dMax != null) {
+                    document.getElementById('statDiff').textContent = fmt(json.dMax - json.dMin);
+                    statDiffCol.classList.remove('d-none');
+                } else {
+                    statDiffCol.classList.add('d-none');
+                }
                 statsRow.style.display = '';
             } else {
-                document.getElementById('multiStatsTbody').innerHTML = results
-                    .filter(function (r) { return r.nCount > 0; })
+                var validResults = results.filter(function (r) { return r.nCount > 0; });
+                var hasKwh = validResults.some(function (r) { return isKwhUnit(r.szUnit); });
+                document.getElementById('multiStatsThDiff').classList.toggle('d-none', !hasKwh);
+                document.getElementById('multiStatsTbody').innerHTML = validResults
                     .map(function (json) {
                         var fmt = function (v) { return v != null ? Number(v).toFixed(3) + (json.szUnit ? ' ' + json.szUnit : '') : '--'; };
+                        var szDiffCell = '';
+                        if (hasKwh) {
+                            var szDiffVal = (isKwhUnit(json.szUnit) && json.dMin != null && json.dMax != null)
+                                ? fmt(json.dMax - json.dMin)
+                                : '--';
+                            szDiffCell = '<td class="text-end">' + szDiffVal + '</td>';
+                        }
                         return '<tr>'
                             + '<td class="fw-semibold">' + json.szName + '</td>'
                             + '<td class="text-end">' + fmt(json.dMin) + '</td>'
                             + '<td class="text-end">' + fmt(json.dMax) + '</td>'
                             + '<td class="text-end">' + fmt(json.dAvg) + '</td>'
                             + '<td class="text-end">' + fmt(json.dStdDev) + '</td>'
+                            + szDiffCell
                             + '</tr>';
                     }).join('');
                 multiStatsWrapper.style.display = '';
@@ -622,16 +652,27 @@
             XLSX.utils.book_append_sheet(wb, ws, finalName);
         });
 
-        if (lastResults.filter(function (r) { return r.nCount > 0; }).length > 1) {
-            var summaryRows = [[t('history.excel.summary.col.point'), t('history.excel.summary.col.unit'), t('history.excel.summary.col.count'), t('history.excel.summary.col.min'), t('history.excel.summary.col.max'), t('history.excel.summary.col.avg'), t('history.excel.summary.col.std_dev')]];
-            lastResults.filter(function (r) { return r.nCount > 0; }).forEach(function (json) {
+        var validSummary = lastResults.filter(function (r) { return r.nCount > 0; });
+        if (validSummary.length > 1) {
+            var hasKwhSummary = validSummary.some(function (r) { return isKwhUnit(r.szUnit); });
+            var header = [t('history.excel.summary.col.point'), t('history.excel.summary.col.unit'), t('history.excel.summary.col.count'), t('history.excel.summary.col.min'), t('history.excel.summary.col.max'), t('history.excel.summary.col.avg'), t('history.excel.summary.col.std_dev')];
+            if (hasKwhSummary) header.push(t('history.excel.summary.col.diff'));
+            var summaryRows = [header];
+            validSummary.forEach(function (json) {
                 var f = function (v) { return v != null ? Number(v) : ''; };
-                summaryRows.push([json.szName, json.szUnit, json.nCount,
-                    f(json.dMin), f(json.dMax), f(json.dAvg), f(json.dStdDev)]);
+                var row = [json.szName, json.szUnit, json.nCount,
+                    f(json.dMin), f(json.dMax), f(json.dAvg), f(json.dStdDev)];
+                if (hasKwhSummary) {
+                    row.push((isKwhUnit(json.szUnit) && json.dMin != null && json.dMax != null)
+                        ? Number(json.dMax - json.dMin) : '');
+                }
+                summaryRows.push(row);
             });
             var wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
-            wsSummary['!cols'] = [{ wch: 20 }, { wch: 8 }, { wch: 8 },
-                                   { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }];
+            var cols = [{ wch: 20 }, { wch: 8 }, { wch: 8 },
+                        { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }];
+            if (hasKwhSummary) cols.push({ wch: 14 });
+            wsSummary['!cols'] = cols;
             XLSX.utils.book_append_sheet(wb, wsSummary, t('history.excel.summary.sheet'));
         }
 

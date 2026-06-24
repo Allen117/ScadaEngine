@@ -324,31 +324,37 @@
                         <div>@Localizer["history.chart.placeholder"]</div>
                     </div>
 
-                    <!-- 統計卡片（單點查詢後才顯示） -->
+                    <!-- 統計卡片（單點查詢後才顯示）— Diff 卡僅 KWH 單位時顯示 -->
                     <div id="statsRow" style="display:none; padding:0.75rem 0.75rem 0;">
                         <div class="row g-2">
-                            <div class="col-3">
+                            <div class="col">
                                 <div class="rounded p-2 text-white d-flex justify-content-between align-items-center" style="background:#198754;">
                                     <div><div class="fw-bold" id="statMin">--</div><div style="font-size:0.75rem;">@Localizer["history.stats.min"]</div></div>
                                     <i class="fas fa-arrow-down opacity-50"></i>
                                 </div>
                             </div>
-                            <div class="col-3">
+                            <div class="col">
                                 <div class="rounded p-2 text-white d-flex justify-content-between align-items-center" style="background:#dc3545;">
                                     <div><div class="fw-bold" id="statMax">--</div><div style="font-size:0.75rem;">@Localizer["history.stats.max"]</div></div>
                                     <i class="fas fa-arrow-up opacity-50"></i>
                                 </div>
                             </div>
-                            <div class="col-3">
+                            <div class="col">
                                 <div class="rounded p-2 text-dark d-flex justify-content-between align-items-center" style="background:#ffc107;">
                                     <div><div class="fw-bold" id="statAvg">--</div><div style="font-size:0.75rem;">@Localizer["history.stats.avg"]</div></div>
                                     <i class="fas fa-chart-bar opacity-50"></i>
                                 </div>
                             </div>
-                            <div class="col-3">
+                            <div class="col">
                                 <div class="rounded p-2 text-white d-flex justify-content-between align-items-center" style="background:#0dcaf0;">
                                     <div><div class="fw-bold" id="statStdDev">--</div><div style="font-size:0.75rem;">@Localizer["history.stats.std_dev"]</div></div>
                                     <i class="fas fa-wave-square opacity-50"></i>
+                                </div>
+                            </div>
+                            <div class="col d-none" id="statDiffCol">
+                                <div class="rounded p-2 text-white d-flex justify-content-between align-items-center" style="background:#6f42c1;">
+                                    <div><div class="fw-bold" id="statDiff">--</div><div style="font-size:0.75rem;">@Localizer["history.stats.diff"]</div></div>
+                                    <i class="fas fa-exchange-alt opacity-50"></i>
                                 </div>
                             </div>
                         </div>
@@ -365,6 +371,7 @@
                                         <th class="text-end">@Localizer["history.stats.max"]</th>
                                         <th class="text-end">@Localizer["history.stats.avg"]</th>
                                         <th class="text-end">@Localizer["history.stats.std_dev"]</th>
+                                        <th class="text-end d-none" id="multiStatsThDiff">@Localizer["history.stats.diff"]</th>
                                     </tr>
                                 </thead>
                                 <tbody id="multiStatsTbody"></tbody>

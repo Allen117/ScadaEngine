@@ -100,6 +100,7 @@
   <data name="history.stats.max" xml:space="preserve"><value>Max</value></data>
   <data name="history.stats.avg" xml:space="preserve"><value>Avg</value></data>
   <data name="history.stats.std_dev" xml:space="preserve"><value>Std Dev</value></data>
+  <data name="history.stats.diff" xml:space="preserve"><value>Diff</value></data>
   <data name="history.stats.count" xml:space="preserve"><value>Count</value></data>
 
   <data name="history.multistats.point" xml:space="preserve"><value>Point</value></data>
@@ -136,5 +137,6 @@
   <data name="history.excel.summary.col.max" xml:space="preserve"><value>Max</value></data>
   <data name="history.excel.summary.col.avg" xml:space="preserve"><value>Avg</value></data>
   <data name="history.excel.summary.col.std_dev" xml:space="preserve"><value>Std Dev</value></data>
+  <data name="history.excel.summary.col.diff" xml:space="preserve"><value>Diff</value></data>
   <data name="history.excel.filename" xml:space="preserve"><value>Trend</value></data>
 </root>
