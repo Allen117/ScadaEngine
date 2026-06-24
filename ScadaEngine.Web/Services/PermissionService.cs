@@ -20,6 +20,7 @@ public static class PermissionService
         ("/LogicFlow",      "流程圖控制"),
         ("/HistoryData",    "歷史資料"),
         ("/EventLog",       "事件記錄"),
+        ("/EMS",            "能源管理首頁"),
         ("/ChilledWaterSystem", "水系統迴路設定"),
         ("/EnergyMeter",    "電表/迴路設定"),
         ("/EnergyReport",   "用電報表"),
@@ -40,6 +41,17 @@ public static class PermissionService
     }
 
     /// <summary>
+    /// 能源管理 Hub 的子頁面（其中任一可看 → /EMS 也可看）
+    /// </summary>
+    private static readonly string[] _aEmsChildren =
+    [
+        "/ChilledWaterSystem",
+        "/EnergyMeter",
+        "/EnergyReport",
+        "/RefrigerationTonReport",
+    ];
+
+    /// <summary>
     /// 檢查使用者是否可存取指定主頁面路由
     /// </summary>
     public static bool CanAccessPage(ClaimsPrincipal user, string szRoute)
@@ -51,7 +63,16 @@ public static class PermissionService
             return true;
 
         var permData = GetPermissionData(user);
-        return permData.pages.Contains(szRoute, StringComparer.OrdinalIgnoreCase);
+        if (permData.pages.Contains(szRoute, StringComparer.OrdinalIgnoreCase))
+            return true;
+
+        // /EMS 為 Hub 頁，子頁任一可看就放行（避免使用者要繞道才能到子頁）
+        if (string.Equals(szRoute, "/EMS", StringComparison.OrdinalIgnoreCase))
+        {
+            return _aEmsChildren.Any(r => permData.pages.Contains(r, StringComparer.OrdinalIgnoreCase));
+        }
+
+        return false;
     }
 
     /// <summary>

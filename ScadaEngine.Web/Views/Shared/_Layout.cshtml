@@ -6,6 +6,13 @@
     var szCurrentCulture = CultureInfo.CurrentUICulture.Name;
     var szCurrentLangLabel = szCurrentCulture.StartsWith("en") ? "EN" : "台灣";
     var szReturnUrl = Context.Request.Path + Context.Request.QueryString;
+    bool isEmsMode = ViewData["EmsMode"] as bool? == true;
+    var szBodyClass = isEmsMode ? "d-flex flex-column ems-mode" : "d-flex flex-column";
+    var szNavbarClass = isEmsMode
+        ? "navbar navbar-expand-lg navbar-light"
+        : "navbar navbar-expand-lg navbar-dark bg-primary";
+    var szBrandKey = isEmsMode ? "layout.brand.ems" : "layout.brand";
+    var szBrandIcon = isEmsMode ? "fas fa-leaf me-2" : "fas fa-industry me-2";
 }
 <!DOCTYPE html>
 <html lang="@szCurrentCulture">
@@ -19,6 +26,11 @@
 
     <!-- Font Awesome 6 Icons (本機) -->
     <link rel="stylesheet" href="~/lib/font-awesome/css/all.min.css">
+
+    @if (isEmsMode)
+    {
+        <link rel="stylesheet" href="~/css/ems.css">
+    }
 
     <!-- 自訂樣式 -->
     <style>
@@ -99,15 +111,15 @@
         }
     </style>
 </head>
-<body class="d-flex flex-column">
+<body class="@szBodyClass">
     <!-- 導覽列 -->
     @if (ViewData["ShowNavigation"]?.ToString() != "false")
     {
-        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <nav class="@szNavbarClass">
             <div class="container-fluid">
-                <a class="navbar-brand" href="/ScadaPage">
-                    <i class="fas fa-industry me-2"></i>
-                    @Localizer["layout.brand"]
+                <a class="navbar-brand" href="@(isEmsMode ? "/EMS" : "/ScadaPage")">
+                    <i class="@szBrandIcon"></i>
+                    @Localizer[szBrandKey]
                 </a>
 
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -116,141 +128,163 @@
 
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav me-auto">
-                        @if (canAccess("/ScadaPage"))
+                        @if (isEmsMode)
                         {
-                            <li class="nav-item">
-                                <a class="nav-link" href="/ScadaPage">
-                                    <i class="fas fa-desktop me-1"></i>
-                                    @Localizer["layout.menu.scadapage"]
-                                </a>
-                            </li>
+                            @if (canAccess("/ChilledWaterSystem"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/ChilledWaterSystem">
+                                        <i class="fas fa-tint me-1"></i>
+                                        @Localizer["layout.menu.chilled_water"]
+                                    </a>
+                                </li>
+                            }
+                            @if (canAccess("/EnergyMeter"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/EnergyMeter">
+                                        <i class="fas fa-sitemap me-1"></i>
+                                        @Localizer["layout.menu.energy_meter"]
+                                    </a>
+                                </li>
+                            }
+                            @if (canAccess("/EnergyReport"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/EnergyReport">
+                                        <i class="fas fa-chart-bar me-1"></i>
+                                        @Localizer["layout.menu.energy_report"]
+                                    </a>
+                                </li>
+                            }
+                            @if (canAccess("/RefrigerationTonReport"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/RefrigerationTonReport">
+                                        <i class="fas fa-snowflake me-1"></i>
+                                        @Localizer["layout.menu.refrigeration_ton_report"]
+                                    </a>
+                                </li>
+                            }
                         }
-                        @if (canAccess("/RealTime"))
+                        else
                         {
-                            <li class="nav-item">
-                                <a class="nav-link" href="/RealTime">
-                                    <i class="fas fa-tachometer-alt me-1"></i>
-                                    @Localizer["layout.menu.realtime"]
-                                </a>
-                            </li>
-                        }
-                        @if (canAccess("/ConditionCtrl") || canAccess("/LogicFlow") || canAccess("/ScheduleSetting"))
-                        {
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                    <i class="fas fa-microchip me-1"></i>
-                                    @Localizer["layout.menu.control"]
-                                </a>
-                                <ul class="dropdown-menu">
-                                    @if (canAccess("/ConditionCtrl"))
-                                    {
-                                        <li><a class="dropdown-item" href="/ConditionCtrl"><i class="fas fa-code-branch me-2"></i>@Localizer["layout.menu.condition"]</a></li>
-                                    }
-                                    @if (canAccess("/LogicFlow"))
-                                    {
-                                        <li><a class="dropdown-item" href="/LogicFlow"><i class="fas fa-project-diagram me-2"></i>@Localizer["layout.menu.logicflow"]</a></li>
-                                    }
-                                    @if (canAccess("/ScheduleSetting"))
-                                    {
-                                        <li><a class="dropdown-item" href="/ScheduleSetting"><i class="fas fa-calendar-alt me-2"></i>@Localizer["layout.menu.schedule"]</a></li>
-                                    }
-                                </ul>
-                            </li>
-                        }
-                        @if (canAccess("/HistoryData") || canAccess("/EventLog"))
-                        {
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                    <i class="fas fa-chart-line me-1"></i>
-                                    @Localizer["layout.menu.history"]
-                                </a>
-                                <ul class="dropdown-menu">
-                                    @if (canAccess("/HistoryData"))
-                                    {
-                                        <li><a class="dropdown-item" href="/HistoryData"><i class="fas fa-chart-area me-2"></i>@Localizer["layout.menu.trend"]</a></li>
-                                    }
-                                    @if (canAccess("/EventLog"))
-                                    {
-                                        <li><a class="dropdown-item" href="/EventLog"><i class="fas fa-clipboard-list me-2"></i>@Localizer["layout.menu.eventlog"]</a></li>
-                                    }
-                                </ul>
-                            </li>
-                        }
-                        @if (canAccess("/ChilledWaterSystem") || canAccess("/EnergyMeter") || canAccess("/EnergyReport") || canAccess("/RefrigerationTonReport"))
-                        {
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                    <i class="fas fa-leaf me-1"></i>
-                                    @Localizer["layout.menu.energy"]
-                                </a>
-                                <ul class="dropdown-menu">
-                                    @if (canAccess("/ChilledWaterSystem"))
-                                    {
-                                        <li><a class="dropdown-item" href="/ChilledWaterSystem"><i class="fas fa-tint me-2"></i>@Localizer["layout.menu.chilled_water"]</a></li>
-                                    }
-                                    @if (canAccess("/EnergyMeter"))
-                                    {
-                                        <li><a class="dropdown-item" href="/EnergyMeter"><i class="fas fa-sitemap me-2"></i>@Localizer["layout.menu.energy_meter"]</a></li>
-                                    }
-                                    @if (canAccess("/EnergyReport"))
-                                    {
-                                        <li><a class="dropdown-item" href="/EnergyReport"><i class="fas fa-chart-bar me-2"></i>@Localizer["layout.menu.energy_report"]</a></li>
-                                    }
-                                    @if (canAccess("/RefrigerationTonReport"))
-                                    {
-                                        <li><a class="dropdown-item" href="/RefrigerationTonReport"><i class="fas fa-snowflake me-2"></i>@Localizer["layout.menu.refrigeration_ton_report"]</a></li>
-                                    }
-                                </ul>
-                            </li>
-                        }
-                        @{
+                            @if (canAccess("/ScadaPage"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/ScadaPage">
+                                        <i class="fas fa-desktop me-1"></i>
+                                        @Localizer["layout.menu.scadapage"]
+                                    </a>
+                                </li>
+                            }
+                            @if (canAccess("/RealTime"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/RealTime">
+                                        <i class="fas fa-tachometer-alt me-1"></i>
+                                        @Localizer["layout.menu.realtime"]
+                                    </a>
+                                </li>
+                            }
+                            @if (canAccess("/ConditionCtrl") || canAccess("/LogicFlow") || canAccess("/ScheduleSetting"))
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-microchip me-1"></i>
+                                        @Localizer["layout.menu.control"]
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        @if (canAccess("/ConditionCtrl"))
+                                        {
+                                            <li><a class="dropdown-item" href="/ConditionCtrl"><i class="fas fa-code-branch me-2"></i>@Localizer["layout.menu.condition"]</a></li>
+                                        }
+                                        @if (canAccess("/LogicFlow"))
+                                        {
+                                            <li><a class="dropdown-item" href="/LogicFlow"><i class="fas fa-project-diagram me-2"></i>@Localizer["layout.menu.logicflow"]</a></li>
+                                        }
+                                        @if (canAccess("/ScheduleSetting"))
+                                        {
+                                            <li><a class="dropdown-item" href="/ScheduleSetting"><i class="fas fa-calendar-alt me-2"></i>@Localizer["layout.menu.schedule"]</a></li>
+                                        }
+                                    </ul>
+                                </li>
+                            }
+                            @if (canAccess("/HistoryData") || canAccess("/EventLog"))
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-chart-line me-1"></i>
+                                        @Localizer["layout.menu.history"]
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        @if (canAccess("/HistoryData"))
+                                        {
+                                            <li><a class="dropdown-item" href="/HistoryData"><i class="fas fa-chart-area me-2"></i>@Localizer["layout.menu.trend"]</a></li>
+                                        }
+                                        @if (canAccess("/EventLog"))
+                                        {
+                                            <li><a class="dropdown-item" href="/EventLog"><i class="fas fa-clipboard-list me-2"></i>@Localizer["layout.menu.eventlog"]</a></li>
+                                        }
+                                    </ul>
+                                </li>
+                            }
+                            @if (canAccess("/ChilledWaterSystem") || canAccess("/EnergyMeter") || canAccess("/EnergyReport") || canAccess("/RefrigerationTonReport"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/EMS">
+                                        <i class="fas fa-leaf me-1"></i>
+                                        @Localizer["layout.menu.energy"]
+                                    </a>
+                                </li>
+                            }
                             bool showPointSettings = canAccess("/ModbusCoordinator") || canAccess("/DbCoordinator") || canAccess("/CalcPoint");
                             bool showSettings = canAccess("/Designer") || canAccess("/AlarmSetting") || canAccess("/AccountSetting") || showPointSettings;
-                        }
-                        @if (showSettings)
-                        {
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                    <i class="fas fa-cogs me-1"></i>
-                                    @Localizer["layout.menu.system"]
-                                </a>
-                                <ul class="dropdown-menu">
-                                    @if (canAccess("/Designer"))
-                                    {
-                                        <li><a class="dropdown-item" href="/Designer"><i class="fas fa-paint-brush me-2"></i>@Localizer["layout.menu.designer"]</a></li>
-                                    }
-                                    @if (canAccess("/AlarmSetting"))
-                                    {
-                                        <li><a class="dropdown-item" href="/AlarmSetting"><i class="fas fa-bell me-2"></i>@Localizer["layout.menu.alarm"]</a></li>
-                                    }
-                                    @if (showPointSettings)
-                                    {
-                                        <li class="dropdown-submenu">
-                                            <a class="dropdown-item dropdown-toggle" href="#" role="button">
-                                                <i class="fas fa-map-marker-alt me-2"></i>@Localizer["layout.menu.points"]
-                                            </a>
-                                            <ul class="dropdown-menu">
-                                                @if (canAccess("/ModbusCoordinator"))
-                                                {
-                                                    <li><a class="dropdown-item" href="/ModbusCoordinator"><i class="fas fa-network-wired me-2"></i>@Localizer["layout.menu.modbuscoordinator"]</a></li>
-                                                }
-                                                @if (canAccess("/DbCoordinator"))
-                                                {
-                                                    <li><a class="dropdown-item" href="/DbCoordinator"><i class="fas fa-database me-2"></i>@Localizer["layout.menu.dbcoordinator"]</a></li>
-                                                }
-                                                @if (canAccess("/CalcPoint"))
-                                                {
-                                                    <li><a class="dropdown-item" href="/CalcPoint"><i class="fas fa-calculator me-2"></i>@Localizer["layout.menu.calcpoint"]</a></li>
-                                                }
-                                            </ul>
-                                        </li>
-                                    }
-                                    @if (canAccess("/AccountSetting"))
-                                    {
-                                        <li><a class="dropdown-item" href="/AccountSetting"><i class="fas fa-users-cog me-2"></i>@Localizer["layout.menu.account"]</a></li>
-                                    }
-                                </ul>
-                            </li>
+                            @if (showSettings)
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-cogs me-1"></i>
+                                        @Localizer["layout.menu.system"]
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        @if (canAccess("/Designer"))
+                                        {
+                                            <li><a class="dropdown-item" href="/Designer"><i class="fas fa-paint-brush me-2"></i>@Localizer["layout.menu.designer"]</a></li>
+                                        }
+                                        @if (canAccess("/AlarmSetting"))
+                                        {
+                                            <li><a class="dropdown-item" href="/AlarmSetting"><i class="fas fa-bell me-2"></i>@Localizer["layout.menu.alarm"]</a></li>
+                                        }
+                                        @if (showPointSettings)
+                                        {
+                                            <li class="dropdown-submenu">
+                                                <a class="dropdown-item dropdown-toggle" href="#" role="button">
+                                                    <i class="fas fa-map-marker-alt me-2"></i>@Localizer["layout.menu.points"]
+                                                </a>
+                                                <ul class="dropdown-menu">
+                                                    @if (canAccess("/ModbusCoordinator"))
+                                                    {
+                                                        <li><a class="dropdown-item" href="/ModbusCoordinator"><i class="fas fa-network-wired me-2"></i>@Localizer["layout.menu.modbuscoordinator"]</a></li>
+                                                    }
+                                                    @if (canAccess("/DbCoordinator"))
+                                                    {
+                                                        <li><a class="dropdown-item" href="/DbCoordinator"><i class="fas fa-database me-2"></i>@Localizer["layout.menu.dbcoordinator"]</a></li>
+                                                    }
+                                                    @if (canAccess("/CalcPoint"))
+                                                    {
+                                                        <li><a class="dropdown-item" href="/CalcPoint"><i class="fas fa-calculator me-2"></i>@Localizer["layout.menu.calcpoint"]</a></li>
+                                                    }
+                                                </ul>
+                                            </li>
+                                        }
+                                        @if (canAccess("/AccountSetting"))
+                                        {
+                                            <li><a class="dropdown-item" href="/AccountSetting"><i class="fas fa-users-cog me-2"></i>@Localizer["layout.menu.account"]</a></li>
+                                        }
+                                    </ul>
+                                </li>
+                            }
                         }
                     </ul>
 

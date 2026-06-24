@@ -1,0 +1,57 @@
+/* EMS Hub 頁淡綠/白主題 — 由 _Layout.cshtml 在 EmsMode=true 時掛 body.ems-mode */
+
+body.ems-mode {
+    background-color: #f1f8f4;
+}
+
+body.ems-mode .navbar {
+    background: linear-gradient(135deg, #e8f5e9 0%, #ffffff 100%) !important;
+    border-bottom: 1px solid #c8e6c9;
+}
+
+body.ems-mode .navbar .navbar-brand {
+    color: #2e7d32 !important;
+    font-weight: 600;
+}
+
+body.ems-mode .navbar .navbar-brand i {
+    color: #43a047 !important;
+}
+
+body.ems-mode .navbar .nav-link {
+    color: #2e7d32 !important;
+}
+
+body.ems-mode .navbar .nav-link:hover,
+body.ems-mode .navbar .nav-link:focus {
+    color: #1b5e20 !important;
+}
+
+body.ems-mode .navbar .nav-item .nav-link.active,
+body.ems-mode .navbar .nav-item.active > .nav-link {
+    color: #ffffff !important;
+    background: #66bb6a;
+    border-radius: 6px;
+}
+
+body.ems-mode .navbar-toggler {
+    border-color: #a5d6a7;
+}
+
+body.ems-mode .navbar .dropdown-menu {
+    border: 1px solid #c8e6c9;
+}
+
+body.ems-mode .navbar .dropdown-item:hover {
+    background-color: #e8f5e9;
+    color: #1b5e20;
+}
+
+.ems-hub {
+    min-height: calc(100vh - 200px);
+}
+
+body.ems-mode .footer {
+    background: linear-gradient(135deg, #66bb6a 0%, #43a047 100%);
+    color: #ffffff;
+}
