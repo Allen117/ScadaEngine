@@ -490,14 +490,12 @@ function Update-Service {
         dotnet publish -c Release --self-contained true --runtime win-x64 -o "$ProjectPath\bin\Release\Publish"
         if ($LASTEXITCODE -ne 0) { Write-Host "Build failed. Exiting." -ForegroundColor Red; return $false }
 
-        # Update exe/dll — 修正: 路徑加 \* 讓 -Include 正常運作
+        # Copy 整個 publish 輸出（含 *.deps.json / *.runtimeconfig.json / runtimes\ 等）
+        # 不可只 copy *.exe/*.dll — 升級 NuGet 套件版本後 deps.json 未同步會導致 runtime 載不到新 assembly
         $publishPath = "$ProjectPath\bin\Release\Publish"
-        $copied = 0
-        Get-ChildItem -Path "$publishPath\*" -Include "*.exe","*.dll" | ForEach-Object {
-            Copy-Item -Path $_.FullName -Destination $TargetPath -Force
-            $copied++
-        }
-        Write-Host "Updated $copied files." -ForegroundColor Green
+        Write-Host "Copying updated application files..."
+        Copy-Item -Path "$publishPath\*" -Destination $TargetPath -Recurse -Force
+        Write-Host "Application files updated." -ForegroundColor Green
 
         # 同步設定檔 (遞迴複製，含子資料夾，含 PythonRuntime)
         $dirsToCopy = @("Setting","Modbus","MqttSetting","DatabaseSchema","DBPoint","Algorithms","PythonRuntime")
