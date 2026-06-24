@@ -18,7 +18,10 @@
       "Bash(powershell.exe -Command \"Get-Process -Name ''ScadaEngine.Web'' -ErrorAction SilentlyContinue | Stop-Process -Force; Write-Host ''stopped''\")",
       "Bash(powershell.exe -Command \"Get-Process -Name ''ScadaEngine.Web'' -ErrorAction SilentlyContinue | Stop-Process -Force; Write-Host ''done''\")",
       "Bash(powershell.exe -Command \"Get-Process -Name ''ScadaEngine.Web'' -ErrorAction SilentlyContinue | Stop-Process -Force; Write-Host ''Done''\")",
-      "Bash(powershell.exe -Command \"Get-Process -Name ''ScadaEngine.Web'' -ErrorAction SilentlyContinue | Stop-Process -Force; Write-Host ''Stopped''\")"
+      "Bash(powershell.exe -Command \"Get-Process -Name ''ScadaEngine.Web'' -ErrorAction SilentlyContinue | Stop-Process -Force; Write-Host ''Stopped''\")",
+      "Bash(powershell -Command \"Get-Process -Name ''ScadaEngine.Web'' -ErrorAction SilentlyContinue | Stop-Process -Force; Start-Sleep -Seconds 1; ''killed''\")",
+      "Bash(powershell -Command \"Get-Process -Name ''ScadaEngine.Web''*)",
+      "Bash(powershell.exe -Command \"Get-Process -Name ''ScadaEngine.Web''*)"
     ]
   }
 }

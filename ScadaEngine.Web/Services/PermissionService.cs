@@ -18,7 +18,7 @@ public static class PermissionService
         ("/RealTime",       "即時數據"),
         ("/ConditionCtrl",  "條件控制"),
         ("/LogicFlow",      "流程圖控制"),
-        ("/History/Trend",  "趨勢圖"),
+        ("/HistoryData",    "歷史資料"),
         ("/EventLog",       "事件記錄"),
         ("/ChilledWaterSystem", "水系統迴路設定"),
         ("/EnergyMeter",    "電表/迴路設定"),

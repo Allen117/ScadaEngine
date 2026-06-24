@@ -1,4 +1,4 @@
-/* ── History / Trend 頁面邏輯（IIFE 封裝）── */
+/* ── HistoryData 頁面邏輯（IIFE 封裝）── */
 (function () {
     'use strict';
 
@@ -66,6 +66,37 @@
         { border: 'rgba(102,16,242,0.9)',  bg: 'rgba(102,16,242,0.12)'  }
     ];
     var MAX_BASKET = 8;
+
+    // Chart.js plugin：Y 軸 title 改水平、貼在 Y 軸 tick 數值欄的外側（左軸在 tick 數值左邊、右軸在右邊），
+    // 垂直置中於資料區。需配合 layout.padding 左右預留空間（雙軸時設 70px）
+    var horizontalAxisTitlePlugin = {
+        id: 'horizontalAxisTitle',
+        afterDatasetsDraw: function (chart) {
+            var ctx = chart.ctx;
+            var area = chart.chartArea;
+            ['y', 'y1'].forEach(function (axisId) {
+                var scale = chart.scales[axisId];
+                if (!scale) return;
+                var titleOpt = scale.options && scale.options.title;
+                if (!titleOpt || !titleOpt.text) return;
+                var fontSize   = (titleOpt.font && titleOpt.font.size)   || 11;
+                var fontWeight = (titleOpt.font && titleOpt.font.weight) || 'normal';
+                ctx.save();
+                ctx.font = fontWeight + ' ' + fontSize + 'px sans-serif';
+                ctx.fillStyle = titleOpt.color || '#666';
+                ctx.textBaseline = 'middle';
+                var midY = (area.top + area.bottom) / 2;
+                if (scale.position === 'right') {
+                    ctx.textAlign = 'left';
+                    ctx.fillText(titleOpt.text, scale.right + 4, midY);
+                } else {
+                    ctx.textAlign = 'right';
+                    ctx.fillText(titleOpt.text, scale.left - 4, midY);
+                }
+                ctx.restore();
+            });
+        }
+    };
 
     // ── DOM refs ─────────────────────────────────────────────────────────
     var pointListContainer = document.getElementById('pointListContainer');
@@ -285,11 +316,13 @@
             grid:  { color: 'rgba(0,0,0,0.06)' }
         };
 
+        // 雙軸 title 用 horizontalAxisTitlePlugin 改為水平繪製：Chart.js 內建 title 一律 display:false，
+        // text/color/font 仍寫入 options 供 plugin 讀取
         var scaleY = {
             position: 'left',
             grid: { color: 'rgba(0,0,0,0.06)' },
             title: isDual ? {
-                display: true,
+                display: false,
                 text: datasets[0].szUnit || datasets[0].label,
                 color: CHART_COLORS[0].border,
                 font: { size: 11, weight: 'bold' }
@@ -304,7 +337,7 @@
                 position: 'right',
                 grid: { drawOnChartArea: false },
                 title: {
-                    display: true,
+                    display: false,
                     text: datasets[1].szUnit || datasets[1].label,
                     color: CHART_COLORS[1].border,
                     font: { size: 11, weight: 'bold' }
@@ -315,11 +348,13 @@
         trendChart = new Chart(ctx, {
             type: currentChartType,
             data: { datasets: chartDatasets },
+            plugins: [horizontalAxisTitlePlugin],
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 animation: { duration: maxLen > 1000 ? 0 : 400 },
                 interaction: { mode: 'index', intersect: false },
+                layout: { padding: { left: isDual ? 70 : 0, right: isDual ? 70 : 0 } },
                 plugins: {
                     legend: { display: true, position: 'top' },
                     tooltip: {
@@ -443,6 +478,8 @@
     function doQuery() {
         var szStart = dtStart.value;
         var szEnd   = dtEnd.value;
+        var selInterval = document.getElementById('selInterval');
+        var nInterval = selInterval ? (parseInt(selInterval.value, 10) || 0) : 0;
 
         if (basket.length === 0) { showAlert(t('history.alert.no_points_in_basket'), 'warning'); return; }
         if (!szStart || !szEnd)  { showAlert(t('history.alert.no_time_range'), 'warning'); return; }
@@ -461,7 +498,8 @@
         Promise.all(basket.map(function (p) {
             return fetch('/api/history/data?szSID=' + encodeURIComponent(p.sid)
                 + '&szStart=' + encodeURIComponent(szStart)
-                + '&szEnd=' + encodeURIComponent(szEnd))
+                + '&szEnd=' + encodeURIComponent(szEnd)
+                + '&nInterval=' + nInterval)
                 .then(function (r) { return r.json(); });
         })).then(function (results) {
             loadingSpinner.classList.add('d-none');

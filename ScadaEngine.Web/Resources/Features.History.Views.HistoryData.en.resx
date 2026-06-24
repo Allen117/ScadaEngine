@@ -68,6 +68,12 @@
 
   <data name="history.time.start" xml:space="preserve"><value>Start Time</value></data>
   <data name="history.time.end" xml:space="preserve"><value>End Time</value></data>
+  <data name="history.time.interval" xml:space="preserve"><value>Interval</value></data>
+  <data name="history.time.interval.1m" xml:space="preserve"><value>1m</value></data>
+  <data name="history.time.interval.5m" xml:space="preserve"><value>5m</value></data>
+  <data name="history.time.interval.15m" xml:space="preserve"><value>15m</value></data>
+  <data name="history.time.interval.30m" xml:space="preserve"><value>30m</value></data>
+  <data name="history.time.interval.1h" xml:space="preserve"><value>1h</value></data>
   <data name="history.button.query" xml:space="preserve"><value>Query</value></data>
   <data name="history.button.clear" xml:space="preserve"><value>Clear chart</value></data>
   <data name="history.time.quick" xml:space="preserve"><value>Quick:</value></data>

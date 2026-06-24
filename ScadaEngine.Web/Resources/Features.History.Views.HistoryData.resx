@@ -68,6 +68,12 @@
 
   <data name="history.time.start" xml:space="preserve"><value>開始時間</value></data>
   <data name="history.time.end" xml:space="preserve"><value>結束時間</value></data>
+  <data name="history.time.interval" xml:space="preserve"><value>時間間隔</value></data>
+  <data name="history.time.interval.1m" xml:space="preserve"><value>1 分鐘</value></data>
+  <data name="history.time.interval.5m" xml:space="preserve"><value>5 分鐘</value></data>
+  <data name="history.time.interval.15m" xml:space="preserve"><value>15 分鐘</value></data>
+  <data name="history.time.interval.30m" xml:space="preserve"><value>30 分鐘</value></data>
+  <data name="history.time.interval.1h" xml:space="preserve"><value>1 小時</value></data>
   <data name="history.button.query" xml:space="preserve"><value>查詢</value></data>
   <data name="history.button.clear" xml:space="preserve"><value>清除圖表</value></data>
   <data name="history.time.quick" xml:space="preserve"><value>快速：</value></data>

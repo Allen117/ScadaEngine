@@ -118,8 +118,9 @@ public interface IDataRepository
     /// <param name="dtStartTime">開始時間</param>
     /// <param name="dtEndTime">結束時間</param>
     /// <param name="nMaxRecords">最大筆數上限，預設 5000</param>
+    /// <param name="nIntervalMinutes">取樣間隔（分鐘）。0 = 原始；>0 = 對整點對齊取每 bucket 首筆，例如 15 = 每 HH:00/15/30/45 取首筆</param>
     /// <returns>歷史資料清單 (時間升冪)</returns>
-    Task<IEnumerable<HistoryDataModel>> GetHistoryTableDataAsync(string szSID, DateTime dtStartTime, DateTime dtEndTime, int nMaxRecords = 5000);
+    Task<IEnumerable<HistoryDataModel>> GetHistoryTableDataAsync(string szSID, DateTime dtStartTime, DateTime dtEndTime, int nMaxRecords = 5000, int nIntervalMinutes = 0);
 
     /// <summary>
     /// 取得所有條件控制規則

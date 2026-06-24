@@ -1131,7 +1131,7 @@ public class SqlServerDataRepository : IDataRepository, IDisposable
     /// 查詢 HistoryData 資料表中指定 SID 的歷史記錄
     /// </summary>
     public async Task<IEnumerable<HistoryDataModel>> GetHistoryTableDataAsync(
-        string szSID, DateTime dtStartTime, DateTime dtEndTime, int nMaxRecords = 5000)
+        string szSID, DateTime dtStartTime, DateTime dtEndTime, int nMaxRecords = 5000, int nIntervalMinutes = 0)
     {
         if (string.IsNullOrEmpty(_szConnectionString))
         {
@@ -1143,26 +1143,54 @@ public class SqlServerDataRepository : IDataRepository, IDisposable
             using var connection = new SqlConnection(_szConnectionString);
             await connection.OpenAsync();
 
-            const string szSql = @"
-                SELECT TOP (@MaxRecords)
-                    SID       AS szSID,
-                    Value     AS fValue,
-                    Quality   AS nQuality,
-                    Timestamp AS dtTimestamp
-                FROM HistoryData
-                WHERE SID = @SID
-                  AND Timestamp BETWEEN @StartTime AND @EndTime
-                ORDER BY Timestamp ASC";
+            string szSql;
+            if (nIntervalMinutes > 0)
+            {
+                // 取樣模式：對 Timestamp 按 N 分鐘整點對齊分 bucket，每 bucket 取最早一筆
+                szSql = @"
+                    WITH bucketed AS (
+                        SELECT SID       AS szSID,
+                               Value     AS fValue,
+                               Quality   AS nQuality,
+                               Timestamp AS dtTimestamp,
+                               ROW_NUMBER() OVER (
+                                   PARTITION BY DATEADD(MINUTE,
+                                       (DATEDIFF(MINUTE, 0, Timestamp) / @IntervalMin) * @IntervalMin, 0)
+                                   ORDER BY Timestamp ASC
+                               ) AS rn
+                        FROM HistoryData
+                        WHERE SID = @SID
+                          AND Timestamp BETWEEN @StartTime AND @EndTime
+                    )
+                    SELECT TOP (@MaxRecords) szSID, fValue, nQuality, dtTimestamp
+                    FROM bucketed
+                    WHERE rn = 1
+                    ORDER BY dtTimestamp ASC";
+            }
+            else
+            {
+                szSql = @"
+                    SELECT TOP (@MaxRecords)
+                        SID       AS szSID,
+                        Value     AS fValue,
+                        Quality   AS nQuality,
+                        Timestamp AS dtTimestamp
+                    FROM HistoryData
+                    WHERE SID = @SID
+                      AND Timestamp BETWEEN @StartTime AND @EndTime
+                    ORDER BY Timestamp ASC";
+            }
 
             var result = await connection.QueryAsync<HistoryDataModel>(szSql, new
             {
-                MaxRecords = nMaxRecords,
-                SID        = szSID,
-                StartTime  = dtStartTime,
-                EndTime    = dtEndTime
+                MaxRecords  = nMaxRecords,
+                SID         = szSID,
+                StartTime   = dtStartTime,
+                EndTime     = dtEndTime,
+                IntervalMin = nIntervalMinutes
             });
 
-            _logger.LogDebug("查詢 HistoryData 完成: SID={SID}, 筆數={Count}", szSID, result.Count());
+            _logger.LogDebug("查詢 HistoryData 完成: SID={SID}, 間隔={Interval}min, 筆數={Count}", szSID, nIntervalMinutes, result.Count());
             return result;
         }
         catch (Exception ex)

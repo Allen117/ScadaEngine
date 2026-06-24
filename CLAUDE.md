@@ -75,6 +75,16 @@ wwwroot/
 - JS 中如有 HTML 實體（`&le;`、`&times;` 等），須轉換為 Unicode 跳脫（`\u2264`、`\u00d7`）
 - JS 使用 IIFE `(function(){ ... })();` 封裝，對外介面掛在 `window._xx` 供 `onclick` 等屬性呼叫
 
+### 時間輸入一律 24 小時制
+
+**新增**任何時間選擇控制項時必須強制 24 小時制，禁止 AM/PM。`<input type="datetime-local">`、`<input type="time">` 必須加 `lang="en-GB"`（瀏覽器標準 trick，迫使 picker 用 24h，不影響其餘 UI 語系）：
+
+```html
+<input type="datetime-local" lang="en-GB" ... />
+<input type="time" lang="en-GB" ... />
+```
+
+現有未加的舊頁面（ScheduleSetting、AlarmSetting 等）之後再陸續補，新功能不可缺。
 
 ## Build & Run
 

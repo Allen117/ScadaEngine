@@ -157,7 +157,7 @@
                                 </ul>
                             </li>
                         }
-                        @if (canAccess("/History/Trend") || canAccess("/EventLog"))
+                        @if (canAccess("/HistoryData") || canAccess("/EventLog"))
                         {
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
@@ -165,9 +165,9 @@
                                     @Localizer["layout.menu.history"]
                                 </a>
                                 <ul class="dropdown-menu">
-                                    @if (canAccess("/History/Trend"))
+                                    @if (canAccess("/HistoryData"))
                                     {
-                                        <li><a class="dropdown-item" href="/History/Trend"><i class="fas fa-chart-area me-2"></i>@Localizer["layout.menu.trend"]</a></li>
+                                        <li><a class="dropdown-item" href="/HistoryData"><i class="fas fa-chart-area me-2"></i>@Localizer["layout.menu.trend"]</a></li>
                                     }
                                     @if (canAccess("/EventLog"))
                                     {

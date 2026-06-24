@@ -19,10 +19,10 @@ public class HistoryController : Controller
     }
 
     /// <summary>
-    /// GET /History/Trend — 歷史趨勢頁面
+    /// GET /HistoryData — 歷史資料頁面
     /// </summary>
-    [HttpGet("/History/Trend")]
-    public async Task<IActionResult> Trend()
+    [HttpGet("/HistoryData")]
+    public async Task<IActionResult> HistoryData()
     {
         var coordinatorList = (await _dataRepository.GetAllCoordinatorsAsync()).ToList();
         var dbCoordinatorList = (await _dataRepository.GetAllDbCoordinatorsAsync()).ToList();
@@ -61,14 +61,16 @@ public class HistoryController : Controller
     }
 
     /// <summary>
-    /// GET /api/history/data?szSID=xxx&szStart=...&szEnd=...
+    /// GET /api/history/data?szSID=xxx&szStart=...&szEnd=...&nInterval=15
     /// 查詢 HistoryData 資料表並回傳 JSON，供前端 Chart.js 使用。
+    /// nInterval：取樣間隔（分鐘），0 = 原始；>0 = 整點對齊取每 bucket 首筆
     /// </summary>
     [HttpGet("~/api/history/data")]
     public async Task<IActionResult> GetHistoryData(
         [FromQuery] string szSID,
         [FromQuery] string szStart,
-        [FromQuery] string szEnd)
+        [FromQuery] string szEnd,
+        [FromQuery] int nInterval = 0)
     {
         if (string.IsNullOrWhiteSpace(szSID))
             return BadRequest(new { success = false, message = "SID 不可為空" });
@@ -82,11 +84,13 @@ public class HistoryController : Controller
         if (dtStart >= dtEnd)
             return BadRequest(new { success = false, message = "開始時間必須早於結束時間" });
 
+        if (nInterval < 0) nInterval = 0;
+
         try
         {
             const int nMaxRecords = 5000;
             var historyData = (await _dataRepository.GetHistoryTableDataAsync(
-                szSID, dtStart, dtEnd, nMaxRecords)).ToList();
+                szSID, dtStart, dtEnd, nMaxRecords, nInterval)).ToList();
 
             // 查詢點位名稱與單位（Modbus + 計算點位 + DB 來源）
             var allPoints = await _dataRepository.GetAllModbusPointsAsync();

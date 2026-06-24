@@ -242,14 +242,26 @@
                                         <i class="fas fa-calendar-plus me-1"></i>@Localizer["history.time.start"]
                                     </label>
                                     <input type="datetime-local" id="dtStart" class="form-control form-control-sm"
-                                           value="@szStartDefault" />
+                                           lang="en-GB" value="@szStartDefault" />
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label small fw-semibold text-muted">
                                         <i class="fas fa-calendar-check me-1"></i>@Localizer["history.time.end"]
                                     </label>
                                     <input type="datetime-local" id="dtEnd" class="form-control form-control-sm"
-                                           value="@szEndDefault" />
+                                           lang="en-GB" value="@szEndDefault" />
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small fw-semibold text-muted">
+                                        <i class="fas fa-stopwatch me-1"></i>@Localizer["history.time.interval"]
+                                    </label>
+                                    <select id="selInterval" class="form-select form-select-sm">
+                                        <option value="1" selected>@Localizer["history.time.interval.1m"]</option>
+                                        <option value="5">@Localizer["history.time.interval.5m"]</option>
+                                        <option value="15">@Localizer["history.time.interval.15m"]</option>
+                                        <option value="30">@Localizer["history.time.interval.30m"]</option>
+                                        <option value="60">@Localizer["history.time.interval.1h"]</option>
+                                    </select>
                                 </div>
                                 <div class="col-12 d-flex gap-2">
                                     <button id="btnQuery" class="btn btn-success btn-sm flex-fill">
