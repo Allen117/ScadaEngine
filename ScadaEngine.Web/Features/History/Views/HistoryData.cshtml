@@ -3,8 +3,8 @@
     ViewData["Title"] = Localizer["history.title"].Value;
     Layout = "~/Views/Shared/_Layout.cshtml";
 
-    var szStartDefault = Model.dtStartTime.ToString("yyyy-MM-ddTHH:mm");
-    var szEndDefault   = Model.dtEndTime.ToString("yyyy-MM-ddTHH:mm");
+    var szStartDefault = Model.dtStartTime.ToString("yyyy-MM-dd HH:mm");
+    var szEndDefault   = Model.dtEndTime.ToString("yyyy-MM-dd HH:mm");
 
     var calcGroupMap = Model.CalcGroupMap;
     var pointJson = System.Text.Json.JsonSerializer.Serialize(
@@ -25,6 +25,7 @@
     var szUngroupedLabel = Localizer["history.coordinator.ungrouped"].Value;
 }
 
+<link rel="stylesheet" href="~/lib/flatpickr/flatpickr.min.css" />
 <link rel="stylesheet" href="~/css/history.css" />
 
 <div class="container-fluid mt-4">
@@ -241,15 +242,15 @@
                                     <label class="form-label small fw-semibold text-muted">
                                         <i class="fas fa-calendar-plus me-1"></i>@Localizer["history.time.start"]
                                     </label>
-                                    <input type="datetime-local" id="dtStart" class="form-control form-control-sm"
-                                           lang="en-GB" value="@szStartDefault" />
+                                    <input type="text" id="dtStart" class="form-control form-control-sm"
+                                           value="@szStartDefault" autocomplete="off" />
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label small fw-semibold text-muted">
                                         <i class="fas fa-calendar-check me-1"></i>@Localizer["history.time.end"]
                                     </label>
-                                    <input type="datetime-local" id="dtEnd" class="form-control form-control-sm"
-                                           lang="en-GB" value="@szEndDefault" />
+                                    <input type="text" id="dtEnd" class="form-control form-control-sm"
+                                           value="@szEndDefault" autocomplete="off" />
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label small fw-semibold text-muted">
@@ -433,6 +434,9 @@
 <script src="~/lib/chartjs/chart.umd.min.js"></script>
 <script src="~/lib/chartjs/chartjs-adapter-date-fns.bundle.min.js"></script>
 <script src="~/lib/xlsx/xlsx.full.min.js"></script>
+<script src="~/lib/flatpickr/flatpickr.min.js"></script>
+<script src="~/lib/flatpickr/zh-tw.js"></script>
+<script src="~/js/flatpickr-init.js"></script>
 <script>
     window.__historyConfig = {
         points:         @Html.Raw(pointJson),

@@ -123,6 +123,7 @@
   <data name="history.alert.no_points_selected" xml:space="preserve"><value>請先勾選點位</value></data>
   <data name="history.alert.no_export_data" xml:space="preserve"><value>無可匯出的資料</value></data>
   <data name="history.alert.no_points_data" xml:space="preserve"><value>無點位資料</value></data>
+  <data name="history.alert.row_limit_exceeded" xml:space="preserve"><value>查詢結果超過 {0} 筆上限（{1}），僅顯示前 {0} 筆，請縮短時間範圍或加大取樣間隔</value></data>
 
   <data name="history.basket.button.remove" xml:space="preserve"><value>移除</value></data>
 

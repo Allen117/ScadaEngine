@@ -22,10 +22,28 @@
         schedules = data.schedules || [];
         modal = new bootstrap.Modal(document.getElementById('scheduleModal'));
         buildDomCheckboxes();
+
+        // flatpickr 24h（依 i18n 切 locale） — 三個欄位都在 modal 內，DOM 已存在
+        if (window._fpInit) {
+            window._fpInit.datetime(document.getElementById('txtAnchorDateTime'));
+            window._fpInit.time(document.getElementById('txtStartTime'));
+            window._fpInit.time(document.getElementById('txtEndTime'));
+        }
+
         if (window.i18n && window.i18n.ready) {
             window.i18n.ready(renderTable);
         } else {
             renderTable();
+        }
+    }
+
+    function setFp(elId, value) {
+        var el = document.getElementById(elId);
+        if (el._flatpickr) {
+            if (value == null || value === '') el._flatpickr.clear();
+            else el._flatpickr.setDate(value, true);
+        } else {
+            el.value = value || '';
         }
     }
 
@@ -265,11 +283,11 @@
         document.getElementById('selRecurrenceType').value = '0';
         document.getElementById('txtRunLength').value = '1';
         document.getElementById('txtRestLength').value = '1';
-        document.getElementById('txtAnchorDateTime').value = nowLocalIso();
+        setFp('txtAnchorDateTime', new Date());
         clearDays();
         clearDom();
-        document.getElementById('txtStartTime').value = '08:00';
-        document.getElementById('txtEndTime').value = '17:00';
+        setFp('txtStartTime', '08:00');
+        setFp('txtEndTime', '17:00');
         document.getElementById('txtRemarks').value = '';
         document.getElementById('chkEnabled').checked = true;
         editExcludeDates = [];
@@ -293,7 +311,7 @@
         // 跟休參數
         document.getElementById('txtRunLength').value = s.runLength || 1;
         document.getElementById('txtRestLength').value = s.restLength || 1;
-        document.getElementById('txtAnchorDateTime').value = s.anchorDateTime || '';
+        setFp('txtAnchorDateTime', s.anchorDateTime);
 
         // 星期
         clearDays();
@@ -315,8 +333,8 @@
             }
         }
 
-        document.getElementById('txtStartTime').value = s.startTime;
-        document.getElementById('txtEndTime').value = s.endTime;
+        setFp('txtStartTime', s.startTime);
+        setFp('txtEndTime', s.endTime);
         document.getElementById('txtRemarks').value = s.remarks || '';
         document.getElementById('chkEnabled').checked = s.isEnabled;
 
@@ -529,13 +547,6 @@
     }
 
     // ── 工具 ──
-
-    function nowLocalIso() {
-        var d = new Date();
-        var pad = function (n) { return n < 10 ? '0' + n : String(n); };
-        return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate())
-            + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
-    }
 
     function formatYmd(d) {
         var pad = function (n) { return n < 10 ? '0' + n : String(n); };

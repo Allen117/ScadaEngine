@@ -529,7 +529,12 @@
                 noDataMsg.classList.remove('d-none'); return;
             }
 
-            if (results.some(function (r) { return r.isLimited; })) limitWarning.classList.remove('d-none');
+            var limitedResults = results.filter(function (r) { return r.isLimited; });
+            if (limitedResults.length > 0) {
+                limitWarning.classList.remove('d-none');
+                var szNames = limitedResults.map(function (r) { return r.szName; }).join('、');
+                showAlert(t('history.alert.row_limit_exceeded', { 0: 5000, 1: szNames }), 'warning', 8000);
+            }
 
             var btnAxis = document.getElementById('btnSingleAxis');
             var validCount = results.filter(function (r) { return r.nCount > 0; }).length;
@@ -685,7 +690,7 @@
     // ── 工具函式 ─────────────────────────────────────────────────────────
     function fmtDtLocal(dt) {
         var p = function (n) { return String(n).padStart(2, '0'); };
-        return dt.getFullYear() + '-' + p(dt.getMonth()+1) + '-' + p(dt.getDate()) + 'T' + p(dt.getHours()) + ':' + p(dt.getMinutes());
+        return dt.getFullYear() + '-' + p(dt.getMonth()+1) + '-' + p(dt.getDate()) + ' ' + p(dt.getHours()) + ':' + p(dt.getMinutes());
     }
 
     function ceilToMinute(d) {
@@ -696,18 +701,23 @@
         return d;
     }
 
-    function showAlert(msg, type) {
+    function showAlert(msg, type, nDurationMs) {
         type = type || 'warning';
         var el = document.createElement('div');
         el.className = 'alert alert-' + type + ' alert-dismissible fade show mt-2';
         el.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>' + msg + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
         var container = document.querySelector('.container-fluid');
         container.insertBefore(el, container.firstChild);
-        setTimeout(function () { el.remove(); }, 3000);
+        setTimeout(function () { el.remove(); }, nDurationMs || 3000);
     }
 
     // ── 事件綁定 ─────────────────────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', function () {
+
+        if (window._fpInit) {
+            window._fpInit.datetime(dtStart);
+            window._fpInit.datetime(dtEnd);
+        }
 
         renderPointList(currentCoordinatorId, currentModbusId, null, null);
         renderBasket();
@@ -839,8 +849,14 @@
             btn.addEventListener('click', function () {
                 var h = parseInt(this.dataset.hours);
                 var now = ceilToMinute(new Date());
-                dtStart.value = fmtDtLocal(new Date(now - h * 3600000));
-                dtEnd.value   = fmtDtLocal(now);
+                var start = new Date(now - h * 3600000);
+                if (dtStart._flatpickr) {
+                    dtStart._flatpickr.setDate(start, true);
+                    dtEnd._flatpickr.setDate(now, true);
+                } else {
+                    dtStart.value = fmtDtLocal(start);
+                    dtEnd.value   = fmtDtLocal(now);
+                }
             });
         });
 

@@ -10,7 +10,7 @@
             recurrenceType = s.nRecurrenceType,
             runLength = s.nRunLength,
             restLength = s.nRestLength,
-            anchorDateTime = s.dtAnchorDateTime?.ToString("yyyy-MM-ddTHH:mm"),
+            anchorDateTime = s.dtAnchorDateTime?.ToString("yyyy-MM-dd HH:mm"),
             daysOfWeek = s.szDaysOfWeek ?? "",
             daysOfMonth = s.szDaysOfMonth ?? "",
             startTime = s.szStartTime, endTime = s.szEndTime,
@@ -21,6 +21,7 @@
     );
 }
 
+<link rel="stylesheet" href="~/lib/flatpickr/flatpickr.min.css" />
 <link rel="stylesheet" href="~/css/schedulesetting.css" asp-append-version="true" />
 
 <div class="container-fluid mt-4">
@@ -114,7 +115,7 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-semibold"><i class="fas fa-calendar-day me-1"></i>@Localizer["schedule.cycle.anchor_datetime"]</label>
-                        <input type="datetime-local" class="form-control" id="txtAnchorDateTime" />
+                        <input type="text" class="form-control" id="txtAnchorDateTime" autocomplete="off" />
                         <small class="text-muted">@Localizer["schedule.cycle.anchor_hint"]</small>
                     </div>
                 </div>
@@ -154,14 +155,14 @@
                 <div class="row mb-3">
                     <div class="col-md-4">
                         <label class="form-label fw-semibold"><i class="fas fa-clock me-1"></i>@Localizer["schedule.field.start_time"]</label>
-                        <input type="time" class="form-control" id="txtStartTime" value="08:00" />
+                        <input type="text" class="form-control" id="txtStartTime" value="08:00" autocomplete="off" />
                     </div>
                     <div class="col-md-4">
                         <label class="form-label fw-semibold">
                             <i class="fas fa-clock me-1"></i>@Localizer["schedule.field.end_time"]
                             <small class="text-muted fw-normal">@Localizer["schedule.field.end_time_hint"]</small>
                         </label>
-                        <input type="time" class="form-control" id="txtEndTime" value="17:00" />
+                        <input type="text" class="form-control" id="txtEndTime" value="17:00" autocomplete="off" />
                     </div>
                     <div class="col-md-4">
                         <label class="form-label fw-semibold"><i class="fas fa-comment me-1"></i>@Localizer["schedule.field.remarks"]</label>
@@ -224,5 +225,8 @@
             schedules: @Html.Raw(schedulesJson)
         };
     </script>
+    <script src="~/lib/flatpickr/flatpickr.min.js"></script>
+    <script src="~/lib/flatpickr/zh-tw.js"></script>
+    <script src="~/js/flatpickr-init.js"></script>
     <script src="~/js/schedulesetting.js" asp-append-version="true"></script>
 }

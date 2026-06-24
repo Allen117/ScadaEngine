@@ -4,6 +4,7 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
+<link rel="stylesheet" href="~/lib/flatpickr/flatpickr.min.css" />
 <link rel="stylesheet" href="~/css/eventlog.css" />
 
 <div class="container-fluid py-3">
@@ -19,13 +20,13 @@
         <div class="row g-2 align-items-end">
             <div class="col-md-2">
                 <label class="form-label mb-1 small fw-bold">@Localizer["eventlog.filter.start_time"]</label>
-                <input type="datetime-local" id="startTime" class="form-control form-control-sm"
-                       value="@Model.dtStartTime.ToString("yyyy-MM-ddTHH:mm")" />
+                <input type="text" id="startTime" class="form-control form-control-sm"
+                       value="@Model.dtStartTime.ToString("yyyy-MM-dd HH:mm")" autocomplete="off" />
             </div>
             <div class="col-md-2">
                 <label class="form-label mb-1 small fw-bold">@Localizer["eventlog.filter.end_time"]</label>
-                <input type="datetime-local" id="endTime" class="form-control form-control-sm"
-                       value="@Model.dtEndTime.ToString("yyyy-MM-ddTHH:mm")" />
+                <input type="text" id="endTime" class="form-control form-control-sm"
+                       value="@Model.dtEndTime.ToString("yyyy-MM-dd HH:mm")" autocomplete="off" />
             </div>
             <div class="col-md-2">
                 <label class="form-label mb-1 small fw-bold">@Localizer["eventlog.filter.event_type"]</label>
@@ -202,5 +203,8 @@
 </div>
 
 @section Scripts {
+    <script src="~/lib/flatpickr/flatpickr.min.js"></script>
+    <script src="~/lib/flatpickr/zh-tw.js"></script>
+    <script src="~/js/flatpickr-init.js"></script>
     <script src="~/js/eventlog.js"></script>
 }

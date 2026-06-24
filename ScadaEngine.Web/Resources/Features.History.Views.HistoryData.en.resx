@@ -123,6 +123,7 @@
   <data name="history.alert.no_points_selected" xml:space="preserve"><value>Please tick at least one point</value></data>
   <data name="history.alert.no_export_data" xml:space="preserve"><value>No data to export</value></data>
   <data name="history.alert.no_points_data" xml:space="preserve"><value>No point data</value></data>
+  <data name="history.alert.row_limit_exceeded" xml:space="preserve"><value>Query exceeded the {0}-row limit ({1}); only the first {0} rows are shown. Please narrow the time range or increase the sampling interval.</value></data>
 
   <data name="history.basket.button.remove" xml:space="preserve"><value>Remove</value></data>
 

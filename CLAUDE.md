@@ -29,7 +29,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - 若 plan 因使用者回覆而需更新，先改 plan、再次停下等確認
    - ❌ 不可自設「回答完問題就動手」「說 OK 就動手」等暗示性條件來繞過此規則
 4. 實作中即時更新勾選狀態
-5. 完成後狀態改為「已完成」、回填 commit hash、搬到 `docs/plans/_archive/`
+5. 實作完成後先停下，等使用者驗證
+6. 使用者明確說「沒問題」「OK」「可以」「過了」之後，自動執行 `git add` 相關檔案 → `git commit`（訊息走專案風格）→ `git push`，再回填 commit hash 並把 plan 搬到 `docs/plans/_archive/`
+   - ✅ 授權 scope 僅限「plan 流程收尾 + 使用者明確確認」，不代表其他情境也預先授權 push
+   - ⚠️ 若 pre-commit hook 失敗，修好後建**新** commit，禁止 `--no-verify`
+   - ⚠️ 若 push 被 reject（非 fast-forward 等），停下回報，不可 force push
 
 **不需要 plan.md**：單檔小修、問答、讀碼、bug 根因調查、使用者已給出明確一步到位指令。
 
@@ -75,16 +79,42 @@ wwwroot/
 - JS 中如有 HTML 實體（`&le;`、`&times;` 等），須轉換為 Unicode 跳脫（`\u2264`、`\u00d7`）
 - JS 使用 IIFE `(function(){ ... })();` 封裝，對外介面掛在 `window._xx` 供 `onclick` 等屬性呼叫
 
-### 時間輸入一律 24 小時制
+### 時間輸入一律 24 小時制 — 用 flatpickr
 
-**新增**任何時間選擇控制項時必須強制 24 小時制，禁止 AM/PM。`<input type="datetime-local">`、`<input type="time">` 必須加 `lang="en-GB"`（瀏覽器標準 trick，迫使 picker 用 24h，不影響其餘 UI 語系）：
+**新增**任何 datetime / time 選擇控制項時，**禁止**用原生 `<input type="datetime-local">` / `<input type="time">`
+（Chromium 在 zh-TW Windows 下會強制吃 OS locale 顯示「下午 01:34」，`lang="en-GB"` trick 已證實對 datetime-local 無效）。
+
+改用 flatpickr + 共用 helper：
 
 ```html
-<input type="datetime-local" lang="en-GB" ... />
-<input type="time" lang="en-GB" ... />
+<!-- View 頂端 -->
+<link rel="stylesheet" href="~/lib/flatpickr/flatpickr.min.css" />
+
+<!-- input 用 type="text" -->
+<input type="text" id="dtStart" class="form-control" autocomplete="off" />
+
+<!-- @section Scripts 依序載入 -->
+<script src="~/lib/flatpickr/flatpickr.min.js"></script>
+<script src="~/lib/flatpickr/zh-tw.js"></script>
+<script src="~/js/flatpickr-init.js"></script>
+<script src="~/js/myfeature.js"></script>
 ```
 
-現有未加的舊頁面（ScheduleSetting、AlarmSetting 等）之後再陸續補，新功能不可缺。
+```js
+// feature.js 內初始化（依 <html lang> 自動切 zh-TW / en locale，強制 time_24hr）
+window._fpInit.datetime(document.getElementById('dtStart'));  // YYYY-MM-DD HH:mm
+window._fpInit.time(document.getElementById('txtStartTime'));  // HH:mm
+
+// 寫值要走 setDate，不能直接 .value = ...（picker 狀態不會同步）
+dtStart._flatpickr.setDate(new Date(), true);
+// 讀值照舊用 .value
+var s = dtStart.value;
+```
+
+Razor 預設值請輸出空白分隔格式以對齊 flatpickr `Y-m-d H:i`：
+`Model.dt.ToString("yyyy-MM-dd HH:mm")`。後端 `DateTime.TryParse` 對 T / 空白分隔都吃，不需改 API。
+
+date-only（純日期、無時間）可繼續用原生 `<input type="date">` — 無 AM/PM 問題不必引入 flatpickr。
 
 ## Build & Run
 

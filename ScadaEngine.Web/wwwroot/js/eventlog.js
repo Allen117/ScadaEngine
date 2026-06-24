@@ -214,11 +214,19 @@
         }, true);
     }
 
+    // ── 時間欄位 picker（24h、依 i18n 切 locale） ──
+    var startTimeEl = document.getElementById('startTime');
+    var endTimeEl   = document.getElementById('endTime');
+    if (window._fpInit) {
+        window._fpInit.datetime(startTimeEl);
+        window._fpInit.datetime(endTimeEl);
+    }
+
     // ── 快速時間範圍按鈕 ──
     function fmtDtLocal(d) {
         var pad = function (n) { return n < 10 ? '0' + n : n; };
         return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
-               'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+               ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
     }
 
     function ceilToMinute(d) {
@@ -233,8 +241,14 @@
         btn.addEventListener('click', function () {
             var h = parseInt(this.dataset.hours);
             var now = ceilToMinute(new Date());
-            document.getElementById('startTime').value = fmtDtLocal(new Date(now - h * 3600000));
-            document.getElementById('endTime').value = fmtDtLocal(now);
+            var start = new Date(now - h * 3600000);
+            if (startTimeEl._flatpickr) {
+                startTimeEl._flatpickr.setDate(start, true);
+                endTimeEl._flatpickr.setDate(now, true);
+            } else {
+                startTimeEl.value = fmtDtLocal(start);
+                endTimeEl.value   = fmtDtLocal(now);
+            }
         });
     });
 
