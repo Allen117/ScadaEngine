@@ -176,7 +176,7 @@
                                 </ul>
                             </li>
                         }
-                        @if (canAccess("/ChilledWaterSystem") || canAccess("/EnergyMeter") || canAccess("/EnergyReport"))
+                        @if (canAccess("/ChilledWaterSystem") || canAccess("/EnergyMeter") || canAccess("/EnergyReport") || canAccess("/RefrigerationTonReport"))
                         {
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
@@ -195,6 +195,10 @@
                                     @if (canAccess("/EnergyReport"))
                                     {
                                         <li><a class="dropdown-item" href="/EnergyReport"><i class="fas fa-chart-bar me-2"></i>@Localizer["layout.menu.energy_report"]</a></li>
+                                    }
+                                    @if (canAccess("/RefrigerationTonReport"))
+                                    {
+                                        <li><a class="dropdown-item" href="/RefrigerationTonReport"><i class="fas fa-snowflake me-2"></i>@Localizer["layout.menu.refrigeration_ton_report"]</a></li>
                                     }
                                 </ul>
                             </li>

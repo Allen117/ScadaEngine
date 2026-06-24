@@ -1,0 +1,68 @@
+/* 冷凍噸報表頁專屬樣式（對標 energyreport.css） */
+
+.rt-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+}
+
+.rt-filter-bar .rt-circuit {
+    flex: 0 0 220px;
+}
+
+.rt-filter-bar .rt-narrow-unit {
+    flex: 0 0 90px;
+}
+
+.rt-filter-bar .rt-narrow-date {
+    flex: 0 0 130px;
+}
+
+.rt-filter-bar .rt-wide-date {
+    flex: 0 0 200px;
+}
+
+.rt-hour-group .rt-hour-select {
+    flex: 0 0 72px;
+    padding-right: 1.5rem;
+    background-position: right 0.4rem center;
+}
+
+.rt-filter-bar .rt-btn .btn {
+    white-space: nowrap;
+}
+
+.rt-period {
+    display: none;
+}
+
+.rt-period.active {
+    display: block;
+}
+
+#rtTableBody td {
+    font-size: 0.85rem;
+    padding: 6px 10px;
+}
+
+#rtTableBody td.text-end {
+    font-family: monospace;
+    font-weight: 500;
+}
+
+#rtTableBody tr.rt-total {
+    background-color: #fff3cd !important;
+    font-weight: bold;
+}
+
+#rtWarnText {
+    color: #fd7e14;
+    font-weight: 500;
+}
+
+#rtBtnToggleBreakdown {
+    white-space: nowrap;
+    font-size: 0.8rem;
+    padding: 0.2rem 0.55rem;
+}

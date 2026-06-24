@@ -94,6 +94,11 @@ try
     // 註冊葉子層 Backfill MQTT 訂閱服務（接 SCADA/Sys/EnergyLeafHourly/Backfill）
     builder.Services.AddHostedService<EnergyLeafBackfillSubscriber>();
 
+    // 註冊冷凍噸葉子層 hourly 預聚合（AVG × 1h，與電表預聚合對稱）
+    builder.Services.AddSingleton<WaterLeafHourlyRepository>();
+    builder.Services.AddSingleton<WaterLeafAggregator>();
+    builder.Services.AddHostedService<WaterLeafAggregationService>();
+
     var host = builder.Build();
 
     // 初始化資料庫服務

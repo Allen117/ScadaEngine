@@ -390,6 +390,24 @@
       ]
     },
     {
+      "_comment": "冷凍噸報表 — 葉子層 hourly 預聚合表。一列 = 一個葉子 SID 在某個小時的 RT·h（冷量，= AVG(RT) × 1h）。SampleCount < 30 視為資料不足，整列不寫（sparse storage）。",
+      "TableName": "WaterLeafHourly",
+      "Columns": [
+        { "Name": "SID",          "Type": "nvarchar", "Length": 50, "IsPrimaryKey": true, "Nullable": false },
+        { "Name": "HourStart",    "Type": "datetime",               "IsPrimaryKey": true, "Nullable": false,
+          "_comment": "小時起點（local time，與 HistoryData.Timestamp 同基準）" },
+        { "Name": "RtHour",       "Type": "float",                  "Nullable": false,
+          "_comment": "該小時 RT·h（冷量）= AVG(RT samples in hour) × 1h" },
+        { "Name": "SampleCount",  "Type": "int",                    "Nullable": false, "Default": 0,
+          "_comment": "該小時 HistoryData 樣本數（Quality=1）。資料完整度判定，預設門檻 30" },
+        { "Name": "Quality",      "Type": "tinyint",                "Nullable": false, "Default": 1,
+          "_comment": "1=Good。保留欄位供未來擴充" },
+        { "Name": "IsBackfilled", "Type": "bit",                    "Nullable": false, "Default": 0,
+          "_comment": "是否由 backfill 流程寫入（目前固定 false）" },
+        { "Name": "CreatedAt",    "Type": "datetime",               "Nullable": false, "Default": "getdate()" }
+      ]
+    },
+    {
       "_comment": "Line 通知收件群組 — 警報觸發時推播 Line 訊息的目標群組清單",
       "TableName": "LineNotifyTargets",
       "Columns": [

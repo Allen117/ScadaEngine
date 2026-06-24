@@ -26,7 +26,9 @@
 | 事件記錄 | Event Log | `/EventLog` |
 | 能源管理 | Energy Management | top-level menu |
 | 用電報表 | Energy Report | `/EnergyReport` |
+| 冷凍噸報表 | Refrigeration Ton Report | `/RefrigerationTonReport` |
 | 電表/迴路設定 | Energy Meter / Circuit | `/EnergyMeter` |
+| 水系統迴路設定 | Chilled Water Circuit Settings | `/ChilledWaterSystem` |
 | 系統設定 | System Settings | top-level menu |
 | 畫面設計 | Designer | `/Designer` |
 | 警報設定 | Alarm Settings | `/AlarmSetting` |
@@ -173,8 +175,13 @@
 | zh-TW | en | 備註 |
 |---|---|---|
 | 用電報表 | Energy Report | |
+| 冷凍噸報表 | Refrigeration Ton Report | |
+| 冷凍噸 / 冷量 | Refrigeration Ton / Cooling Energy | RT 為瞬時，RT·h 為累計冷量 |
+| RT | RT | 冷凍噸單位，不翻 |
+| RT·h | RT·h | 冷量單位（ton-hours），不翻；類比 kWh |
 | 用電量 | Energy | (kWh) |
 | 用電量分布 | Energy Consumption | chart 標題 |
+| 冷量分布 | Cooling Energy | RefrigerationTonReport chart 標題 |
 | 數據明細 | Data Detail | 表格區塊 |
 | 時段 | Period | 表格欄 |
 | 粒度 / 單位 | Granularity | 時 / 日 / 月 / 年 |

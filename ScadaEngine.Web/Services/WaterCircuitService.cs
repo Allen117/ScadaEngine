@@ -163,8 +163,29 @@ public class WaterCircuitService
     }
 
     /// <summary>
-    /// 展開指定迴路下的所有葉子（綁 SID 的節點）— 預留給未來 COP / 製冷量報表使用。
-    /// 目前本期不做報表，介面先擺著保留呼叫端形狀。
+    /// 取得指定節點的直接子節點（不遞迴）— 給冷凍噸報表 Excel 匯出多欄展開用
+    /// </summary>
+    public async Task<List<WaterCircuitModel>> GetDirectChildrenAsync(int nParentId)
+    {
+        using var conn = await GetConnectionAsync();
+        var rows = await conn.QueryAsync<WaterCircuitModel>(@"
+            SELECT  Id          AS nId,
+                    Name        AS szName,
+                    ParentId    AS nParentId,
+                    SortOrder   AS nSortOrder,
+                    SID         AS szSID,
+                    Description AS szDescription,
+                    CreatedAt   AS dtCreatedAt,
+                    UpdatedAt   AS dtUpdatedAt
+            FROM    WaterCircuit
+            WHERE   ParentId = @Id
+            ORDER BY SortOrder, Id", new { Id = nParentId });
+        return rows.ToList();
+    }
+
+    /// <summary>
+    /// 展開指定迴路下的所有葉子（綁 SID 的節點）— 供冷凍噸報表 on-demand 階層加總使用。
+    /// 自參照遞迴 CTE。水系統無 sign，純正向加總。
     /// </summary>
     public async Task<List<WaterCircuitModel>> GetLeavesUnderAsync(int nCircuitId)
     {
