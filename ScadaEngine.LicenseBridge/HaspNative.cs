@@ -14,4 +14,7 @@ internal static class HaspNative
 
     [DllImport(Dll, CallingConvention = CallingConvention.Cdecl)]
     public static extern uint hasp_logout(uint handle);
+
+    [DllImport(Dll, CallingConvention = CallingConvention.Cdecl)]
+    public static extern uint hasp_read(uint handle, uint fileId, uint offset, uint length, byte[] buffer);
 }

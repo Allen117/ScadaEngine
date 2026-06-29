@@ -1,4 +1,5 @@
 using System.IO.Pipes;
+using System.Text;
 using ScadaEngine.LicenseBridge;
 
 namespace ScadaEngine.LicenseBridge.Services;
@@ -91,7 +92,20 @@ public class HaspVerificationService : BackgroundService
         if (status != HaspNative.HASP_STATUS_OK)
             return (false, $"HASP Login 失敗: {status}");
 
+        // 讀取 fileId=1 前 48 bytes，驗證記憶體內容
+        var buf = new byte[48];
+        uint readSt = HaspNative.hasp_read(handle, 1, 0, 48, buf);
         HaspNative.hasp_logout(handle);
+
+        if (readSt != HaspNative.HASP_STATUS_OK)
+            return (false, $"HASP Read 失敗: {readSt}");
+
+        // Condition A：前 20 bytes == "ITRIGELD400B64308309"
+        var expected = Encoding.ASCII.GetBytes("ITRIGELD400B64308309");
+        for (int i = 0; i < 20; i++)
+            if (buf[i] != expected[i])
+                return (false, "授權碼內容不符");
+
         return (true, "");
     }
 }
