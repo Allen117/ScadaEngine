@@ -1981,6 +1981,162 @@ public class SqlServerDataRepository : IDataRepository, IDisposable
 
     #endregion
 
+    #region 需量計算
+
+    public async Task<IEnumerable<string>> GetDemandSidsAsync()
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+            const string szSql = "SELECT DISTINCT DemandSID FROM EnergyCircuit WHERE DemandSID IS NOT NULL";
+            return await connection.QueryAsync<string>(szSql);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "取得 DemandSID 清單失敗");
+            return Enumerable.Empty<string>();
+        }
+    }
+
+    public async Task UpsertDemandDataAsync(DemandDataModel model)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+            const string szSql = @"
+                MERGE DemandData AS target
+                USING (VALUES (@SID, @Timestamp, @DemandKW, @WindowStart, @SampleCount, @Quality))
+                    AS source (SID, Timestamp, DemandKW, WindowStart, SampleCount, Quality)
+                ON target.SID = source.SID AND target.Timestamp = source.Timestamp
+                WHEN MATCHED THEN
+                    UPDATE SET DemandKW    = source.DemandKW,
+                               WindowStart = source.WindowStart,
+                               SampleCount = source.SampleCount,
+                               Quality     = source.Quality
+                WHEN NOT MATCHED THEN
+                    INSERT (SID, Timestamp, DemandKW, WindowStart, SampleCount, Quality)
+                    VALUES (source.SID, source.Timestamp, source.DemandKW, source.WindowStart, source.SampleCount, source.Quality);";
+
+            await connection.ExecuteAsync(szSql, new
+            {
+                SID         = model.szSID,
+                Timestamp   = model.dtTimestamp,
+                DemandKW    = model.dDemandKW,
+                WindowStart = model.dtWindowStart,
+                SampleCount = model.nSampleCount,
+                Quality     = model.nQuality
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "UPSERT DemandData 失敗: SID={SID}", model.szSID);
+        }
+    }
+
+    public async Task<IEnumerable<DemandCircuitModel>> GetCircuitsWithDemandAsync()
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+            const string szSql = @"
+                SELECT Name AS szName, DemandSID AS szDemandSID
+                FROM EnergyCircuit
+                WHERE DemandSID IS NOT NULL AND DemandSID <> ''
+                ORDER BY Name";
+            return await connection.QueryAsync<DemandCircuitModel>(szSql);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "取得需量迴路清單失敗");
+            return Enumerable.Empty<DemandCircuitModel>();
+        }
+    }
+
+    public async Task<TodayDemandModel?> GetTodayDemandAsync(string szDemandSID)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+            const string szSql = @"
+                SELECT
+                    curr.dCurrentKW,
+                    curr.dtTimestamp,
+                    curr.nQuality,
+                    mx.dMaxKW,
+                    mx.dtMaxAt
+                FROM (
+                    SELECT TOP 1
+                        CASE WHEN Quality = 1 THEN DemandKW ELSE NULL END AS dCurrentKW,
+                        Timestamp  AS dtTimestamp,
+                        Quality    AS nQuality
+                    FROM DemandData
+                    WHERE SID = @SID
+                      AND CAST(Timestamp AS date) = CAST(GETDATE() AS date)
+                    ORDER BY Timestamp DESC
+                ) curr
+                OUTER APPLY (
+                    SELECT TOP 1
+                        DemandKW  AS dMaxKW,
+                        Timestamp AS dtMaxAt
+                    FROM DemandData
+                    WHERE SID = @SID
+                      AND CAST(Timestamp AS date) = CAST(GETDATE() AS date)
+                      AND Quality = 1
+                    ORDER BY DemandKW DESC, Timestamp ASC
+                ) mx";
+
+            return await connection.QueryFirstOrDefaultAsync<TodayDemandModel>(szSql, new { SID = szDemandSID });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "取得今日需量失敗: SID={SID}", szDemandSID);
+            return null;
+        }
+    }
+
+    public async Task<IEnumerable<DemandTrendPoint>> GetTodayDemandTrendAsync(string szDemandSID)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+            const string szSql = @"
+                SELECT Timestamp AS dtTimestamp, DemandKW AS dDemandKW, Quality AS nQuality
+                FROM DemandData
+                WHERE SID = @SID
+                  AND CAST(Timestamp AS date) = CAST(GETDATE() AS date)
+                ORDER BY Timestamp ASC";
+
+            return await connection.QueryAsync<DemandTrendPoint>(szSql, new { SID = szDemandSID });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "取得今日需量趨勢失敗: SID={SID}", szDemandSID);
+            return Enumerable.Empty<DemandTrendPoint>();
+        }
+    }
+
+    #endregion
+
     /// <summary>
     /// 釋放資源
     /// </summary>

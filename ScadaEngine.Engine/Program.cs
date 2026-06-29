@@ -68,6 +68,13 @@ try
     // 註冊資料庫相關服務 (包含儲存服務)
     builder.Services.AddDataServices();
 
+    // 授權守衛
+    builder.Services.AddSingleton<LicenseState>();
+    builder.Services.AddSingleton<LicenseService>();
+    builder.Services.AddHostedService<LicenseService>(provider =>
+        provider.GetRequiredService<LicenseService>());
+    builder.Services.AddHostedService<LicenseVerifySubscriber>();
+
     // 註冊條件控制服務
     builder.Services.AddHostedService<ConditionControlService>();
 
@@ -98,6 +105,9 @@ try
     builder.Services.AddSingleton<WaterLeafHourlyRepository>();
     builder.Services.AddSingleton<WaterLeafAggregator>();
     builder.Services.AddHostedService<WaterLeafAggregationService>();
+
+    // 註冊需量計算服務（每分鐘計算各電表迴路 15min 滑動 TWA 功率）
+    builder.Services.AddHostedService<DemandCalculatorService>();
 
     var host = builder.Build();
 

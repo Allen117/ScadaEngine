@@ -296,6 +296,25 @@ public interface IDataRepository
 
     #endregion
 
+    #region 需量計算
+
+    /// <summary>取得 EnergyCircuit 中所有不重複的 DemandSID（NULL 排除）</summary>
+    Task<IEnumerable<string>> GetDemandSidsAsync();
+
+    /// <summary>UPSERT 需量計算結果至 DemandData</summary>
+    Task UpsertDemandDataAsync(DemandDataModel model);
+
+    /// <summary>取得所有已設定 DemandSID 的電表/迴路（Name + DemandSID），供 Web 下拉選單用</summary>
+    Task<IEnumerable<DemandCircuitModel>> GetCircuitsWithDemandAsync();
+
+    /// <summary>取得指定 DemandSID 今日的即時需量（最新一筆）與今日最大值</summary>
+    Task<TodayDemandModel?> GetTodayDemandAsync(string szDemandSID);
+
+    /// <summary>取得指定 DemandSID 今日所有 Quality=1 的需量趨勢點（升冪），供折線圖用</summary>
+    Task<IEnumerable<DemandTrendPoint>> GetTodayDemandTrendAsync(string szDemandSID);
+
+    #endregion
+
     /// <summary>
     /// 釋放資源
     /// </summary>

@@ -4,4 +4,57 @@
 }
 
 <div class="ems-hub">
+    <div class="container-fluid mt-3">
+        <div class="row g-3">
+
+            <!-- 今日即時需量卡片 -->
+            <div class="col-md-6 col-lg-5 col-xl-4">
+                <div class="card shadow-sm">
+                    <div class="card-header py-2"
+                         style="background:#43a047;color:#fff;">
+                        <i class="fas fa-tachometer-alt me-1"></i>今日即時需量
+                    </div>
+                    <div class="card-body pb-2">
+
+                        <select id="demandCircuitSelect" class="form-select form-select-sm mb-2">
+                            <option value="">載入中...</option>
+                        </select>
+
+                        <!-- 即時數值 + 狀態點 -->
+                        <div class="d-flex align-items-center justify-content-center gap-2 py-1">
+                            <span id="demandCurrentKW"
+                                  class="fw-bold"
+                                  style="font-size:1.8rem;line-height:1;color:#2e7d32;">--</span>
+                            <span class="small text-muted">kW</span>
+                            <span id="demandStatusDot"
+                                  data-bs-toggle="tooltip"
+                                  data-bs-original-title=""
+                                  style="width:9px;height:9px;border-radius:50%;background:#bdbdbd;flex-shrink:0;cursor:default;"></span>
+                        </div>
+
+                        <!-- 今日最高需量 -->
+                        <div class="d-flex justify-content-between align-items-baseline px-1 mt-1 mb-2">
+                            <span class="small text-muted">今日最高需量</span>
+                            <span>
+                                <span id="demandMaxKW" class="small fw-semibold text-danger">--</span>
+                                <span id="demandMaxAt" class="small text-muted"></span>
+                            </span>
+                        </div>
+
+                        <!-- 趨勢折線圖 -->
+                        <div style="height:90px;position:relative;">
+                            <canvas id="demandTrendChart"></canvas>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
 </div>
+
+@section Scripts {
+    <script src="~/lib/chartjs/chart.umd.min.js"></script>
+    <script src="~/js/ems.js"></script>
+}

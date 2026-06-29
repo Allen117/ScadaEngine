@@ -410,6 +410,25 @@
       ]
     },
     {
+      "_comment": "需量計算結果 — 每分鐘寫一筆（每個 DemandSID 各一），滾動 15min 時間加權平均功率",
+      "TableName": "DemandData",
+      "Columns": [
+        { "Name": "SID",         "Type": "nvarchar", "Length": 100, "IsPrimaryKey": true,  "Nullable": false,
+          "_comment": "對應 EnergyCircuit.DemandSID（功率點位 SID）" },
+        { "Name": "Timestamp",   "Type": "datetime",               "IsPrimaryKey": true,  "Nullable": false,
+          "_comment": "計算時刻，truncate 到整分鐘（local time）" },
+        { "Name": "DemandKW",    "Type": "float",                  "Nullable": false,
+          "_comment": "15min 滑動時間加權平均功率 kW；Quality=0 時為 0" },
+        { "Name": "WindowStart", "Type": "datetime",               "Nullable": false,
+          "_comment": "本次計算窗口起點（= Timestamp - 15min）" },
+        { "Name": "SampleCount", "Type": "int",                    "Nullable": false,
+          "_comment": "窗口內 Quality=1 的樣本數；< 5 則 Quality=0" },
+        { "Name": "Quality",     "Type": "tinyint",                "Nullable": false, "Default": 1,
+          "_comment": "1=Good, 0=資料不足（SampleCount < 5）" }
+      ],
+      "ClusteredIndex": ["SID", "Timestamp"]
+    },
+    {
       "_comment": "Line 通知收件群組 — 警報觸發時推播 Line 訊息的目標群組清單",
       "TableName": "LineNotifyTargets",
       "Columns": [
