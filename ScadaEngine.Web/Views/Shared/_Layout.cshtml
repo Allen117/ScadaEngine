@@ -353,6 +353,21 @@
         </nav>
     }
 
+    <!-- HASP 授權失效跑馬燈（預設隱藏，license-monitor.js 控制顯示） -->
+    <div id="license-warning-banner"
+         style="display:none; background:#dc3545; color:#fff; padding:6px 16px;
+                align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+        <span>
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>&#9888; Engine 授權驗證失效</strong> &mdash; 資料採集已暫停
+        </span>
+        <button id="license-verify-btn"
+                class="btn btn-sm btn-light"
+                onclick="window._licenseMonitor.triggerVerify()">
+            <i class="fas fa-sync-alt me-1"></i>立即重新驗證
+        </button>
+    </div>
+
     <!-- 主要內容 -->
     <main role="main" class="flex-grow-1">
         @RenderBody()
@@ -473,6 +488,9 @@
             });
         })();
     </script>
+
+    <!-- 授權守衛監控 -->
+    <script src="~/js/license-monitor.js"></script>
 
     <!-- 頁面特定 JavaScript -->
     @await RenderSectionAsync("Scripts", required: false)
