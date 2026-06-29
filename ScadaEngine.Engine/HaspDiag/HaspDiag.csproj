@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RuntimeIdentifier>win-x86</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="..\Lib\apidsp_windows.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>apidsp_windows.dll</Link>
+    </None>
+    <None Include="..\Lib\hasp_windows_102115.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>hasp_windows_102115.dll</Link>
+    </None>
+    <None Include="..\Lib\hasp_windows_103223.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>hasp_windows_103223.dll</Link>
+    </None>
+    <None Include="..\Lib\hasp_windows_112579.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>hasp_windows_112579.dll</Link>
+    </None>
+    <None Include="..\Lib\haspvlib_102115.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>haspvlib_102115.dll</Link>
+    </None>
+    <None Include="..\Lib\haspvlib_103223.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>haspvlib_103223.dll</Link>
+    </None>
+    <None Include="..\Lib\haspvlib_112579.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>haspvlib_112579.dll</Link>
+    </None>
+  </ItemGroup>
+</Project>

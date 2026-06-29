@@ -23,6 +23,9 @@ public class ModbusCollectionManager : IDisposable
     private FileSystemWatcher? _configFileWatcher;
     private bool _isDisposed = false;
 
+    /// <summary>true 時各採集迴圈跳過資料讀取（連線保持）</summary>
+    private volatile bool _isSuspended = false;
+
     /// <summary>
     /// 預設採集週期 (毫秒)，當設備未設定時使用
     /// </summary>
@@ -165,6 +168,13 @@ public class ModbusCollectionManager : IDisposable
                                 isConnected ? "Connected" : "Disconnected",
                                 communicationService.GetDeviceStatus());
                         }
+                    }
+
+                    // 授權暫停中：保持連線但跳過資料讀取
+                    if (_isSuspended)
+                    {
+                        await Task.Delay(nIntervalMs, cancellationToken);
+                        continue;
                     }
 
                     // 執行資料採集（即使未連線也要嘗試，以產生 Bad Quality 資料）
@@ -313,6 +323,20 @@ public class ModbusCollectionManager : IDisposable
         {
             _logger.LogError(ex, "停止設備採集時發生錯誤: {DeviceKey}", szDeviceKey);
         }
+    }
+
+    /// <summary>暫停所有設備資料讀取（連線保持，供授權守衛呼叫）</summary>
+    public void Suspend()
+    {
+        _isSuspended = true;
+        _logger.LogWarning("Modbus 採集已暫停（授權守衛）");
+    }
+
+    /// <summary>恢復所有設備資料讀取（供授權守衛呼叫）</summary>
+    public void Resume()
+    {
+        _isSuspended = false;
+        _logger.LogInformation("Modbus 採集已恢復（授權守衛）");
     }
 
     /// <summary>

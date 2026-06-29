@@ -253,6 +253,11 @@ function Install-Service {
         Write-Host '  - Mqtt\MqttSetting.json'
         Write-Host '  - DatabaseSchema\DatabaseSchema.json'
         Write-Host '  - DBPoint\*.json'
+
+        # ── LicenseBridge ──────────────────────────────────────────────────
+        Deploy-LicenseBridge -SolutionRoot (Split-Path $ProjectPath -Parent) -Install $true
+        # ───────────────────────────────────────────────────────────────────
+
         return $true
 
     } catch {
@@ -511,6 +516,10 @@ function Update-Service {
 
         if ($wasRunning) { Start-Service -Name $ServiceName; Start-Sleep 2 }
 
+        # ── LicenseBridge ──────────────────────────────────────────────────
+        Deploy-LicenseBridge -SolutionRoot (Split-Path $ProjectPath -Parent) -Install $false
+        # ───────────────────────────────────────────────────────────────────
+
         Get-ServiceStatus
         Write-Host "Update completed!" -ForegroundColor Green
         return $true
@@ -705,6 +714,69 @@ function Force-Cleanup {
         Write-Host "Force cleanup error: $($_.Exception.Message)" -ForegroundColor Red
     }
 }
+# Function: Build and deploy LicenseBridge (32-bit)
+# -Install $true  → first-time install：sc.exe create + start
+# -Install $false → update：stop → deploy → start
+function Deploy-LicenseBridge {
+    param(
+        [string]$SolutionRoot,
+        [bool]$Install
+    )
+
+    $BridgeProject = Join-Path $SolutionRoot "ScadaEngine.LicenseBridge\ScadaEngine.LicenseBridge.csproj"
+    $BridgeTarget  = "C:\SCADA\LicenseBridge"
+    $BridgeSvc     = "ScadaEngineLicense"
+    $BridgeExe     = Join-Path $BridgeTarget "ScadaEngine.LicenseBridge.exe"
+
+    Write-Host ""
+    Write-Host "======================================" -ForegroundColor Cyan
+    Write-Host "  Deploying LicenseBridge (win-x86)"
+    Write-Host "======================================" -ForegroundColor Cyan
+
+    if (-not (Test-Path $BridgeProject)) {
+        Write-Host "LicenseBridge csproj not found, skipping." -ForegroundColor Yellow
+        return
+    }
+
+    # Stop bridge before update
+    if (-not $Install) {
+        $svc = Get-Service -Name $BridgeSvc -ErrorAction SilentlyContinue
+        if ($svc -and $svc.Status -eq 'Running') {
+            Write-Host "Stopping $BridgeSvc..."
+            Stop-Service -Name $BridgeSvc -Force
+            Start-Sleep -Seconds 2
+        }
+    }
+
+    # Build & publish
+    Write-Host "Publishing LicenseBridge (self-contained win-x86)..."
+    dotnet publish $BridgeProject -c Release --self-contained true --runtime win-x86 -o $BridgeTarget
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "LicenseBridge build failed." -ForegroundColor Red
+        return
+    }
+    Write-Host "LicenseBridge published to $BridgeTarget" -ForegroundColor Green
+
+    # Install service if not exists (Install mode or after clean)
+    $svcExist = Get-Service -Name $BridgeSvc -ErrorAction SilentlyContinue
+    if (-not $svcExist) {
+        Write-Host "Creating Windows Service: $BridgeSvc"
+        sc.exe create $BridgeSvc `
+            binPath= "`"$BridgeExe`"" `
+            DisplayName= "SCADA Engine License Bridge" `
+            start= auto | Out-Null
+        sc.exe description $BridgeSvc "32-bit HASP 驗證橋接服務" | Out-Null
+    }
+
+    # Start service
+    Write-Host "Starting $BridgeSvc..."
+    Start-Service -Name $BridgeSvc -ErrorAction SilentlyContinue
+    Start-Sleep -Seconds 2
+    $svcObj = Get-Service -Name $BridgeSvc -ErrorAction SilentlyContinue
+    $svcStatus = if ($svcObj) { $svcObj.Status } else { "Unknown" }
+    Write-Host "LicenseBridge status: $svcStatus" -ForegroundColor $(if ($svcStatus -eq 'Running') { 'Green' } else { 'Yellow' })
+}
+
 # Main execution
 switch ($Action.ToLower()) {
     "install" { if (Get-ServiceStatus) { Write-Host "Service already installed. Use 'uninstall' first or 'update'." } else { Install-Service } }

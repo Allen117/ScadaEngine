@@ -173,6 +173,9 @@ builder.Services.AddScoped<ScadaEngine.Web.Services.AlarmMessageLocalizer>();
 // ScadaPage 控制動作 EventLog 寫入器（EventType=3 資訊）
 builder.Services.AddScoped<ScadaEngine.Web.Services.ControlEventLogger>();
 
+// 授權狀態快取（Singleton — 由 MqttRealtimeSubscriberService 更新，Controller/Layout 讀取）
+builder.Services.AddSingleton<ScadaEngine.Web.Services.LicenseStatusCache>();
+
 // 註冊即時監控 MQTT 訂閱服務
 builder.Services.AddSingleton<ScadaEngine.Web.Services.MqttRealtimeSubscriberService>();
 builder.Services.AddHostedService<ScadaEngine.Web.Services.MqttRealtimeSubscriberService>(provider =>

@@ -26,6 +26,8 @@ public class MqttRealtimeSubscriberService : BackgroundService, IDisposable
     // LogicFlow TP 計時器狀態快取 (key: "treeId-nodeId")
     private readonly ConcurrentDictionary<string, TimerStateItem> _timerStateCache = new();
 
+    private readonly LicenseStatusCache _licenseStatusCache;
+
     // 手動/自動模式快取 (key: SID/CID, value: isAuto)
     // 來源：ManualControlValue 表，由 RefreshManualAutoMapAsync 同步
     private readonly ConcurrentDictionary<string, bool> _manualAutoMap = new();
@@ -33,6 +35,7 @@ public class MqttRealtimeSubscriberService : BackgroundService, IDisposable
     // MQTT 即時資料主題 (格式: SCADA/Realtime/{coordinatorName}/{SID})
     private const string REALTIME_TOPIC = "SCADA/Realtime/+/+";
     private const string TIMER_STATE_TOPIC = "SCADA/LogicFlow/TimerState";
+    private const string LICENSE_STATUS_TOPIC = "SCADA/Sys/License/Status";
 
     // 資料更新事件
     public event Action<RealtimeDataItemModel>? DataUpdated;
@@ -41,11 +44,13 @@ public class MqttRealtimeSubscriberService : BackgroundService, IDisposable
     public MqttRealtimeSubscriberService(
         ILogger<MqttRealtimeSubscriberService> logger,
         MqttConfigService mqttConfigService,
-        IServiceProvider serviceProvider)
+        IServiceProvider serviceProvider,
+        LicenseStatusCache licenseStatusCache)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _mqttConfigService = mqttConfigService ?? throw new ArgumentNullException(nameof(mqttConfigService));
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+        _licenseStatusCache = licenseStatusCache ?? throw new ArgumentNullException(nameof(licenseStatusCache));
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -139,8 +144,10 @@ public class MqttRealtimeSubscriberService : BackgroundService, IDisposable
         {
             await _mqttClient!.SubscribeAsync(REALTIME_TOPIC);
             await _mqttClient!.SubscribeAsync(TIMER_STATE_TOPIC);
+            await _mqttClient!.SubscribeAsync(LICENSE_STATUS_TOPIC);
             _isConnected = true;
-            _logger.LogInformation("已訂閱即時資料主題: {Topic}, {TimerTopic}", REALTIME_TOPIC, TIMER_STATE_TOPIC);
+            _logger.LogInformation("已訂閱即時資料主題: {Topic}, {TimerTopic}, {LicenseTopic}",
+                REALTIME_TOPIC, TIMER_STATE_TOPIC, LICENSE_STATUS_TOPIC);
         }
         catch (Exception ex)
         {
@@ -171,6 +178,13 @@ public class MqttRealtimeSubscriberService : BackgroundService, IDisposable
         {
             var szTopic = e.ApplicationMessage.Topic;
             var szPayload = System.Text.Encoding.UTF8.GetString(e.ApplicationMessage.PayloadSegment);
+
+            // 授權狀態
+            if (szTopic == LICENSE_STATUS_TOPIC)
+            {
+                ParseLicenseStatusMessage(szPayload);
+                return;
+            }
 
             // LogicFlow TP 計時器狀態
             if (szTopic == TIMER_STATE_TOPIC)
@@ -237,6 +251,25 @@ public class MqttRealtimeSubscriberService : BackgroundService, IDisposable
         }
 
         await Task.CompletedTask;
+    }
+
+    /// <summary>解析授權狀態 MQTT 訊息，更新 LicenseStatusCache</summary>
+    private void ParseLicenseStatusMessage(string szPayload)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(szPayload);
+            var root = doc.RootElement;
+            var isValid = root.TryGetProperty("valid", out var validEl) && validEl.GetBoolean();
+            var checkedAt = root.TryGetProperty("checkedAt", out var dtEl) &&
+                            DateTime.TryParse(dtEl.GetString(), out var dt) ? dt : DateTime.UtcNow;
+            var reason = root.TryGetProperty("reason", out var reasonEl) ? reasonEl.GetString() ?? "" : "";
+            _licenseStatusCache.Update(isValid, checkedAt, reason);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "解析授權狀態 MQTT 訊息失敗");
+        }
     }
 
     /// <summary>解析 TP 計時器狀態 MQTT 訊息</summary>
