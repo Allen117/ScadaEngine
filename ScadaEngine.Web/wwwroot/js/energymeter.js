@@ -3,7 +3,8 @@
     'use strict';
 
     let g_nodes = [];           // 平坦清單
-    let g_sidOptions = [];      // 點位下拉選項
+    let g_sidOptions = [];      // kWh 點位下拉選項
+    let g_sidKwOptions = [];    // kW 點位下拉選項（需量計算用）
     let g_selectedId = null;
     let g_modal = null;
 
@@ -14,7 +15,8 @@
         const maxKwhEl = document.getElementById('emMaxKwh');
         maxKwhEl.addEventListener('input', () => { maxKwhEl.value = formatThousand(maxKwhEl.value); });
         document.getElementById('emDevice').addEventListener('change', onDeviceChange);
-        await Promise.all([loadTree(), loadSidOptions()]);
+        document.getElementById('emDemandEnabled').addEventListener('change', onDemandEnabledChange);
+        await Promise.all([loadTree(), loadSidOptions(), loadSidKwOptions()]);
     });
 
     function formatThousand(v) {
@@ -50,6 +52,32 @@
         } catch (err) {
             console.error('[EnergyMeter] 載入 SID 清單失敗', err);
         }
+    }
+
+    async function loadSidKwOptions() {
+        try {
+            const res = await fetch('/EnergyMeter/api/sids-kw');
+            g_sidKwOptions = await res.json();
+        } catch (err) {
+            console.error('[EnergyMeter] 載入 kW SID 清單失敗', err);
+        }
+    }
+
+    function renderDemandSidOptions(selectedSid) {
+        const sel = document.getElementById('emDemandSid');
+        const devices = [...new Set(g_sidKwOptions.map(o => o.deviceName || '未指定'))].sort();
+        sel.innerHTML = '<option value="">—— 請選擇功率點位 ——</option>' +
+            devices.map(dev => {
+                const opts = g_sidKwOptions.filter(o => (o.deviceName || '未指定') === dev);
+                return `<optgroup label="${escapeHtml(dev)}">${
+                    opts.map(o => `<option value="${escapeHtml(o.sid)}"${o.sid === selectedSid ? ' selected' : ''}>${escapeHtml(o.name)}</option>`).join('')
+                }</optgroup>`;
+            }).join('');
+    }
+
+    function onDemandEnabledChange() {
+        document.getElementById('emDemandSidRow').style.display =
+            document.getElementById('emDemandEnabled').checked ? '' : 'none';
     }
 
     function renderDeviceOptions() {
@@ -143,6 +171,10 @@
         const sidLabel = sidOpt
             ? (sidOpt.deviceName ? `${sidOpt.deviceName} - ${sidOpt.name}` : sidOpt.name)
             : (isMeter ? '⚠ 找不到對應的點位' : '');
+        const demandOpt = isMeter && node.demandSid ? g_sidKwOptions.find(o => o.sid === node.demandSid) : null;
+        const demandLabel = demandOpt
+            ? (demandOpt.deviceName ? `${demandOpt.deviceName} - ${demandOpt.name}` : demandOpt.name)
+            : (node.demandSid || '');
 
         document.getElementById('detailTitle').innerHTML =
             `<i class="fas ${isMeter ? 'fa-bolt text-warning' : 'fa-folder text-secondary'} me-1"></i>${escapeHtml(node.name)}`;
@@ -177,7 +209,12 @@
             <div class="em-detail-row">
                 <div class="em-detail-label">MaxKwh</div>
                 <div class="em-detail-value">${node.maxKwh != null ? formatThousand(Math.trunc(node.maxKwh)) : '<span class="text-muted">未設定</span>'}</div>
-            </div>` : ''}
+            </div>
+            ${node.demandSid ? `
+            <div class="em-detail-row">
+                <div class="em-detail-label">需量計算點位</div>
+                <div class="em-detail-value">${escapeHtml(demandLabel)}</div>
+            </div>` : ''}` : ''}
             <div class="em-detail-row">
                 <div class="em-detail-label">說明</div>
                 <div class="em-detail-value">${node.description ? escapeHtml(node.description) : '<span class="text-muted">無</span>'}</div>
@@ -205,6 +242,9 @@
         document.getElementById('emDevice').value = '';
         renderSidOptionsForDevice('');
         document.getElementById('emMaxKwh').value = formatThousand(1000000000);
+        document.getElementById('emDemandEnabled').checked = false;
+        renderDemandSidOptions('');
+        document.getElementById('emDemandSidRow').style.display = 'none';
         document.getElementById('emDesc').value = '';
         document.getElementById('emTypeVirtual').checked = true;
         document.getElementById('emSignPos').checked = true;
@@ -226,6 +266,10 @@
         renderSidOptionsForDevice(szDev);
         document.getElementById('emSid').value = node.sid || '';
         document.getElementById('emMaxKwh').value = node.maxKwh == null ? '' : formatThousand(Math.trunc(node.maxKwh));
+        const hasDemand = !!node.demandSid;
+        document.getElementById('emDemandEnabled').checked = hasDemand;
+        renderDemandSidOptions(node.demandSid || '');
+        document.getElementById('emDemandSidRow').style.display = hasDemand ? '' : 'none';
         document.getElementById('emDesc').value = node.description || '';
         if (node.sid) document.getElementById('emTypeMeter').checked = true;
         else document.getElementById('emTypeVirtual').checked = true;
@@ -260,6 +304,8 @@
         const isMeter = document.getElementById('emTypeMeter').checked;
         const szSid = isMeter ? document.getElementById('emSid').value : '';
         const nMaxKwh = isMeter ? parseThousand(document.getElementById('emMaxKwh').value) : null;
+        const isDemand = isMeter && document.getElementById('emDemandEnabled').checked;
+        const szDemandSid = isDemand ? document.getElementById('emDemandSid').value : null;
         const szDesc = document.getElementById('emDesc').value;
         const isRoot = szParentId === '';
         const nSign = isRoot ? 1 : (document.getElementById('emSignNeg').checked ? -1 : 1);
@@ -272,6 +318,7 @@
             sid: szSid || null,
             maxKwh: nMaxKwh,
             sign: nSign,
+            demandSid: szDemandSid || null,
             description: szDesc || null
         };
 

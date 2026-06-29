@@ -198,6 +198,23 @@ public class DatabaseInitializationService
                 }
             }
 
+            // EnergyCircuit: 補上 DemandSID 欄位（需量計算功率點位）
+            var nHasDemandSidColumn = await connection.QuerySingleAsync<int>(
+                @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+                  WHERE TABLE_NAME = 'EnergyCircuit' AND COLUMN_NAME = 'DemandSID'");
+            if (nHasDemandSidColumn == 0)
+            {
+                var nHasEnergyTable = await connection.QuerySingleAsync<int>(
+                    @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
+                      WHERE TABLE_NAME = 'EnergyCircuit' AND TABLE_TYPE = 'BASE TABLE'");
+                if (nHasEnergyTable > 0)
+                {
+                    await connection.ExecuteAsync(
+                        "ALTER TABLE [EnergyCircuit] ADD [DemandSID] NVARCHAR(100) NULL");
+                    _logger.LogInformation("欄位遷移完成: EnergyCircuit 新增 DemandSID 欄位");
+                }
+            }
+
             // TimeSchedules: 補上 ExcludeDates / IncludeDates 欄位
             var nHasTimeSchedulesTable = await connection.QuerySingleAsync<int>(
                 @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES

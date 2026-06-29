@@ -109,6 +109,20 @@
                     <label class="form-label fw-semibold mt-3"><i class="fas fa-sort-numeric-up me-1"></i>累積最大值 MaxKwh</label>
                     <input type="text" inputmode="numeric" class="form-control form-control-sm" id="emMaxKwh" placeholder="例如：1,000,000,000">
                     <small class="text-muted d-block mt-1">電表累積值溢位/重置時用於計算 delta；留空表示不處理溢位</small>
+
+                    <div class="form-check mt-3">
+                        <input class="form-check-input" type="checkbox" id="emDemandEnabled">
+                        <label class="form-check-label fw-semibold" for="emDemandEnabled">
+                            <i class="fas fa-tachometer-alt me-1"></i>啟用需量計算
+                        </label>
+                    </div>
+                    <div id="emDemandSidRow" style="display:none;" class="mt-2">
+                        <label class="form-label fw-semibold"><i class="fas fa-plug me-1"></i>功率對應點位</label>
+                        <select class="form-select form-select-sm" id="emDemandSid">
+                            <option value="">-- 請選擇功率點位 --</option>
+                        </select>
+                        <small class="text-muted d-block mt-1">僅列出單位為 kW 的量測點位</small>
+                    </div>
                 </div>
 
                 <div class="mb-3">

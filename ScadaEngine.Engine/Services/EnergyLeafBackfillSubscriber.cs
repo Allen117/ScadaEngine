@@ -143,7 +143,7 @@ public class EnergyLeafBackfillSubscriber : BackgroundService
         return Task.CompletedTask;
     }
 
-    private async Task OnMessageReceivedAsync(MqttApplicationMessageReceivedEventArgs e)
+    private Task OnMessageReceivedAsync(MqttApplicationMessageReceivedEventArgs e)
     {
         try
         {
@@ -154,7 +154,7 @@ public class EnergyLeafBackfillSubscriber : BackgroundService
             if (req == null)
             {
                 _logger.LogWarning("葉子層 Backfill payload 解析失敗，略過");
-                return;
+                return Task.CompletedTask;
             }
 
             // fire-and-forget — backfill 可能跑數分鐘，不阻塞 MQTT callback
@@ -164,6 +164,7 @@ public class EnergyLeafBackfillSubscriber : BackgroundService
         {
             _logger.LogError(ex, "處理葉子層 Backfill 訊息失敗");
         }
+        return Task.CompletedTask;
     }
 
     private static (string? szSid, DateTime dtFrom, DateTime dtTo)? ParsePayload(string szPayload)

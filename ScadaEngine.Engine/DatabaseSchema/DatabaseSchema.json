@@ -326,6 +326,8 @@
           "_comment": "電表累積最大值（kWh），用於溢位/重置判定。葉子才有意義" },
         { "Name": "Sign",        "Type": "int",                     "Nullable": false, "Default": 1,
           "_comment": "對父節點的貢獻方向：+1=正向加入、-1=反向扣減。根節點固定 +1" },
+        { "Name": "DemandSID",   "Type": "nvarchar", "Length": 100, "Nullable": true,
+          "_comment": "需量計算功率點位 SID（僅葉子有意義）；NULL 表示未啟用需量計算" },
         { "Name": "Description", "Type": "nvarchar", "Length": 500, "Nullable": true },
         { "Name": "CreatedAt",   "Type": "datetime",                "Nullable": false, "Default": "getdate()" },
         { "Name": "UpdatedAt",   "Type": "datetime",                "Nullable": true }

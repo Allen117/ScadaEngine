@@ -42,6 +42,7 @@ public class EnergyCircuitService
                     SID         AS szSID,
                     MaxKwh      AS dMaxKwh,
                     [Sign]      AS nSign,
+                    DemandSID   AS szDemandSID,
                     Description AS szDescription,
                     CreatedAt   AS dtCreatedAt,
                     UpdatedAt   AS dtUpdatedAt
@@ -61,6 +62,7 @@ public class EnergyCircuitService
                     SID         AS szSID,
                     MaxKwh      AS dMaxKwh,
                     [Sign]      AS nSign,
+                    DemandSID   AS szDemandSID,
                     Description AS szDescription,
                     CreatedAt   AS dtCreatedAt,
                     UpdatedAt   AS dtUpdatedAt
@@ -81,9 +83,9 @@ public class EnergyCircuitService
         var nSign = NormalizeSign(model.nSign, model.nParentId);
 
         return await conn.QuerySingleAsync<int>(@"
-            INSERT INTO EnergyCircuit (Name, ParentId, SortOrder, SID, MaxKwh, [Sign], Description, CreatedAt)
+            INSERT INTO EnergyCircuit (Name, ParentId, SortOrder, SID, MaxKwh, [Sign], DemandSID, Description, CreatedAt)
             OUTPUT INSERTED.Id
-            VALUES (@Name, @ParentId, @SortOrder, @SID, @MaxKwh, @Sign, @Description, GETDATE())",
+            VALUES (@Name, @ParentId, @SortOrder, @SID, @MaxKwh, @Sign, @DemandSID, @Description, GETDATE())",
             new
             {
                 Name = model.szName,
@@ -92,12 +94,13 @@ public class EnergyCircuitService
                 SID = model.szSID,
                 MaxKwh = model.dMaxKwh,
                 Sign = nSign,
+                DemandSID = model.szDemandSID,
                 Description = model.szDescription
             });
     }
 
     /// <summary>更新節點（不動 ParentId / SortOrder，改用 MoveAsync）。根節點強制 Sign=1。</summary>
-    public async Task<bool> UpdateAsync(int nId, string szName, string? szSID, double? dMaxKwh, int nSign, string? szDescription)
+    public async Task<bool> UpdateAsync(int nId, string szName, string? szSID, double? dMaxKwh, int nSign, string? szDemandSID, string? szDescription)
     {
         using var conn = await GetConnectionAsync();
         var nParentId = await conn.ExecuteScalarAsync<int?>(
@@ -110,10 +113,11 @@ public class EnergyCircuitService
                     SID = @SID,
                     MaxKwh = @MaxKwh,
                     [Sign] = @Sign,
+                    DemandSID = @DemandSID,
                     Description = @Description,
                     UpdatedAt = GETDATE()
             WHERE   Id = @Id",
-            new { Id = nId, Name = szName, SID = szSID, MaxKwh = dMaxKwh, Sign = nSignNormalized, Description = szDescription });
+            new { Id = nId, Name = szName, SID = szSID, MaxKwh = dMaxKwh, Sign = nSignNormalized, DemandSID = szDemandSID, Description = szDescription });
         return nRows > 0;
     }
 
@@ -201,6 +205,7 @@ public class EnergyCircuitService
                     SID         AS szSID,
                     MaxKwh      AS dMaxKwh,
                     [Sign]      AS nSign,
+                    DemandSID   AS szDemandSID,
                     Description AS szDescription,
                     CreatedAt   AS dtCreatedAt,
                     UpdatedAt   AS dtUpdatedAt

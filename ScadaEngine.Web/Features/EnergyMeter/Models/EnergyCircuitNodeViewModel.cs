@@ -12,5 +12,6 @@ public class EnergyCircuitNodeViewModel
     public string? sid { get; set; }
     public double? maxKwh { get; set; }
     public int sign { get; set; } = 1;
+    public string? demandSid { get; set; }
     public string? description { get; set; }
 }
