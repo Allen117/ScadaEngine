@@ -1,6 +1,8 @@
 using System.IO.Pipes;
 using System.Text;
-using ScadaEngine.LicenseBridge;
+using Aladdin.HASP;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace ScadaEngine.LicenseBridge.Services;
 
@@ -65,10 +67,10 @@ public class HaspVerificationService : BackgroundService
 
         await server.WaitForConnectionAsync(ct);
 
-        using var reader = new StreamReader(server, leaveOpen: true);
-        using var writer = new StreamWriter(server, leaveOpen: true) { AutoFlush = true };
+        using var reader = new StreamReader(server, Encoding.UTF8, false, 1024, true);
+        using var writer = new StreamWriter(server, new UTF8Encoding(false), 1024, true) { AutoFlush = true };
 
-        var command = await reader.ReadLineAsync(ct);
+        var command = await reader.ReadLineAsync();
         string reply;
 
         if (command?.Trim() == "verify")
@@ -86,26 +88,40 @@ public class HaspVerificationService : BackgroundService
         await writer.WriteLineAsync(reply);
     }
 
-    private static (bool ok, string reason) VerifyHasp()
+    private (bool ok, string reason) VerifyHasp()
     {
-        uint status = HaspNative.hasp_login(HaspNative.HASP_DEFAULT_FID, VENDOR_CODE, out uint handle);
-        if (status != HaspNative.HASP_STATUS_OK)
-            return (false, $"HASP Login 失敗: {status}");
+        var hasp = new Hasp(HaspFeature.Default);
+        HaspStatus loginStatus = hasp.Login(VENDOR_CODE);
+        _logger.LogInformation("hasp.Login → {Status} ({Code})", loginStatus, (int)loginStatus);
 
-        // 讀取 fileId=1 前 48 bytes，驗證記憶體內容
-        var buf = new byte[48];
-        uint readSt = HaspNative.hasp_read(handle, 1, 0, 48, buf);
-        HaspNative.hasp_logout(handle);
+        if (loginStatus != HaspStatus.StatusOk)
+            return (false, $"HASP Login 失敗: {(int)loginStatus}");
 
-        if (readSt != HaspNative.HASP_STATUS_OK)
-            return (false, $"HASP Read 失敗: {readSt}");
+        try
+        {
+            HaspFile file = hasp.GetFile(HaspFileId.ReadWrite);
+            if (!file.IsLoggedIn())
+                return (false, "HASP File 未登入");
 
-        // Condition A：前 20 bytes == "ITRIGELD400B64308309"
-        var expected = Encoding.ASCII.GetBytes("ITRIGELD400B64308309");
-        for (int i = 0; i < 20; i++)
-            if (buf[i] != expected[i])
-                return (false, "授權碼內容不符");
+            file.FilePos = 0;
+            byte[] data = new byte[48];
+            HaspStatus readStatus = file.Read(data, 0, data.Length);
+            _logger.LogInformation("file.Read → {Status} ({Code})", readStatus, (int)readStatus);
 
-        return (true, "");
+            if (readStatus != HaspStatus.StatusOk)
+                return (false, $"HASP Read 失敗: {(int)readStatus}");
+
+            // 前 20 bytes == "ITRIGELD400B64308309"
+            var expected = Encoding.ASCII.GetBytes("ITRIGELD400B64308309");
+            for (int i = 0; i < 20; i++)
+                if (data[i] != expected[i])
+                    return (false, "授權碼內容不符");
+
+            return (true, "");
+        }
+        finally
+        {
+            hasp.Logout();
+        }
     }
 }

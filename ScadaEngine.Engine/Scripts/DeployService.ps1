@@ -730,7 +730,7 @@ function Deploy-LicenseBridge {
 
     Write-Host ""
     Write-Host "======================================" -ForegroundColor Cyan
-    Write-Host "  Deploying LicenseBridge (win-x86)"
+    Write-Host "  Deploying LicenseBridge (net48 x86)"
     Write-Host "======================================" -ForegroundColor Cyan
 
     if (-not (Test-Path $BridgeProject)) {
@@ -748,9 +748,15 @@ function Deploy-LicenseBridge {
         }
     }
 
-    # Build & publish
-    Write-Host "Publishing LicenseBridge (self-contained win-x86)..."
-    dotnet publish $BridgeProject -c Release --self-contained true --runtime win-x86 -o $BridgeTarget
+    # 清掉舊部署（避免 net8.0 殘留的 .dll / runtimeconfig.json 污染 net48 執行環境）
+    if (Test-Path $BridgeTarget) {
+        Write-Host "Cleaning old LicenseBridge deployment..."
+        Remove-Item -Path "$BridgeTarget\*" -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    # Build & publish（net48 不支援 --self-contained / --runtime，平台由 csproj PlatformTarget=x86 控制）
+    Write-Host "Publishing LicenseBridge (net48 x86)..."
+    dotnet publish $BridgeProject -c Release -o $BridgeTarget
     if ($LASTEXITCODE -ne 0) {
         Write-Host "LicenseBridge build failed." -ForegroundColor Red
         return

@@ -1,5 +1,7 @@
-using ScadaEngine.LicenseBridge.Services;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Serilog;
+using ScadaEngine.LicenseBridge.Services;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -7,7 +9,7 @@ Log.Logger = new LoggerConfiguration()
         Path.Combine(AppContext.BaseDirectory, "Log", "bridge-.log"),
         rollingInterval: RollingInterval.Day,
         retainedFileCountLimit: 7)
-    .CreateBootstrapLogger();
+    .CreateLogger();
 
 try
 {
@@ -33,5 +35,5 @@ catch (Exception ex)
 }
 finally
 {
-    await Log.CloseAndFlushAsync();
+    Log.CloseAndFlush();
 }

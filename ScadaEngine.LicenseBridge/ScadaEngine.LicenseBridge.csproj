@@ -1,11 +1,12 @@
-<Project Sdk="Microsoft.NET.Sdk.Worker">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <PlatformTarget>x86</PlatformTarget>
+    <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <RuntimeIdentifier>win-x86</RuntimeIdentifier>
-    <SelfContained>true</SelfContained>
     <AssemblyTitle>SCADA Engine License Bridge</AssemblyTitle>
     <AssemblyDescription>32-bit HASP 驗證橋接服務（Named Pipe server）</AssemblyDescription>
   </PropertyGroup>
@@ -20,7 +21,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- 32-bit HASP DLLs，複製到輸出目錄 -->
+    <!-- Managed HASP .NET SDK -->
+    <Reference Include="hasp_net_windows">
+      <HintPath>..\ScadaEngine.Engine\Lib\hasp_net_windows.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- HASP DLLs，複製到輸出目錄 -->
+    <None Include="..\ScadaEngine.Engine\Lib\hasp_net_windows.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>hasp_net_windows.dll</TargetPath>
+    </None>
     <None Include="..\ScadaEngine.Engine\Lib\hasp_windows_103223.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>hasp_windows_103223.dll</TargetPath>
