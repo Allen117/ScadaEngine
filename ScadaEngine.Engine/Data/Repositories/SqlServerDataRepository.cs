@@ -1992,12 +1992,12 @@ public class SqlServerDataRepository : IDataRepository, IDisposable
         {
             using var connection = new SqlConnection(_szConnectionString);
             await connection.OpenAsync();
-            const string szSql = "SELECT DISTINCT DemandSID FROM EnergyCircuit WHERE DemandSID IS NOT NULL";
+            const string szSql = "SELECT DISTINCT SID FROM EnergyCircuit WHERE IsDemandEnabled = 1 AND SID IS NOT NULL AND SID <> ''";
             return await connection.QueryAsync<string>(szSql);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "取得 DemandSID 清單失敗");
+            _logger.LogError(ex, "取得需量 SID 清單失敗");
             return Enumerable.Empty<string>();
         }
     }
@@ -2051,9 +2051,9 @@ public class SqlServerDataRepository : IDataRepository, IDisposable
             using var connection = new SqlConnection(_szConnectionString);
             await connection.OpenAsync();
             const string szSql = @"
-                SELECT Name AS szName, DemandSID AS szDemandSID
+                SELECT Name AS szName, SID AS szSID
                 FROM EnergyCircuit
-                WHERE DemandSID IS NOT NULL AND DemandSID <> ''
+                WHERE IsDemandEnabled = 1 AND SID IS NOT NULL AND SID <> ''
                 ORDER BY Name";
             return await connection.QueryAsync<DemandCircuitModel>(szSql);
         }
@@ -2131,6 +2131,124 @@ public class SqlServerDataRepository : IDataRepository, IDisposable
         catch (Exception ex)
         {
             _logger.LogError(ex, "取得今日需量趨勢失敗: SID={SID}", szDemandSID);
+            return Enumerable.Empty<DemandTrendPoint>();
+        }
+    }
+
+    public async Task<IEnumerable<DemandCircuitModel>> GetCircuitsForDemandAsync()
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+            const string szSql = @"
+                ;WITH Leaves AS (
+                    SELECT Id FROM EnergyCircuit
+                    WHERE IsDemandEnabled = 1 AND SID IS NOT NULL AND SID <> ''
+                ),
+                Ancestors AS (
+                    SELECT Id, Name, ParentId FROM EnergyCircuit WHERE Id IN (SELECT Id FROM Leaves)
+                    UNION ALL
+                    SELECT e.Id, e.Name, e.ParentId
+                    FROM EnergyCircuit e INNER JOIN Ancestors a ON e.Id = a.ParentId
+                )
+                SELECT DISTINCT Id AS nId, Name AS szName FROM Ancestors ORDER BY Name";
+            return await connection.QueryAsync<DemandCircuitModel>(szSql);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "取得需量迴路清單（含虛擬迴路）失敗");
+            return Enumerable.Empty<DemandCircuitModel>();
+        }
+    }
+
+    public async Task<TodayDemandModel?> GetTodayDemandByCircuitIdAsync(int nCircuitId)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+            const string szSql = @"
+                ;WITH Descendants AS (
+                    SELECT Id, SID, IsDemandEnabled
+                    FROM EnergyCircuit WHERE Id = @CircuitId
+                    UNION ALL
+                    SELECT t.Id, t.SID, t.IsDemandEnabled
+                    FROM EnergyCircuit t INNER JOIN Descendants d ON t.ParentId = d.Id
+                ),
+                Sids AS (
+                    SELECT SID FROM Descendants
+                    WHERE IsDemandEnabled = 1 AND SID IS NOT NULL AND SID <> ''
+                ),
+                TodayAgg AS (
+                    SELECT Timestamp,
+                           SUM(DemandKW) AS TotalKW,
+                           SUM(CASE WHEN Quality=1 THEN 1 ELSE 0 END) AS GoodCount,
+                           COUNT(*) AS TotalCount
+                    FROM DemandData
+                    WHERE SID IN (SELECT SID FROM Sids)
+                      AND CAST(Timestamp AS DATE) = CAST(GETDATE() AS DATE)
+                    GROUP BY Timestamp
+                )
+                SELECT
+                    (SELECT TOP 1 TotalKW   FROM TodayAgg ORDER BY Timestamp DESC) AS dCurrentKW,
+                    (SELECT TOP 1 Timestamp FROM TodayAgg ORDER BY Timestamp DESC) AS dtTimestamp,
+                    (SELECT TOP 1 CASE WHEN GoodCount = TotalCount THEN 1 ELSE 0 END
+                                  FROM TodayAgg ORDER BY Timestamp DESC) AS nQuality,
+                    (SELECT TOP 1 TotalKW   FROM TodayAgg ORDER BY TotalKW DESC, Timestamp ASC) AS dMaxKW,
+                    (SELECT TOP 1 Timestamp FROM TodayAgg ORDER BY TotalKW DESC, Timestamp ASC) AS dtMaxAt";
+
+            return await connection.QueryFirstOrDefaultAsync<TodayDemandModel>(szSql, new { CircuitId = nCircuitId });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "取得今日需量失敗: CircuitId={CircuitId}", nCircuitId);
+            return null;
+        }
+    }
+
+    public async Task<IEnumerable<DemandTrendPoint>> GetTodayDemandTrendByCircuitIdAsync(int nCircuitId)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+            const string szSql = @"
+                ;WITH Descendants AS (
+                    SELECT Id, SID, IsDemandEnabled
+                    FROM EnergyCircuit WHERE Id = @CircuitId
+                    UNION ALL
+                    SELECT t.Id, t.SID, t.IsDemandEnabled
+                    FROM EnergyCircuit t INNER JOIN Descendants d ON t.ParentId = d.Id
+                ),
+                Sids AS (
+                    SELECT SID FROM Descendants
+                    WHERE IsDemandEnabled = 1 AND SID IS NOT NULL AND SID <> ''
+                )
+                SELECT
+                    Timestamp AS dtTimestamp,
+                    SUM(DemandKW) AS dDemandKW,
+                    CASE WHEN SUM(CASE WHEN Quality=1 THEN 1 ELSE 0 END) = COUNT(*) THEN 1 ELSE 0 END AS nQuality
+                FROM DemandData
+                WHERE SID IN (SELECT SID FROM Sids)
+                  AND CAST(Timestamp AS DATE) = CAST(GETDATE() AS DATE)
+                GROUP BY Timestamp
+                ORDER BY Timestamp ASC";
+
+            return await connection.QueryAsync<DemandTrendPoint>(szSql, new { CircuitId = nCircuitId });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "取得今日需量趨勢失敗: CircuitId={CircuitId}", nCircuitId);
             return Enumerable.Empty<DemandTrendPoint>();
         }
     }

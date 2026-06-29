@@ -20,6 +20,7 @@ public class DbCommunicationService : BackgroundService
     private readonly HistoryDataStorageService _historyStorage;
     private readonly AlarmMonitorService _alarmMonitorService;
     private readonly CalculatedPointService _calculatedPointService;
+    private readonly LicenseState _licenseState;
 
     /// <summary>
     /// PollingInterval 下限（避免使用者誤設過短把連線池打滿）
@@ -49,7 +50,8 @@ public class DbCommunicationService : BackgroundService
         RealtimeDataStorageService realtimeStorage,
         HistoryDataStorageService historyStorage,
         AlarmMonitorService alarmMonitorService,
-        CalculatedPointService calculatedPointService)
+        CalculatedPointService calculatedPointService,
+        LicenseState licenseState)
     {
         _logger = logger;
         _loader = loader;
@@ -59,6 +61,7 @@ public class DbCommunicationService : BackgroundService
         _historyStorage = historyStorage;
         _alarmMonitorService = alarmMonitorService;
         _calculatedPointService = calculatedPointService;
+        _licenseState = licenseState;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -153,6 +156,13 @@ public class DbCommunicationService : BackgroundService
         {
             try
             {
+                // 授權失效時跳過 polling
+                if (!_licenseState.IsValid)
+                {
+                    await Task.Delay(runtime.PollingIntervalMs, ct);
+                    continue;
+                }
+
                 await PollOnceAsync(runtime, szPrefix, ct);
             }
             catch (OperationCanceledException)

@@ -7,12 +7,13 @@ namespace ScadaEngine.Engine.Services;
 
 /// <summary>
 /// 需量計算背景服務。
-/// 每分鐘對齊整分鐘計算各電表迴路 15min 滑動時間加權平均功率（kW），
+/// 每分鐘對齊整分鐘計算各電表迴路 15min ΔkWh×4 需量（kW），
 /// 結果 UPSERT 至 DemandData 表供監控預警使用。
 ///
 /// 設計重點：
-/// - 採 step-hold TWA：每個樣本值保持到下一個樣本，最後一段延伸到窗口尾
-/// - Quality=1 的樣本數 &lt; 5 → DemandKW=0, Quality=0（資料不足）
+/// - 算法：取 15min 窗口內最早一筆與最晚一筆 kWh 樣本，差值 × 4
+/// - Δ &lt; 0（電表重置）→ DemandKW=0, Quality=0
+/// - Quality=1 的樣本數 &lt; 2 → DemandKW=0, Quality=0（資料不足）
 /// - 公開 ReloadDemandSidsAsync() 供外部 MQTT Reload Subscriber 呼叫
 /// </summary>
 public class DemandCalculatorService : BackgroundService
@@ -23,7 +24,7 @@ public class DemandCalculatorService : BackgroundService
     private readonly SemaphoreSlim _reloadLock = new(1, 1);
 
     private const int WINDOW_MINUTES = 15;
-    private const int MIN_SAMPLE_COUNT = 5;
+    private const int MIN_SAMPLE_COUNT = 2;
     private const int RELOAD_INTERVAL_MINUTES = 5;
 
     public DemandCalculatorService(
@@ -49,11 +50,19 @@ public class DemandCalculatorService : BackgroundService
         // 對齊到下一個整分鐘再開始
         var dtNow = DateTime.Now;
         var dtNextMinute = new DateTime(dtNow.Year, dtNow.Month, dtNow.Day, dtNow.Hour, dtNow.Minute, 0).AddMinutes(1);
-        var nDelayMs = (int)(dtNextMinute - dtNow).TotalMilliseconds;
+        var nDelayMs = (int)Math.Ceiling((dtNextMinute - dtNow).TotalMilliseconds);
         _logger.LogInformation("需量計算服務對齊整分鐘，等待 {DelayMs} ms", nDelayMs);
 
         try { await Task.Delay(nDelayMs, stoppingToken); }
         catch (OperationCanceledException) { return; }
+
+        // Task.Delay 可能提早數 ms 觸發，spin 到確實跨過整分鐘
+        while (DateTime.Now < dtNextMinute && !stoppingToken.IsCancellationRequested)
+            await Task.Delay(1, stoppingToken);
+
+        // dtTick 記錄「預定 tick 時間」，每次固定 +1min，不從 DateTime.Now 重新截斷
+        // 這樣即使某次計算花超過 1 分鐘，下一個 tick 仍是 M+1 而非 M+2（不跳分鐘）
+        var dtTick = TruncateToMinute(DateTime.Now);
 
         int nTickCount = 0;
         while (!stoppingToken.IsCancellationRequested)
@@ -63,7 +72,6 @@ public class DemandCalculatorService : BackgroundService
                 await LoadDemandSidsAsync();
             nTickCount++;
 
-            var dtTick = TruncateToMinute(DateTime.Now);
             try
             {
                 await CalculateAllAsync(dtTick, stoppingToken);
@@ -74,11 +82,15 @@ public class DemandCalculatorService : BackgroundService
                 _logger.LogError(ex, "需量計算主迴圈發生錯誤");
             }
 
-            // 等到下一個整分鐘
-            var dtNext = TruncateToMinute(DateTime.Now).AddMinutes(1);
-            var nWaitMs = Math.Max(0, (int)(dtNext - DateTime.Now).TotalMilliseconds);
+            // 固定往前推一分鐘（不依賴當下 DateTime.Now 截斷，避免計算慢時跳過分鐘）
+            dtTick = dtTick.AddMinutes(1);
+            var nWaitMs = (int)Math.Max(0, Math.Ceiling((dtTick - DateTime.Now).TotalMilliseconds));
             try { await Task.Delay(nWaitMs, stoppingToken); }
             catch (OperationCanceledException) { break; }
+
+            // 防止 Task.Delay 提早數 ms 觸發，確保已真正到達 dtTick
+            while (DateTime.Now < dtTick && !stoppingToken.IsCancellationRequested)
+                await Task.Delay(1, stoppingToken);
         }
 
         _logger.LogInformation("需量計算服務已停止");
@@ -149,14 +161,16 @@ public class DemandCalculatorService : BackgroundService
                 }
                 else
                 {
+                    var dDeltaKwh = samples[^1].fValue - samples[0].fValue;
+                    var isReset = dDeltaKwh < 0;
                     result = new DemandDataModel
                     {
                         szSID         = szSid,
                         dtTimestamp   = dtTick,
-                        dDemandKW     = CalcTwa(samples, dtTick),
+                        dDemandKW     = isReset ? 0 : dDeltaKwh * 4.0,
                         dtWindowStart = dtWindowStart,
                         nSampleCount  = samples.Count,
-                        nQuality      = 1
+                        nQuality      = isReset ? (byte)0 : (byte)1
                     };
                 }
 
@@ -169,36 +183,6 @@ public class DemandCalculatorService : BackgroundService
                 _logger.LogError(ex, "需量計算失敗: SID={SID}", szSid);
             }
         }
-    }
-
-    /// <summary>
-    /// step-hold 時間加權平均（TWA）。
-    /// 各樣本值保持到下一個樣本的時刻；最後一個樣本延伸到 windowEnd。
-    /// </summary>
-    private static double CalcTwa(List<HistoryDataModel> points, DateTime windowEnd)
-    {
-        if (points.Count == 1)
-            return points[0].fValue;
-
-        double dTotalWeighted = 0;
-        double dTotalSeconds = 0;
-
-        for (int i = 0; i < points.Count - 1; i++)
-        {
-            var dDt = (points[i + 1].dtTimestamp - points[i].dtTimestamp).TotalSeconds;
-            dTotalWeighted += points[i].fValue * dDt;
-            dTotalSeconds  += dDt;
-        }
-
-        // 最後一段延伸到 windowEnd
-        var dLastDt = (windowEnd - points[^1].dtTimestamp).TotalSeconds;
-        if (dLastDt > 0)
-        {
-            dTotalWeighted += points[^1].fValue * dLastDt;
-            dTotalSeconds  += dLastDt;
-        }
-
-        return dTotalSeconds > 0 ? dTotalWeighted / dTotalSeconds : 0;
     }
 
     private static DateTime TruncateToMinute(DateTime dt)

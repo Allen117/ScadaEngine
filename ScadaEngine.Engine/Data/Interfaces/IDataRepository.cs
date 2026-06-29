@@ -298,20 +298,29 @@ public interface IDataRepository
 
     #region 需量計算
 
-    /// <summary>取得 EnergyCircuit 中所有不重複的 DemandSID（NULL 排除）</summary>
+    /// <summary>取得 EnergyCircuit 中所有 IsDemandEnabled=1 且 SID IS NOT NULL 的 kWh 點位 SID（不重複）</summary>
     Task<IEnumerable<string>> GetDemandSidsAsync();
 
     /// <summary>UPSERT 需量計算結果至 DemandData</summary>
     Task UpsertDemandDataAsync(DemandDataModel model);
 
-    /// <summary>取得所有已設定 DemandSID 的電表/迴路（Name + DemandSID），供 Web 下拉選單用</summary>
+    /// <summary>取得所有 IsDemandEnabled=1 的電表/迴路（Name + kWh SID），供 Web 下拉選單用</summary>
     Task<IEnumerable<DemandCircuitModel>> GetCircuitsWithDemandAsync();
 
-    /// <summary>取得指定 DemandSID 今日的即時需量（最新一筆）與今日最大值</summary>
+    /// <summary>取得指定 kWh SID 今日的即時需量（最新一筆）與今日最大值</summary>
     Task<TodayDemandModel?> GetTodayDemandAsync(string szDemandSID);
 
-    /// <summary>取得指定 DemandSID 今日所有 Quality=1 的需量趨勢點（升冪），供折線圖用</summary>
+    /// <summary>取得指定 kWh SID 今日所有 Quality=1 的需量趨勢點（升冪），供折線圖用</summary>
     Task<IEnumerable<DemandTrendPoint>> GetTodayDemandTrendAsync(string szDemandSID);
+
+    /// <summary>取得所有可作為 EMS 需量選單的迴路（葉子＋含有啟用後裔的虛擬迴路）</summary>
+    Task<IEnumerable<DemandCircuitModel>> GetCircuitsForDemandAsync();
+
+    /// <summary>取得指定迴路（遞迴展開後裔加總）今日的即時需量與今日最大值</summary>
+    Task<TodayDemandModel?> GetTodayDemandByCircuitIdAsync(int nCircuitId);
+
+    /// <summary>取得指定迴路（遞迴展開後裔加總）今日所有需量趨勢點（升冪），供折線圖用</summary>
+    Task<IEnumerable<DemandTrendPoint>> GetTodayDemandTrendByCircuitIdAsync(int nCircuitId);
 
     #endregion
 

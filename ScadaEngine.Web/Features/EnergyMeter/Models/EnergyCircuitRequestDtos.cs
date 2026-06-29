@@ -9,7 +9,7 @@ public class CreateCircuitDto
     public double? maxKwh { get; set; }
     /// <summary>對父貢獻方向：+1 / -1，預設 +1。根節點伺服器端會強制覆寫為 +1</summary>
     public int sign { get; set; } = 1;
-    public string? demandSid { get; set; }
+    public bool isDemandEnabled { get; set; }
     public string? description { get; set; }
 }
 
@@ -21,7 +21,7 @@ public class UpdateCircuitDto
     public double? maxKwh { get; set; }
     /// <summary>對父貢獻方向：+1 / -1。根節點伺服器端會強制覆寫為 +1</summary>
     public int sign { get; set; } = 1;
-    public string? demandSid { get; set; }
+    public bool isDemandEnabled { get; set; }
     public string? description { get; set; }
 }
 

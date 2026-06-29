@@ -45,7 +45,7 @@ public class EnergyMeterController : Controller
             sid = n.szSID,
             maxKwh = n.dMaxKwh,
             sign = n.nSign,
-            demandSid = n.szDemandSID,
+            isDemandEnabled = n.isIsDemandEnabled,
             description = n.szDescription
         }));
     }
@@ -122,71 +122,6 @@ public class EnergyMeterController : Controller
         return Ok(list);
     }
 
-    [HttpGet("api/sids-kw")]
-    public async Task<IActionResult> GetSidKwOptions()
-    {
-        var modbus = await _repository.GetAllModbusPointsAsync();
-        var calc = await _repository.GetAllCalculatedPointsAsync();
-        var dbPts = await _repository.GetAllDbPointsAsync();
-        var coords = (await _repository.GetAllCoordinatorsAsync()).ToList();
-        var dbCoords = (await _repository.GetAllDbCoordinatorsAsync()).ToList();
-
-        string ResolveDeviceName(string szSID)
-        {
-            var nHyphen = szSID.IndexOf('-');
-            if (nHyphen <= 0) return string.Empty;
-            if (!int.TryParse(szSID[..nHyphen], out var nPrefix)) return string.Empty;
-            var nCoordId = nPrefix / 65536;
-            var nSubModbusId = (nPrefix % 65536) / 256;
-            var coord = coords.FirstOrDefault(c => c.Id == nCoordId);
-            if (coord == null) return string.Empty;
-            var ids = (coord.szModbusID ?? string.Empty)
-                .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-            var names = (coord.szDeviceName ?? string.Empty)
-                .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-            if (ids.Length <= 1) return coord.szName ?? string.Empty;
-            for (int i = 0; i < ids.Length; i++)
-            {
-                if (int.TryParse(ids[i], out var nMid) && nMid == nSubModbusId)
-                    return (i < names.Length && !string.IsNullOrWhiteSpace(names[i]))
-                        ? names[i] : (coord.szName ?? string.Empty);
-            }
-            return coord.szName ?? string.Empty;
-        }
-
-        var list = modbus
-            .Where(p => string.Equals(p.szUnit, "kW", StringComparison.OrdinalIgnoreCase))
-            .Select(p => new CircuitSidOptionDto
-            {
-                sid = p.szSID,
-                name = p.szName,
-                unit = p.szUnit,
-                source = "Modbus",
-                deviceName = ResolveDeviceName(p.szSID)
-            })
-            .Concat(calc
-                .Where(p => string.Equals(p.szUnit, "kW", StringComparison.OrdinalIgnoreCase))
-                .Select(p => new CircuitSidOptionDto
-                {
-                    sid = p.szSID,
-                    name = p.szName,
-                    unit = p.szUnit,
-                    source = "Calculated",
-                    deviceName = p.szGroupName ?? string.Empty
-                }))
-            .Concat(dbPts
-                .Where(p => string.Equals(p.szUnit, "kW", StringComparison.OrdinalIgnoreCase))
-                .Select(p => new CircuitSidOptionDto
-                {
-                    sid = p.szSID,
-                    name = p.szName,
-                    unit = p.szUnit ?? string.Empty,
-                    source = "DB",
-                    deviceName = dbCoords.FirstOrDefault(c => c.Id == p.nCoordinatorId)?.szName ?? string.Empty
-                }));
-        return Ok(list);
-    }
-
     [HttpPost("api/tree")]
     public async Task<IActionResult> Create([FromBody] CreateCircuitDto dto)
     {
@@ -202,7 +137,7 @@ public class EnergyMeterController : Controller
             szSID = string.IsNullOrWhiteSpace(dto.sid) ? null : dto.sid,
             dMaxKwh = dto.maxKwh,
             nSign = dto.sign,
-            szDemandSID = string.IsNullOrWhiteSpace(dto.demandSid) ? null : dto.demandSid,
+            isIsDemandEnabled = dto.isDemandEnabled,
             szDescription = dto.description
         });
         return Ok(new { success = true, id = nId });
@@ -219,7 +154,7 @@ public class EnergyMeterController : Controller
         var ok = await _service.UpdateAsync(nId, dto.name,
             string.IsNullOrWhiteSpace(dto.sid) ? null : dto.sid,
             dto.maxKwh, dto.sign,
-            string.IsNullOrWhiteSpace(dto.demandSid) ? null : dto.demandSid,
+            dto.isDemandEnabled,
             dto.description);
         return ok ? Ok(new { success = true }) : NotFound(new { success = false, message = "節點不存在" });
     }

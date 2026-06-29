@@ -13,7 +13,7 @@ public class EnergyCircuitModel
     public double? dMaxKwh { get; set; }
     /// <summary>對父節點的貢獻方向：+1=正向加入、-1=反向扣減。根節點固定 +1</summary>
     public int nSign { get; set; } = 1;
-    public string? szDemandSID { get; set; }
+    public bool isIsDemandEnabled { get; set; }
     public string? szDescription { get; set; }
     public DateTime dtCreatedAt { get; set; }
     public DateTime? dtUpdatedAt { get; set; }

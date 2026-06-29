@@ -2,7 +2,7 @@
     'use strict';
 
     var REFRESH_MS = 60000;
-    var _sid = '';
+    var _circuitId = '';
     var _refreshTimer = null;
     var _chart = null;
     var _dotTooltip = null;
@@ -18,9 +18,9 @@
         loadCircuits();
 
         document.getElementById('demandCircuitSelect').addEventListener('change', function () {
-            _sid = this.value;
+            _circuitId = this.value;
             clearTimeout(_refreshTimer);
-            if (_sid) refresh();
+            if (_circuitId) refresh();
             else clearDisplay();
         });
     }
@@ -36,9 +36,9 @@
                     return;
                 }
                 sel.innerHTML = list.map(function (c) {
-                    return '<option value="' + escAttr(c.sid) + '">' + escHtml(c.name) + '</option>';
+                    return '<option value="' + escAttr(c.id) + '">' + escHtml(c.name) + '</option>';
                 }).join('');
-                _sid = list[0].sid;
+                _circuitId = String(list[0].id);
                 refresh();
             })
             .catch(function (e) { console.error('載入需量迴路失敗', e); });
@@ -46,12 +46,12 @@
 
     // ── 刷新（今日數值 + 趨勢圖同時更新）────────────────────
     function refresh() {
-        if (!_sid) return;
+        if (!_circuitId) return;
         clearTimeout(_refreshTimer);
 
         Promise.all([
-            fetch('/EMS/api/demand-today?sid=' + encodeURIComponent(_sid)).then(function (r) { return r.json(); }),
-            fetch('/EMS/api/demand-trend?sid=' + encodeURIComponent(_sid)).then(function (r) { return r.json(); })
+            fetch('/EMS/api/demand-today?circuitId=' + encodeURIComponent(_circuitId)).then(function (r) { return r.json(); }),
+            fetch('/EMS/api/demand-trend?circuitId=' + encodeURIComponent(_circuitId)).then(function (r) { return r.json(); })
         ]).then(function (res) {
             renderValue(res[0]);
             renderChart(res[1]);

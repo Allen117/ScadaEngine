@@ -18,6 +18,7 @@ public class ConditionControlService : BackgroundService
     private readonly ILogger<ConditionControlService> _logger;
     private readonly IServiceProvider _serviceProvider;
     private readonly ModbusConfigService _modbusConfigService;
+    private readonly LicenseState _licenseState;
 
     // 快取
     private List<ConditionControlRuleModel> _rules = new();
@@ -38,11 +39,13 @@ public class ConditionControlService : BackgroundService
     public ConditionControlService(
         ILogger<ConditionControlService> logger,
         IServiceProvider serviceProvider,
-        ModbusConfigService modbusConfigService)
+        ModbusConfigService modbusConfigService,
+        LicenseState licenseState)
     {
         _logger = logger;
         _serviceProvider = serviceProvider;
         _modbusConfigService = modbusConfigService;
+        _licenseState = licenseState;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -67,6 +70,13 @@ public class ConditionControlService : BackgroundService
                 // 定期重新載入規則 (每 30 秒)
                 if (DateTime.Now - _dtLastRuleReload >= RULE_RELOAD_INTERVAL)
                     await ReloadRulesAsync();
+
+                // 授權失效時跳過控制
+                if (!_licenseState.IsValid)
+                {
+                    await Task.Delay(CHECK_INTERVAL, stoppingToken);
+                    continue;
+                }
 
                 // 評估條件
                 if (_rules.Count > 0)
