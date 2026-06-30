@@ -23,8 +23,23 @@
         return String(new Date().getFullYear());
     }
 
+    // ── 動態填滿可視高度（消除整頁拉霸）─────────────────────────────────────
+    function fitPageHeight() {
+        var page = document.querySelector('.ems-circuit-page');
+        if (!page) return;
+        var nav  = document.querySelector('.navbar');
+        var foot = document.querySelector('.footer');
+        var h = window.innerHeight
+              - (nav  ? nav.offsetHeight  : 0)
+              - (foot ? foot.offsetHeight : 0);
+        page.style.height = h + 'px';
+    }
+
     // ── 初始化 ────────────────────────────────────────────────────────────────
     function init() {
+        fitPageHeight();
+        window.addEventListener('resize', fitPageHeight);
+
         document.getElementById('yearPicker').value  = thisYearStr();
         document.getElementById('monthPicker').value = thisMonthStr();
         document.getElementById('datePicker').value  = todayStr();
