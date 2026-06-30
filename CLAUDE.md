@@ -268,6 +268,28 @@ Defined in `ScadaEngine.Engine` but used by both Engine and Web. Web registers `
 
 改動 `.cshtml` / `.css` / `wwwroot/` 前先讀 [docs/設計規範.md](docs/設計規範.md)，含框架、元件模式、色彩、字體、間距、圓角、陰影、動畫、Z-Index、圖示慣例。
 
+### SCADA / EMS 雙主題（新頁面必讀）
+
+新增頁面前先判斷歸屬，確保色系統一：
+
+- **SCADA 體系**（預設）：深藍 navbar（`navbar-dark bg-primary`）、Bootstrap primary 藍 `#0d6efd`、紫色頁尾漸層
+- **EMS 體系**：淡綠 navbar、主色 `#43a047`、深綠 `#2e7d32`/`#1b5e20`、淺綠 `#e8f5e9`/`#c8e6c9`/`#f1f8f4`、綠色頁尾漸層
+
+**EMS 子頁掛載步驟**（自動套主題，不需在 View / Controller 手動切色）：
+
+1. 路由加入 `PermissionService.EmsRoutes[]`（同時加 `ConfigurablePages` 給權限管理用）
+2. `_Layout.cshtml` 偵測 `IsEmsRoute()` 自動掛 `body.ems-mode` class
+3. `ems.css` 自動套：navbar / brand / footer 綠色化 + `.text-primary` / `.btn-primary` / `.bg-primary` / `.form-control:focus` / `#treeContainer .tree-node.active` 等覆寫成綠
+4. navbar 加 nav-link（搭 i18n key `layout.menu.xxx`）
+
+**色號使用原則**：
+
+- **頁面內優先用 Bootstrap class**（`btn-primary`、`text-primary`、`bg-primary`、`spinner-border text-primary`）— EMS 模式會自動轉綠，不必兩套寫法
+- **新增 EMS 子頁專屬色**時，在 `ems.css` 用 `body.ems-mode .your-class { ... }` 覆寫，不要污染 SCADA 模式
+- 不要在 `.cshtml` 內 inline 硬寫藍色色號（如 `style="color:#0d6efd"`），會破壞 EMS 模式切換
+
+完整色票見 [docs/設計規範.md](docs/設計規範.md) §色彩系統。
+
 ## i18n 規則（zh-TW + en，僅指定頁面）
 
 僅以下頁面已導入 i18n，新增/修改其字串時：
