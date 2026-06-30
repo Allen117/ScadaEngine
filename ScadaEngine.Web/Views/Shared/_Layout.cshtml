@@ -7,7 +7,8 @@
     var szCurrentLangLabel = szCurrentCulture.StartsWith("en") ? "EN" : "台灣";
     var szReturnUrl = Context.Request.Path + Context.Request.QueryString;
     bool isEmsMode = ViewData["EmsMode"] as bool? == true
-        || PermissionService.IsEmsRoute(Context.Request.Path.Value);
+        || PermissionService.IsEmsRoute(Context.Request.Path.Value)
+        || Context.Request.Query["ems"] == "1";
     var szBodyClass = isEmsMode ? "d-flex flex-column ems-mode" : "d-flex flex-column";
     var szNavbarClass = isEmsMode
         ? "navbar navbar-expand-lg navbar-light"
@@ -131,40 +132,70 @@
                     <ul class="navbar-nav me-auto">
                         @if (isEmsMode)
                         {
-                            @if (canAccess("/ChilledWaterSystem"))
+                            @if (canAccess("/CircuitInfo"))
                             {
                                 <li class="nav-item">
-                                    <a class="nav-link" href="/ChilledWaterSystem">
-                                        <i class="fas fa-tint me-1"></i>
-                                        @Localizer["layout.menu.chilled_water"]
+                                    <a class="nav-link" href="/CircuitInfo">
+                                        <i class="fas fa-plug me-1"></i>
+                                        @Localizer["layout.menu.circuit_info"]
                                     </a>
                                 </li>
                             }
-                            @if (canAccess("/EnergyMeter"))
+                            @if (canAccess("/EnergyReport") || canAccess("/RefrigerationTonReport"))
                             {
-                                <li class="nav-item">
-                                    <a class="nav-link" href="/EnergyMeter">
-                                        <i class="fas fa-sitemap me-1"></i>
-                                        @Localizer["layout.menu.energy_meter"]
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-file-alt me-1"></i>
+                                        @Localizer["layout.menu.reports"]
                                     </a>
+                                    <ul class="dropdown-menu">
+                                        @if (canAccess("/EnergyReport"))
+                                        {
+                                            <li><a class="dropdown-item" href="/EnergyReport"><i class="fas fa-chart-bar me-2"></i>@Localizer["layout.menu.energy_report"]</a></li>
+                                        }
+                                        @if (canAccess("/RefrigerationTonReport"))
+                                        {
+                                            <li><a class="dropdown-item" href="/RefrigerationTonReport"><i class="fas fa-snowflake me-2"></i>@Localizer["layout.menu.refrigeration_ton_report"]</a></li>
+                                        }
+                                    </ul>
                                 </li>
                             }
-                            @if (canAccess("/EnergyReport"))
+                            @if (canAccess("/ChilledWaterSystem") || canAccess("/EnergyMeter"))
                             {
-                                <li class="nav-item">
-                                    <a class="nav-link" href="/EnergyReport">
-                                        <i class="fas fa-chart-bar me-1"></i>
-                                        @Localizer["layout.menu.energy_report"]
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-cog me-1"></i>
+                                        @Localizer["layout.menu.ems_settings"]
                                     </a>
+                                    <ul class="dropdown-menu">
+                                        @if (canAccess("/ChilledWaterSystem"))
+                                        {
+                                            <li><a class="dropdown-item" href="/ChilledWaterSystem"><i class="fas fa-tint me-2"></i>@Localizer["layout.menu.chilled_water"]</a></li>
+                                        }
+                                        @if (canAccess("/EnergyMeter"))
+                                        {
+                                            <li><a class="dropdown-item" href="/EnergyMeter"><i class="fas fa-sitemap me-2"></i>@Localizer["layout.menu.energy_meter"]</a></li>
+                                        }
+                                    </ul>
                                 </li>
                             }
-                            @if (canAccess("/RefrigerationTonReport"))
+                            @if (canAccess("/HistoryData") || canAccess("/EventLog"))
                             {
-                                <li class="nav-item">
-                                    <a class="nav-link" href="/RefrigerationTonReport">
-                                        <i class="fas fa-snowflake me-1"></i>
-                                        @Localizer["layout.menu.refrigeration_ton_report"]
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-chart-line me-1"></i>
+                                        @Localizer["layout.menu.history"]
                                     </a>
+                                    <ul class="dropdown-menu">
+                                        @if (canAccess("/HistoryData"))
+                                        {
+                                            <li><a class="dropdown-item" href="/HistoryData?ems=1"><i class="fas fa-chart-area me-2"></i>@Localizer["layout.menu.trend"]</a></li>
+                                        }
+                                        @if (canAccess("/EventLog"))
+                                        {
+                                            <li><a class="dropdown-item" href="/EventLog?ems=1"><i class="fas fa-clipboard-list me-2"></i>@Localizer["layout.menu.eventlog"]</a></li>
+                                        }
+                                    </ul>
                                 </li>
                             }
                         }

@@ -22,6 +22,7 @@ public static class PermissionService
         ("/EventLog",       "事件記錄"),
         ("/EMS",            "能源管理首頁"),
         ("/ChilledWaterSystem", "水系統迴路設定"),
+        ("/CircuitInfo",    "迴路資訊"),
         ("/EnergyMeter",    "電表/迴路設定"),
         ("/EnergyReport",   "用電報表"),
         ("/RefrigerationTonReport", "冷凍噸報表"),
@@ -49,6 +50,7 @@ public static class PermissionService
     [
         "/EMS",
         "/ChilledWaterSystem",
+        "/CircuitInfo",
         "/EnergyMeter",
         "/EnergyReport",
         "/RefrigerationTonReport",

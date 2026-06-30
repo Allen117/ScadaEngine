@@ -1,0 +1,75 @@
+@{
+    ViewData["Title"] = "迴路資訊";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="ems-circuit-page">
+    <div class="ems-circuit-layout">
+
+        <!-- 左欄：迴路階層樹 -->
+        <div class="ems-circuit-tree-panel">
+            <div id="circuitTree"></div>
+        </div>
+
+        <!-- 右欄：三張圖表卡片 -->
+        <div class="ems-circuit-chart-panel">
+            <h6 id="selectedCircuitName" class="ems-circuit-title text-muted">
+                請選擇左側迴路
+            </h6>
+
+            <!-- 年 / 月份 -->
+            <div class="card ems-chart-card">
+                <div class="card-header d-flex justify-content-between align-items-center py-1 px-2">
+                    <span class="fw-semibold small">
+                        <i class="fas fa-calendar-alt me-1 text-success"></i>年用電量（各月 kWh）
+                    </span>
+                    <input type="number" id="yearPicker" min="2000" max="2100"
+                           class="form-control form-control-sm ems-picker" />
+                </div>
+                <div class="card-body p-2">
+                    <div class="ems-chart-wrap">
+                        <canvas id="chartMonth"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 月 / 各日 -->
+            <div class="card ems-chart-card">
+                <div class="card-header d-flex justify-content-between align-items-center py-1 px-2">
+                    <span class="fw-semibold small">
+                        <i class="fas fa-calendar-day me-1 text-success"></i>月用電量（各日 kWh）
+                    </span>
+                    <input type="month" id="monthPicker"
+                           class="form-control form-control-sm ems-picker" />
+                </div>
+                <div class="card-body p-2">
+                    <div class="ems-chart-wrap">
+                        <canvas id="chartDay"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 日 / 各時 -->
+            <div class="card ems-chart-card">
+                <div class="card-header d-flex justify-content-between align-items-center py-1 px-2">
+                    <span class="fw-semibold small">
+                        <i class="fas fa-clock me-1 text-success"></i>日用電量（各時 kWh，60s 自動刷新）
+                    </span>
+                    <input type="date" id="datePicker"
+                           class="form-control form-control-sm ems-picker" />
+                </div>
+                <div class="card-body p-2">
+                    <div class="ems-chart-wrap">
+                        <canvas id="chartHour"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/chartjs/chart.umd.min.js"></script>
+    <script src="~/js/ems-circuit.js"></script>
+}

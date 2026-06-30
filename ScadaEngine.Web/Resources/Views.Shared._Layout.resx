@@ -68,10 +68,13 @@
   <data name="layout.menu.eventlog" xml:space="preserve"><value>事件記錄</value></data>
 
   <data name="layout.menu.energy" xml:space="preserve"><value>能源管理</value></data>
+  <data name="layout.menu.ems_settings" xml:space="preserve"><value>能管設定</value></data>
+  <data name="layout.menu.reports" xml:space="preserve"><value>報表查詢</value></data>
   <data name="layout.menu.energy_meter" xml:space="preserve"><value>電表/迴路設定</value></data>
   <data name="layout.menu.energy_report" xml:space="preserve"><value>用電報表</value></data>
   <data name="layout.menu.refrigeration_ton_report" xml:space="preserve"><value>冷凍噸報表</value></data>
   <data name="layout.menu.chilled_water" xml:space="preserve"><value>水系統迴路設定</value></data>
+  <data name="layout.menu.circuit_info" xml:space="preserve"><value>迴路資訊</value></data>
 
   <data name="layout.menu.system" xml:space="preserve"><value>系統設定</value></data>
   <data name="layout.menu.designer" xml:space="preserve"><value>畫面設計</value></data>
