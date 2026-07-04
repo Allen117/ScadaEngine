@@ -215,6 +215,23 @@ public class DatabaseInitializationService
                 }
             }
 
+            // EnergyCircuit: 補上 IsMainMeter 欄位（主要電表標記，全系統唯一由應用層保證）
+            var nHasIsMainMeterColumn = await connection.QuerySingleAsync<int>(
+                @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+                  WHERE TABLE_NAME = 'EnergyCircuit' AND COLUMN_NAME = 'IsMainMeter'");
+            if (nHasIsMainMeterColumn == 0)
+            {
+                var nHasEnergyTableForMainMeter = await connection.QuerySingleAsync<int>(
+                    @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
+                      WHERE TABLE_NAME = 'EnergyCircuit' AND TABLE_TYPE = 'BASE TABLE'");
+                if (nHasEnergyTableForMainMeter > 0)
+                {
+                    await connection.ExecuteAsync(
+                        "ALTER TABLE [EnergyCircuit] ADD [IsMainMeter] BIT NOT NULL DEFAULT 0");
+                    _logger.LogInformation("欄位遷移完成: EnergyCircuit 新增 IsMainMeter 欄位（預設 0）");
+                }
+            }
+
             // TimeSchedules: 補上 ExcludeDates / IncludeDates 欄位
             var nHasTimeSchedulesTable = await connection.QuerySingleAsync<int>(
                 @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES

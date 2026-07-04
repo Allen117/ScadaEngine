@@ -141,6 +141,22 @@
     line-height: 1;
 }
 
+/* 樹狀清單：主要電表金色星號 */
+#treeContainer .em-main-star {
+    color: #ffc107;
+    font-size: 0.8rem;
+}
+
+/* 詳情區：主要電表 badge */
+.em-badge-main {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #fff3cd;
+    color: #b8860b;
+    font-size: 0.75rem;
+}
+
 /* 詳情區：貢獻方向 badge */
 .em-badge-sign-pos {
     display: inline-block;

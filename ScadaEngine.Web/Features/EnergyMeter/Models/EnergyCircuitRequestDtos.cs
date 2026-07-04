@@ -10,6 +10,8 @@ public class CreateCircuitDto
     /// <summary>對父貢獻方向：+1 / -1，預設 +1。根節點伺服器端會強制覆寫為 +1</summary>
     public int sign { get; set; } = 1;
     public bool isDemandEnabled { get; set; }
+    /// <summary>主要電表標記 — 全系統唯一；僅實體電表（綁 SID）有效，虛擬迴路伺服器端強制 false</summary>
+    public bool isMainMeter { get; set; }
     public string? description { get; set; }
 }
 
@@ -22,6 +24,8 @@ public class UpdateCircuitDto
     /// <summary>對父貢獻方向：+1 / -1。根節點伺服器端會強制覆寫為 +1</summary>
     public int sign { get; set; } = 1;
     public bool isDemandEnabled { get; set; }
+    /// <summary>主要電表標記 — 全系統唯一；僅實體電表（綁 SID）有效，虛擬迴路伺服器端強制 false</summary>
+    public bool isMainMeter { get; set; }
     public string? description { get; set; }
 }
 

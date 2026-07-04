@@ -13,5 +13,6 @@ public class EnergyCircuitNodeViewModel
     public double? maxKwh { get; set; }
     public int sign { get; set; } = 1;
     public bool isDemandEnabled { get; set; }
+    public bool isMainMeter { get; set; }
     public string? description { get; set; }
 }

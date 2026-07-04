@@ -46,6 +46,7 @@ public class EnergyMeterController : Controller
             maxKwh = n.dMaxKwh,
             sign = n.nSign,
             isDemandEnabled = n.isIsDemandEnabled,
+            isMainMeter = n.isIsMainMeter,
             description = n.szDescription
         }));
     }
@@ -146,6 +147,7 @@ public class EnergyMeterController : Controller
             dMaxKwh = dto.maxKwh,
             nSign = dto.sign,
             isIsDemandEnabled = dto.isDemandEnabled,
+            isIsMainMeter = !string.IsNullOrWhiteSpace(dto.sid) && dto.isMainMeter,
             szDescription = dto.description
         });
         return Ok(new { success = true, id = nId });
@@ -163,6 +165,7 @@ public class EnergyMeterController : Controller
             string.IsNullOrWhiteSpace(dto.sid) ? null : dto.sid,
             dto.maxKwh, dto.sign,
             dto.isDemandEnabled,
+            !string.IsNullOrWhiteSpace(dto.sid) && dto.isMainMeter,
             dto.description);
         return ok ? Ok(new { success = true }) : NotFound(new { success = false, message = "節點不存在" });
     }

@@ -43,6 +43,7 @@ public class EnergyCircuitService
                     MaxKwh           AS dMaxKwh,
                     [Sign]           AS nSign,
                     IsDemandEnabled  AS isIsDemandEnabled,
+                    IsMainMeter      AS isIsMainMeter,
                     Description      AS szDescription,
                     CreatedAt        AS dtCreatedAt,
                     UpdatedAt        AS dtUpdatedAt
@@ -63,6 +64,7 @@ public class EnergyCircuitService
                     MaxKwh           AS dMaxKwh,
                     [Sign]           AS nSign,
                     IsDemandEnabled  AS isIsDemandEnabled,
+                    IsMainMeter      AS isIsMainMeter,
                     Description      AS szDescription,
                     CreatedAt        AS dtCreatedAt,
                     UpdatedAt        AS dtUpdatedAt
@@ -70,55 +72,87 @@ public class EnergyCircuitService
             WHERE   Id = @Id", new { Id = nId });
     }
 
-    /// <summary>新增節點。若未指定 SortOrder，自動排到同層末端。根節點強制 Sign=1。</summary>
+    /// <summary>新增節點。若未指定 SortOrder，自動排到同層末端。根節點強制 Sign=1。主要電表全系統唯一：勾選時同交易內先取消其他列。</summary>
     public async Task<int> CreateAsync(EnergyCircuitModel model)
     {
         using var conn = await GetConnectionAsync();
-        var nNextSort = await conn.ExecuteScalarAsync<int>(@"
-            SELECT ISNULL(MAX(SortOrder), -1) + 1
-            FROM   EnergyCircuit
-            WHERE  (ParentId = @ParentId) OR (@ParentId IS NULL AND ParentId IS NULL)",
-            new { ParentId = model.nParentId });
+        using var tran = conn.BeginTransaction();
+        try
+        {
+            var nNextSort = await conn.ExecuteScalarAsync<int>(@"
+                SELECT ISNULL(MAX(SortOrder), -1) + 1
+                FROM   EnergyCircuit
+                WHERE  (ParentId = @ParentId) OR (@ParentId IS NULL AND ParentId IS NULL)",
+                new { ParentId = model.nParentId }, tran);
 
-        var nSign = NormalizeSign(model.nSign, model.nParentId);
+            var nSign = NormalizeSign(model.nSign, model.nParentId);
 
-        return await conn.QuerySingleAsync<int>(@"
-            INSERT INTO EnergyCircuit (Name, ParentId, SortOrder, SID, MaxKwh, [Sign], IsDemandEnabled, Description, CreatedAt)
-            OUTPUT INSERTED.Id
-            VALUES (@Name, @ParentId, @SortOrder, @SID, @MaxKwh, @Sign, @IsDemandEnabled, @Description, GETDATE())",
-            new
-            {
-                Name = model.szName,
-                ParentId = model.nParentId,
-                SortOrder = nNextSort,
-                SID = model.szSID,
-                MaxKwh = model.dMaxKwh,
-                Sign = nSign,
-                IsDemandEnabled = model.isIsDemandEnabled,
-                Description = model.szDescription
-            });
+            if (model.isIsMainMeter)
+                await conn.ExecuteAsync(
+                    "UPDATE EnergyCircuit SET IsMainMeter = 0, UpdatedAt = GETDATE() WHERE IsMainMeter = 1", transaction: tran);
+
+            var nId = await conn.QuerySingleAsync<int>(@"
+                INSERT INTO EnergyCircuit (Name, ParentId, SortOrder, SID, MaxKwh, [Sign], IsDemandEnabled, IsMainMeter, Description, CreatedAt)
+                OUTPUT INSERTED.Id
+                VALUES (@Name, @ParentId, @SortOrder, @SID, @MaxKwh, @Sign, @IsDemandEnabled, @IsMainMeter, @Description, GETDATE())",
+                new
+                {
+                    Name = model.szName,
+                    ParentId = model.nParentId,
+                    SortOrder = nNextSort,
+                    SID = model.szSID,
+                    MaxKwh = model.dMaxKwh,
+                    Sign = nSign,
+                    IsDemandEnabled = model.isIsDemandEnabled,
+                    IsMainMeter = model.isIsMainMeter,
+                    Description = model.szDescription
+                }, tran);
+            tran.Commit();
+            return nId;
+        }
+        catch
+        {
+            tran.Rollback();
+            throw;
+        }
     }
 
-    /// <summary>更新節點（不動 ParentId / SortOrder，改用 MoveAsync）。根節點強制 Sign=1。</summary>
-    public async Task<bool> UpdateAsync(int nId, string szName, string? szSID, double? dMaxKwh, int nSign, bool isIsDemandEnabled, string? szDescription)
+    /// <summary>更新節點（不動 ParentId / SortOrder，改用 MoveAsync）。根節點強制 Sign=1。主要電表全系統唯一：勾選時同交易內先取消其他列。</summary>
+    public async Task<bool> UpdateAsync(int nId, string szName, string? szSID, double? dMaxKwh, int nSign, bool isIsDemandEnabled, bool isIsMainMeter, string? szDescription)
     {
         using var conn = await GetConnectionAsync();
-        var nParentId = await conn.ExecuteScalarAsync<int?>(
-            "SELECT ParentId FROM EnergyCircuit WHERE Id = @Id", new { Id = nId });
-        var nSignNormalized = NormalizeSign(nSign, nParentId);
+        using var tran = conn.BeginTransaction();
+        try
+        {
+            var nParentId = await conn.ExecuteScalarAsync<int?>(
+                "SELECT ParentId FROM EnergyCircuit WHERE Id = @Id", new { Id = nId }, tran);
+            var nSignNormalized = NormalizeSign(nSign, nParentId);
 
-        var nRows = await conn.ExecuteAsync(@"
-            UPDATE  EnergyCircuit
-            SET     Name = @Name,
-                    SID = @SID,
-                    MaxKwh = @MaxKwh,
-                    [Sign] = @Sign,
-                    IsDemandEnabled = @IsDemandEnabled,
-                    Description = @Description,
-                    UpdatedAt = GETDATE()
-            WHERE   Id = @Id",
-            new { Id = nId, Name = szName, SID = szSID, MaxKwh = dMaxKwh, Sign = nSignNormalized, IsDemandEnabled = isIsDemandEnabled, Description = szDescription });
-        return nRows > 0;
+            if (isIsMainMeter)
+                await conn.ExecuteAsync(
+                    "UPDATE EnergyCircuit SET IsMainMeter = 0, UpdatedAt = GETDATE() WHERE IsMainMeter = 1 AND Id <> @Id",
+                    new { Id = nId }, tran);
+
+            var nRows = await conn.ExecuteAsync(@"
+                UPDATE  EnergyCircuit
+                SET     Name = @Name,
+                        SID = @SID,
+                        MaxKwh = @MaxKwh,
+                        [Sign] = @Sign,
+                        IsDemandEnabled = @IsDemandEnabled,
+                        IsMainMeter = @IsMainMeter,
+                        Description = @Description,
+                        UpdatedAt = GETDATE()
+                WHERE   Id = @Id",
+                new { Id = nId, Name = szName, SID = szSID, MaxKwh = dMaxKwh, Sign = nSignNormalized, IsDemandEnabled = isIsDemandEnabled, IsMainMeter = isIsMainMeter, Description = szDescription }, tran);
+            tran.Commit();
+            return nRows > 0;
+        }
+        catch
+        {
+            tran.Rollback();
+            throw;
+        }
     }
 
     /// <summary>規格化 sign：限定 ±1，根節點強制為 +1。</summary>
@@ -206,6 +240,7 @@ public class EnergyCircuitService
                     MaxKwh           AS dMaxKwh,
                     [Sign]           AS nSign,
                     IsDemandEnabled  AS isIsDemandEnabled,
+                    IsMainMeter      AS isIsMainMeter,
                     Description      AS szDescription,
                     CreatedAt        AS dtCreatedAt,
                     UpdatedAt        AS dtUpdatedAt

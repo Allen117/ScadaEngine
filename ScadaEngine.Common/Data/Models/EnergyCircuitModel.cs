@@ -14,6 +14,8 @@ public class EnergyCircuitModel
     /// <summary>對父節點的貢獻方向：+1=正向加入、-1=反向扣減。根節點固定 +1</summary>
     public int nSign { get; set; } = 1;
     public bool isIsDemandEnabled { get; set; }
+    /// <summary>主要電表標記 — 全系統唯一（應用層保證）；僅實體電表（綁 SID）有意義</summary>
+    public bool isIsMainMeter { get; set; }
     public string? szDescription { get; set; }
     public DateTime dtCreatedAt { get; set; }
     public DateTime? dtUpdatedAt { get; set; }

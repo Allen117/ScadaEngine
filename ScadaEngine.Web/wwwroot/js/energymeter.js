@@ -155,12 +155,15 @@
         const signBadge = node.sign === -1
             ? '<span class="em-sign-neg" title="反向：從父迴路扣減">−</span>'
             : '';
+        const mainStar = node.isMainMeter
+            ? '<i class="fas fa-star em-main-star" title="主要電表"></i>'
+            : '';
 
         return `<div class="tree-item">
             <div class="tree-node ${g_selectedId === node.id ? 'active' : ''}" data-id="${node.id}">
                 <i class="fas fa-caret-down tree-toggle ${hasChildren ? '' : 'invisible'}"></i>
                 <i class="fas ${isMeter ? 'fa-bolt is-meter' : 'fa-folder'} tree-icon"></i>
-                ${signBadge}
+                ${signBadge}${mainStar}
                 <span class="tree-name">${escapeHtml(node.name)}</span>
                 <span class="tree-actions">
                     <button title="新增子節點" onclick="event.stopPropagation();window._em.openCreateModal(${node.id})">
@@ -241,6 +244,14 @@
                         ? '<span class="badge bg-success"><i class="fas fa-tachometer-alt me-1"></i>已啟用</span>'
                         : '<span class="text-muted">未啟用</span>'}
                 </div>
+            </div>
+            <div class="em-detail-row">
+                <div class="em-detail-label">主要電表</div>
+                <div class="em-detail-value">
+                    ${node.isMainMeter
+                        ? '<span class="em-badge-main"><i class="fas fa-star me-1"></i>主要電表</span>'
+                        : '<span class="text-muted">否</span>'}
+                </div>
             </div>` : ''}
             <div class="em-detail-row">
                 <div class="em-detail-label">說明</div>
@@ -270,6 +281,7 @@
         renderSubUnitOptions('');
         document.getElementById('emMaxKwh').value = formatThousand(1000000000);
         document.getElementById('emDemandEnabled').checked = false;
+        document.getElementById('emMainMeter').checked = false;
         document.getElementById('emDesc').value = '';
         document.getElementById('emTypeVirtual').checked = true;
         document.getElementById('emSignPos').checked = true;
@@ -302,6 +314,7 @@
         }
         document.getElementById('emMaxKwh').value = node.maxKwh == null ? '' : formatThousand(Math.trunc(node.maxKwh));
         document.getElementById('emDemandEnabled').checked = !!node.isDemandEnabled;
+        document.getElementById('emMainMeter').checked = !!node.isMainMeter;
         document.getElementById('emDesc').value = node.description || '';
         if (node.sid) document.getElementById('emTypeMeter').checked = true;
         else document.getElementById('emTypeVirtual').checked = true;
@@ -337,6 +350,7 @@
         const szSid = isMeter ? document.getElementById('emSid').value : '';
         const nMaxKwh = isMeter ? parseThousand(document.getElementById('emMaxKwh').value) : null;
         const isDemandEnabled = isMeter && document.getElementById('emDemandEnabled').checked;
+        const isMainMeter = isMeter && document.getElementById('emMainMeter').checked;
         const szDesc = document.getElementById('emDesc').value;
         const isRoot = szParentId === '';
         const nSign = isRoot ? 1 : (document.getElementById('emSignNeg').checked ? -1 : 1);
@@ -350,6 +364,7 @@
             maxKwh: nMaxKwh,
             sign: nSign,
             isDemandEnabled: isDemandEnabled,
+            isMainMeter: isMainMeter,
             description: szDesc || null
         };
 
