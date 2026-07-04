@@ -46,6 +46,15 @@
       ]
     },
     {
+      "_comment": "系統層級鍵值設定 — 例如 first-run setup 完成旗標（SettingKey='SetupCompleted', SettingValue='1'）。一次性、不自動重開後門用。",
+      "TableName": "SystemSettings",
+      "Columns": [
+        { "Name": "SettingKey",   "Type": "nvarchar", "Length": 100, "IsPrimaryKey": true, "Nullable": false },
+        { "Name": "SettingValue", "Type": "nvarchar", "Length": -1,  "Nullable": true },
+        { "Name": "UpdatedAt",    "Type": "datetime",                "Nullable": false, "Default": "getdate()" }
+      ]
+    },
+    {
       "TableName": "ConditionControlRules",
       "Columns": [
         { "Name": "Id",                 "Type": "int",      "IsPrimaryKey": true, "IsIdentity": true, "Nullable": false },

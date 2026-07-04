@@ -1,0 +1,72 @@
+@model ScadaEngine.Web.Features.Setup.Models.SetupCreateAdminModel
+@{
+    ViewData["Title"] = "建立管理者帳號";
+    Layout = "~/Views/Shared/_LoginLayout.cshtml";
+}
+
+<div class="login-shell">
+    <div class="login-brand">
+        <h1 class="login-brand-title">SCADA 智慧能源管理平台</h1>
+        <div class="login-brand-subtitle">建立第一組管理者</div>
+    </div>
+
+    <div class="card login-card">
+        <div class="card-body">
+            <h2 class="login-title fs-3">
+                <i class="fas fa-user-shield"></i>
+                建立管理者帳號
+            </h2>
+
+            <form asp-action="CreateAdmin" asp-controller="Setup" method="post">
+                @Html.AntiForgeryToken()
+
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger" role="alert">
+                        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                        {
+                            <div>@error.ErrorMessage</div>
+                        }
+                    </div>
+                }
+
+                <div class="mb-3">
+                    <label asp-for="szUsername" class="form-label">
+                        <i class="fas fa-user"></i> 管理者帳號
+                    </label>
+                    <input asp-for="szUsername" class="form-control" autocomplete="username"
+                           placeholder="請輸入管理者帳號" required />
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="szRealName" class="form-label">
+                        <i class="fas fa-id-card"></i> 顯示名稱（選填）
+                    </label>
+                    <input asp-for="szRealName" class="form-control" placeholder="例如：系統管理員" />
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="szPassword" class="form-label">
+                        <i class="fas fa-key"></i> 密碼
+                    </label>
+                    <input asp-for="szPassword" type="password" class="form-control"
+                           autocomplete="new-password" placeholder="至少 8 碼，含英文與數字" required />
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="szConfirmPassword" class="form-label">
+                        <i class="fas fa-key"></i> 確認密碼
+                    </label>
+                    <input asp-for="szConfirmPassword" type="password" class="form-control"
+                           autocomplete="new-password" placeholder="再次輸入密碼" required />
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-check"></i> 建立並登入
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

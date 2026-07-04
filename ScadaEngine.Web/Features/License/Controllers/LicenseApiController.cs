@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MQTTnet;
 using MQTTnet.Client;
@@ -11,6 +12,7 @@ namespace ScadaEngine.Web.Features.License.Controllers;
 ///   GET  /api/license/status  — 回傳最新快取狀態
 ///   POST /api/license/verify  — 發布 MQTT 指令，要求 Engine 立即重新驗證
 /// </summary>
+[Authorize]
 [ApiController]
 [Route("api/license")]
 public class LicenseApiController : ControllerBase

@@ -18,6 +18,15 @@
                 系統登入
             </h2>
 
+            @if (ViewData["SetupHint"] as bool? == true)
+            {
+                <div class="alert alert-info" role="alert">
+                    <i class="fas fa-info-circle"></i>
+                    系統尚無管理者帳號，請於伺服器本機開啟
+                    <strong>http://localhost:5038</strong> 完成初始設定。
+                </div>
+            }
+
             <form asp-action="Index" asp-controller="Login" method="post" id="frmLogin">
                 @Html.AntiForgeryToken()
 

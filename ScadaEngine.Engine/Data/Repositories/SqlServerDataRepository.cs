@@ -628,6 +628,76 @@ public class SqlServerDataRepository : IDataRepository, IDisposable
     }
 
     /// <summary>
+    /// 查詢 first-run setup 是否已完成（SystemSettings.SetupCompleted='1'）。
+    /// 表尚未建立或查無值時回傳 false。
+    /// </summary>
+    public async Task<bool> IsSetupCompletedAsync()
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+        {
+            await InitializeAsync();
+        }
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+
+            const string szSql = @"
+                IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES
+                           WHERE TABLE_NAME = 'SystemSettings' AND TABLE_TYPE = 'BASE TABLE')
+                    SELECT SettingValue FROM SystemSettings WHERE SettingKey = 'SetupCompleted';";
+
+            var szValue = await connection.QuerySingleOrDefaultAsync<string>(szSql);
+            return szValue == "1";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "查詢 SetupCompleted 旗標時發生錯誤，視為未完成");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 標記 first-run setup 已完成（UPSERT SystemSettings.SetupCompleted='1'）。
+    /// 表不存在時就地建立，確保全新 DB 也能寫入。
+    /// </summary>
+    public async Task MarkSetupCompletedAsync()
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+        {
+            await InitializeAsync();
+        }
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+
+            const string szSql = @"
+                IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES
+                               WHERE TABLE_NAME = 'SystemSettings' AND TABLE_TYPE = 'BASE TABLE')
+                    CREATE TABLE [SystemSettings] (
+                        [SettingKey]   NVARCHAR(100) NOT NULL CONSTRAINT [PK_SystemSettings] PRIMARY KEY,
+                        [SettingValue] NVARCHAR(MAX) NULL,
+                        [UpdatedAt]    DATETIME NOT NULL DEFAULT GETDATE()
+                    );
+
+                IF EXISTS (SELECT * FROM SystemSettings WHERE SettingKey = 'SetupCompleted')
+                    UPDATE SystemSettings SET SettingValue = '1', UpdatedAt = GETDATE() WHERE SettingKey = 'SetupCompleted';
+                ELSE
+                    INSERT INTO SystemSettings (SettingKey, SettingValue, UpdatedAt) VALUES ('SetupCompleted', '1', GETDATE());";
+
+            await connection.ExecuteAsync(szSql);
+            _logger.LogInformation("已標記 first-run setup 完成（SystemSettings.SetupCompleted=1）");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "標記 SetupCompleted 旗標時發生錯誤");
+        }
+    }
+
+    /// <summary>
     /// 取得所有使用者帳號資料
     /// </summary>
     public async Task<IEnumerable<UserModel>> GetAllUsersAsync()

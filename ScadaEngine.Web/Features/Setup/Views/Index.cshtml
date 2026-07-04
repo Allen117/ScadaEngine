@@ -1,0 +1,33 @@
+@{
+    ViewData["Title"] = "系統初始化";
+    Layout = "~/Views/Shared/_LoginLayout.cshtml";
+}
+
+<div class="login-shell">
+    <div class="login-brand">
+        <h1 class="login-brand-title">SCADA 智慧能源管理平台</h1>
+        <div class="login-brand-subtitle">系統初始化</div>
+    </div>
+
+    <div class="card login-card">
+        <div class="card-body">
+            <h2 class="login-title fs-3">
+                <i class="fas fa-user-shield"></i>
+                建立管理者帳號
+            </h2>
+
+            <p class="mb-4">系統尚未建立任何管理者帳號。是否現在建立第一組管理者？</p>
+
+            <div class="d-grid">
+                <a href="/Setup/CreateAdmin" class="btn btn-primary btn-lg">
+                    <i class="fas fa-arrow-right"></i>
+                    是，現在建立
+                </a>
+            </div>
+
+            <p class="text-muted mt-3 mb-0">
+                <small><i class="fas fa-lock"></i> 基於安全，此頁僅於伺服器本機可見。</small>
+            </p>
+        </div>
+    </div>
+</div>

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ScadaEngine.Web.Features.Realtime.Models;
 using ScadaEngine.Web.Services;
@@ -8,6 +9,7 @@ namespace ScadaEngine.Web.Features.Realtime.Controllers;
 /// <summary>
 /// 即時監控主頁控制器
 /// </summary>
+[Authorize]
 [Route("[controller]")]
 public class RealtimeController : Controller
 {

@@ -92,6 +92,18 @@ public interface IDataRepository
     Task<bool> ValidateUserAsync(string szUsername, string szPassword);
 
     /// <summary>
+    /// 查詢 first-run setup 是否已完成（SystemSettings.SetupCompleted='1'）。
+    /// 表尚未建立或查無值時回傳 false（視為未完成）。用於「一次性、不自動重開」的管理者初始化流程。
+    /// </summary>
+    Task<bool> IsSetupCompletedAsync();
+
+    /// <summary>
+    /// 標記 first-run setup 已完成（UPSERT SystemSettings.SetupCompleted='1'）。
+    /// 表不存在時會就地建立，確保全新 DB 也能寫入。
+    /// </summary>
+    Task MarkSetupCompletedAsync();
+
+    /// <summary>
     /// 取得所有已設定的 ModbusPoints (用於Web初始化全點位清單)
     /// </summary>
     /// <returns>所有 ModbusPoint 清單</returns>

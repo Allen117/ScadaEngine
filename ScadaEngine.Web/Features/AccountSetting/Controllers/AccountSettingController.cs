@@ -5,7 +5,7 @@ using ScadaEngine.Web.Services;
 
 namespace ScadaEngine.Web.Features.AccountSetting.Controllers;
 
-[Authorize]
+[Authorize(Roles = "Admin")]
 public class AccountSettingController : Controller
 {
     private readonly AccountSettingService _service;

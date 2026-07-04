@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ScadaEngine.Web.Features.Login.Models;
 using ScadaEngine.Engine.Data.Interfaces;
+using System.Net;
 using System.Security.Claims;
 
 namespace ScadaEngine.Web.Features.Login.Controllers;
@@ -16,14 +17,19 @@ public class LoginController : Controller
     private readonly ILogger<LoginController> _logger;
     private readonly IDataRepository _dataRepository;
 
-    // 預設帳密 (僅在 DB 無任何啟用的 Admin 帳號時生效)
-    private const string DEFAULT_USERNAME = "admin";
-    private const string DEFAULT_PASSWORD = "admin";
-
     public LoginController(ILogger<LoginController> logger, IDataRepository dataRepository)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _dataRepository = dataRepository ?? throw new ArgumentNullException(nameof(dataRepository));
+    }
+
+    /// <summary>來源是否為本機（含 IPv4-mapped IPv6）</summary>
+    private static bool IsLoopback(HttpContext ctx)
+    {
+        var ip = ctx.Connection.RemoteIpAddress;
+        if (ip == null) return false;
+        if (ip.IsIPv4MappedToIPv6) ip = ip.MapToIPv4();
+        return IPAddress.IsLoopback(ip);
     }
 
     /// <summary>
@@ -31,10 +37,19 @@ public class LoginController : Controller
     /// </summary>
     [HttpGet]
     [AllowAnonymous]
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
         if (User.Identity?.IsAuthenticated == true)
             return Redirect("/ScadaPage");
+
+        // First-run：DB 尚無 Admin 且 setup 未完成 → 本機導向初始化頁，遠端則顯示指引
+        if (!await _dataRepository.IsSetupCompletedAsync()
+            && await _dataRepository.GetAdminCountAsync() == 0)
+        {
+            if (IsLoopback(HttpContext))
+                return Redirect("/Setup");
+            ViewData["SetupHint"] = true;
+        }
 
         return View(new LoginModel());
     }
@@ -47,8 +62,6 @@ public class LoginController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Index(LoginModel loginModel)
     {
-        var nAdminCount = await _dataRepository.GetAdminCountAsync();
-
         if (!ModelState.IsValid)
             return View(loginModel);
 
@@ -59,18 +72,9 @@ public class LoginController : Controller
             return View(loginModel);
         }
 
-        // 先嘗試 DB 驗證
+        // DB 驗證（已移除 admin/admin 預設後門，SEC-08）
         bool isDbAuth = await _dataRepository.ValidateUserAsync(loginModel.szUserName!, loginModel.szPassword!);
-
-        // DB 驗證失敗時，若無 Admin 帳號則嘗試預設帳密
-        bool isDefaultAuth = false;
-        if (!isDbAuth && nAdminCount == 0)
-        {
-            isDefaultAuth = string.Equals(loginModel.szUserName, DEFAULT_USERNAME, StringComparison.OrdinalIgnoreCase)
-                && loginModel.szPassword == DEFAULT_PASSWORD;
-        }
-
-        if (!isDbAuth && !isDefaultAuth)
+        if (!isDbAuth)
         {
             _logger.LogWarning("登入失敗：使用者={UserName}", loginModel.szUserName);
             ModelState.AddModelError(string.Empty, "使用者名稱或密碼錯誤");
@@ -78,24 +82,25 @@ public class LoginController : Controller
             return View(loginModel);
         }
 
+        var dbUser = await _dataRepository.GetUserByUsernameAsync(loginModel.szUserName!);
+        if (dbUser == null)
+        {
+            // 理論上不會發生（isDbAuth 成立代表帳號存在且啟用）；防禦性拒絕，避免落到預設角色
+            _logger.LogWarning("登入驗證通過但查無使用者：{UserName}", loginModel.szUserName);
+            ModelState.AddModelError(string.Empty, "使用者名稱或密碼錯誤");
+            loginModel.ClearSensitiveData();
+            return View(loginModel);
+        }
+
         // 取得使用者角色資訊
-        string szRole = "Admin"; // 預設帳號為 Admin
+        string szRole = dbUser.szRole;
         string szPermissionJson = "{}";
 
-        if (isDbAuth)
+        // User 角色需載入權限設定
+        if (szRole == "User")
         {
-            var dbUser = await _dataRepository.GetUserByUsernameAsync(loginModel.szUserName!);
-            if (dbUser != null)
-            {
-                szRole = dbUser.szRole;
-
-                // User 角色需載入權限設定
-                if (szRole == "User")
-                {
-                    var perm = await _dataRepository.GetUserPermissionsAsync(dbUser.nUserID);
-                    szPermissionJson = perm?.szPermissionJson ?? "{}";
-                }
-            }
+            var perm = await _dataRepository.GetUserPermissionsAsync(dbUser.nUserID);
+            szPermissionJson = perm?.szPermissionJson ?? "{}";
         }
 
         // 建立認證 Cookie
@@ -122,14 +127,16 @@ public class LoginController : Controller
             new ClaimsPrincipal(claimsIdentity),
             authProperties);
 
-        // 更新最後登入時間至 DB（僅 DB 帳號）
-        if (isDbAuth)
+        // 更新最後登入時間至 DB
+        await _dataRepository.UpdateLastLoginAsync(loginModel.szUserName!);
+
+        // 既有安裝適配：首次有 Admin 成功登入即鎖定 first-run setup（一次性、不自動重開）
+        if (szRole == "Admin" && !await _dataRepository.IsSetupCompletedAsync())
         {
-            await _dataRepository.UpdateLastLoginAsync(loginModel.szUserName!);
+            await _dataRepository.MarkSetupCompletedAsync();
         }
 
-        _logger.LogInformation("使用者登入成功：{UserName}（{AuthType}）", loginModel.szUserName,
-            isDefaultAuth ? "預設帳號" : "DB帳號");
+        _logger.LogInformation("使用者登入成功：{UserName}", loginModel.szUserName);
 
         loginModel.ClearSensitiveData();
         return Redirect("/ScadaPage");

@@ -7,6 +7,7 @@ namespace ScadaEngine.Web.Features.Realtime.Controllers;
 /// <summary>
 /// 提供未恢復警報清單給 Realtime 頁面 Active Alarm Panel
 /// </summary>
+[Authorize]
 [Route("Realtime")]
 public class ActiveAlarmController : Controller
 {

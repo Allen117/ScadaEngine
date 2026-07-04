@@ -83,6 +83,15 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
     });
 
+// 全域授權後備：預設所有端點都要登入，未標 [AllowAnonymous] 者一律擋
+// （一次堵住所有「忘了加 [Authorize]」的匿名破口；白名單：Login / I18n / Setup / 靜態檔）
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
+
 // 註冊來自 Engine 專案的資料庫服務（用於登入功能）
 builder.Services.AddSingleton<DatabaseConfigService>(serviceProvider =>
 {
@@ -226,8 +235,8 @@ try
     app.UseAuthorization();
 
     Console.WriteLine("設置路由...");
-    // 根路徑重導向至登入頁
-    app.MapGet("/", () => Results.Redirect("/Login"));
+    // 根路徑重導向至登入頁（未登入也可達，交由 Login 流程處理）
+    app.MapGet("/", () => Results.Redirect("/Login")).AllowAnonymous();
 
     app.MapControllerRoute(
         name: "default",
