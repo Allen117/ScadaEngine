@@ -59,45 +59,51 @@ public class EnergyMeterController : Controller
         var coords = (await _repository.GetAllCoordinatorsAsync()).ToList();
         var dbCoords = (await _repository.GetAllDbCoordinatorsAsync()).ToList();
 
-        string ResolveDeviceName(string szSID)
+        (string szCoordName, string szSubUnit) ResolveDevice(string szSID)
         {
             // SID 前綴 = coord.Id * 65536 + subModbusId * 256 + pointSeq
             var nHyphen = szSID.IndexOf('-');
-            if (nHyphen <= 0) return string.Empty;
-            if (!int.TryParse(szSID[..nHyphen], out var nPrefix)) return string.Empty;
+            if (nHyphen <= 0) return (string.Empty, string.Empty);
+            if (!int.TryParse(szSID[..nHyphen], out var nPrefix)) return (string.Empty, string.Empty);
 
             var nCoordId = nPrefix / 65536;
             var nSubModbusId = (nPrefix % 65536) / 256;
             var coord = coords.FirstOrDefault(c => c.Id == nCoordId);
-            if (coord == null) return string.Empty;
+            if (coord == null) return (string.Empty, string.Empty);
 
+            var szName = coord.szName ?? string.Empty;
             var ids = (coord.szModbusID ?? string.Empty)
                 .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
             var names = (coord.szDeviceName ?? string.Empty)
                 .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 
-            // 單 ID 協調器：直接用協調器名稱
-            if (ids.Length <= 1) return coord.szName ?? string.Empty;
+            // 單 ID 協調器：無子單元層
+            if (ids.Length <= 1) return (szName, string.Empty);
 
-            // 多 ID 協調器：找與 subModbusId 相符的子設備
+            // 多 ID 協調器：找與 subModbusId 相符的子設備當子單元；DeviceName 未填時用「ID {n}」區分
             for (int i = 0; i < ids.Length; i++)
             {
                 if (int.TryParse(ids[i], out var nMid) && nMid == nSubModbusId)
-                    return (i < names.Length && !string.IsNullOrWhiteSpace(names[i]))
-                        ? names[i] : (coord.szName ?? string.Empty);
+                    return (szName, (i < names.Length && !string.IsNullOrWhiteSpace(names[i]))
+                        ? names[i] : $"ID {nSubModbusId}");
             }
-            return coord.szName ?? string.Empty;
+            return (szName, $"ID {nSubModbusId}");
         }
 
         var list = modbus
             .Where(p => string.Equals(p.szUnit, "kWh", StringComparison.OrdinalIgnoreCase))
-            .Select(p => new CircuitSidOptionDto
+            .Select(p =>
             {
-                sid = p.szSID,
-                name = p.szName,
-                unit = p.szUnit,
-                source = "Modbus",
-                deviceName = ResolveDeviceName(p.szSID)
+                var (szCoordName, szSubUnit) = ResolveDevice(p.szSID);
+                return new CircuitSidOptionDto
+                {
+                    sid = p.szSID,
+                    name = p.szName,
+                    unit = p.szUnit,
+                    source = "Modbus",
+                    coordName = szCoordName,
+                    deviceName = szSubUnit
+                };
             })
             .Concat(calc
                 .Where(p => string.Equals(p.szUnit, "kWh", StringComparison.OrdinalIgnoreCase))
@@ -107,7 +113,8 @@ public class EnergyMeterController : Controller
                     name = p.szName,
                     unit = p.szUnit,
                     source = "Calculated",
-                    deviceName = p.szGroupName ?? string.Empty
+                    coordName = p.szGroupName ?? string.Empty,
+                    deviceName = string.Empty
                 }))
             .Concat(dbPts
                 .Where(p => string.Equals(p.szUnit, "kWh", StringComparison.OrdinalIgnoreCase))
@@ -117,7 +124,8 @@ public class EnergyMeterController : Controller
                     name = p.szName,
                     unit = p.szUnit ?? string.Empty,
                     source = "DB",
-                    deviceName = dbCoords.FirstOrDefault(c => c.Id == p.nCoordinatorId)?.szName ?? string.Empty
+                    coordName = dbCoords.FirstOrDefault(c => c.Id == p.nCoordinatorId)?.szName ?? string.Empty,
+                    deviceName = string.Empty
                 }));
         return Ok(list);
     }

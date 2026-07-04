@@ -39,6 +39,7 @@ public class CircuitSidOptionDto
     public string sid { get; set; } = string.Empty;
     public string name { get; set; } = string.Empty;
     public string unit { get; set; } = string.Empty;
-    public string source { get; set; } = string.Empty; // "Modbus" or "Calculated"
-    public string deviceName { get; set; } = string.Empty; // 設備（子設備）名稱，無對應則為協調器名稱或群組
+    public string source { get; set; } = string.Empty; // "Modbus" / "Calculated" / "DB"
+    public string coordName { get; set; } = string.Empty; // 通訊設備層：協調器名 / 計算群組名 / DB 來源名
+    public string deviceName { get; set; } = string.Empty; // 子單元層：多 ID 協調器的子設備名，無子單元則為空字串
 }

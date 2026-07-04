@@ -14,6 +14,7 @@
         const maxKwhEl = document.getElementById('emMaxKwh');
         maxKwhEl.addEventListener('input', () => { maxKwhEl.value = formatThousand(maxKwhEl.value); });
         document.getElementById('emDevice').addEventListener('change', onDeviceChange);
+        document.getElementById('emSubUnit').addEventListener('change', onSubUnitChange);
         await Promise.all([loadTree(), loadSidOptions()]);
     });
 
@@ -52,29 +53,84 @@
         }
     }
 
-    function renderDeviceOptions() {
-        const devices = [...new Set(g_sidOptions.map(o => o.deviceName || '未指定'))].sort();
-        const sel = document.getElementById('emDevice');
-        sel.innerHTML = '<option value="">-- 請選擇設備 --</option>' +
-            devices.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('');
+    // 通訊設備下拉的 value 用「source|coordName」複合鍵，避免不同來源同名設備互撞
+    function deviceKeyOf(o) {
+        return o.source + '|' + (o.coordName || '未指定');
     }
 
-    function renderSidOptionsForDevice(szDeviceName) {
+    function renderDeviceOptions() {
+        const groups = [
+            { source: 'Modbus', label: 'Modbus 通訊設備' },
+            { source: 'Calculated', label: '計算點位' },
+            { source: 'DB', label: 'DB 來源' }
+        ];
+        const sel = document.getElementById('emDevice');
+        let html = '<option value="">-- 請選擇設備 --</option>';
+        groups.forEach(g => {
+            const names = [...new Set(g_sidOptions.filter(o => o.source === g.source)
+                .map(o => o.coordName || '未指定'))].sort();
+            if (names.length === 0) return;
+            html += `<optgroup label="${escapeHtml(g.label)}">` +
+                names.map(n => `<option value="${escapeHtml(g.source + '|' + n)}">${escapeHtml(n)}</option>`).join('') +
+                '</optgroup>';
+        });
+        sel.innerHTML = html;
+    }
+
+    function optionsForDeviceKey(szKey) {
+        return g_sidOptions.filter(o => deviceKeyOf(o) === szKey);
+    }
+
+    // list = null 時顯示等待提示並 disable；有陣列時列出點位
+    function renderSidOptions(list, szWaitLabel) {
         const sel = document.getElementById('emSid');
-        if (!szDeviceName) {
-            sel.innerHTML = '<option value="">-- 請先選擇設備 --</option>';
+        if (!list) {
+            sel.innerHTML = `<option value="">${szWaitLabel || '-- 請先選擇設備 --'}</option>`;
             sel.disabled = true;
             return;
         }
-        const list = g_sidOptions.filter(o => (o.deviceName || '未指定') === szDeviceName);
         sel.innerHTML = '<option value="">-- 請選擇點位 --</option>' +
             list.map(o => `<option value="${escapeHtml(o.sid)}">${escapeHtml(o.name)}</option>`).join('');
         sel.disabled = false;
     }
 
+    // 依選定設備決定子單元層：有子單元 → 顯示並等待選擇；無 → 隱藏並直接列點位
+    function renderSubUnitOptions(szKey) {
+        const row = document.getElementById('emSubUnitRow');
+        const sel = document.getElementById('emSubUnit');
+        if (!szKey) {
+            row.style.display = 'none';
+            sel.innerHTML = '';
+            renderSidOptions(null);
+            return;
+        }
+        const list = optionsForDeviceKey(szKey);
+        const subUnits = [...new Set(list.map(o => o.deviceName || ''))].filter(s => s !== '')
+            .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+        if (subUnits.length === 0) {
+            row.style.display = 'none';
+            sel.innerHTML = '';
+            renderSidOptions(list);
+            return;
+        }
+        row.style.display = '';
+        sel.innerHTML = '<option value="">-- 請選擇子單元 --</option>' +
+            subUnits.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+        renderSidOptions(null, '-- 請先選擇子單元 --');
+    }
+
     function onDeviceChange() {
-        const szDev = document.getElementById('emDevice').value;
-        renderSidOptionsForDevice(szDev);
+        renderSubUnitOptions(document.getElementById('emDevice').value);
+    }
+
+    function onSubUnitChange() {
+        const szKey = document.getElementById('emDevice').value;
+        const szSub = document.getElementById('emSubUnit').value;
+        if (!szSub) {
+            renderSidOptions(null, '-- 請先選擇子單元 --');
+            return;
+        }
+        renderSidOptions(optionsForDeviceKey(szKey).filter(o => (o.deviceName || '') === szSub));
     }
 
     // ============ 樹渲染 ============
@@ -141,7 +197,7 @@
         const isMeter = !!node.sid;
         const sidOpt = isMeter ? g_sidOptions.find(o => o.sid === node.sid) : null;
         const sidLabel = sidOpt
-            ? (sidOpt.deviceName ? `${sidOpt.deviceName} - ${sidOpt.name}` : sidOpt.name)
+            ? [sidOpt.coordName, sidOpt.deviceName, sidOpt.name].filter(s => s).join(' - ')
             : (isMeter ? '⚠ 找不到對應的點位' : '');
 
         document.getElementById('detailTitle').innerHTML =
@@ -211,7 +267,7 @@
         document.getElementById('emParentId').value = parentId == null ? '' : parentId;
         document.getElementById('emName').value = '';
         document.getElementById('emDevice').value = '';
-        renderSidOptionsForDevice('');
+        renderSubUnitOptions('');
         document.getElementById('emMaxKwh').value = formatThousand(1000000000);
         document.getElementById('emDemandEnabled').checked = false;
         document.getElementById('emDesc').value = '';
@@ -230,10 +286,20 @@
         document.getElementById('emParentId').value = node.parentId == null ? '' : node.parentId;
         document.getElementById('emName').value = node.name;
         const opt = node.sid ? g_sidOptions.find(o => o.sid === node.sid) : null;
-        const szDev = opt ? (opt.deviceName || '未指定') : '';
-        document.getElementById('emDevice').value = szDev;
-        renderSidOptionsForDevice(szDev);
-        document.getElementById('emSid').value = node.sid || '';
+        if (opt) {
+            const szKey = deviceKeyOf(opt);
+            document.getElementById('emDevice').value = szKey;
+            renderSubUnitOptions(szKey);
+            const szSub = opt.deviceName || '';
+            if (szSub) {
+                document.getElementById('emSubUnit').value = szSub;
+                onSubUnitChange();
+            }
+            document.getElementById('emSid').value = node.sid;
+        } else {
+            document.getElementById('emDevice').value = '';
+            renderSubUnitOptions('');
+        }
         document.getElementById('emMaxKwh').value = node.maxKwh == null ? '' : formatThousand(Math.trunc(node.maxKwh));
         document.getElementById('emDemandEnabled').checked = !!node.isDemandEnabled;
         document.getElementById('emDesc').value = node.description || '';
