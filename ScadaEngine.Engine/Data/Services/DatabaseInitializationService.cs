@@ -98,8 +98,11 @@ public class DatabaseInitializationService
                 }
             }
 
-            // 執行欄位遷移（既有表格的欄位改名）
+            // 執行欄位遷移（既有表格的欄位改名）— 必須先於欄位同步，否則改名會被誤判為缺欄位而補出空欄
             await MigrateColumnsAsync(connection);
+
+            // Schema-driven 欄位同步：比對 INFORMATION_SCHEMA.COLUMNS 與 schema，自動補缺欄位（只加不減不改）
+            await SyncMissingColumnsAsync(connection, schema);
 
             _logger.LogInformation("資料庫結構初始化完成: 新建={Created}, 已存在={Existing}", nCreatedTables, nExistingTables);
             return true;
@@ -162,7 +165,8 @@ public class DatabaseInitializationService
     }
 
     /// <summary>
-    /// 執行欄位遷移 — 處理既有表格的欄位改名
+    /// 執行欄位遷移 — 僅處理既有表格的欄位改名（sp_rename 無法從 schema diff 推斷，維持手寫）。
+    /// 補缺欄位一律走 SyncMissingColumnsAsync（schema-driven），不要在此新增手寫 ADD 段。
     /// </summary>
     private async Task MigrateColumnsAsync(SqlConnection connection)
     {
@@ -179,172 +183,170 @@ public class DatabaseInitializationService
                     "EXEC sp_rename 'CalculatedPoints.CoordinatorName', 'GroupName', 'COLUMN'");
                 _logger.LogInformation("欄位遷移完成: CalculatedPoints.CoordinatorName → GroupName");
             }
-
-            // EnergyCircuit: 補上 Sign 欄位（既有 DB 升級用，預設 +1 與升級前行為一致）
-            var nHasSignColumn = await connection.QuerySingleAsync<int>(
-                @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-                  WHERE TABLE_NAME = 'EnergyCircuit' AND COLUMN_NAME = 'Sign'");
-
-            if (nHasSignColumn == 0)
-            {
-                var nHasTable = await connection.QuerySingleAsync<int>(
-                    @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
-                      WHERE TABLE_NAME = 'EnergyCircuit' AND TABLE_TYPE = 'BASE TABLE'");
-                if (nHasTable > 0)
-                {
-                    await connection.ExecuteAsync(
-                        "ALTER TABLE [EnergyCircuit] ADD [Sign] INT NOT NULL DEFAULT 1");
-                    _logger.LogInformation("欄位遷移完成: EnergyCircuit 新增 Sign 欄位（預設 1）");
-                }
-            }
-
-            // EnergyCircuit: 補上 DemandSID 欄位（需量計算功率點位）
-            var nHasDemandSidColumn = await connection.QuerySingleAsync<int>(
-                @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-                  WHERE TABLE_NAME = 'EnergyCircuit' AND COLUMN_NAME = 'DemandSID'");
-            if (nHasDemandSidColumn == 0)
-            {
-                var nHasEnergyTable = await connection.QuerySingleAsync<int>(
-                    @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
-                      WHERE TABLE_NAME = 'EnergyCircuit' AND TABLE_TYPE = 'BASE TABLE'");
-                if (nHasEnergyTable > 0)
-                {
-                    await connection.ExecuteAsync(
-                        "ALTER TABLE [EnergyCircuit] ADD [DemandSID] NVARCHAR(100) NULL");
-                    _logger.LogInformation("欄位遷移完成: EnergyCircuit 新增 DemandSID 欄位");
-                }
-            }
-
-            // EnergyCircuit: 補上 IsMainMeter 欄位（主要電表標記，全系統唯一由應用層保證）
-            var nHasIsMainMeterColumn = await connection.QuerySingleAsync<int>(
-                @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-                  WHERE TABLE_NAME = 'EnergyCircuit' AND COLUMN_NAME = 'IsMainMeter'");
-            if (nHasIsMainMeterColumn == 0)
-            {
-                var nHasEnergyTableForMainMeter = await connection.QuerySingleAsync<int>(
-                    @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
-                      WHERE TABLE_NAME = 'EnergyCircuit' AND TABLE_TYPE = 'BASE TABLE'");
-                if (nHasEnergyTableForMainMeter > 0)
-                {
-                    await connection.ExecuteAsync(
-                        "ALTER TABLE [EnergyCircuit] ADD [IsMainMeter] BIT NOT NULL DEFAULT 0");
-                    _logger.LogInformation("欄位遷移完成: EnergyCircuit 新增 IsMainMeter 欄位（預設 0）");
-                }
-            }
-
-            // TimeSchedules: 補上 ExcludeDates / IncludeDates 欄位
-            var nHasTimeSchedulesTable = await connection.QuerySingleAsync<int>(
-                @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
-                  WHERE TABLE_NAME = 'TimeSchedules' AND TABLE_TYPE = 'BASE TABLE'");
-
-            if (nHasTimeSchedulesTable > 0)
-            {
-                var nHasExcludeDates = await connection.QuerySingleAsync<int>(
-                    @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-                      WHERE TABLE_NAME = 'TimeSchedules' AND COLUMN_NAME = 'ExcludeDates'");
-                if (nHasExcludeDates == 0)
-                {
-                    await connection.ExecuteAsync(
-                        "ALTER TABLE [TimeSchedules] ADD [ExcludeDates] NVARCHAR(MAX) NULL");
-                    _logger.LogInformation("欄位遷移完成: TimeSchedules 新增 ExcludeDates 欄位");
-                }
-
-                var nHasIncludeDates = await connection.QuerySingleAsync<int>(
-                    @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-                      WHERE TABLE_NAME = 'TimeSchedules' AND COLUMN_NAME = 'IncludeDates'");
-                if (nHasIncludeDates == 0)
-                {
-                    await connection.ExecuteAsync(
-                        "ALTER TABLE [TimeSchedules] ADD [IncludeDates] NVARCHAR(MAX) NULL");
-                    _logger.LogInformation("欄位遷移完成: TimeSchedules 新增 IncludeDates 欄位");
-                }
-            }
-
-            // EventLog: 補上 MessageKey / MessageArgs 欄位（i18n 結構化警報訊息）
-            var nHasEventLogTable = await connection.QuerySingleAsync<int>(
-                @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
-                  WHERE TABLE_NAME = 'EventLog' AND TABLE_TYPE = 'BASE TABLE'");
-            if (nHasEventLogTable > 0)
-            {
-                var nHasMessageKey = await connection.QuerySingleAsync<int>(
-                    @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-                      WHERE TABLE_NAME = 'EventLog' AND COLUMN_NAME = 'MessageKey'");
-                if (nHasMessageKey == 0)
-                {
-                    await connection.ExecuteAsync(
-                        "ALTER TABLE [EventLog] ADD [MessageKey] NVARCHAR(64) NULL");
-                    _logger.LogInformation("欄位遷移完成: EventLog 新增 MessageKey 欄位");
-                }
-
-                var nHasMessageArgs = await connection.QuerySingleAsync<int>(
-                    @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-                      WHERE TABLE_NAME = 'EventLog' AND COLUMN_NAME = 'MessageArgs'");
-                if (nHasMessageArgs == 0)
-                {
-                    await connection.ExecuteAsync(
-                        "ALTER TABLE [EventLog] ADD [MessageArgs] NVARCHAR(512) NULL");
-                    _logger.LogInformation("欄位遷移完成: EventLog 新增 MessageArgs 欄位");
-                }
-
-                // EventLog: 補上通知摘要欄位（NotifyChannel / NotifyStatus / NotifyDetail / NotifyRelatedEventId）
-                var nHasNotifyChannel = await connection.QuerySingleAsync<int>(
-                    @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-                      WHERE TABLE_NAME = 'EventLog' AND COLUMN_NAME = 'NotifyChannel'");
-                if (nHasNotifyChannel == 0)
-                {
-                    await connection.ExecuteAsync(
-                        "ALTER TABLE [EventLog] ADD [NotifyChannel] NVARCHAR(10) NULL");
-                    _logger.LogInformation("欄位遷移完成: EventLog 新增 NotifyChannel 欄位");
-                }
-                var nHasNotifyStatus = await connection.QuerySingleAsync<int>(
-                    @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-                      WHERE TABLE_NAME = 'EventLog' AND COLUMN_NAME = 'NotifyStatus'");
-                if (nHasNotifyStatus == 0)
-                {
-                    await connection.ExecuteAsync(
-                        "ALTER TABLE [EventLog] ADD [NotifyStatus] TINYINT NULL");
-                    _logger.LogInformation("欄位遷移完成: EventLog 新增 NotifyStatus 欄位");
-                }
-                var nHasNotifyDetail = await connection.QuerySingleAsync<int>(
-                    @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-                      WHERE TABLE_NAME = 'EventLog' AND COLUMN_NAME = 'NotifyDetail'");
-                if (nHasNotifyDetail == 0)
-                {
-                    await connection.ExecuteAsync(
-                        "ALTER TABLE [EventLog] ADD [NotifyDetail] NVARCHAR(500) NULL");
-                    _logger.LogInformation("欄位遷移完成: EventLog 新增 NotifyDetail 欄位");
-                }
-                var nHasNotifyRelatedEventId = await connection.QuerySingleAsync<int>(
-                    @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-                      WHERE TABLE_NAME = 'EventLog' AND COLUMN_NAME = 'NotifyRelatedEventId'");
-                if (nHasNotifyRelatedEventId == 0)
-                {
-                    await connection.ExecuteAsync(
-                        "ALTER TABLE [EventLog] ADD [NotifyRelatedEventId] BIGINT NULL");
-                    _logger.LogInformation("欄位遷移完成: EventLog 新增 NotifyRelatedEventId 欄位");
-                }
-            }
-
-            // LineNotifyTargets: 補上 Language 欄位
-            var nHasLineTargetsTable = await connection.QuerySingleAsync<int>(
-                @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
-                  WHERE TABLE_NAME = 'LineNotifyTargets' AND TABLE_TYPE = 'BASE TABLE'");
-            if (nHasLineTargetsTable > 0)
-            {
-                var nHasLineLanguage = await connection.QuerySingleAsync<int>(
-                    @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-                      WHERE TABLE_NAME = 'LineNotifyTargets' AND COLUMN_NAME = 'Language'");
-                if (nHasLineLanguage == 0)
-                {
-                    await connection.ExecuteAsync(
-                        "ALTER TABLE [LineNotifyTargets] ADD [Language] NVARCHAR(10) NOT NULL DEFAULT 'zh-TW'");
-                    _logger.LogInformation("欄位遷移完成: LineNotifyTargets 新增 Language 欄位（預設 zh-TW）");
-                }
-            }
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "欄位遷移時發生錯誤（可忽略若欄位已正確）");
+        }
+    }
+
+    /// <summary>
+    /// Schema-driven 欄位同步 — 逐表比對 INFORMATION_SCHEMA.COLUMNS 與 schema 定義，缺欄位自動 ALTER TABLE ADD。
+    /// 既有欄位原則上不改（型別 / nullability 不一致僅 log warning 讓漂移可見），
+    /// 唯一例外：同型別 + 同 nullability 的字元欄位「純加寬」（如 nvarchar(100)→(500)/MAX）為無損操作，自動 ALTER COLUMN；縮短僅警告。
+    /// IDENTITY / PK 欄位無法事後 ADD，缺了只 log error；NOT NULL 且無 Default 的欄位跳過並 log error（避免 ALTER 失敗）。
+    /// </summary>
+    /// <param name="connection">資料庫連線</param>
+    /// <param name="schema">資料庫綱要模型</param>
+    private async Task SyncMissingColumnsAsync(SqlConnection connection, DatabaseSchemaModel schema)
+    {
+        foreach (var table in schema.tableList)
+        {
+            try
+            {
+                // 查出該表目前所有欄位（表不存在則為空清單 → 跳過，建表流程已涵蓋）
+                var dbColumns = (await connection.QueryAsync<(string ColumnName, string DataType, string IsNullable, int? CharMaxLength)>(
+                    @"SELECT COLUMN_NAME AS ColumnName, DATA_TYPE AS DataType, IS_NULLABLE AS IsNullable, CHARACTER_MAXIMUM_LENGTH AS CharMaxLength
+                      FROM INFORMATION_SCHEMA.COLUMNS
+                      WHERE TABLE_NAME = @TableName",
+                    new { TableName = table.szTableName })).ToList();
+
+                if (dbColumns.Count == 0)
+                {
+                    continue;
+                }
+
+                var dbColumnMap = dbColumns.ToDictionary(c => c.ColumnName, c => c, StringComparer.OrdinalIgnoreCase);
+
+                foreach (var column in table.columnList)
+                {
+                    if (dbColumnMap.TryGetValue(column.szName, out var dbColumn))
+                    {
+                        await CheckExistingColumnDriftAsync(connection, table, column, dbColumn);
+                        continue;
+                    }
+
+                    // IDENTITY / PK 欄位無法事後 ADD
+                    if (column.isIdentity || column.isPrimaryKey)
+                    {
+                        _logger.LogError(
+                            "欄位同步跳過: {TableName}.{ColumnName} 為 IDENTITY/PK 欄位，無法自動補上，請人工遷移",
+                            table.szTableName, column.szName);
+                        continue;
+                    }
+
+                    // NOT NULL 且無 Default：對非空表 ADD 必失敗，跳過並要求補 Default
+                    if (!column.isNullable && string.IsNullOrEmpty(column.szDefault))
+                    {
+                        _logger.LogError(
+                            "欄位同步跳過: {TableName}.{ColumnName} 定義為 NOT NULL 但無 Default，請在 DatabaseSchema.json 補上 Default 後重啟",
+                            table.szTableName, column.szName);
+                        continue;
+                    }
+
+                    try
+                    {
+                        var szAlterSql = $"ALTER TABLE [{table.szTableName}] ADD {GenerateColumnDefinition(column)}";
+                        await connection.ExecuteAsync(szAlterSql);
+                        _logger.LogInformation("欄位同步完成: {TableName} 新增欄位 {ColumnName}", table.szTableName, column.szName);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Engine / Web 同時啟動的 ALTER race 或權限不足：單欄失敗不中斷整批
+                        _logger.LogWarning(ex, "欄位同步失敗: {TableName}.{ColumnName}（若另一端已補上可忽略）",
+                            table.szTableName, column.szName);
+                    }
+                }
+
+                // DB 有、schema 沒有的欄位（人工加過的）：不動，只讓漂移可見
+                var schemaColumnNames = new HashSet<string>(table.columnList.Select(c => c.szName), StringComparer.OrdinalIgnoreCase);
+                foreach (var dbColumn in dbColumns.Where(c => !schemaColumnNames.Contains(c.ColumnName)))
+                {
+                    _logger.LogWarning(
+                        "欄位漂移: {TableName}.{ColumnName} 存在於 DB 但不在 DatabaseSchema.json（不自動移除，請人工確認是否回填定義）",
+                        table.szTableName, dbColumn.ColumnName);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "同步表格 {TableName} 欄位時發生錯誤", table.szTableName);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 檢查既有欄位與 schema 的漂移 — 型別 / nullability 不一致僅警告；
+    /// 同型別 + 同 nullability 的字元欄位純加寬（含 → MAX）自動 ALTER COLUMN（無損），縮短僅警告。
+    /// </summary>
+    /// <param name="connection">資料庫連線</param>
+    /// <param name="table">表格模型</param>
+    /// <param name="column">schema 欄位定義</param>
+    /// <param name="dbColumn">DB 現況（INFORMATION_SCHEMA.COLUMNS）</param>
+    private async Task CheckExistingColumnDriftAsync(
+        SqlConnection connection,
+        DatabaseTableModel table,
+        DatabaseColumnModel column,
+        (string ColumnName, string DataType, string IsNullable, int? CharMaxLength) dbColumn)
+    {
+        // 型別不一致：只警告，不自動改（改型別有資料毀損風險）
+        if (!string.Equals(dbColumn.DataType, column.szType, StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogWarning(
+                "欄位型別漂移: {TableName}.{ColumnName} DB={DbType} schema={SchemaType}（不自動修改，請人工確認）",
+                table.szTableName, column.szName, dbColumn.DataType, column.szType);
+            return;
+        }
+
+        // Nullability 不一致：只警告（NULL→NOT NULL 需先處理既有 NULL 值，是資料決策）
+        var isDbNullable = string.Equals(dbColumn.IsNullable, "YES", StringComparison.OrdinalIgnoreCase);
+        if (isDbNullable != column.isNullable)
+        {
+            _logger.LogWarning(
+                "欄位 Nullability 漂移: {TableName}.{ColumnName} DB={DbNullable} schema={SchemaNullable}（不自動修改，請人工確認）",
+                table.szTableName, column.szName, isDbNullable ? "NULL" : "NOT NULL", column.isNullable ? "NULL" : "NOT NULL");
+            return;
+        }
+
+        // 長度比對：僅字元型別（varchar/nvarchar/char/nchar）且兩邊都有長度資訊才比
+        var isCharType = column.szType.ToLower().Contains("varchar") || column.szType.ToLower().Contains("char");
+        if (!isCharType || !column.nLength.HasValue || !dbColumn.CharMaxLength.HasValue)
+        {
+            return;
+        }
+
+        var nSchemaLen = column.nLength.Value;   // -1 = MAX
+        var nDbLen = dbColumn.CharMaxLength.Value; // -1 = MAX
+        if (nSchemaLen == nDbLen)
+        {
+            return;
+        }
+
+        // 純加寬（schema 比 DB 寬，含 → MAX）：無損 metadata 操作，自動執行
+        var isWiden = nDbLen != -1 && (nSchemaLen == -1 || nSchemaLen > nDbLen);
+        if (!isWiden)
+        {
+            _logger.LogWarning(
+                "欄位長度漂移（縮短）: {TableName}.{ColumnName} DB={DbLen} schema={SchemaLen}（縮短有截斷風險，不自動修改，請人工確認）",
+                table.szTableName, column.szName, nDbLen == -1 ? "MAX" : nDbLen.ToString(), nSchemaLen == -1 ? "MAX" : nSchemaLen.ToString());
+            return;
+        }
+
+        try
+        {
+            var szLenSpec = nSchemaLen == -1 ? "MAX" : nSchemaLen.ToString();
+            var szNullSpec = column.isNullable ? "NULL" : "NOT NULL";
+            await connection.ExecuteAsync(
+                $"ALTER TABLE [{table.szTableName}] ALTER COLUMN [{column.szName}] {column.szType}({szLenSpec}) {szNullSpec}");
+            _logger.LogInformation(
+                "欄位加寬完成: {TableName}.{ColumnName} {Type}: {DbLen} → {SchemaLen}",
+                table.szTableName, column.szName, column.szType, nDbLen, szLenSpec);
+        }
+        catch (Exception ex)
+        {
+            // PK / 索引 / DEFAULT 約束相依等情況可能擋 ALTER COLUMN：不中斷整批，留警告請人工處理
+            _logger.LogWarning(ex,
+                "欄位加寬失敗: {TableName}.{ColumnName}（可能受 PK/索引/約束相依限制，請人工加寬）",
+                table.szTableName, column.szName);
         }
     }
 

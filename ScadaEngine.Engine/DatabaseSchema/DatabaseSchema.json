@@ -337,6 +337,8 @@
           "_comment": "對父節點的貢獻方向：+1=正向加入、-1=反向扣減。根節點固定 +1" },
         { "Name": "IsDemandEnabled", "Type": "bit", "Nullable": false, "Default": 0,
           "_comment": "是否啟用需量計算（ΔkWh×4 算法，直接使用本迴路 SID）；僅葉子有意義" },
+        { "Name": "DemandSID",   "Type": "nvarchar", "Length": 100, "Nullable": true,
+          "_comment": "需量計算功率點位 SID；NULL 表示未指定。僅葉子有意義" },
         { "Name": "IsMainMeter", "Type": "bit", "Nullable": false, "Default": 0,
           "_comment": "主要電表標記 — 全系統唯一（應用層保證：勾新的自動取消舊的）；僅實體電表（綁 SID）有意義" },
         { "Name": "Description", "Type": "nvarchar", "Length": 500, "Nullable": true },

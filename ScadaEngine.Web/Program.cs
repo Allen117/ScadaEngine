@@ -158,6 +158,8 @@ builder.Services.AddScoped<ScadaEngine.Web.Services.RefrigerationTonReportServic
 builder.Services.AddScoped<ScadaEngine.Web.Services.DbCoordinatorService>();
 // Designer 列範本 JSON 讀寫（Singleton：內含 SemaphoreSlim 檔案鎖）
 builder.Services.AddSingleton<ScadaEngine.Web.Services.DesignerTemplateService>();
+// Modbus 點位熱編輯 — 讀寫 Engine 執行目錄 Modbus JSON（原子替換，Engine watcher 自動重載）
+builder.Services.AddSingleton<ScadaEngine.Web.Services.ModbusConfigFileService>();
 // Scoped：依賴 IStringLocalizer<T>（Scoped），且 exporter 本身無狀態
 builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyReportExcelExporter>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.RefrigerationTonReportExcelExporter>();
@@ -208,6 +210,23 @@ builder.Services.AddHostedService<ScadaEngine.Web.Services.DbCoordinatorReloadPu
 var app = builder.Build();
 
 Console.WriteLine("正在啟動 SCADA Web 應用程式...");
+
+// 啟動時同步 DB 結構（schema-driven 建表 + 補缺欄位）— 消滅 Engine/Web 部署順序依賴，誰先重啟誰補。
+// 失敗僅 log 不擋啟動（DB 連不上時 Web 照常起，之後 Engine 或手動初始化可補）
+try
+{
+    var dbInitLogger = app.Services.GetRequiredService<ILogger<Program>>();
+    var dbInitService = app.Services.GetRequiredService<DatabaseInitializationService>();
+    var isDbSchemaSynced = await dbInitService.InitializeDatabaseSchemaAsync();
+    if (!isDbSchemaSynced)
+    {
+        dbInitLogger.LogWarning("Web 啟動時資料庫結構同步失敗（不擋啟動）— 請確認 DB 連線與 DatabaseSchema.json");
+    }
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Web 啟動時資料庫結構同步發生錯誤（不擋啟動）: {ex.Message}");
+}
 
 try
 {
