@@ -282,6 +282,16 @@
   <data name="designer.prop.row_height" xml:space="preserve"><value>Row Height</value></data>
   <data name="designer.prop.size_placeholder_default" xml:space="preserve"><value>Leave empty for default</value></data>
   <data name="designer.prop.table_size_locked" xml:space="preserve"><value>Size determined by rows &amp; cols</value></data>
+  <!-- Prop Panel - table style presets (plan 2026-07-04) -->
+  <data name="designer.prop.table_style" xml:space="preserve"><value>Table Style</value></data>
+  <data name="designer.prop.body_bg_odd" xml:space="preserve"><value>Odd Row Background</value></data>
+  <data name="designer.prop.body_bg_even" xml:space="preserve"><value>Even Row Background</value></data>
+  <data name="designer.prop.border_color" xml:space="preserve"><value>Border Color</value></data>
+  <data name="designer.preset.classic" xml:space="preserve"><value>Classic Gray</value></data>
+  <data name="designer.preset.scada_blue" xml:space="preserve"><value>SCADA Blue</value></data>
+  <data name="designer.preset.ems_green" xml:space="preserve"><value>EMS Green</value></data>
+  <data name="designer.preset.dark" xml:space="preserve"><value>Dark</value></data>
+  <data name="designer.preset.minimal" xml:space="preserve"><value>Minimal White</value></data>
 
   <!-- Prop Panel - gauge -->
   <data name="designer.prop.bound_point" xml:space="preserve"><value>Bound Point</value></data>

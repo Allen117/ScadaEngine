@@ -345,6 +345,8 @@ DOMContentLoaded
 |------|------|
 | `nCols` / `nRows` | 欄位數（1~4）/ 列數 |
 | `szHeaderColor` | 表頭背景色 |
+| `szBodyBgOdd` / `szBodyBgEven` | 奇/偶數資料列底色（`null` = 沿用預設外觀） |
+| `szBorderColor` | 資料列分隔線色（`null` = 預設 `#f0f0f0`） |
 | `arrCells` | 二維陣列，每格可綁定 SID |
 | `arrColDecimals` | 各欄小數位數 |
 
@@ -353,6 +355,12 @@ DOMContentLoaded
 - DI：ON/OFF 文字 + 警報變色
 - 品質 BAD 時顯示「斷線」
 - 右鍵可針對單一儲存格加入趨勢圖
+
+**預設底色樣式（2026-07-04）**：Designer 屬性面板提供 5 套一鍵樣式色塊 —
+經典深灰 / SCADA 藍 / EMS 綠 / 深色 / 極簡白（定義於 `widget-defs.js` 的 `TABLE_STYLE_PRESETS`）。
+
+- **一次性填色**：點選 preset 是把顏色**複製**進 props（表頭色、奇/偶列底色、框線色，並**整組覆蓋**所有儲存格字色），不儲存 preset key，套用後仍可用「表頭底色 / 奇數列底色 / 偶數列底色 / 框線色」欄位個別微調
+- **向下相容**：三個新 props 預設 `null` — 舊存檔與未套樣式的新表格完全維持現行外觀（Designer 淡灰斑馬紋、執行期白底），不會因本功能改變既有場域
 
 #### (9) text — 靜態文字標籤
 

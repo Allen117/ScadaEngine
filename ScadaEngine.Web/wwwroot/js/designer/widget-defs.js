@@ -24,6 +24,10 @@ const WIDGET_DEFS = {
             nRows: 5,
             nCols: 6,
             szHeaderColor: '#343a40',
+            // ─ 底色樣式（plan 2026-07-04）：null = 沿用現行渲染（Designer CSS 斑馬紋、執行期白底）─
+            szBodyBgOdd: null,           // 奇數資料列底色
+            szBodyBgEven: null,          // 偶數資料列底色
+            szBorderColor: null,         // 資料列分隔線色
             arrCells: null,
             arrColDecimals: null,
             // ─ 表格大小由結構決定（plan 2026-06-01）─
@@ -293,6 +297,17 @@ function getDefaultColHeaders() {
     ];
 }
 
+// ── 表格預設底色樣式（plan 2026-07-04）──
+// 一次性填色：點選時把顏色複製進 props（含全部 cell 字色），不存 preset key，
+// 套用後仍可個別微調；配色對齊 docs/設計規範.md 雙主題色票
+const TABLE_STYLE_PRESETS = {
+    classic:    { szHeaderColor: '#343a40', szHeaderFont: '#ffffff', szBodyBgOdd: '#ffffff', szBodyBgEven: '#f8f9fa', szBorderColor: '#dee2e6', szDataFont: '#444444' },
+    scada_blue: { szHeaderColor: '#0d6efd', szHeaderFont: '#ffffff', szBodyBgOdd: '#ffffff', szBodyBgEven: '#e7f1ff', szBorderColor: '#b6d4fe', szDataFont: '#212529' },
+    ems_green:  { szHeaderColor: '#2e7d32', szHeaderFont: '#ffffff', szBodyBgOdd: '#ffffff', szBodyBgEven: '#e8f5e9', szBorderColor: '#c8e6c9', szDataFont: '#1b5e20' },
+    dark:       { szHeaderColor: '#1f2937', szHeaderFont: '#e5e7eb', szBodyBgOdd: '#111827', szBodyBgEven: '#1e293b', szBorderColor: '#374151', szDataFont: '#e5e7eb' },
+    minimal:    { szHeaderColor: '#f8f9fa', szHeaderFont: '#495057', szBodyBgOdd: '#ffffff', szBodyBgEven: '#ffffff', szBorderColor: '#e9ecef', szDataFont: '#444444' }
+};
+
 // ── 儲存格預設值 ──
 function _defaultHeaderCell(ci) {
     return { szText: '', szFontColor: '#fff', szFontWeight: '500', szAlign: 'left', nFontSize: 14 };
@@ -329,6 +344,10 @@ function initArrCells(props) {
     if (!Array.isArray(props.arrColWidths))  props.arrColWidths  = Array.from({ length: nC }, () => null);
     if (!Array.isArray(props.arrRowHeights)) props.arrRowHeights = Array.from({ length: nR }, () => null);
     if (typeof props.bTableSizeLocked !== 'boolean') props.bTableSizeLocked = false;
+    // ─ 底色樣式：舊檔無這些欄位，補 null（= 沿用現行渲染）─
+    if (props.szBodyBgOdd === undefined)   props.szBodyBgOdd = null;
+    if (props.szBodyBgEven === undefined)  props.szBodyBgEven = null;
+    if (props.szBorderColor === undefined) props.szBorderColor = null;
 }
 
 // ── 當 nRows/nCols 改變時同步 arrCells 大小 ──
@@ -406,12 +425,21 @@ function buildTableHtml(props) {
             cursor:pointer;">${escHtml(cell.szText || '')}</th>`
     ).join('');
 
+    // 底色樣式（plan 2026-07-04）：null = 不輸出 inline，沿用 designer.css 斑馬紋
+    const szBgOdd   = props.szBodyBgOdd   || '';
+    const szBgEven  = props.szBodyBgEven  || '';
+    const szBorderC = props.szBorderColor || '';
+
     // 資料列 (row 1..nR) — tr 帶 inline height
     const szRows = Array.from({ length: nR }, (_, ri) => {
         const rowIdx = ri + 1;
         if (rowIdx >= arrCells.length) return '';
         const row = arrCells[rowIdx];
         const nRowH = arrRH[ri] != null ? +arrRH[ri] : nDefH;
+        const szRowBg = (ri % 2 === 1) ? szBgEven : szBgOdd;
+        const szBgStyle = szRowBg ? `background:${szRowBg};` : '';
+        // 末列不輸出 inline border，保留 CSS tr:last-child 無框線行為
+        const szBorderStyle = (szBorderC && ri < nR - 1) ? `border-bottom:1px solid ${szBorderC};` : '';
         const szCells = row.slice(0, nC).map((cell, ci) => {
             const szSidAttr = cell.szSid ? `data-sid="${escHtml(cell.szSid)}"` : '';
             const szSidLabel = cell.szSid
@@ -419,6 +447,7 @@ function buildTableHtml(props) {
             return `<td data-row="${rowIdx}" data-col="${ci}" ${szSidAttr}
                 style="color:${cell.szFontColor || '#444'};font-weight:${cell.szFontWeight || 'normal'};
                        font-size:${cell.nFontSize || 12}px;text-align:${cell.szAlign || 'left'};
+                       ${szBgStyle}${szBorderStyle}
                        cursor:pointer;position:relative;">${escHtml(cell.szText || '')}${szSidLabel}</td>`;
         }).join('');
         return `<tr style="height:${nRowH}px">${szCells}</tr>`;

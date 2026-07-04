@@ -282,6 +282,16 @@
   <data name="designer.prop.row_height" xml:space="preserve"><value>該列高度</value></data>
   <data name="designer.prop.size_placeholder_default" xml:space="preserve"><value>留空=用預設</value></data>
   <data name="designer.prop.table_size_locked" xml:space="preserve"><value>大小由欄列決定</value></data>
+  <!-- Prop Panel - table 底色樣式（plan 2026-07-04） -->
+  <data name="designer.prop.table_style" xml:space="preserve"><value>表格樣式</value></data>
+  <data name="designer.prop.body_bg_odd" xml:space="preserve"><value>奇數列底色</value></data>
+  <data name="designer.prop.body_bg_even" xml:space="preserve"><value>偶數列底色</value></data>
+  <data name="designer.prop.border_color" xml:space="preserve"><value>框線色</value></data>
+  <data name="designer.preset.classic" xml:space="preserve"><value>經典深灰</value></data>
+  <data name="designer.preset.scada_blue" xml:space="preserve"><value>SCADA 藍</value></data>
+  <data name="designer.preset.ems_green" xml:space="preserve"><value>EMS 綠</value></data>
+  <data name="designer.preset.dark" xml:space="preserve"><value>深色</value></data>
+  <data name="designer.preset.minimal" xml:space="preserve"><value>極簡白</value></data>
 
   <!-- Prop Panel - gauge -->
   <data name="designer.prop.bound_point" xml:space="preserve"><value>綁定點位</value></data>

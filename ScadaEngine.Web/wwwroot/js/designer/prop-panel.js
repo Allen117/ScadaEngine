@@ -63,6 +63,16 @@ function renderPropPanel(el) {
     `;
 
     if (szType === 'table') {
+        // 預設底色樣式色塊（plan 2026-07-04）— 迷你預覽：表頭 + 奇/偶列
+        const szPresetSwatches = Object.keys(TABLE_STYLE_PRESETS).map(k => {
+            const p = TABLE_STYLE_PRESETS[k];
+            return `<div class="table-preset-swatch" title="${escHtml(t('designer.preset.' + k))}"
+                         onclick="applyTablePreset('${k}')">
+                        <div style="height:7px;background:${p.szHeaderColor};"></div>
+                        <div style="height:6px;background:${p.szBodyBgOdd};"></div>
+                        <div style="height:6px;background:${p.szBodyBgEven};border-top:1px solid ${p.szBorderColor};"></div>
+                    </div>`;
+        }).join('');
         szHtml += `
         <div class="prop-group">
             <label>${escHtml(t('designer.prop.rows'))}</label>
@@ -85,9 +95,28 @@ function renderPropPanel(el) {
                    oninput="setProp('nDefaultColW', +this.value)">
         </div>
         <div class="prop-group">
+            <label>${escHtml(t('designer.prop.table_style'))}</label>
+            <div class="table-preset-row">${szPresetSwatches}</div>
+        </div>
+        <div class="prop-group">
             <label>${escHtml(t('designer.prop.header_color'))}</label>
             <input type="color" value="${props.szHeaderColor}"
                    oninput="setProp('szHeaderColor', this.value)">
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.body_bg_odd'))}</label>
+            <input type="color" value="${props.szBodyBgOdd || '#ffffff'}"
+                   oninput="setProp('szBodyBgOdd', this.value)">
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.body_bg_even'))}</label>
+            <input type="color" value="${props.szBodyBgEven || '#f8f9fa'}"
+                   oninput="setProp('szBodyBgEven', this.value)">
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.border_color'))}</label>
+            <input type="color" value="${props.szBorderColor || '#f0f0f0'}"
+                   oninput="setProp('szBorderColor', this.value)">
         </div>`;
     } else if (szType === 'gauge') {
         const szSidLabel = props.szPointName
@@ -943,6 +972,26 @@ function setProp(szKey, val) {
     if (bJustLockedTable) {
         renderPropPanel(selectedEl);
     }
+}
+
+// 套用表格預設底色樣式（plan 2026-07-04）
+// 一次性填色：把 preset 各色複製進 props，並整組覆蓋 header/data cell 字色
+// （2026-07-04 使用者確認：連同覆蓋已自訂字色，套完可再逐格改回）
+function applyTablePreset(szKey) {
+    if (!selectedEl || selectedEl.dataset.type !== 'table') return;
+    const preset = TABLE_STYLE_PRESETS[szKey];
+    if (!preset) return;
+    const props = selectedEl.widgetProps;
+    initArrCells(props);
+    props.szHeaderColor = preset.szHeaderColor;
+    props.szBodyBgOdd   = preset.szBodyBgOdd;
+    props.szBodyBgEven  = preset.szBodyBgEven;
+    props.szBorderColor = preset.szBorderColor;
+    props.arrCells.forEach((row, ri) => row.forEach(cell => {
+        cell.szFontColor = (ri === 0) ? preset.szHeaderFont : preset.szDataFont;
+    }));
+    renderWidget(selectedEl);
+    renderPropPanel(selectedEl);
 }
 
 function setPos(szSide, nVal) {

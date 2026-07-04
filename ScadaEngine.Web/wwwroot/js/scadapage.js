@@ -1595,6 +1595,10 @@
         var arrCW = props.arrColWidths || [];
         var arrRH = props.arrRowHeights || [];
         var bLocked = props.bTableSizeLocked === true;
+        // 底色樣式（plan 2026-07-04）：未設定（null/undefined）= 沿用現行純白渲染
+        var szBgOdd   = props.szBodyBgOdd   || '';
+        var szBgEven  = props.szBodyBgEven  || '';
+        var szBorderC = props.szBorderColor || '#f0f0f0';
         // 鎖定 → 用結構欄寬；未鎖定（舊檔）→ 用 table width:100% 等比例
         var szTableStyle = bLocked
             ? 'border-collapse:collapse;table-layout:fixed;'
@@ -1624,6 +1628,8 @@
                 var row = props.arrCells[rowIdx];
                 var nRowH = arrRH[ri] != null ? +arrRH[ri] : nDefH;
                 var szRowStyle = bLocked ? ' style="height:' + nRowH + 'px"' : '';
+                var szRowBg = (ri % 2 === 1) ? szBgEven : szBgOdd;
+                var szBgStyle = szRowBg ? 'background:' + szRowBg + ';' : '';
                 var szCells = row.slice(0, nC).map(function (cell, ci) {
                     var nDec = arrColDec[ci];
                     var szPT = cell.szPointType || 'AI';
@@ -1645,8 +1651,8 @@
                         'font-size:' + (cell.nFontSize || 12) + 'px;' +
                         'color:' + (cell.szFontColor || '#444') + ';' +
                         'font-weight:' + (cell.szFontWeight || 'normal') + ';' +
-                        'text-align:' + (cell.szAlign || 'left') + ';' +
-                        'border-bottom:1px solid #f0f0f0;">' + szDisplay + '</td>';
+                        'text-align:' + (cell.szAlign || 'left') + ';' + szBgStyle +
+                        'border-bottom:1px solid ' + szBorderC + ';">' + szDisplay + '</td>';
                 }).join('');
                 return '<tr' + szRowStyle + '>' + szCells + '</tr>';
             }).join('');
