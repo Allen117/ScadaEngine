@@ -37,6 +37,10 @@ public class HistoryController : Controller
         pointList.AddRange((await _dataRepository.GetAllDbPointsAsync())
             .Select(p => new ModbusPointModel { szSID = p.szSID, szName = p.szName, szUnit = p.szUnit ?? string.Empty }));
 
+        // 合併 OPC UA 來源點位
+        pointList.AddRange((await _dataRepository.GetAllOpcUaPointsAsync())
+            .Select(p => new ModbusPointModel { szSID = p.szSID, szName = p.szName, szUnit = p.szUnit ?? string.Empty }));
+
         // 計算點位群組名稱（供側欄分群）
         var calcPointGroups = calcPointsAll
             .Select(c => c.szGroupName)
@@ -108,6 +112,13 @@ public class HistoryController : Controller
                 var dp = dbPoints.FirstOrDefault(p => p.szSID == szSID);
                 if (dp != null)
                     point = new ModbusPointModel { szSID = dp.szSID, szName = dp.szName, szUnit = dp.szUnit ?? string.Empty };
+            }
+            if (point == null && szSID.StartsWith("OPC"))
+            {
+                var opcUaPoints = await _dataRepository.GetAllOpcUaPointsAsync();
+                var op = opcUaPoints.FirstOrDefault(p => p.szSID == szSID);
+                if (op != null)
+                    point = new ModbusPointModel { szSID = op.szSID, szName = op.szName, szUnit = op.szUnit ?? string.Empty };
             }
 
             // 計算標準差

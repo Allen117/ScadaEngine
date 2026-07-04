@@ -156,8 +156,11 @@ builder.Services.AddScoped<ScadaEngine.Web.Services.WaterCircuitService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyReportService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.RefrigerationTonReportService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.DbCoordinatorService>();
+// OPC UA 來源設定（Scoped：依賴 IDataRepository 與 IStringLocalizer）
+builder.Services.AddScoped<ScadaEngine.Web.Services.OpcUaCoordinatorService>();
 // Designer 列範本 JSON 讀寫（Singleton：內含 SemaphoreSlim 檔案鎖）
 builder.Services.AddSingleton<ScadaEngine.Web.Services.DesignerTemplateService>();
+
 // Modbus 點位熱編輯 — 讀寫 Engine 執行目錄 Modbus JSON（原子替換，Engine watcher 自動重載）
 builder.Services.AddSingleton<ScadaEngine.Web.Services.ModbusConfigFileService>();
 // Scoped：依賴 IStringLocalizer<T>（Scoped），且 exporter 本身無狀態
@@ -206,6 +209,11 @@ builder.Services.AddHostedService<ScadaEngine.Web.Services.AlarmRuleReloadPublis
 builder.Services.AddSingleton<ScadaEngine.Web.Services.DbCoordinatorReloadPublisher>();
 builder.Services.AddHostedService<ScadaEngine.Web.Services.DbCoordinatorReloadPublisher>(provider =>
     provider.GetRequiredService<ScadaEngine.Web.Services.DbCoordinatorReloadPublisher>());
+
+// 註冊 OPC UA 來源 Reload 發布者（雙註冊：Singleton 供 Controller 注入呼叫 + HostedService 啟動時連 broker）
+builder.Services.AddSingleton<ScadaEngine.Web.Services.OpcUaReloadPublisher>();
+builder.Services.AddHostedService<ScadaEngine.Web.Services.OpcUaReloadPublisher>(provider =>
+    provider.GetRequiredService<ScadaEngine.Web.Services.OpcUaReloadPublisher>());
 
 var app = builder.Build();
 

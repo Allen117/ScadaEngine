@@ -233,6 +233,10 @@ public static class DataServiceExtensions
         services.AddSingleton<DbCoordinatorJsonLoader>();
         services.AddSingleton<DbCommunicationService>();
 
+        // 註冊 OPC UA 來源相關服務為單例（OpcUaCommunicationService 同時作 HostedService 由 Program.cs 註冊）
+        services.AddSingleton<OpcUaConfigLoader>();
+        services.AddSingleton<OpcUaCommunicationService>();
+
         return services;
     }
 

@@ -1,0 +1,26 @@
+{
+  "_comment": "OPC UA 來源範例 — 複製為 {Name}.json 後由 Engine 載入（.example 副檔名不會被載入，避免在正式環境產生假資料）。建議直接在 Web「OPC UA 來源」頁建立，Seq 由 Web 自動配號。",
+  "Name": "OpcUa1",
+  "EndpointUrl": "opc.tcp://192.168.1.10:4840",
+  "Username": "user1",
+  "Password": "pass1",
+  "PollingInterval": 1000,
+  "ConnectTimeout": 5000,
+  "MonitorEnabled": true,
+  "MaxNodesPerRead": 0,
+  "Devices": [
+    {
+      "Name": "D1",
+      "Tags": [
+        { "Seq": 1, "Name": "溫度", "TagName": "ns=2;s=D1.T", "ControlType": "", "Ratio": "1", "Unit": "°C", "Min": 0, "Max": 100 },
+        { "Seq": 2, "Name": "頻率設定", "TagName": "ns=2;s=D1.Freq", "ControlType": "AO", "Ratio": "0.1", "Unit": "Hz" }
+      ]
+    },
+    {
+      "Name": "D2",
+      "Tags": [
+        { "Seq": 3, "Name": "溫度", "TagName": "ns=2;s=D2.T", "ControlType": "", "Ratio": "1", "Unit": "°C" }
+      ]
+    }
+  ]
+}

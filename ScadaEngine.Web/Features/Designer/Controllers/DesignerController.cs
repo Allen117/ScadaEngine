@@ -44,6 +44,9 @@ public class DesignerController : Controller
         var dbPoints       = await _repository.GetAllDbPointsAsync();
         var dbCoordinators = await _repository.GetAllDbCoordinatorsAsync();
         var dbCoordNameMap = dbCoordinators.ToDictionary(c => c.Id, c => c.szName);
+        var opcUaPoints    = await _repository.GetAllOpcUaPointsAsync();
+        var opcUaCoordinators = await _repository.GetAllOpcUaCoordinatorsAsync();
+        var opcUaCoordNameMap = opcUaCoordinators.ToDictionary(c => c.Id, c => c.szName);
 
         var allPoints = modbusPoints.Select(p => new
         {
@@ -69,6 +72,16 @@ public class DesignerController : Controller
             fMin        = p.fMin,
             fMax        = p.fMax,
             szGroupName = dbCoordNameMap.TryGetValue(p.nCoordinatorId, out var szName) ? szName : "DB"
+        })).Concat(opcUaPoints.Select(p => new
+        {
+            szSid       = p.szSID,
+            szName      = p.szName,
+            szUnit      = p.szUnit ?? string.Empty,
+            fMin        = p.fMin ?? 0f,
+            fMax        = p.fMax ?? 100f,
+            szGroupName = opcUaCoordNameMap.TryGetValue(p.nCoordinatorId, out var szCoordName)
+                ? (string.IsNullOrEmpty(p.szDeviceName) ? szCoordName : $"{szCoordName}/{p.szDeviceName}")
+                : "OPCUA"
         }));
 
         return Json(allPoints);

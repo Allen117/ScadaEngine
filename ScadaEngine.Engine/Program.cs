@@ -91,6 +91,13 @@ try
     // 註冊 DB 來源 Reload 訂閱服務（聽 Web 端 JSON 異動 MQTT 通知）
     builder.Services.AddHostedService<DbCoordinatorReloadSubscriber>();
 
+    // 註冊 OPC UA 來源通訊服務（雙註冊：Singleton 供 ReloadSubscriber / 控制分流注入呼叫 + HostedService 啟動 polling）
+    builder.Services.AddHostedService<OpcUaCommunicationService>(provider =>
+        provider.GetRequiredService<OpcUaCommunicationService>());
+
+    // 註冊 OPC UA 來源 Reload 訂閱服務（聽 Web 端 JSON 異動 MQTT 通知）
+    builder.Services.AddHostedService<OpcUaReloadSubscriber>();
+
     // 註冊葉子層 hourly 預聚合 — 純邏輯 + 資料存取
     builder.Services.AddSingleton<EnergyLeafHourlyRepository>();
     builder.Services.AddSingleton<EnergyLeafAggregator>();

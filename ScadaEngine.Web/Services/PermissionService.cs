@@ -30,6 +30,7 @@ public static class PermissionService
         ("/Config",         "系統參數"),
         ("/ModbusCoordinator", "Modbus來源"),
         ("/DbCoordinator",  "DB 來源"),
+        ("/OpcUaCoordinator", "OPC UA 來源"),
         ("/AccountSetting", "帳號管理"),
     ];
 

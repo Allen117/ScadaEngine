@@ -60,6 +60,10 @@ public class RealtimeController : Controller
             var dbCoordinators = await _dataRepository.GetAllDbCoordinatorsAsync();
             model.DbCoordinatorList = [.. dbCoordinators];
 
+            // 載入左側 OpcUaCoordinator 清單
+            var opcUaCoordinators = await _dataRepository.GetAllOpcUaCoordinatorsAsync();
+            model.OpcUaCoordinatorList = [.. opcUaCoordinators];
+
             // 載入計算點位群組清單與 SID → GroupName 對照（供側欄分群與前端篩選）
             var calcPointsAll = (await _dataRepository.GetAllCalculatedPointsAsync())
                 .Where(c => c.isEnabled).ToList();

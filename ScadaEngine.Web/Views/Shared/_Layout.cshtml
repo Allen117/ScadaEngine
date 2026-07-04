@@ -271,7 +271,7 @@
                                     </a>
                                 </li>
                             }
-                            bool showPointSettings = canAccess("/ModbusCoordinator") || canAccess("/DbCoordinator") || canAccess("/CalcPoint");
+                            bool showPointSettings = canAccess("/ModbusCoordinator") || canAccess("/DbCoordinator") || canAccess("/OpcUaCoordinator") || canAccess("/CalcPoint");
                             bool showSettings = canAccess("/Designer") || canAccess("/AlarmSetting") || canAccess("/AccountSetting") || showPointSettings;
                             @if (showSettings)
                             {
@@ -303,6 +303,10 @@
                                                     @if (canAccess("/DbCoordinator"))
                                                     {
                                                         <li><a class="dropdown-item" href="/DbCoordinator"><i class="fas fa-database me-2"></i>@Localizer["layout.menu.dbcoordinator"]</a></li>
+                                                    }
+                                                    @if (canAccess("/OpcUaCoordinator"))
+                                                    {
+                                                        <li><a class="dropdown-item" href="/OpcUaCoordinator"><i class="fas fa-plug me-2"></i>@Localizer["layout.menu.opcuacoordinator"]</a></li>
                                                     }
                                                     @if (canAccess("/CalcPoint"))
                                                     {

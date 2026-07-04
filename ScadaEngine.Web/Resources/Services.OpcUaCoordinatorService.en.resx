@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="opcuacoord.svc.name_invalid" xml:space="preserve"><value>Name allows only letters, digits, underscore and hyphen (1-50 chars; used as file name and MQTT topic)</value></data>
+  <data name="opcuacoord.svc.name_duplicate" xml:space="preserve"><value>Name already exists, please choose another</value></data>
+  <data name="opcuacoord.svc.endpoint_invalid" xml:space="preserve"><value>Endpoint URL must start with opc.tcp://</value></data>
+  <data name="opcuacoord.svc.interval_invalid" xml:space="preserve"><value>Polling interval must be at least 200 ms</value></data>
+  <data name="opcuacoord.svc.timeout_invalid" xml:space="preserve"><value>Connect timeout must be at least 1000 ms</value></data>
+  <data name="opcuacoord.svc.not_found" xml:space="preserve"><value>The specified OPC UA server was not found</value></data>
+  <data name="opcuacoord.svc.save_success" xml:space="preserve"><value>Connection settings saved. Engine will apply automatically</value></data>
+  <data name="opcuacoord.svc.delete_success" xml:space="preserve"><value>Server deleted. Engine will stop polling automatically</value></data>
+  <data name="opcuacoord.svc.points_saved" xml:space="preserve"><value>Points saved ({0} in total). Engine will apply automatically</value></data>
+  <data name="opcuacoord.svc.device_name_required" xml:space="preserve"><value>Device name is required</value></data>
+  <data name="opcuacoord.svc.device_name_duplicate" xml:space="preserve"><value>Duplicate device name: {0}</value></data>
+  <data name="opcuacoord.svc.tag_name_required" xml:space="preserve"><value>Point name is required (device {0})</value></data>
+  <data name="opcuacoord.svc.nodeid_required" xml:space="preserve"><value>TagName (NodeId) is required: {0}</value></data>
+  <data name="opcuacoord.svc.nodeid_invalid" xml:space="preserve"><value>Invalid NodeId format: {0}</value></data>
+  <data name="opcuacoord.svc.controltype_invalid" xml:space="preserve"><value>Control type must be blank/AO/DO: {0}</value></data>
+  <data name="opcuacoord.svc.ratio_zero" xml:space="preserve"><value>Ratio cannot be 0: {0}</value></data>
+  <data name="opcuacoord.svc.minmax_invalid" xml:space="preserve"><value>Min must be less than Max: {0}</value></data>
+  <data name="opcuacoord.svc.seq_duplicate" xml:space="preserve"><value>Duplicate point sequence: {0}</value></data>
+  <data name="opcuacoord.svc.json_write_failed" xml:space="preserve"><value>Failed to write configuration file: {0}</value></data>
+  <data name="opcuacoord.svc.test_success" xml:space="preserve"><value>Read OK — raw value {0}, engineering value {1}</value></data>
+  <data name="opcuacoord.svc.test_success_nonnumeric" xml:space="preserve"><value>Read OK — value is {0} (non-numeric type, cannot be polled)</value></data>
+  <data name="opcuacoord.svc.test_bad_status" xml:space="preserve"><value>Server returned non-Good status: {0}</value></data>
+  <data name="opcuacoord.svc.test_failed" xml:space="preserve"><value>Read failed: {0}</value></data>
+</root>

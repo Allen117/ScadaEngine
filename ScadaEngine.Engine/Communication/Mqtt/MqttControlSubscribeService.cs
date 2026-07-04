@@ -336,6 +336,11 @@ public class MqttControlSubscribeService : BackgroundService, IDisposable
             {
                 await ExecuteDbControlAsync(controlCommand);
             }
+            // OPC UA 來源 SID（OPC{coordId}-S{n}）— 以 OPC UA Write 寫回 Server
+            else if (szCID.StartsWith("OPC", StringComparison.Ordinal))
+            {
+                await ExecuteOpcUaControlAsync(controlCommand);
+            }
             else
             {
                 // 解析 CID 格式 (XXX-SN)
@@ -439,6 +444,45 @@ public class MqttControlSubscribeService : BackgroundService, IDisposable
         {
             controlCommand.szParseError = $"DB 控制例外: {ex.Message}";
             _logger.LogError(ex, "[DB 控制] 執行錯誤: CID={CID}", controlCommand.szCID);
+        }
+    }
+
+    /// <summary>
+    /// 執行 OPC UA 來源點位控制操作（委派 OpcUaCommunicationService 以既有 Session 寫回 Server）
+    /// AO 寫入值 = 輸入值 ÷ Ratio、DO 寫 bool，換算與唯讀檢查都在 WriteNodeAsync 內
+    /// </summary>
+    /// <param name="controlCommand">控制指令物件</param>
+    private async Task ExecuteOpcUaControlAsync(MqttControlCommandModel controlCommand)
+    {
+        try
+        {
+            var opcUaService = _serviceProvider.GetService<ScadaEngine.Engine.Services.OpcUaCommunicationService>();
+            if (opcUaService == null)
+            {
+                controlCommand.szParseError = "無法取得 OpcUaCommunicationService 服務";
+                _logger.LogError("[OPC 控制] 無法取得 OpcUaCommunicationService 服務，無法執行控制");
+                return;
+            }
+
+            var isOk = await opcUaService.WriteNodeAsync(controlCommand.szCID, controlCommand.dValue);
+
+            controlCommand.isParsed = isOk;
+            if (isOk)
+            {
+                _logger.LogInformation("[OPC 控制] OPC UA 寫入成功: CID={CID}, Value={Value}",
+                                       controlCommand.szCID, controlCommand.dValue);
+            }
+            else
+            {
+                controlCommand.szParseError = "OPC UA 寫入失敗（點位不存在/唯讀/未連線/Server 拒絕）";
+                _logger.LogWarning("[OPC 控制] OPC UA 寫入失敗: CID={CID}, Value={Value}",
+                                   controlCommand.szCID, controlCommand.dValue);
+            }
+        }
+        catch (Exception ex)
+        {
+            controlCommand.szParseError = $"OPC 控制例外: {ex.Message}";
+            _logger.LogError(ex, "[OPC 控制] 執行錯誤: CID={CID}", controlCommand.szCID);
         }
     }
 

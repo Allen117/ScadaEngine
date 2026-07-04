@@ -71,6 +71,11 @@ public class AlarmSettingController : Controller
             .Select(p => new ModbusPointModel { szSID = p.szSID, szName = p.szName, szUnit = p.szUnit ?? string.Empty });
         pointList.AddRange(dbPoints);
 
+        // 合併 OPC UA 來源點位
+        var opcUaPoints = (await _dataRepository.GetAllOpcUaPointsAsync())
+            .Select(p => new ModbusPointModel { szSID = p.szSID, szName = p.szName, szUnit = p.szUnit ?? string.Empty });
+        pointList.AddRange(opcUaPoints);
+
         var rules = (await _alarmRuleService.GetAllRulesAsync()).ToList();
         var lineTargets = (await _lineTargetService.GetAllAsync()).ToList();
 

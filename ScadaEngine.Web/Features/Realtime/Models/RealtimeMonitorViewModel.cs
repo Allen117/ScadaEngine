@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using ScadaEngine.Common.Data.Models;
 using ScadaEngine.Engine.Models;
 
 namespace ScadaEngine.Web.Features.Realtime.Models;
@@ -52,6 +53,11 @@ public class RealtimeMonitorViewModel
     /// DBCoordinator 設備清單 (左側邊欄 DB 來源用)
     /// </summary>
     public List<DbCoordinatorModel> DbCoordinatorList { get; set; } = [];
+
+    /// <summary>
+    /// OpcUaCoordinator 設備清單 (左側邊欄 OPC UA 來源用，SID 前綴 OPC{Id}- 分群)
+    /// </summary>
+    public List<OpcUaCoordinatorModel> OpcUaCoordinatorList { get; set; } = [];
 
     /// <summary>計算點位的群組名稱清單（側欄分群用）</summary>
     public List<string> CalcPointGroups { get; set; } = [];

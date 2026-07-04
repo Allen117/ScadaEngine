@@ -2051,6 +2051,268 @@ public class SqlServerDataRepository : IDataRepository, IDisposable
 
     #endregion
 
+    #region OPC UA 來源 Coordinator / Points
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<OpcUaCoordinatorModel>> GetAllOpcUaCoordinatorsAsync()
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+
+            const string szSql = @"
+                SELECT
+                    Id,
+                    Name            AS szName,
+                    EndpointUrl     AS szEndpointUrl,
+                    Username        AS szUsername,
+                    Password        AS szPassword,
+                    PollingInterval AS nPollingInterval,
+                    ConnectTimeout  AS nConnectTimeout,
+                    MonitorEnabled  AS isMonitorEnabled,
+                    CreatedAt       AS dtCreatedAt
+                FROM OpcUaCoordinator
+                ORDER BY Id";
+
+            return await connection.QueryAsync<OpcUaCoordinatorModel>(szSql);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "查詢 OpcUaCoordinator 時發生錯誤");
+            return Enumerable.Empty<OpcUaCoordinatorModel>();
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<OpcUaPointModel>> GetAllOpcUaPointsAsync()
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+
+            const string szSql = @"
+                SELECT
+                    SID            AS szSID,
+                    CoordinatorId  AS nCoordinatorId,
+                    DeviceName     AS szDeviceName,
+                    Sequence       AS nSequence,
+                    Name           AS szName,
+                    TagName        AS szTagName,
+                    ControlType    AS szControlType,
+                    Ratio          AS fRatio,
+                    Unit           AS szUnit,
+                    [Min]          AS fMin,
+                    [Max]          AS fMax
+                FROM OpcUaPoints
+                ORDER BY CoordinatorId, Sequence";
+
+            return await connection.QueryAsync<OpcUaPointModel>(szSql);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "查詢 OpcUaPoints 時發生錯誤");
+            return Enumerable.Empty<OpcUaPointModel>();
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<OpcUaPointModel>> GetOpcUaPointsByCoordinatorIdAsync(int nCoordinatorId)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+
+            const string szSql = @"
+                SELECT
+                    SID            AS szSID,
+                    CoordinatorId  AS nCoordinatorId,
+                    DeviceName     AS szDeviceName,
+                    Sequence       AS nSequence,
+                    Name           AS szName,
+                    TagName        AS szTagName,
+                    ControlType    AS szControlType,
+                    Ratio          AS fRatio,
+                    Unit           AS szUnit,
+                    [Min]          AS fMin,
+                    [Max]          AS fMax
+                FROM OpcUaPoints
+                WHERE CoordinatorId = @CoordinatorId
+                ORDER BY Sequence";
+
+            return await connection.QueryAsync<OpcUaPointModel>(szSql, new { CoordinatorId = nCoordinatorId });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "查詢 Coordinator {Id} 的 OpcUaPoints 時發生錯誤", nCoordinatorId);
+            return Enumerable.Empty<OpcUaPointModel>();
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<int> SaveOpcUaCoordinatorAsync(OpcUaCoordinatorModel coordinator)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        using var connection = new SqlConnection(_szConnectionString);
+        await connection.OpenAsync();
+
+        // UPSERT by Name — 同名 JSON 檔永遠拿到同一個 Id（SID 前綴 OPC{Id}- 依賴此值）
+        const string szCheckSql = "SELECT Id FROM OpcUaCoordinator WHERE Name = @Name";
+        var nExistingId = await connection.QuerySingleOrDefaultAsync<int?>(
+            szCheckSql, new { Name = coordinator.szName });
+
+        if (nExistingId.HasValue)
+        {
+            const string szUpdateSql = @"
+                UPDATE OpcUaCoordinator
+                SET EndpointUrl     = @EndpointUrl,
+                    Username        = @Username,
+                    Password        = @Password,
+                    PollingInterval = @PollingInterval,
+                    ConnectTimeout  = @ConnectTimeout,
+                    MonitorEnabled  = @MonitorEnabled
+                WHERE Id = @Id";
+            await connection.ExecuteAsync(szUpdateSql, new
+            {
+                EndpointUrl = coordinator.szEndpointUrl,
+                Username = coordinator.szUsername,
+                Password = coordinator.szPassword,
+                PollingInterval = coordinator.nPollingInterval,
+                ConnectTimeout = coordinator.nConnectTimeout,
+                MonitorEnabled = coordinator.isMonitorEnabled,
+                Id = nExistingId.Value
+            });
+            _logger.LogDebug("更新 OpcUaCoordinator: Id={Id}, Name={Name}, Endpoint={Endpoint}",
+                nExistingId.Value, coordinator.szName, coordinator.szEndpointUrl);
+            return nExistingId.Value;
+        }
+
+        const string szInsertSql = @"
+            INSERT INTO OpcUaCoordinator (Name, EndpointUrl, Username, Password, PollingInterval, ConnectTimeout, MonitorEnabled)
+            VALUES (@Name, @EndpointUrl, @Username, @Password, @PollingInterval, @ConnectTimeout, @MonitorEnabled);
+            SELECT CAST(SCOPE_IDENTITY() AS INT);";
+        var nNewId = await connection.QuerySingleAsync<int>(szInsertSql, new
+        {
+            Name = coordinator.szName,
+            EndpointUrl = coordinator.szEndpointUrl,
+            Username = coordinator.szUsername,
+            Password = coordinator.szPassword,
+            PollingInterval = coordinator.nPollingInterval,
+            ConnectTimeout = coordinator.nConnectTimeout,
+            MonitorEnabled = coordinator.isMonitorEnabled
+        });
+        _logger.LogInformation("新增 OpcUaCoordinator: Id={Id}, Name={Name}", nNewId, coordinator.szName);
+        return nNewId;
+    }
+
+    /// <inheritdoc/>
+    public async Task<int> SaveOpcUaPointsAsync(int nCoordinatorId, IEnumerable<OpcUaPointModel> points)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        var pointList = points.ToList();
+
+        using var connection = new SqlConnection(_szConnectionString);
+        await connection.OpenAsync();
+        using var transaction = await connection.BeginTransactionAsync();
+
+        try
+        {
+            await connection.ExecuteAsync(
+                "DELETE FROM OpcUaPoints WHERE CoordinatorId = @CoordinatorId",
+                new { CoordinatorId = nCoordinatorId },
+                transaction: transaction);
+
+            const string szInsertSql = @"
+                INSERT INTO OpcUaPoints (SID, CoordinatorId, DeviceName, Sequence, Name, TagName, ControlType, Ratio, Unit, [Min], [Max])
+                VALUES (@SID, @CoordinatorId, @DeviceName, @Sequence, @Name, @TagName, @ControlType, @Ratio, @Unit, @Min, @Max)";
+
+            var nInserted = 0;
+            foreach (var p in pointList)
+            {
+                if (!p.Validate())
+                {
+                    _logger.LogWarning("OPC UA 點位驗證失敗，跳過: SID={SID}, Name={Name}", p.szSID, p.szName);
+                    continue;
+                }
+
+                await connection.ExecuteAsync(szInsertSql, new
+                {
+                    SID = p.szSID,
+                    CoordinatorId = nCoordinatorId,
+                    DeviceName = p.szDeviceName ?? string.Empty,
+                    Sequence = p.nSequence,
+                    Name = p.szName,
+                    TagName = p.szTagName,
+                    ControlType = p.szControlType ?? string.Empty,
+                    Ratio = p.fRatio,
+                    Unit = p.szUnit ?? string.Empty,
+                    Min = p.fMin,
+                    Max = p.fMax
+                }, transaction);
+                nInserted++;
+            }
+
+            await transaction.CommitAsync();
+            _logger.LogInformation("OpcUaPoints 全量覆寫完成: CoordinatorId={Id}, 寫入={Count}", nCoordinatorId, nInserted);
+            return nInserted;
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "儲存 OpcUaPoints 失敗: CoordinatorId={Id}", nCoordinatorId);
+            return 0;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> DeleteOpcUaCoordinatorAsync(int nCoordinatorId)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        using var connection = new SqlConnection(_szConnectionString);
+        await connection.OpenAsync();
+        using var transaction = await connection.BeginTransactionAsync();
+
+        try
+        {
+            await connection.ExecuteAsync(
+                "DELETE FROM OpcUaPoints WHERE CoordinatorId = @Id",
+                new { Id = nCoordinatorId }, transaction: transaction);
+
+            var nAffected = await connection.ExecuteAsync(
+                "DELETE FROM OpcUaCoordinator WHERE Id = @Id",
+                new { Id = nCoordinatorId }, transaction: transaction);
+
+            await transaction.CommitAsync();
+            _logger.LogInformation("刪除 OpcUaCoordinator: Id={Id}, 受影響={Affected}", nCoordinatorId, nAffected);
+            return nAffected > 0;
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "刪除 OpcUaCoordinator 失敗: Id={Id}", nCoordinatorId);
+            return false;
+        }
+    }
+
+    #endregion
+
     #region 需量計算
 
     public async Task<IEnumerable<string>> GetDemandSidsAsync()

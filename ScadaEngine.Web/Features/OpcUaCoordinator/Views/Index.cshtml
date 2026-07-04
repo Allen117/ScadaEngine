@@ -1,0 +1,117 @@
+@{
+    ViewData["Title"] = Localizer["opcuacoord.title"].Value;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var serverListJson = ViewBag.ServerListJson as string ?? "[]";
+}
+
+<link rel="stylesheet" href="~/css/opcuacoordinator.css" asp-append-version="true" />
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0"><i class="fas fa-plug me-2"></i>@Localizer["opcuacoord.title"]</h4>
+        <button class="btn btn-primary" onclick="window._opcua.newServer()">
+            <i class="fas fa-plus me-1"></i>@Localizer["opcuacoord.btn.new_server"]
+        </button>
+    </div>
+
+    <div class="row">
+        <!-- 左側：Server 清單 -->
+        <div class="col-md-3 pe-0">
+            <div class="card">
+                <div class="card-header py-2">
+                    <i class="fas fa-server me-1"></i>@Localizer["opcuacoord.card.server_list"]
+                </div>
+                <div class="list-group list-group-flush" id="opcuaServerList"></div>
+            </div>
+        </div>
+
+        <!-- 右側：連線設定 + 點位編輯 -->
+        <div class="col-md-9">
+            <div id="emptyDetail" class="text-center text-muted py-5">
+                <i class="fas fa-plug fa-2x mb-2 d-block"></i>
+                <p>@Localizer["opcuacoord.empty.select"]</p>
+            </div>
+
+            <div id="fullDetail" style="display:none;">
+                <!-- 連線設定卡 -->
+                <div class="card mb-3">
+                    <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                        <span id="serverDetailTitle"><i class="fas fa-cog me-1"></i>@Localizer["opcuacoord.card.server_setting"]</span>
+                        <button class="btn btn-outline-danger btn-sm" id="btnDeleteServer" onclick="window._opcua.deleteServer()">
+                            <i class="fas fa-trash me-1"></i>@Localizer["opcuacoord.btn.delete_server"]
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label small mb-1">@Localizer["opcuacoord.label.name"]</label>
+                                <input type="text" class="form-control form-control-sm" id="fieldName"
+                                       placeholder="OpcUa1" autocomplete="off" />
+                                <div class="form-text small">@Localizer["opcuacoord.hint.name"]</div>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label small mb-1">@Localizer["opcuacoord.label.endpoint"]</label>
+                                <input type="text" class="form-control form-control-sm" id="fieldEndpointUrl"
+                                       placeholder="opc.tcp://192.168.1.10:4840" autocomplete="off" />
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small mb-1">@Localizer["opcuacoord.label.username"]</label>
+                                <input type="text" class="form-control form-control-sm" id="fieldUsername" autocomplete="off" />
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small mb-1">@Localizer["opcuacoord.label.password"]</label>
+                                <input type="password" class="form-control form-control-sm" id="fieldPassword"
+                                       autocomplete="new-password" />
+                                <div class="form-text small" id="passwordHint"></div>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small mb-1">@Localizer["opcuacoord.label.polling"]</label>
+                                <input type="number" class="form-control form-control-sm" id="fieldPollingInterval"
+                                       min="200" step="100" value="1000" />
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small mb-1">@Localizer["opcuacoord.label.timeout"]</label>
+                                <input type="number" class="form-control form-control-sm" id="fieldConnectTimeout"
+                                       min="1000" step="500" value="5000" />
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="fieldMonitorEnabled" checked />
+                                    <label class="form-check-label small" for="fieldMonitorEnabled">@Localizer["opcuacoord.label.enabled"]</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 d-flex align-items-end justify-content-end">
+                                <button class="btn btn-primary btn-sm" id="btnSaveServer" onclick="window._opcua.saveServer()">
+                                    <i class="fas fa-save me-1"></i>@Localizer["opcuacoord.btn.save_server"]
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 點位編輯卡 -->
+                <div class="card" id="pointsCard" style="display:none;">
+                    <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-map-marker-alt me-1"></i>@Localizer["opcuacoord.card.points"]</span>
+                        <div>
+                            <button class="btn btn-outline-primary btn-sm me-2" onclick="window._opcua.addDevice()">
+                                <i class="fas fa-plus me-1"></i>@Localizer["opcuacoord.btn.add_device"]
+                            </button>
+                            <button class="btn btn-success btn-sm" id="btnSavePoints" onclick="window._opcua.savePoints()">
+                                <i class="fas fa-save me-1"></i>@Localizer["opcuacoord.btn.save_points"]
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body" id="deviceContainer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        window._opcuaData = @Html.Raw(serverListJson);
+    </script>
+    <script src="~/js/opcuacoordinator.js" asp-append-version="true"></script>
+}

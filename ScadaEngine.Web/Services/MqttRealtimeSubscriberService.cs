@@ -441,6 +441,9 @@ public class MqttRealtimeSubscriberService : BackgroundService, IDisposable
             _logger.LogInformation("預填 Modbus + 計算點位快取完成，共 {Count} 個點位（含 {CalcCount} 個計算點位），其中 {WithValue} 個有最新數值",
                 pointList.Count + calcList.Count, calcList.Count, nWithValue + nCalcWithValue);
 
+            // 預填 OPC UA 點位（即時值走 MQTT，與 Modbus 同路徑；先佔位讓 UI 開機即可見全部配置點位）
+            await SyncOpcUaPointCacheAsync();
+
             // DB 來源走獨立資料路徑：直接從 DBLatestData 表讀取（不依賴 LatestData / MQTT）
             await RefreshDbSourcesAsync();
 
@@ -450,6 +453,78 @@ public class MqttRealtimeSubscriberService : BackgroundService, IDisposable
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "預填點位快取時發生錯誤，將等待 MQTT 資料自動建立快取");
+        }
+    }
+
+    /// <summary>
+    /// 同步 OPC UA 點位快取：預填佔位（有 LatestData 用最新值）+ 剔除已刪除點位。
+    /// 啟動時與 Web「OPC UA 來源」頁存檔後呼叫 — 新增點位立即出現在 UI、刪除點位立即消失。
+    /// OPC UA 即時值走 MQTT 更新路徑（SID 前綴 OPC 不會被 DB 分流跳過）。
+    /// </summary>
+    public async Task SyncOpcUaPointCacheAsync()
+    {
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var repository = scope.ServiceProvider.GetRequiredService<IDataRepository>();
+            var opcPoints = (await repository.GetAllOpcUaPointsAsync()).ToList();
+            var configuredSids = new HashSet<string>(opcPoints.Select(p => p.szSID), StringComparer.Ordinal);
+
+            // 剔除快取中已刪除的 OPC UA 點位
+            foreach (var szCachedSid in _realtimeDataCache.Keys.Where(k => k.StartsWith("OPC", StringComparison.Ordinal)).ToList())
+            {
+                if (!configuredSids.Contains(szCachedSid))
+                    _realtimeDataCache.TryRemove(szCachedSid, out _);
+            }
+
+            if (opcPoints.Count == 0) return;
+
+            var latestDataList = await repository.GetLatestDataAsync(nLimit: 100000);
+            var latestDataMap = latestDataList.ToDictionary(x => x.szSID, x => x);
+
+            int nWithValue = 0;
+            foreach (var point in opcPoints)
+            {
+                RealtimeDataItemModel item;
+                if (latestDataMap.TryGetValue(point.szSID, out var latestData))
+                {
+                    item = new RealtimeDataItemModel
+                    {
+                        szSubTopic = point.szSID,
+                        szSID = point.szSID,
+                        szName = point.szName,
+                        szUnit = point.szUnit,
+                        szQuality = latestData.nQuality == 1 ? "GOOD" : "BAD",
+                        dValue = latestData.fValue,
+                        dtTimestamp = latestData.dtTimestamp,
+                        hasData = true
+                    };
+                    nWithValue++;
+                }
+                else
+                {
+                    item = new RealtimeDataItemModel
+                    {
+                        szSubTopic = point.szSID,
+                        szSID = point.szSID,
+                        szName = point.szName,
+                        szUnit = point.szUnit,
+                        szQuality = "NO_DATA",
+                        dValue = 0,
+                        dtTimestamp = DateTime.MinValue,
+                        hasData = false
+                    };
+                }
+                // TryAdd：若 MQTT 已先到資料則不覆蓋
+                _realtimeDataCache.TryAdd(point.szSID, item);
+            }
+
+            _logger.LogInformation("同步 OPC UA 點位快取完成，共 {Count} 個點位，其中 {WithValue} 個有最新數值",
+                opcPoints.Count, nWithValue);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "同步 OPC UA 點位快取時發生錯誤");
         }
     }
 

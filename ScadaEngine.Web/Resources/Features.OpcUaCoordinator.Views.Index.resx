@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="opcuacoord.title" xml:space="preserve"><value>OPC UA 來源</value></data>
+  <data name="opcuacoord.btn.new_server" xml:space="preserve"><value>新增 Server</value></data>
+  <data name="opcuacoord.card.server_list" xml:space="preserve"><value>Server 清單</value></data>
+  <data name="opcuacoord.card.server_setting" xml:space="preserve"><value>連線設定</value></data>
+  <data name="opcuacoord.card.points" xml:space="preserve"><value>點位設定</value></data>
+  <data name="opcuacoord.empty.select" xml:space="preserve"><value>請從左側選擇 Server，或按「新增 Server」建立</value></data>
+  <data name="opcuacoord.empty.no_server" xml:space="preserve"><value>尚無 OPC UA Server</value></data>
+  <data name="opcuacoord.empty.no_device" xml:space="preserve"><value>尚無設備 — 按「新增設備」開始建立點位</value></data>
+  <data name="opcuacoord.label.name" xml:space="preserve"><value>名稱</value></data>
+  <data name="opcuacoord.hint.name" xml:space="preserve"><value>僅限英數、_、-（建立後不可更改）</value></data>
+  <data name="opcuacoord.label.endpoint" xml:space="preserve"><value>Endpoint URL</value></data>
+  <data name="opcuacoord.label.username" xml:space="preserve"><value>帳號</value></data>
+  <data name="opcuacoord.label.password" xml:space="preserve"><value>密碼</value></data>
+  <data name="opcuacoord.placeholder.password_keep" xml:space="preserve"><value>已設定密碼，留空 = 不變更</value></data>
+  <data name="opcuacoord.label.polling" xml:space="preserve"><value>掃描週期 (ms)</value></data>
+  <data name="opcuacoord.label.timeout" xml:space="preserve"><value>逾時 (ms)</value></data>
+  <data name="opcuacoord.label.enabled" xml:space="preserve"><value>啟用監控</value></data>
+  <data name="opcuacoord.btn.save_server" xml:space="preserve"><value>儲存連線設定</value></data>
+  <data name="opcuacoord.btn.delete_server" xml:space="preserve"><value>刪除 Server</value></data>
+  <data name="opcuacoord.btn.add_device" xml:space="preserve"><value>新增設備</value></data>
+  <data name="opcuacoord.btn.add_point" xml:space="preserve"><value>新增點位</value></data>
+  <data name="opcuacoord.btn.save_points" xml:space="preserve"><value>儲存點位</value></data>
+  <data name="opcuacoord.btn.test" xml:space="preserve"><value>測試讀取</value></data>
+  <data name="opcuacoord.device.name" xml:space="preserve"><value>設備名稱</value></data>
+  <data name="opcuacoord.th.name" xml:space="preserve"><value>名稱</value></data>
+  <data name="opcuacoord.th.tagname" xml:space="preserve"><value>TagName (NodeId)</value></data>
+  <data name="opcuacoord.th.controltype" xml:space="preserve"><value>控制類型</value></data>
+  <data name="opcuacoord.th.ratio" xml:space="preserve"><value>倍數</value></data>
+  <data name="opcuacoord.th.unit" xml:space="preserve"><value>單位</value></data>
+  <data name="opcuacoord.th.min" xml:space="preserve"><value>Min</value></data>
+  <data name="opcuacoord.th.max" xml:space="preserve"><value>Max</value></data>
+  <data name="opcuacoord.value.readonly" xml:space="preserve"><value>唯讀</value></data>
+  <data name="opcuacoord.value.disabled" xml:space="preserve"><value>停用</value></data>
+  <data name="opcuacoord.value.new_point" xml:space="preserve"><value>（新）</value></data>
+  <data name="opcuacoord.confirm.delete_server" xml:space="preserve"><value>確定刪除 Server「{name}」？其點位設定將一併刪除（歷史資料保留）</value></data>
+  <data name="opcuacoord.confirm.delete_device" xml:space="preserve"><value>確定刪除設備「{name}」與其所有點位？</value></data>
+  <data name="opcuacoord.msg.success_default" xml:space="preserve"><value>操作成功</value></data>
+  <data name="opcuacoord.msg.failure_default" xml:space="preserve"><value>操作失敗</value></data>
+  <data name="opcuacoord.msg.call_failed" xml:space="preserve"><value>呼叫失敗：{error}</value></data>
+</root>

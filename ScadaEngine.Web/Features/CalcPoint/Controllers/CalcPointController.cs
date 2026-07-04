@@ -48,6 +48,7 @@ public class CalcPointController : Controller
         var modbusPoints = await _repository.GetAllModbusPointsAsync();
         var calcPoints = await _service.GetAllAsync();
         var dbPoints = await _repository.GetAllDbPointsAsync();
+        var opcUaPoints = await _repository.GetAllOpcUaPointsAsync();
 
         var allPoints = modbusPoints.Select(p => new
         {
@@ -67,6 +68,12 @@ public class CalcPointController : Controller
             szName = p.szName,
             szUnit = p.szUnit ?? string.Empty,
             szType = "DB"
+        })).Concat(opcUaPoints.Select(p => new
+        {
+            szSid = p.szSID,
+            szName = p.szName,
+            szUnit = p.szUnit ?? string.Empty,
+            szType = "OpcUa"
         }));
 
         return Json(allPoints);

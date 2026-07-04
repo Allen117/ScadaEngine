@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
@@ -82,6 +82,7 @@
   <data name="layout.menu.points" xml:space="preserve"><value>Point Settings</value></data>
   <data name="layout.menu.modbuscoordinator" xml:space="preserve"><value>Modbus Source</value></data>
   <data name="layout.menu.dbcoordinator" xml:space="preserve"><value>DB Source</value></data>
+  <data name="layout.menu.opcuacoordinator" xml:space="preserve"><value>OPC UA Source</value></data>
   <data name="layout.menu.calcpoint" xml:space="preserve"><value>Calculated Points</value></data>
   <data name="layout.menu.account" xml:space="preserve"><value>Account Management</value></data>
 

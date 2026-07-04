@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="opcuacoord.svc.name_invalid" xml:space="preserve"><value>名稱僅允許英數、底線、連字號（1~50 字，將作為檔名與 MQTT 主題）</value></data>
+  <data name="opcuacoord.svc.name_duplicate" xml:space="preserve"><value>名稱已存在，請改用其他名稱</value></data>
+  <data name="opcuacoord.svc.endpoint_invalid" xml:space="preserve"><value>Endpoint URL 必須以 opc.tcp:// 開頭</value></data>
+  <data name="opcuacoord.svc.interval_invalid" xml:space="preserve"><value>掃描週期不可小於 200 毫秒</value></data>
+  <data name="opcuacoord.svc.timeout_invalid" xml:space="preserve"><value>連線逾時不可小於 1000 毫秒</value></data>
+  <data name="opcuacoord.svc.not_found" xml:space="preserve"><value>找不到指定的 OPC UA Server</value></data>
+  <data name="opcuacoord.svc.save_success" xml:space="preserve"><value>連線設定已儲存，Engine 將自動套用</value></data>
+  <data name="opcuacoord.svc.delete_success" xml:space="preserve"><value>Server 已刪除，Engine 將自動停止採集</value></data>
+  <data name="opcuacoord.svc.points_saved" xml:space="preserve"><value>點位已儲存（共 {0} 點），Engine 將自動套用</value></data>
+  <data name="opcuacoord.svc.device_name_required" xml:space="preserve"><value>設備名稱不可為空</value></data>
+  <data name="opcuacoord.svc.device_name_duplicate" xml:space="preserve"><value>設備名稱重複：{0}</value></data>
+  <data name="opcuacoord.svc.tag_name_required" xml:space="preserve"><value>點位名稱不可為空（設備 {0}）</value></data>
+  <data name="opcuacoord.svc.nodeid_required" xml:space="preserve"><value>TagName (NodeId) 不可為空：{0}</value></data>
+  <data name="opcuacoord.svc.nodeid_invalid" xml:space="preserve"><value>NodeId 格式錯誤：{0}</value></data>
+  <data name="opcuacoord.svc.controltype_invalid" xml:space="preserve"><value>控制類型僅允許空白/AO/DO：{0}</value></data>
+  <data name="opcuacoord.svc.ratio_zero" xml:space="preserve"><value>倍數 Ratio 不可為 0：{0}</value></data>
+  <data name="opcuacoord.svc.minmax_invalid" xml:space="preserve"><value>Min 必須小於 Max：{0}</value></data>
+  <data name="opcuacoord.svc.seq_duplicate" xml:space="preserve"><value>點位序號重複：{0}</value></data>
+  <data name="opcuacoord.svc.json_write_failed" xml:space="preserve"><value>設定檔寫入失敗：{0}</value></data>
+  <data name="opcuacoord.svc.test_success" xml:space="preserve"><value>讀取成功 — 原始值 {0}，工程值 {1}</value></data>
+  <data name="opcuacoord.svc.test_success_nonnumeric" xml:space="preserve"><value>讀取成功 — 值為 {0}（非數值型別，無法納入採集）</value></data>
+  <data name="opcuacoord.svc.test_bad_status" xml:space="preserve"><value>Server 回應非 Good：{0}</value></data>
+  <data name="opcuacoord.svc.test_failed" xml:space="preserve"><value>讀取失敗：{0}</value></data>
+</root>

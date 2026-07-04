@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="opcuacoord.title" xml:space="preserve"><value>OPC UA Source</value></data>
+  <data name="opcuacoord.btn.new_server" xml:space="preserve"><value>New Server</value></data>
+  <data name="opcuacoord.card.server_list" xml:space="preserve"><value>Server List</value></data>
+  <data name="opcuacoord.card.server_setting" xml:space="preserve"><value>Connection Settings</value></data>
+  <data name="opcuacoord.card.points" xml:space="preserve"><value>Point Settings</value></data>
+  <data name="opcuacoord.empty.select" xml:space="preserve"><value>Select a server on the left, or click "New Server" to create one</value></data>
+  <data name="opcuacoord.empty.no_server" xml:space="preserve"><value>No OPC UA server yet</value></data>
+  <data name="opcuacoord.empty.no_device" xml:space="preserve"><value>No device yet — click "Add Device" to start adding points</value></data>
+  <data name="opcuacoord.label.name" xml:space="preserve"><value>Name</value></data>
+  <data name="opcuacoord.hint.name" xml:space="preserve"><value>Letters, digits, _ and - only (cannot be changed later)</value></data>
+  <data name="opcuacoord.label.endpoint" xml:space="preserve"><value>Endpoint URL</value></data>
+  <data name="opcuacoord.label.username" xml:space="preserve"><value>Username</value></data>
+  <data name="opcuacoord.label.password" xml:space="preserve"><value>Password</value></data>
+  <data name="opcuacoord.placeholder.password_keep" xml:space="preserve"><value>Password set. Leave blank to keep unchanged</value></data>
+  <data name="opcuacoord.label.polling" xml:space="preserve"><value>Polling Interval (ms)</value></data>
+  <data name="opcuacoord.label.timeout" xml:space="preserve"><value>Timeout (ms)</value></data>
+  <data name="opcuacoord.label.enabled" xml:space="preserve"><value>Monitor Enabled</value></data>
+  <data name="opcuacoord.btn.save_server" xml:space="preserve"><value>Save Connection</value></data>
+  <data name="opcuacoord.btn.delete_server" xml:space="preserve"><value>Delete Server</value></data>
+  <data name="opcuacoord.btn.add_device" xml:space="preserve"><value>Add Device</value></data>
+  <data name="opcuacoord.btn.add_point" xml:space="preserve"><value>Add Point</value></data>
+  <data name="opcuacoord.btn.save_points" xml:space="preserve"><value>Save Points</value></data>
+  <data name="opcuacoord.btn.test" xml:space="preserve"><value>Test Read</value></data>
+  <data name="opcuacoord.device.name" xml:space="preserve"><value>Device Name</value></data>
+  <data name="opcuacoord.th.name" xml:space="preserve"><value>Name</value></data>
+  <data name="opcuacoord.th.tagname" xml:space="preserve"><value>TagName (NodeId)</value></data>
+  <data name="opcuacoord.th.controltype" xml:space="preserve"><value>Control Type</value></data>
+  <data name="opcuacoord.th.ratio" xml:space="preserve"><value>Ratio</value></data>
+  <data name="opcuacoord.th.unit" xml:space="preserve"><value>Unit</value></data>
+  <data name="opcuacoord.th.min" xml:space="preserve"><value>Min</value></data>
+  <data name="opcuacoord.th.max" xml:space="preserve"><value>Max</value></data>
+  <data name="opcuacoord.value.readonly" xml:space="preserve"><value>Read-only</value></data>
+  <data name="opcuacoord.value.disabled" xml:space="preserve"><value>Disabled</value></data>
+  <data name="opcuacoord.value.new_point" xml:space="preserve"><value>(new)</value></data>
+  <data name="opcuacoord.confirm.delete_server" xml:space="preserve"><value>Delete server "{name}"? Its point settings will also be removed (history data is kept)</value></data>
+  <data name="opcuacoord.confirm.delete_device" xml:space="preserve"><value>Delete device "{name}" and all of its points?</value></data>
+  <data name="opcuacoord.msg.success_default" xml:space="preserve"><value>Operation succeeded</value></data>
+  <data name="opcuacoord.msg.failure_default" xml:space="preserve"><value>Operation failed</value></data>
+  <data name="opcuacoord.msg.call_failed" xml:space="preserve"><value>Request failed: {error}</value></data>
+</root>

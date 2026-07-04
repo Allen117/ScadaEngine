@@ -308,6 +308,42 @@ public interface IDataRepository
 
     #endregion
 
+    #region OPC UA 來源 Coordinator / Points
+
+    /// <summary>
+    /// 取得所有 OPC UA 來源 Coordinator
+    /// </summary>
+    Task<IEnumerable<OpcUaCoordinatorModel>> GetAllOpcUaCoordinatorsAsync();
+
+    /// <summary>
+    /// 取得所有 OPC UA 來源點位（不限 Coordinator）
+    /// </summary>
+    Task<IEnumerable<OpcUaPointModel>> GetAllOpcUaPointsAsync();
+
+    /// <summary>
+    /// 取得指定 Coordinator 的所有 OPC UA 點位
+    /// </summary>
+    Task<IEnumerable<OpcUaPointModel>> GetOpcUaPointsByCoordinatorIdAsync(int nCoordinatorId);
+
+    /// <summary>
+    /// UPSERT OPC UA Coordinator（依 Name 比對；存在則更新連線設定，不存在則新增）
+    /// </summary>
+    /// <returns>Coordinator Id（SID 前綴 OPC{Id}- 依賴此值）</returns>
+    Task<int> SaveOpcUaCoordinatorAsync(OpcUaCoordinatorModel coordinator);
+
+    /// <summary>
+    /// 全量覆寫指定 Coordinator 的 OPC UA 點位（先刪後插，Transaction 包裹）
+    /// </summary>
+    Task<int> SaveOpcUaPointsAsync(int nCoordinatorId, IEnumerable<OpcUaPointModel> points);
+
+    /// <summary>
+    /// 刪除 OPC UA Coordinator 及其所有點位（Transaction 包裹）。
+    /// LatestData / HistoryData 舊資料比照既有行為保留不清除。
+    /// </summary>
+    Task<bool> DeleteOpcUaCoordinatorAsync(int nCoordinatorId);
+
+    #endregion
+
     #region 需量計算
 
     /// <summary>取得 EnergyCircuit 中所有 IsDemandEnabled=1 且 SID IS NOT NULL 的 kWh 點位 SID（不重複）</summary>

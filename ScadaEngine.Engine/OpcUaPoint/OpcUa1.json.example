@@ -1,0 +1,53 @@
+{
+  "Name": "OpcUa1",
+  "EndpointUrl": "opc.tcp://192.168.1.10:4840",
+  "Username": "user1",
+  "Password": "pass1",
+  "PollingInterval": 1000,
+  "ConnectTimeout": 1000,
+  "MonitorEnabled": true,
+  "MaxNodesPerRead": 0,
+  "NextSeq": 4,
+  "Devices": [
+    {
+      "Name": "D1",
+      "Tags": [
+        {
+          "Seq": 1,
+          "Name": "D1T",
+          "TagName": "ns=2;s=D1.T",
+          "ControlType": "",
+          "Ratio": "1",
+          "Unit": "",
+          "Min": 0,
+          "Max": 100
+        },
+        {
+          "Seq": 2,
+          "Name": "D1F",
+          "TagName": "ns=2;s=D1.F",
+          "ControlType": "",
+          "Ratio": "1",
+          "Unit": "",
+          "Min": 0,
+          "Max": 100
+        }
+      ]
+    },
+    {
+      "Name": "D2",
+      "Tags": [
+        {
+          "Seq": 3,
+          "Name": "D2T",
+          "TagName": "ns=2;s=D2.T",
+          "ControlType": "",
+          "Ratio": "1",
+          "Unit": "",
+          "Min": 0,
+          "Max": 100
+        }
+      ]
+    }
+  ]
+}

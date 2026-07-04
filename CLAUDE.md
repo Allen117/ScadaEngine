@@ -141,7 +141,7 @@ ScadaEngine.sln
 
 任務牽涉以下任一主題，先讀 **[docs/架構.md](docs/架構.md)**（含 TOC）：
 
-- **資料流**：Modbus / DB 來源 → HistoryData / LatestData / MQTT → Web
+- **資料流**：Modbus / DB 來源 / OPC UA 來源 → HistoryData / LatestData / MQTT → Web
 - **警報系統**：Alarm MQTT 推播 + 規則熱重載（Engine ↔ Web）
 - **通知系統**：Line / Email 推播（每群組可選 zh-TW / en，觸發 + 恢復皆通知；寄送結果寫 EventLog 摘要，EventType=3）。Engine 端訊息字典 `Resources/notification.{zh-TW,en}.json`，Web UI 在 `AlarmSetting` 第三個 tab 管理 Email 群組與規則路由。SMTP 走 **MailKit** PackageReference。
 - **用電報表**：On-demand 計算 + 葉子層 Hourly 預聚合 + Staleness Window
@@ -158,6 +158,7 @@ ScadaEngine.sln
 | `ScadaEngine.Engine/Modbus/Modbus.json` | Modbus device definitions (IP, port, tags) |
 | `ScadaEngine.Engine/DatabaseSchema/DatabaseSchema.json` | 建表 + 欄位自動同步的**唯一真相來源** — 加欄位只改此檔，Engine 與 Web 啟動時自動補缺欄位（只加不減不改，詳見 docs/架構.md §資料庫結構初始化與欄位同步） |
 | `ScadaEngine.Engine/DBPoint/*.json` | DB 來源 Coordinator 點位定義（由 `DB通訊檔案產生工具.xlsm` 巨集產生，Engine 啟動 + reload MQTT 訊號時載入） |
+| `ScadaEngine.Engine/OpcUaPoint/*.json` | OPC UA 來源定義（一檔一 Server 含 Devices 分組；由 Web「OPC UA 來源」頁動態編輯回寫，Engine 啟動 + reload MQTT 訊號時載入，免重啟） |
 | `ScadaEngine.Engine/Setting/LineSetting.json` | Line Messaging API token + rate limit |
 | `ScadaEngine.Engine/Setting/EmailSetting.json` | SMTP host/port/帳密 + rate limit（MailKit）|
 | `ScadaEngine.Engine/Resources/notification.{zh-TW,en}.json` | Engine 通知訊息字典（Line + Email 共用，依群組 Language 切換）|
@@ -178,6 +179,8 @@ Web reads Engine's `dbSetting.json` via a relative path `../ScadaEngine.Engine/S
 | `DBCoordinator` | Id, Name (UNIQUE), PollingInterval, ConnectTimeout, MonitorEnabled | DB 來源設備（由 `DBPoint/*.json` UPSERT by Name） |
 | `DBPoints` | SID (PK), CoordinatorId, Sequence, Name, Unit, Min, Max | DB 來源點位定義（每 Coordinator 上限 100 點；Sequence 由載入器以陣列順序自動產生） |
 | `DBLatestData` | SID (PK), Value, Timestamp, Quality | DB 來源統一入口表 — 外部系統 INSERT/UPDATE 此表（Value 寫工程值），Engine polling |
+| `OpcUaCoordinator` | Id, Name (UNIQUE), EndpointUrl, Username, Password, PollingInterval, ConnectTimeout, MonitorEnabled | OPC UA Server 註冊表（由 `OpcUaPoint/*.json` UPSERT by Name） |
+| `OpcUaPoints` | SID (PK), CoordinatorId, DeviceName, Sequence, Name, TagName, ControlType, Ratio, Unit, Min, Max | OPC UA 點位快照（Seq 由 Web 配號持久化於 JSON，刪除不回收） |
 | `LineNotifyTargets` | Id, GroupId, Label, MaxSeverity, Language, IsEnabled | Line 推播群組（Language 每群組獨立） |
 | `EmailGroups` | Id, Name (UNIQUE), Label, MaxSeverity, Language, IsEnabled | Email 通知群組 |
 | `EmailRecipients` | Id, GroupId, EmailAddress, DisplayName, IsEnabled | Email 收件人（多對一群組） |
@@ -188,6 +191,7 @@ SID 格式：
 - Modbus：`{ModbusID}-S{N}` 例 `196865-S1`
 - 計算點位：`CALC-S{N}` 例 `CALC-S3`
 - DB 來源：`DB{CoordinatorId}-S{Sequence}` 例 `DB1-S5`
+- OPC UA 來源：`OPC{CoordinatorId}-S{Seq}` 例 `OPC1-S5`
 
 ---
 

@@ -389,6 +389,48 @@
       ]
     },
     {
+      "_comment": "OPC UA 來源 Server — 一列 = 一個 OPC UA Server = 一個 OpcUaPoint/*.json 檔。Name UNIQUE，UPSERT by Name 保 Id 穩定（SID 前綴 OPC{Id}- 依賴此值）。帳密明文比照 dbSetting.json 慣例。",
+      "TableName": "OpcUaCoordinator",
+      "Columns": [
+        { "Name": "Id",              "Type": "int",      "IsPrimaryKey": true, "IsIdentity": true, "Nullable": false },
+        { "Name": "Name",            "Type": "nvarchar", "Length": 100, "Nullable": false, "IsUnique": true,
+          "_comment": "= JSON 檔名" },
+        { "Name": "EndpointUrl",     "Type": "nvarchar", "Length": 200, "Nullable": false,
+          "_comment": "例 opc.tcp://192.168.1.10:4840" },
+        { "Name": "Username",        "Type": "nvarchar", "Length": 100, "Nullable": false, "Default": "",
+          "_comment": "空字串 = Anonymous" },
+        { "Name": "Password",        "Type": "nvarchar", "Length": 200, "Nullable": false, "Default": "" },
+        { "Name": "PollingInterval", "Type": "int",                     "Nullable": false, "Default": 1000,
+          "_comment": "毫秒，下限 200（服務內 clamp）" },
+        { "Name": "ConnectTimeout",  "Type": "int",                     "Nullable": false, "Default": 5000,
+          "_comment": "毫秒；連線與 Read/Write 操作逾時" },
+        { "Name": "MonitorEnabled",  "Type": "bit",                     "Nullable": false, "Default": 1 },
+        { "Name": "CreatedAt",       "Type": "datetime",                "Nullable": false, "Default": "getdate()" }
+      ]
+    },
+    {
+      "_comment": "OPC UA 來源點位 — SID 格式 OPC{CoordinatorId}-S{Sequence}；Sequence 由 Web 配號並持久化於 JSON（同 Coordinator 遞增、刪除不回收，保 SID 穩定）。",
+      "TableName": "OpcUaPoints",
+      "Columns": [
+        { "Name": "SID",           "Type": "nvarchar", "Length": 100, "IsPrimaryKey": true, "Nullable": false,
+          "_comment": "OPC{CoordinatorId}-S{Sequence}" },
+        { "Name": "CoordinatorId", "Type": "int",                     "Nullable": false },
+        { "Name": "DeviceName",    "Type": "nvarchar", "Length": 100, "Nullable": false, "Default": "",
+          "_comment": "Device 分組（顯示分組 + 批次讀取對齊 Device 邊界）" },
+        { "Name": "Sequence",      "Type": "int",                     "Nullable": false },
+        { "Name": "Name",          "Type": "nvarchar", "Length": 100, "Nullable": false },
+        { "Name": "TagName",       "Type": "nvarchar", "Length": 200, "Nullable": false,
+          "_comment": "OPC UA NodeId 字串，例 ns=2;s=D1.T" },
+        { "Name": "ControlType",   "Type": "nvarchar", "Length": 10,  "Nullable": false, "Default": "",
+          "_comment": "''=唯讀 / 'AO'=類比寫入 / 'DO'=數位寫入" },
+        { "Name": "Ratio",         "Type": "float",                   "Nullable": false, "Default": 1.0,
+          "_comment": "工程值 = 原始值 × Ratio；寫回 = 輸入值 ÷ Ratio" },
+        { "Name": "Unit",          "Type": "nvarchar", "Length": 50,  "Nullable": true },
+        { "Name": "Min",           "Type": "float",                   "Nullable": true },
+        { "Name": "Max",           "Type": "float",                   "Nullable": true }
+      ]
+    },
+    {
       "_comment": "能源管理 — 葉子層 hourly 預聚合表。一列 = 一個葉子 SID 在某個小時的 kWh 增量（已套 MaxKwh 溢位、未套 sign）。Quality=0 表示掉線 transition（只缺一邊邊界），兩邊都缺則不寫該列（sparse storage）。",
       "TableName": "EnergyLeafHourly",
       "Columns": [

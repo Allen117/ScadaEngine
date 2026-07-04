@@ -43,6 +43,8 @@ public class ConditionCtrlController : Controller
             .Select(c => new ModbusPointModel { szSID = c.szSID, szName = c.szName, szUnit = c.szUnit }));
         pointList.AddRange((await _dataRepository.GetAllDbPointsAsync())
             .Select(p => new ModbusPointModel { szSID = p.szSID, szName = p.szName, szUnit = p.szUnit ?? string.Empty }));
+        pointList.AddRange((await _dataRepository.GetAllOpcUaPointsAsync())
+            .Select(p => new ModbusPointModel { szSID = p.szSID, szName = p.szName, szUnit = p.szUnit ?? string.Empty }));
 
         var existingRules = (await _dataRepository.GetAllConditionControlRulesAsync()).ToList();
 
