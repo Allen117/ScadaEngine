@@ -49,13 +49,27 @@ if (Test-Path $getPip) { Copy-Item $getPip -Destination "$ReleasePath\Engine\" -
 $setupPy = Join-Path $engineProject "Scripts\SetupPythonRuntime.ps1"
 if (Test-Path $setupPy) { Copy-Item $setupPy -Destination "$ReleasePath\Engine\" -Force }
 
-# Copy PythonRuntime if exists (portable, no need to reinstall)
+# PythonRuntime：缺少時自動執行 SetupPythonRuntime.ps1 建立（需網路），確保部署包一定含可攜式 Python
 $pythonRuntime = Join-Path $engineProject "PythonRuntime"
-if (Test-Path $pythonRuntime) {
-    Write-Host "  Copying PythonRuntime (portable)..." -ForegroundColor Gray
-    $pyDst = "$ReleasePath\Engine\App\PythonRuntime"
-    if (-not (Test-Path $pyDst)) { New-Item -ItemType Directory -Path $pyDst -Force | Out-Null }
-    Copy-Item -Path "$pythonRuntime\*" -Destination $pyDst -Recurse -Force
+if (-not (Test-Path (Join-Path $pythonRuntime "python.exe"))) {
+    Write-Host "  PythonRuntime not found - running SetupPythonRuntime.ps1 (requires internet)..." -ForegroundColor Yellow
+    & (Join-Path $engineProject "Scripts\SetupPythonRuntime.ps1")
+    if (-not (Test-Path (Join-Path $pythonRuntime "python.exe"))) {
+        Write-Host "PythonRuntime setup FAILED - LogicFlow algorithm nodes will not work on target machines" -ForegroundColor Red
+        exit 1
+    }
+}
+Write-Host "  Copying PythonRuntime (portable)..." -ForegroundColor Gray
+$pyDst = "$ReleasePath\Engine\App\PythonRuntime"
+if (-not (Test-Path $pyDst)) { New-Item -ItemType Directory -Path $pyDst -Force | Out-Null }
+Copy-Item -Path "$pythonRuntime\*" -Destination $pyDst -Recurse -Force
+
+# LineSetting.json：正式檔含 token 不進 git，打包時若缺就用範本補上（placeholder token 會被程式視為未設定、安全停用）
+$lineSettingDst = "$ReleasePath\Engine\App\Setting\LineSetting.json"
+$lineSettingExample = Join-Path $engineProject "Setting\LineSetting.example.json"
+if (-not (Test-Path $lineSettingDst) -and (Test-Path $lineSettingExample)) {
+    Copy-Item $lineSettingExample -Destination $lineSettingDst -Force
+    Write-Host "  LineSetting.json created from example (fill token on-site to enable Line notify)" -ForegroundColor Gray
 }
 
 Write-Host "  Engine OK" -ForegroundColor Green
