@@ -122,7 +122,8 @@
       "PowerShell($rel=\"C:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine\\\\Release\\\\SCADA_Release_20260705_0757\"; Test-Path \"$rel\\\\Engine\\\\App\\\\PythonRuntime\\\\python.exe\"; Test-Path \"$rel\\\\Engine\\\\App\\\\Setting\\\\LineSetting.json\"; & \"$rel\\\\Engine\\\\App\\\\PythonRuntime\\\\python.exe\" -c \"import fastapi, uvicorn, sys; print\\('py', sys.version.split\\(\\)[0], '| fastapi+uvicorn OK'\\)\")",
       "PowerShell(if \\(-not \\(Test-Path 'docs\\\\plans\\\\_archive'\\)\\) { New-Item -ItemType Directory 'docs\\\\plans\\\\_archive' | Out-Null }; Move-Item 'docs\\\\plans\\\\2026-07-04-modbus-address-ui-hot-edit.md' 'docs\\\\plans\\\\_archive\\\\' ; Get-ChildItem 'docs\\\\plans\\\\_archive' | Select-Object Name)",
       "PowerShell(try { Get-Content \".claude\\\\settings.local.json\" -Raw | ConvertFrom-Json | Out-Null; \"JSON OK\" } catch { \"JSON ERROR: \" + $_.Exception.Message })",
-      "PowerShell(git check-ignore -v .claude/settings.local.json)"
+      "PowerShell(git check-ignore -v .claude/settings.local.json)",
+      "PowerShell(\\(Get-Content 'docs\\\\架構.md' -Encoding utf8\\)[55])"
     ]
   }
 }
