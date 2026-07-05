@@ -14,12 +14,18 @@ namespace ScadaEngine.Web.Services;
 /// OPC UA 來源設定服務 — 讀 DB 供顯示；寫入時回寫 OpcUaPoint/*.json（source of truth）
 /// 並同步 UPSERT DB，之後由 Controller 發 MQTT reload 通知 Engine 熱重載。
 /// JSON 為設定源、DB 為執行期快照（比照 DBPoint 線，見 docs/plans 決策 2）。
+///
+/// 寫檔路徑由 appsettings.json 的 EngineOpcUaConfig 明定（比照 EngineModbusConfig）：
+/// WatchedFolder = Engine 實際讀取的部署資料夾；MirrorFolder（可選，dev 用）鏡像寫回原始碼資料夾。
+/// 原子寫檔（*.json.tmp → File.Replace → 留 *.json.bak）。
 /// </summary>
 public class OpcUaCoordinatorService
 {
     private readonly IDataRepository _repository;
     private readonly ILogger<OpcUaCoordinatorService> _logger;
     private readonly IStringLocalizer<OpcUaCoordinatorService> _l;
+    private readonly IConfiguration _configuration;
+    private readonly IWebHostEnvironment _env;
 
     /// <summary>JSON 檔寫入互斥（static — Scoped service 跨請求共用）</summary>
     private static readonly SemaphoreSlim _fileGate = new(1, 1);
@@ -43,23 +49,37 @@ public class OpcUaCoordinatorService
     public OpcUaCoordinatorService(
         IDataRepository repository,
         ILogger<OpcUaCoordinatorService> logger,
-        IStringLocalizer<OpcUaCoordinatorService> localizer)
+        IStringLocalizer<OpcUaCoordinatorService> localizer,
+        IConfiguration configuration,
+        IWebHostEnvironment env)
     {
         _repository = repository;
         _logger = logger;
         _l = localizer;
+        _configuration = configuration;
+        _env = env;
     }
 
     /// <summary>
-    /// JSON 資料夾解析 — 比照 dbSetting.json 慣例：
-    /// 優先本地 OpcUaPoint/（部署腳本複製情境），fallback Engine 專案相對路徑（開發 / 同機部署）。
-    /// 前提：Web 與 Engine 同機部署（分機部署需改走 DB/API，見 plan 已知風險）。
+    /// 每次呼叫即時解析監控資料夾（Engine 實際讀取的 OpcUaPoint 位置）— 不在建構子快取，
+    /// appsettings.json 熱重載改路徑即生效。相對路徑以 Web ContentRoot 為基準；未設定回傳 null（呼叫端明確報錯）。
+    /// 比照 ModbusConfigFileService 的 EngineModbusConfig 慣例，禁止猜測式 fallback。
     /// </summary>
-    private static string ResolveJsonFolder()
+    private string? GetWatchedFolder()
     {
-        var szLocal = Path.Combine(AppContext.BaseDirectory, "OpcUaPoint");
-        if (Directory.Exists(szLocal)) return szLocal;
-        return Path.Combine("..", "ScadaEngine.Engine", "OpcUaPoint");
+        var szWatched = _configuration["EngineOpcUaConfig:WatchedFolder"];
+        return string.IsNullOrWhiteSpace(szWatched)
+            ? null
+            : Path.GetFullPath(Path.Combine(_env.ContentRootPath, szWatched));
+    }
+
+    /// <summary>每次呼叫即時解析鏡像資料夾（可選，dev 用 — 同步寫回原始碼資料夾避免 rebuild 後設定倒退）</summary>
+    private string? GetMirrorFolder()
+    {
+        var szMirror = _configuration["EngineOpcUaConfig:MirrorFolder"];
+        return string.IsNullOrWhiteSpace(szMirror)
+            ? null
+            : Path.GetFullPath(Path.Combine(_env.ContentRootPath, szMirror));
     }
 
     /// <summary>
@@ -163,7 +183,9 @@ public class OpcUaCoordinatorService
         await _fileGate.WaitAsync();
         try
         {
-            var szFolder = ResolveJsonFolder();
+            var szFolder = GetWatchedFolder();
+            if (szFolder == null)
+                return (false, _l["opcuacoord.svc.folder_not_configured"].Value, 0);
             Directory.CreateDirectory(szFolder);
             var szPath = Path.Combine(szFolder, szName + ".json");
 
@@ -219,9 +241,14 @@ public class OpcUaCoordinatorService
         await _fileGate.WaitAsync();
         try
         {
-            var szPath = Path.Combine(ResolveJsonFolder(), target.szName + ".json");
+            var szFolder = GetWatchedFolder();
+            if (szFolder == null)
+                return (false, _l["opcuacoord.svc.folder_not_configured"].Value);
+
+            var szPath = Path.Combine(szFolder, target.szName + ".json");
             if (File.Exists(szPath))
                 File.Delete(szPath);
+            MirrorDelete(target.szName + ".json");
 
             await _repository.DeleteOpcUaCoordinatorAsync(nId);
 
@@ -295,7 +322,9 @@ public class OpcUaCoordinatorService
         await _fileGate.WaitAsync();
         try
         {
-            var szFolder = ResolveJsonFolder();
+            var szFolder = GetWatchedFolder();
+            if (szFolder == null)
+                return (false, _l["opcuacoord.svc.folder_not_configured"].Value);
             Directory.CreateDirectory(szFolder);
             var szPath = Path.Combine(szFolder, coordinator.szName + ".json");
 
@@ -451,9 +480,60 @@ public class OpcUaCoordinatorService
         }
     }
 
-    private static async Task WriteJsonFileAsync(string szPath, OpcUaJsonFile file)
+    /// <summary>
+    /// 原子寫檔 + 鏡像寫回（比照 ModbusConfigFileService）：
+    /// 先寫 *.json.tmp 再 File.Replace 原子替換（留 *.json.bak 備份），
+    /// 確保 Engine reload 任何瞬間讀到的都是完整舊檔或完整新檔；新檔（無舊檔可替換）直接 Move。
+    /// </summary>
+    private Task WriteJsonFileAsync(string szPath, OpcUaJsonFile file)
     {
         var szJson = JsonSerializer.Serialize(file, _jsonWriteOptions);
-        await File.WriteAllTextAsync(szPath, szJson, System.Text.Encoding.UTF8);
+
+        var szTmpPath = szPath + ".tmp";
+        File.WriteAllText(szTmpPath, szJson, System.Text.Encoding.UTF8);
+        if (File.Exists(szPath))
+            File.Replace(szTmpPath, szPath, szPath + ".bak", ignoreMetadataErrors: true);
+        else
+            File.Move(szTmpPath, szPath);
+
+        MirrorWrite(Path.GetFileName(szPath), szJson);
+        return Task.CompletedTask;
+    }
+
+    /// <summary>dev 環境鏡像寫回原始碼資料夾（失敗僅記 log，不影響主寫入）</summary>
+    private void MirrorWrite(string szFileName, string szContent)
+    {
+        var szMirrorFolder = GetMirrorFolder();
+        if (szMirrorFolder == null) return;
+
+        try
+        {
+            if (!Directory.Exists(szMirrorFolder)) return;
+            var szMirrorPath = Path.Combine(szMirrorFolder, szFileName);
+            File.WriteAllText(szMirrorPath, szContent, System.Text.Encoding.UTF8);
+            _logger.LogInformation("OPC UA 設定已鏡像寫回: {File}", szMirrorPath);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "OPC UA 鏡像寫回失敗（不影響主寫入）: {File}", szFileName);
+        }
+    }
+
+    /// <summary>鏡像資料夾同步刪檔（失敗僅記 log，不影響主刪除）</summary>
+    private void MirrorDelete(string szFileName)
+    {
+        var szMirrorFolder = GetMirrorFolder();
+        if (szMirrorFolder == null) return;
+
+        try
+        {
+            var szMirrorPath = Path.Combine(szMirrorFolder, szFileName);
+            if (File.Exists(szMirrorPath))
+                File.Delete(szMirrorPath);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "OPC UA 鏡像刪檔失敗（不影響主刪除）: {File}", szFileName);
+        }
     }
 }

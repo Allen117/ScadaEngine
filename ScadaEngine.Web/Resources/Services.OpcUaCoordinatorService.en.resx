@@ -31,6 +31,7 @@
   <data name="opcuacoord.svc.minmax_invalid" xml:space="preserve"><value>Min must be less than Max: {0}</value></data>
   <data name="opcuacoord.svc.seq_duplicate" xml:space="preserve"><value>Duplicate point sequence: {0}</value></data>
   <data name="opcuacoord.svc.json_write_failed" xml:space="preserve"><value>Failed to write configuration file: {0}</value></data>
+  <data name="opcuacoord.svc.folder_not_configured" xml:space="preserve"><value>OPC UA configuration folder is not set — configure EngineOpcUaConfig:WatchedFolder in appsettings.json</value></data>
   <data name="opcuacoord.svc.test_success" xml:space="preserve"><value>Read OK — raw value {0}, engineering value {1}</value></data>
   <data name="opcuacoord.svc.test_success_nonnumeric" xml:space="preserve"><value>Read OK — value is {0} (non-numeric type, cannot be polled)</value></data>
   <data name="opcuacoord.svc.test_bad_status" xml:space="preserve"><value>Server returned non-Good status: {0}</value></data>

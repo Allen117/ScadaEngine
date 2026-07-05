@@ -31,6 +31,7 @@
   <data name="opcuacoord.svc.minmax_invalid" xml:space="preserve"><value>Min 必須小於 Max：{0}</value></data>
   <data name="opcuacoord.svc.seq_duplicate" xml:space="preserve"><value>點位序號重複：{0}</value></data>
   <data name="opcuacoord.svc.json_write_failed" xml:space="preserve"><value>設定檔寫入失敗：{0}</value></data>
+  <data name="opcuacoord.svc.folder_not_configured" xml:space="preserve"><value>OPC UA 設定資料夾未設定 — 請在 appsettings.json 設定 EngineOpcUaConfig:WatchedFolder</value></data>
   <data name="opcuacoord.svc.test_success" xml:space="preserve"><value>讀取成功 — 原始值 {0}，工程值 {1}</value></data>
   <data name="opcuacoord.svc.test_success_nonnumeric" xml:space="preserve"><value>讀取成功 — 值為 {0}（非數值型別，無法納入採集）</value></data>
   <data name="opcuacoord.svc.test_bad_status" xml:space="preserve"><value>Server 回應非 Good：{0}</value></data>

@@ -32,7 +32,18 @@ Engine OpcUaReloadSubscriber → OpcUaCommunicationService.ReloadAsync()
 ```
 
 - **JSON 為 source of truth，DB 為執行期快照**（比照 DBPoint 線）。設定可攜：複製 `OpcUaPoint/*.json` 即可搬遷/備份。
-- Web 與 Engine 需**同機部署**（Web 以相對路徑 `../ScadaEngine.Engine/OpcUaPoint/` 回寫，沿用 dbSetting.json 慣例）。
+- **Web 寫檔路徑由 appsettings.json 明定**（比照 Modbus 熱編輯線的 `EngineModbusConfig` 慣例，禁止猜測式 fallback）：
+
+  ```json
+  "EngineOpcUaConfig": {
+    "WatchedFolder": "C:/SCADA/Engine/App/OpcUaPoint",   // Engine 實際讀取的部署資料夾（主寫入目標）
+    "MirrorFolder": "../ScadaEngine.Engine/OpcUaPoint"   // 可選，dev 用 — 鏡像寫回 repo，rebuild/重打包不倒退
+  }
+  ```
+
+  相對路徑以 Web ContentRoot 為基準；`WatchedFolder` 未設定時存檔直接報錯（不亂寫）。鏡像寫回/刪檔失敗僅記 log，不影響主寫入。
+- **原子寫檔**：先寫 `*.json.tmp` 再 `File.Replace` 原子替換（留 `*.json.bak` 備份），Engine reload 任何瞬間讀到的都是完整舊檔或完整新檔。
+- Web 與 Engine 需**同機部署**（分機部署需改走 DB 或 API）。
 
 ## 設定檔（OpcUaPoint/*.json）
 
@@ -149,6 +160,6 @@ OpcUaCommunicationService.WriteNodeAsync(sid, value)
 - **帳密明文存 JSON/DB**：與 `dbSetting.json` 慣例一致；Web 頁密碼欄遮罩、API 不回明文。
 - **週期 Read，非 Subscription**：與既有 pipeline 同構、行為可預期；MonitoredItem/Subscription 列 Phase 2 優化。
 - **NodeId 手填**：搭配「測試讀取」驗證；Server 位址空間 Browse 選點列 Phase 2。
-- **同機部署前提**：Web 回寫 JSON 走相對路徑；分機部署需改走 DB 或 API。
+- **同機部署前提**：Web 回寫 JSON 走 `EngineOpcUaConfig:WatchedFolder` 指定的本機路徑；分機部署需改走 DB 或 API。
 - **非數值型別**（字串/陣列）點位：讀取 Quality=Bad（pipeline 僅支援數值）；測試讀取會顯示原始值提示。
 - MQTT retained 訊息：刪除點位後 broker 上舊 retained 訊息仍在，Web 重啟後可能短暫重現快取（與 Modbus 既有行為相同；Engine+broker 全重啟可清）。
