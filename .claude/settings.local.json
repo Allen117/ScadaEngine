@@ -168,7 +168,10 @@
       "PowerShell(if \\(-not \\(Test-Path \"c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine\\\\docs\\\\plans\\\\_archive\"\\)\\) { New-Item -ItemType Directory \"c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine\\\\docs\\\\plans\\\\_archive\" | Out-Null }; Move-Item \"c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine\\\\docs\\\\plans\\\\2026-07-05-energy-declaration-report.md\" \"c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine\\\\docs\\\\plans\\\\_archive\\\\2026-07-05-energy-declaration-report.md\"; Get-ChildItem \"c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine\\\\docs\\\\plans\\\\_archive\" -Name | Select-Object -Last 3)",
       "PowerShell(Move-Item \"c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine\\\\docs\\\\plans\\\\2026-07-05-billing-cycle-setting.md\" \"c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine\\\\docs\\\\plans\\\\_archive\\\\2026-07-05-billing-cycle-setting.md\")",
       "PowerShell(dotnet build \"c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine\\\\ScadaEngine.Web\\\\ScadaEngine.Web.csproj\" -o \"C:\\\\Users\\\\Allen\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-Allen-Desktop-ScadaEngine\\\\a92b2c53-1342-42d2-a8a4-560f03d295b8\\\\scratchpad\\\\webbuild\" --nologo -v q)",
-      "PowerShell(git add \"docs/�w��ݨD����.md\" .claude/settings.local.json)"
+      "PowerShell(dotnet build \"c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine\\\\ScadaEngine.Web\\\\ScadaEngine.Web.csproj\" -o \"C:\\\\Users\\\\Allen\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-Allen-Desktop-ScadaEngine\\\\*)",
+      "PowerShell(dotnet build \"c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine\\\\ScadaEngine.Engine\\\\ScadaEngine.Engine.csproj\" -o \"C:\\\\Users\\\\Allen\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-Allen-Desktop-ScadaEngine\\\\*)",
+      "PowerShell(git add \"docs/�w��ݨD����.md\" .claude/settings.local.json)",
+      "PowerShell(git -C \"c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine\" diff --stat)"
     ]
   }
 }
