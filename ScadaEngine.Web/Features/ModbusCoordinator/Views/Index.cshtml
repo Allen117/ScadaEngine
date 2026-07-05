@@ -91,11 +91,17 @@
         <!-- 右側詳情 -->
         <div class="col-md-9">
             <div class="card shadow-sm h-100">
-                <div class="card-header bg-light d-flex align-items-center">
+                <div class="card-header bg-light d-flex align-items-center justify-content-between">
                     <h6 class="mb-0" id="detailTitle">
                         <i class="fas fa-info-circle me-1"></i>
                         @(Model.Any() ? Localizer["modbuscoordinator.card.device_detail"].Value : Localizer["modbuscoordinator.card.select_device"].Value)
                     </h6>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <button class="btn btn-outline-primary btn-sm" id="btnOpenPoints" style="display:none;">
+                            <i class="fas fa-list-ol me-1"></i>@Localizer["modbuscoordinator.points.title"]
+                        </button>
+                    }
                 </div>
                 <div class="card-body" id="detailBody">
                     @if (Model.Any())
@@ -155,9 +161,56 @@
                     }
                 </div>
             </div>
+
         </div>
     </div>
 </div>
+
+@if (User.IsInRole("Admin"))
+{
+    <!-- 點位熱編輯 Modal（限 Admin）：讀寫 Engine Modbus JSON，存檔後 Engine 自動重載 -->
+    <div class="modal fade" id="pointsModal" tabindex="-1" aria-labelledby="pointsTitle" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title" id="pointsTitle">
+                        <i class="fas fa-list-ol me-1"></i>@Localizer["modbuscoordinator.points.title"]
+                    </h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="small text-muted px-3 py-2 border-bottom" id="pointsDeviceInfo"></div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0 points-table">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-center points-col-seq">@Localizer["modbuscoordinator.points.col_seq"]</th>
+                                    <th>@Localizer["modbuscoordinator.points.col_name"]</th>
+                                    <th>@Localizer["modbuscoordinator.points.col_address"]</th>
+                                    <th>@Localizer["modbuscoordinator.points.col_datatype"]</th>
+                                    <th>@Localizer["modbuscoordinator.points.col_ratio"]</th>
+                                    <th>@Localizer["modbuscoordinator.points.col_unit"]</th>
+                                    <th>@Localizer["modbuscoordinator.points.col_min"]</th>
+                                    <th>@Localizer["modbuscoordinator.points.col_max"]</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pointsTbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <span id="pointsStatus" class="small me-auto" style="display:none;"></span>
+                    <button class="btn btn-outline-secondary btn-sm" id="btnReloadPoints">
+                        <i class="fas fa-sync me-1"></i>@Localizer["modbuscoordinator.points.btn_reload"]
+                    </button>
+                    <button class="btn btn-primary btn-sm" id="btnSavePoints">
+                        <i class="fas fa-save me-1"></i>@Localizer["modbuscoordinator.points.btn_save"]
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 @section Scripts {
     <script>

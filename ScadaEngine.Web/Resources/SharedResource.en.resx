@@ -121,4 +121,5 @@
   <data name="control.action.pump_stop" xml:space="preserve"><value>{0} stopped pump "{1}"</value></data>
   <data name="control.action.pump_freq_set" xml:space="preserve"><value>{0} set pump "{1}" frequency to {2} Hz</value></data>
   <data name="control.action.pump_switch_auto" xml:space="preserve"><value>{0} switched pump "{1}" to auto</value></data>
+  <data name="control.action.point_config_changed" xml:space="preserve"><value>{0} changed point "{1}" configuration: {2}</value></data>
 </root>

@@ -49,4 +49,8 @@
 
   <data name="modbuscoordinator.api.param_error" xml:space="preserve"><value>參數錯誤</value></data>
   <data name="modbuscoordinator.api.update_failed" xml:space="preserve"><value>更新失敗</value></data>
+  <data name="modbuscoordinator.api.file_not_found" xml:space="preserve"><value>找不到設備設定檔</value></data>
+  <data name="modbuscoordinator.api.structure_changed" xml:space="preserve"><value>點位數量或順序不可變更</value></data>
+  <data name="modbuscoordinator.api.invalid_point" xml:space="preserve"><value>點位資料不合法</value></data>
+  <data name="modbuscoordinator.api.save_failed" xml:space="preserve"><value>存檔失敗</value></data>
 </root>

@@ -49,4 +49,8 @@
 
   <data name="modbuscoordinator.api.param_error" xml:space="preserve"><value>Invalid parameters</value></data>
   <data name="modbuscoordinator.api.update_failed" xml:space="preserve"><value>Update failed</value></data>
+  <data name="modbuscoordinator.api.file_not_found" xml:space="preserve"><value>Device config file not found</value></data>
+  <data name="modbuscoordinator.api.structure_changed" xml:space="preserve"><value>Point count or order cannot be changed</value></data>
+  <data name="modbuscoordinator.api.invalid_point" xml:space="preserve"><value>Invalid point data</value></data>
+  <data name="modbuscoordinator.api.save_failed" xml:space="preserve"><value>Save failed</value></data>
 </root>

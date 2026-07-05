@@ -73,4 +73,32 @@
   <data name="modbuscoordinator.msg.save_success" xml:space="preserve"><value>Saved</value></data>
   <data name="modbuscoordinator.msg.save_failed" xml:space="preserve"><value>Save failed</value></data>
   <data name="modbuscoordinator.msg.save_failed_with" xml:space="preserve"><value>Save failed: {error}</value></data>
+
+  <data name="modbuscoordinator.points.title" xml:space="preserve"><value>Point Configuration</value></data>
+  <data name="modbuscoordinator.points.btn_save" xml:space="preserve"><value>Save Points</value></data>
+  <data name="modbuscoordinator.points.btn_reload" xml:space="preserve"><value>Reload</value></data>
+  <data name="modbuscoordinator.points.col_seq" xml:space="preserve"><value>#</value></data>
+  <data name="modbuscoordinator.points.col_name" xml:space="preserve"><value>Name</value></data>
+  <data name="modbuscoordinator.points.col_address" xml:space="preserve"><value>Address</value></data>
+  <data name="modbuscoordinator.points.col_datatype" xml:space="preserve"><value>Data Type</value></data>
+  <data name="modbuscoordinator.points.col_ratio" xml:space="preserve"><value>Ratio</value></data>
+  <data name="modbuscoordinator.points.col_unit" xml:space="preserve"><value>Unit</value></data>
+  <data name="modbuscoordinator.points.col_min" xml:space="preserve"><value>Min</value></data>
+  <data name="modbuscoordinator.points.col_max" xml:space="preserve"><value>Max</value></data>
+  <data name="modbuscoordinator.points.device_info" xml:space="preserve"><value>IP {ip}:{port} | ModbusId {modbusId} | Connect Timeout {timeout} ms (fields above are read-only; points cannot be added, removed or reordered)</value></data>
+  <data name="modbuscoordinator.points.msg_loading" xml:space="preserve"><value>Loading…</value></data>
+  <data name="modbuscoordinator.points.msg_load_failed" xml:space="preserve"><value>Failed to load points</value></data>
+  <data name="modbuscoordinator.points.msg_no_change" xml:space="preserve"><value>No changes</value></data>
+  <data name="modbuscoordinator.points.msg_save_success" xml:space="preserve"><value>Saved. Engine will reload within seconds; the device will briefly disconnect and reconnect.</value></data>
+  <data name="modbuscoordinator.points.err_name_empty" xml:space="preserve"><value>Row {row}: name is required</value></data>
+  <data name="modbuscoordinator.points.err_address_invalid" xml:space="preserve"><value>Row {row}: invalid address (5-digit: 1–9999, 1xxxx, 3xxxx, 4xxxx; 6-digit: 0xxxxx, 1xxxxx, 3xxxxx, 4xxxxx)</value></data>
+  <data name="modbuscoordinator.points.err_ratio_invalid" xml:space="preserve"><value>Row {row}: ratio must be numeric</value></data>
+  <data name="modbuscoordinator.points.err_minmax_invalid" xml:space="preserve"><value>Row {row}: min/max must be numeric or empty</value></data>
+  <data name="modbuscoordinator.points.confirm_save" xml:space="preserve"><value>{count} point(s) will be changed. Save now?
+
+Note:
+• The device will briefly disconnect and reconnect (about 1–3 seconds)
+• SID stays unchanged after an address change; history data continues seamlessly (measuring a different register before/after is an operations responsibility)
+• Changing data type affects register read length and value conversion; make sure it matches the device register map
+• Labels of deployed SCADA page widgets and LogicFlow nodes will NOT be renamed automatically; re-bind them on those pages</value></data>
 </root>

@@ -115,7 +115,7 @@
     <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
   </None>
 
-  <None Update="Modbus\modbus.json">
+  <None Update="Modbus\*.json">
     <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
   </None>
   <None Update="Mqtt\Mqtt.json">

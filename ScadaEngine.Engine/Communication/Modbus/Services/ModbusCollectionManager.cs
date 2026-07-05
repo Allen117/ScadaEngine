@@ -23,6 +23,10 @@ public class ModbusCollectionManager : IDisposable
     private FileSystemWatcher? _configFileWatcher;
     private bool _isDisposed = false;
 
+    /// <summary>per-file 重載去抖計時器 — 一次存檔 FileSystemWatcher 常觸發 2~3 次事件，去抖後只重載一次（設備只斷線重連一次）</summary>
+    private readonly ConcurrentDictionary<string, System.Threading.Timer> _reloadDebounceTimers = new(StringComparer.OrdinalIgnoreCase);
+    private const int RELOAD_DEBOUNCE_MS = 1000;
+
     /// <summary>true 時各採集迴圈跳過資料讀取（連線保持）</summary>
     private volatile bool _isSuspended = false;
 
@@ -229,19 +233,7 @@ public class ModbusCollectionManager : IDisposable
     {
         try
         {
-            _configFileWatcher = _configService.CreateConfigFileWatcher(async szChangedFilePath =>
-            {
-                _logger.LogInformation("配置檔案變更，重新載入: {FilePath}", szChangedFilePath);
-                
-                try
-                {
-                    await ReloadDeviceConfigAsync(szChangedFilePath);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "重新載入配置檔案失敗: {FilePath}", szChangedFilePath);
-                }
-            });
+            _configFileWatcher = _configService.CreateConfigFileWatcher(DebounceReloadDeviceConfig);
 
             _logger.LogInformation("配置檔案監控已啟動");
         }
@@ -249,6 +241,32 @@ public class ModbusCollectionManager : IDisposable
         {
             _logger.LogError(ex, "啟動配置檔案監控失敗");
         }
+    }
+
+    /// <summary>
+    /// 去抖後重新載入設備配置 — 同一檔案 1 秒內連續變更只執行最後一次
+    /// </summary>
+    /// <param name="szChangedFilePath">變更的配置檔案路徑</param>
+    private void DebounceReloadDeviceConfig(string szChangedFilePath)
+    {
+        if (_isDisposed) return;
+
+        var timer = _reloadDebounceTimers.GetOrAdd(szChangedFilePath, szPath => new System.Threading.Timer(async state =>
+        {
+            var szFile = (string)state!;
+            _logger.LogInformation("配置檔案變更，重新載入: {FilePath}", szFile);
+
+            try
+            {
+                await ReloadDeviceConfigAsync(szFile);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "重新載入配置檔案失敗: {FilePath}", szFile);
+            }
+        }, szChangedFilePath, Timeout.Infinite, Timeout.Infinite));
+
+        timer.Change(RELOAD_DEBOUNCE_MS, Timeout.Infinite);
     }
 
     /// <summary>
@@ -354,6 +372,13 @@ public class ModbusCollectionManager : IDisposable
             // 停止配置檔案監控
             _configFileWatcher?.Dispose();
             _configFileWatcher = null;
+
+            // 停止重載去抖計時器
+            foreach (var timer in _reloadDebounceTimers.Values)
+            {
+                timer.Dispose();
+            }
+            _reloadDebounceTimers.Clear();
 
             // 停止所有設備採集
             var stopTasks = _communicationServices.Keys.Select(StopDeviceCollectionAsync);

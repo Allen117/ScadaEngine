@@ -52,6 +52,38 @@ public class ControlEventLogger
         var (szKey, aArgs) = BuildKeyAndArgs(actionType, szName, dValue, szUser);
         if (szKey is null) return;
 
+        await WriteEventAsync(szKey, aArgs, szCid, actionType);
+    }
+
+    /// <summary>
+    /// 寫入一筆點位組態變更 EventLog（ModbusCoordinator 點位熱編輯稽核）。
+    /// value 為文字型變更摘要（如「Address: 30513 → 30514」），與控制動作的數值 value 不同故獨立一支。
+    /// </summary>
+    public async Task LogPointConfigChangedAsync(
+        string szSid,
+        string szPointName,
+        string szChangeSummary,
+        string szUsername)
+    {
+        if (string.IsNullOrWhiteSpace(szSid)) return;
+
+        var args = new Dictionary<string, string>
+        {
+            ["username"] = string.IsNullOrWhiteSpace(szUsername) ? "anonymous" : szUsername,
+            ["name"]     = string.IsNullOrWhiteSpace(szPointName) ? szSid : szPointName,
+            ["value"]    = szChangeSummary,
+        };
+
+        await WriteEventAsync("control.action.point_config_changed", args, szSid, ControlActionType.PointConfigChanged);
+    }
+
+    /// <summary>組出 fallback Message 並寫入 EventLog（共用收尾）</summary>
+    private async Task WriteEventAsync(
+        string szKey,
+        Dictionary<string, string> aArgs,
+        string szCid,
+        ControlActionType actionType)
+    {
         var szArgsJson = JsonSerializer.Serialize(aArgs);
         var szMessage  = FormatFallback(szKey, aArgs);
 
@@ -153,7 +185,8 @@ public class ControlEventLogger
         "control.action.pump_start"       => new[] { "username", "name" },
         "control.action.pump_stop"        => new[] { "username", "name" },
         "control.action.pump_freq_set"    => new[] { "username", "name", "value" },
-        "control.action.pump_switch_auto" => new[] { "username", "name" },
+        "control.action.pump_switch_auto"     => new[] { "username", "name" },
+        "control.action.point_config_changed" => new[] { "username", "name", "value" },
         _ => Array.Empty<string>()
     };
 

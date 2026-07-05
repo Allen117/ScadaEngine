@@ -14,7 +14,7 @@ public class ModbusTagModel
     public string szName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Modbus 暫存器地址 (5位數慣例格式，如 40001)
+    /// Modbus 暫存器地址 (5位數慣例格式如 40001；或 6位數擴充慣例如 430001，供 offset > 9999 的設備使用)
     /// </summary>
     public string szAddress { get; set; } = string.Empty;
 
@@ -79,9 +79,49 @@ public class ModbusTagModel
 
         try
         {
+            var szTrimmed = szAddress.Trim();
+            var nFullAddress = int.Parse(szTrimmed);
+
+            // 6位數擴充慣例（供 offset > 9999 的設備）：與 5位數慣例的數值範圍重疊但意義不同
+            // （如 045000 = Coil offset 44999，45000 = Holding offset 4999），只能靠字串長度（含前導 0）區分
+            if (szTrimmed.Length == 6)
+            {
+                if (nFullAddress >= 400001 && nFullAddress <= 465536)
+                {
+                    // 4xxxxx: Holding Registers (Function Code 03)
+                    nFunctionCode = 3;
+                    nParsedAddress = nFullAddress - 400001; // 0-based
+                }
+                else if (nFullAddress >= 300001 && nFullAddress <= 365536)
+                {
+                    // 3xxxxx: Input Registers (Function Code 04)
+                    nFunctionCode = 4;
+                    nParsedAddress = nFullAddress - 300001; // 0-based
+                }
+                else if (nFullAddress >= 100001 && nFullAddress <= 165536)
+                {
+                    // 1xxxxx: Discrete Inputs (Function Code 02)
+                    nFunctionCode = 2;
+                    nParsedAddress = nFullAddress - 100001; // 0-based
+                }
+                else if (nFullAddress >= 1 && nFullAddress <= 65536)
+                {
+                    // 0xxxxx: Coils (Function Code 01)
+                    nFunctionCode = 1;
+                    nParsedAddress = nFullAddress - 1; // 0-based
+                }
+                else
+                {
+                    return false;
+                }
+
+                return true;
+            }
+
+            if (szTrimmed.Length > 6)
+                return false;
+
             // 解析 5位數慣例地址格式
-            var nFullAddress = int.Parse(szAddress);
-            
             if (nFullAddress >= 40000 && nFullAddress <= 49999)
             {
                 // 4xxxx: Holding Registers (Function Code 03)

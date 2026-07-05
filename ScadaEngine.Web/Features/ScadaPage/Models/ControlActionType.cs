@@ -14,6 +14,9 @@ public enum ControlActionType
     PumpStartStop  = 6,
     PumpFreq       = 7,
     PumpAuto       = 8,
+
+    /// <summary>Modbus 點位組態變更（ModbusCoordinator 頁點位熱編輯稽核，非 ScadaPage 控制）</summary>
+    PointConfigChanged = 9,
 }
 
 public static class ControlActionTypeExtensions

@@ -377,7 +377,16 @@ public class ModbusConfigService
         watcher.Created += async (sender, e) =>
         {
             _logger.LogInformation("偵測到新設定檔: {FilePath}", e.FullPath);
-            
+
+            await Task.Delay(500);
+            onConfigChanged(e.FullPath!);
+        };
+
+        // 原子替換（File.Replace / 先寫 tmp 再改名）在 Windows 以 rename 落地，只會產生 Renamed 事件
+        watcher.Renamed += async (sender, e) =>
+        {
+            _logger.LogInformation("偵測到設定檔改名（原子替換）: {FilePath}", e.FullPath);
+
             await Task.Delay(500);
             onConfigChanged(e.FullPath!);
         };

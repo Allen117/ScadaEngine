@@ -1,13 +1,13 @@
 {
   "IP": "127.0.0.1",
   "Port": 502,
-  "ModbusId": "3,4",
+  "ModbusId": "1",
   "ConnectTimeout": 500,
   "Tags": [
     {
       "Name": "Single1-1",
       "Address": "1001",
-      "DataType": "UINTEGER",
+      "DataType": "INTEGER",
       "Ratio": "1",
       "Unit": "",
       "Min": "0",
@@ -15,7 +15,7 @@
     },
     {
       "Name": "CWP1",
-      "Address": "40001",
+      "Address": "411111",
       "DataType": "FLOATINGPT",
       "Ratio": "1",
       "Unit": "",

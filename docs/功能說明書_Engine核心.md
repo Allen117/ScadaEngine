@@ -237,6 +237,10 @@ Engine 啟動後會透過 `FileSystemWatcher` 監控 `Modbus/` 目錄：
 
 - **修改 JSON 檔**：停止該設備的採集任務 → 重新載入 → 重啟採集
 - **新增 JSON 檔**：自動載入並啟動新設備採集
+- **改名（原子替換）**：Web 點位熱編輯以「寫 `*.json.tmp` → `File.Replace`」原子替換落地，在 Windows 只產生 Renamed 事件，watcher 同樣觸發重載
+- **去抖**：同一檔案 1 秒內連續變更只重載最後一次（`ModbusCollectionManager` per-file debounce timer）— 一次存檔 `FileSystemWatcher` 常觸發 2~3 次事件，去抖後設備只斷線重連一次
+
+重載範圍為**單一 JSON 檔（單一設備）**：該設備斷線重連一次 + 該設備 `ModbusPoints` 刪除重插，其他設備不受影響。點位欄位（Name / Address / Ratio…）的主權在 JSON — Engine 每次重載與每筆控制指令都會重讀 JSON 並整批覆寫 `ModbusPoints`，因此 Web 端點位編輯**只寫 JSON 檔、不直接寫 DB**（見「功能說明書_即時數據.md」點位熱編輯章節）。
 
 ---
 

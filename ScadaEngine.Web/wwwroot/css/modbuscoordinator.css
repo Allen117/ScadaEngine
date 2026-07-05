@@ -29,3 +29,29 @@
 .toggle-icon.open {
     transform: rotate(90deg);
 }
+
+/* ===== 點位熱編輯表格 ===== */
+.points-table th {
+    font-size: .8rem;
+    white-space: nowrap;
+}
+.points-table td {
+    padding: .25rem .3rem;
+}
+.points-col-seq {
+    width: 3rem;
+}
+.point-input {
+    font-size: .85rem;
+    min-width: 5.5rem;
+}
+.point-input-address {
+    max-width: 7rem;
+}
+.point-input-num {
+    max-width: 6.5rem;
+}
+.point-select {
+    font-size: .85rem;
+    min-width: 8.5rem;
+}

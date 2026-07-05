@@ -422,6 +422,14 @@
 | 尚無設備資料 | No Device Data | empty state |
 | 請選擇設備 | Please Select a Device | empty state |
 | 儲存名稱 | Save Name | 按鈕 |
+| 點位設定 | Point Configuration | 點位熱編輯卡片標題 |
+| 儲存點位 | Save Points | 按鈕 |
+| 位址 | Address | Modbus 暫存器位址（5 位數慣例）表頭 |
+| 資料型態 | Data Type | 表頭（唯讀欄位） |
+| 倍率 | Ratio | 表頭 |
+| 連線逾時 | Connect Timeout | 設備唯讀資訊列 |
+| 無變更 | No changes | 存檔提示 |
+| 短暫斷線重連 | briefly disconnect and reconnect | 存檔確認框 |
 
 ## 計算點位 (CalcPoint)
 
