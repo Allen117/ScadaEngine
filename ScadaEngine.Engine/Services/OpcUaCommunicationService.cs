@@ -182,7 +182,7 @@ public class OpcUaCommunicationService : BackgroundService
 
                 // 讀失敗 → 全點位 Bad（沿用最後成功值），走同一條 pipeline（品質變化只會發布一次）
                 await ProcessBadCycleAsync(runtime);
-                CloseSession(runtime);
+                await CloseSessionAsync(runtime);
                 nDelayMs = Math.Max(runtime.PollingIntervalMs, RECONNECT_DELAY_MS);
             }
 
@@ -196,7 +196,7 @@ public class OpcUaCommunicationService : BackgroundService
             }
         }
 
-        CloseSession(runtime);
+        await CloseSessionAsync(runtime);
         _logger.LogInformation("OPC UA Polling 停止: {Name}", runtime.Coordinator.szName);
     }
 
@@ -205,14 +205,14 @@ public class OpcUaCommunicationService : BackgroundService
     /// </summary>
     private async Task ConnectAsync(ServerRuntime runtime, CancellationToken ct)
     {
-        CloseSession(runtime);
+        await CloseSessionAsync(runtime);
 
         var c = runtime.Coordinator;
         _logger.LogInformation("OPC UA 連線中: {Name} → {Url}", c.szName, c.szEndpointUrl);
 
         var session = await OpcUaClientHelper.CreateSessionAsync(
             c.szEndpointUrl, c.szUsername, c.szPassword, runtime.OperationTimeoutMs,
-            $"ScadaEngine_{c.szName}");
+            $"ScadaEngine_{c.szName}", ct);
 
         ct.ThrowIfCancellationRequested();
 
@@ -237,9 +237,9 @@ public class OpcUaCommunicationService : BackgroundService
         var readIds = nodeIds;
         try
         {
-            session.RegisterNodes(null, nodeIds, out var registered);
-            if (registered != null && registered.Count == nodeIds.Count)
-                readIds = registered;
+            var registerResponse = await session.RegisterNodesAsync(null, nodeIds, ct);
+            if (registerResponse.RegisteredNodeIds != null && registerResponse.RegisteredNodeIds.Count == nodeIds.Count)
+                readIds = registerResponse.RegisteredNodeIds;
         }
         catch (Exception ex)
         {
@@ -334,8 +334,8 @@ public class OpcUaCommunicationService : BackgroundService
             ct.ThrowIfCancellationRequested();
 
             // 任一塊 Read 拋例外 → 交給外層視為連線失敗（全點位 Bad + 重連）
-            session.Read(null, 0, TimestampsToReturn.Neither, chunk.NodesToRead,
-                out DataValueCollection results, out _);
+            var readResponse = await session.ReadAsync(null, 0, TimestampsToReturn.Neither, chunk.NodesToRead, ct);
+            var results = readResponse.Results;
 
             for (int i = 0; i < chunk.Points.Count && i < results.Count; i++)
             {
@@ -519,8 +519,6 @@ public class OpcUaCommunicationService : BackgroundService
     /// </summary>
     public async Task<bool> WriteNodeAsync(string szSid, double dValue)
     {
-        await Task.CompletedTask; // OPC UA SDK 此處走同步 API，保留 async 簽名供未來換 WriteAsync
-
         // 在所有 runtime 中找到該 SID
         ServerRuntime? runtime = null;
         OpcUaPointModel? point = null;
@@ -583,8 +581,8 @@ public class OpcUaCommunicationService : BackgroundService
                     // 沒讀過原始值 → 先讀一次拿型別
                     try
                     {
-                        var dv = session.ReadValue(nodeId);
-                        lastRaw = dv.Value;
+                        var dv = await OpcUaClientHelper.ReadSingleValueAsync(session, nodeId);
+                        lastRaw = dv?.Value;
                     }
                     catch
                     {
@@ -604,7 +602,8 @@ public class OpcUaCommunicationService : BackgroundService
                 }
             };
 
-            session.Write(null, writeValues, out StatusCodeCollection results, out _);
+            var writeResponse = await session.WriteAsync(null, writeValues, CancellationToken.None);
+            var results = writeResponse.Results;
 
             var isOk = results.Count > 0 && StatusCode.IsGood(results[0]);
             if (isOk)
@@ -626,25 +625,12 @@ public class OpcUaCommunicationService : BackgroundService
         }
     }
 
-    private void CloseSession(ServerRuntime runtime)
+    private async Task CloseSessionAsync(ServerRuntime runtime)
     {
         var session = runtime.Session;
         runtime.Session = null;
         runtime.Chunks = new List<ReadChunk>();
-        if (session == null) return;
-
-        try
-        {
-            session.Close(1000);
-        }
-        catch
-        {
-            // 連線已斷時 Close 會丟例外，忽略
-        }
-        finally
-        {
-            try { session.Dispose(); } catch { }
-        }
+        await OpcUaClientHelper.CloseSessionSafelyAsync(session);
     }
 
     public override async Task StopAsync(CancellationToken cancellationToken)
@@ -674,7 +660,7 @@ public class OpcUaCommunicationService : BackgroundService
         public int OperationTimeoutMs { get; set; } = 5000;
         public int MaxNodesPerReadFallback { get; set; } = 500;
 
-        public Session? Session { get; set; }
+        public ISession? Session { get; set; }
         public List<ReadChunk> Chunks { get; set; } = new();
 
         /// <summary>變化偵測快取：SID → (engValue, quality)</summary>

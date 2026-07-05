@@ -405,14 +405,14 @@ public class OpcUaCoordinatorService
             szPassword = coordinators.FirstOrDefault(c => c.Id == request.ServerId)?.szPassword ?? string.Empty;
         }
 
-        Opc.Ua.Client.Session? session = null;
+        Opc.Ua.Client.ISession? session = null;
         try
         {
             session = await OpcUaClientHelper.CreateSessionAsync(
                 szEndpoint, request.Username ?? string.Empty, szPassword, 5000, "ScadaWeb_TestRead");
 
-            var dv = session.ReadValue(nodeId);
-            if (!Opc.Ua.StatusCode.IsGood(dv.StatusCode))
+            var dv = await OpcUaClientHelper.ReadSingleValueAsync(session, nodeId);
+            if (dv == null || !Opc.Ua.StatusCode.IsGood(dv.StatusCode))
                 return (false, _l["opcuacoord.svc.test_bad_status", dv.StatusCode.ToString()].Value);
 
             var szRaw = dv.Value?.ToString() ?? "null";
@@ -433,11 +433,7 @@ public class OpcUaCoordinatorService
         }
         finally
         {
-            if (session != null)
-            {
-                try { session.Close(1000); } catch { }
-                try { session.Dispose(); } catch { }
-            }
+            await OpcUaClientHelper.CloseSessionSafelyAsync(session);
         }
     }
 

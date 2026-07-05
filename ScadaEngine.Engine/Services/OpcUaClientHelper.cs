@@ -13,6 +13,7 @@ public static class OpcUaClientHelper
 {
     private static ApplicationConfiguration? _cachedConfig;
     private static readonly SemaphoreSlim _configGate = new(1, 1);
+    private static readonly DefaultSessionFactory _sessionFactory = new((ITelemetryContext?)null);
 
     /// <summary>
     /// 建立（並快取）OPC UA Client ApplicationConfiguration。
@@ -67,21 +68,16 @@ public static class OpcUaClientHelper
                 ClientConfiguration = new ClientConfiguration { DefaultSessionTimeout = 60000 }
             };
 
-            await config.Validate(ApplicationType.Client);
+            await config.ValidateAsync(ApplicationType.Client);
 
             // Phase 1：SecurityPolicy None，Server 憑證一律接受（憑證信任鏈列 Phase 2）
             config.CertificateValidator.CertificateValidation += (s, e) => { e.Accept = true; };
 
             // 產生/檢查自簽 Client 憑證（部分 Server 即使 SecurityPolicy None 也要求 Client 出示憑證）
-            var application = new ApplicationInstance
-            {
-                ApplicationName = config.ApplicationName,
-                ApplicationType = ApplicationType.Client,
-                ApplicationConfiguration = config
-            };
+            var application = new ApplicationInstance(config, null);
             try
             {
-                await application.CheckApplicationInstanceCertificates(true, 2048);
+                await application.CheckApplicationInstanceCertificatesAsync(true, 2048);
             }
             catch
             {
@@ -105,16 +101,19 @@ public static class OpcUaClientHelper
     /// <param name="szPassword">密碼</param>
     /// <param name="nTimeoutMs">連線/操作逾時（毫秒）</param>
     /// <param name="szSessionName">Session 顯示名稱</param>
-    public static async Task<Session> CreateSessionAsync(
-        string szEndpointUrl, string szUsername, string szPassword, int nTimeoutMs, string szSessionName)
+    public static async Task<ISession> CreateSessionAsync(
+        string szEndpointUrl, string szUsername, string szPassword, int nTimeoutMs, string szSessionName,
+        CancellationToken ct = default)
     {
         var config = await GetConfigurationAsync();
-        config.TransportQuotas.OperationTimeout = Math.Max(nTimeoutMs, 5000);
+        var nOperationTimeout = Math.Max(nTimeoutMs, 5000);
+        config.TransportQuotas.OperationTimeout = nOperationTimeout;
 
         // useSecurity: false → 選 SecurityPolicy None 的 endpoint
-        var selectedEndpoint = CoreClientUtils.SelectEndpoint(config, szEndpointUrl, useSecurity: false);
+        var selectedEndpoint = await CoreClientUtils.SelectEndpointAsync(
+            config, szEndpointUrl, false, nOperationTimeout, (ITelemetryContext?)null, ct);
         var endpointConfiguration = EndpointConfiguration.Create(config);
-        endpointConfiguration.OperationTimeout = Math.Max(nTimeoutMs, 5000);
+        endpointConfiguration.OperationTimeout = nOperationTimeout;
         var endpoint = new ConfiguredEndpoint(null, selectedEndpoint, endpointConfiguration);
 
         // 1.5.378 起密碼參數改為 byte[]（UTF-8）
@@ -122,17 +121,43 @@ public static class OpcUaClientHelper
             ? new UserIdentity(new AnonymousIdentityToken())
             : new UserIdentity(szUsername, System.Text.Encoding.UTF8.GetBytes(szPassword ?? string.Empty));
 
-        var session = await Session.Create(
-            config,
-            endpoint,
-            updateBeforeConnect: false,
-            checkDomain: false,
-            sessionName: szSessionName,
-            sessionTimeout: 60000,
-            identity: identity,
-            preferredLocales: null);
+        var session = await _sessionFactory.CreateAsync(
+            config, endpoint, false, szSessionName, 60000, identity, null, ct);
 
         return session;
+    }
+
+    /// <summary>
+    /// 讀取單一節點目前值（取代 1.5.378 已移除的 ReadValue 同步 API）
+    /// </summary>
+    public static async Task<DataValue?> ReadSingleValueAsync(ISession session, NodeId nodeId, CancellationToken ct = default)
+    {
+        var response = await session.ReadAsync(null, 0, TimestampsToReturn.Neither,
+            new ReadValueIdCollection
+            {
+                new ReadValueId { NodeId = nodeId, AttributeId = Attributes.Value }
+            }, ct);
+        return response.Results.Count > 0 ? response.Results[0] : null;
+    }
+
+    /// <summary>
+    /// 安全關閉並釋放 Session（連線已斷時的例外一律吞掉）
+    /// </summary>
+    public static async Task CloseSessionSafelyAsync(ISession? session)
+    {
+        if (session == null) return;
+        try
+        {
+            await session.CloseAsync(CancellationToken.None);
+        }
+        catch
+        {
+            // 連線已斷時 Close 會丟例外，忽略
+        }
+        finally
+        {
+            try { session.Dispose(); } catch { }
+        }
     }
 
     /// <summary>
