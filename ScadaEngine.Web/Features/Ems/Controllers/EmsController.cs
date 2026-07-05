@@ -84,6 +84,42 @@ public class EmsController : Controller
         }));
     }
 
+    /// <summary>取得主要電表資訊卡資料 — 節點名 + 電壓/電流/功率/功因 綁定點位（unit 取點位本身）；即時值由前端走既有 /api/realtime/by-sids 輪詢</summary>
+    [HttpGet("/EMS/api/main-meter-info")]
+    public async Task<IActionResult> GetMainMeterInfo()
+    {
+        var main = await _circuitService.GetMainMeterAsync();
+        if (main == null)
+            return Ok(new { hasMainMeter = false });
+
+        // SID → (點位名, 單位) 查找表（Modbus + Calculated + DB 全來源）
+        var modbus = await _repo.GetAllModbusPointsAsync();
+        var calc = await _repo.GetAllCalculatedPointsAsync();
+        var dbPts = await _repo.GetAllDbPointsAsync();
+        var lookup = new Dictionary<string, (string szName, string szUnit)>(StringComparer.OrdinalIgnoreCase);
+        foreach (var p in modbus) lookup.TryAdd(p.szSID, (p.szName, p.szUnit ?? string.Empty));
+        foreach (var p in calc) lookup.TryAdd(p.szSID, (p.szName, p.szUnit ?? string.Empty));
+        foreach (var p in dbPts) lookup.TryAdd(p.szSID, (p.szName, p.szUnit ?? string.Empty));
+
+        object? Resolve(string? szSid)
+        {
+            if (string.IsNullOrWhiteSpace(szSid)) return null;
+            return lookup.TryGetValue(szSid, out var v)
+                ? new { sid = szSid, pointName = v.szName, unit = v.szUnit }
+                : new { sid = szSid, pointName = szSid, unit = string.Empty };
+        }
+
+        return Ok(new
+        {
+            hasMainMeter = true,
+            name        = main.szName,
+            voltage     = Resolve(main.szVoltageSID),
+            current     = Resolve(main.szCurrentSID),
+            power       = Resolve(main.szPowerSID),
+            powerFactor = Resolve(main.szPowerFactorSID)
+        });
+    }
+
     /// <summary>取得完整迴路階層（flat 清單，前端組樹）</summary>
     [HttpGet("/EMS/api/circuit-tree")]
     public async Task<IActionResult> GetCircuitTree()
@@ -132,6 +168,132 @@ public class EmsController : Controller
             labels = result.buckets.Select(b => b.szLabel).ToList(),
             values = result.buckets.Select(b => b.dKwh).ToList()
         });
+    }
+
+    /// <summary>取得主要電表基本資訊（IsMainMeter = 1，全系統唯一）</summary>
+    [HttpGet("/EMS/api/main-meter")]
+    public async Task<IActionResult> GetMainMeter()
+    {
+        var meter = await _circuitService.GetMainMeterAsync();
+        if (meter == null)
+            return Ok(new EmsMainMeterDto { hasMainMeter = false });
+
+        return Ok(new EmsMainMeterDto
+        {
+            hasMainMeter = true,
+            id           = meter.nId,
+            name         = meter.szName,
+            hasChildren  = await _circuitService.HasChildrenAsync(meter.nId)
+        });
+    }
+
+    /// <summary>主要電表直接子迴路在區間內的用電量拆解（圓餅圖用）；無子迴路時回主要電表自己一筆</summary>
+    /// <param name="granularity">month / day / hour（同 circuit-energy）</param>
+    /// <param name="pivot">month=年份(2026)；day=年月(2026-06)；hour=日期(2026-06-29)</param>
+    [HttpGet("/EMS/api/main-meter-breakdown")]
+    public async Task<IActionResult> GetMainMeterBreakdown(
+        [FromQuery] string? granularity,
+        [FromQuery] string? pivot)
+    {
+        if (string.IsNullOrWhiteSpace(granularity) || string.IsNullOrWhiteSpace(pivot))
+            return BadRequest(new { error = "granularity, pivot 皆為必填" });
+
+        DateTime dtStart, dtEnd;
+        try { (dtStart, dtEnd) = ParsePivot(granularity, pivot); }
+        catch { return BadRequest(new { error = "pivot 格式不正確" }); }
+
+        var meter = await _circuitService.GetMainMeterAsync();
+        if (meter == null)
+            return Ok(new EmsMainMeterBreakdownDto { hasMainMeter = false });
+
+        var dto = new EmsMainMeterBreakdownDto { hasMainMeter = true, meterName = meter.szName };
+
+        var children = await _circuitService.GetDirectChildrenAsync(meter.nId);
+        if (children.Count == 0)
+        {
+            dto.items.Add(new EmsBreakdownItemDto
+            {
+                id   = meter.nId,
+                name = meter.szName,
+                kwh  = await _reportService.GetTotalKwhAsync(meter.nId, granularity, dtStart, dtEnd)
+            });
+            return Ok(dto);
+        }
+
+        foreach (var child in children)
+        {
+            // 子迴路內部 leaves 的 sign 已由計算核心累乘（相對於 child），child 自己對父的方向在這裡補乘
+            var nChildSign = child.nSign == -1 ? -1 : 1;
+            var dKwh = await _reportService.GetTotalKwhAsync(child.nId, granularity, dtStart, dtEnd);
+            dto.items.Add(new EmsBreakdownItemDto
+            {
+                id   = child.nId,
+                name = child.szName,
+                kwh  = Math.Round(dKwh * nChildSign, 3)
+            });
+        }
+        return Ok(dto);
+    }
+
+    /// <summary>主要電表 + 各直接子迴路的本期 vs 去年同期用電比較（比較表用）；首列為主要電表</summary>
+    /// <param name="granularity">month / day / hour（同 circuit-energy）</param>
+    /// <param name="pivot">month=年份(2026)；day=年月(2026-06)；hour=日期(2026-06-29)</param>
+    [HttpGet("/EMS/api/main-meter-yoy")]
+    public async Task<IActionResult> GetMainMeterYoy(
+        [FromQuery] string? granularity,
+        [FromQuery] string? pivot)
+    {
+        if (string.IsNullOrWhiteSpace(granularity) || string.IsNullOrWhiteSpace(pivot))
+            return BadRequest(new { error = "granularity, pivot 皆為必填" });
+
+        DateTime dtStart, dtEnd;
+        try { (dtStart, dtEnd) = ParsePivot(granularity, pivot); }
+        catch { return BadRequest(new { error = "pivot 格式不正確" }); }
+
+        var meter = await _circuitService.GetMainMeterAsync();
+        if (meter == null)
+            return Ok(new EmsMainMeterYoyDto { hasMainMeter = false });
+
+        // 去年同期：起點減一年（AddYears 天然處理 2/29 → 2/28），終點依同粒度公式重建
+        var dtLastStart = dtStart.AddYears(-1);
+        var dtLastEnd = granularity switch
+        {
+            "month" => dtLastStart.AddYears(1),
+            "day"   => dtLastStart.AddMonths(1),
+            _       => dtLastStart.AddDays(1)
+        };
+
+        var dto = new EmsMainMeterYoyDto { hasMainMeter = true };
+        dto.rows.Add(await BuildYoyRowAsync(meter.nId, meter.szName, true, 1,
+            granularity, dtStart, dtEnd, dtLastStart, dtLastEnd));
+
+        foreach (var child in await _circuitService.GetDirectChildrenAsync(meter.nId))
+        {
+            var nChildSign = child.nSign == -1 ? -1 : 1;
+            dto.rows.Add(await BuildYoyRowAsync(child.nId, child.szName, false, nChildSign,
+                granularity, dtStart, dtEnd, dtLastStart, dtLastEnd));
+        }
+        return Ok(dto);
+    }
+
+    private async Task<EmsYoyRowDto> BuildYoyRowAsync(
+        int nCircuitId, string szName, bool isMainMeter, int nSign,
+        string granularity, DateTime dtStart, DateTime dtEnd, DateTime dtLastStart, DateTime dtLastEnd)
+    {
+        var dCurrent  = Math.Round(await _reportService.GetTotalKwhAsync(nCircuitId, granularity, dtStart, dtEnd) * nSign, 3);
+        var dLastYear = Math.Round(await _reportService.GetTotalKwhAsync(nCircuitId, granularity, dtLastStart, dtLastEnd) * nSign, 3);
+        var dDiff     = Math.Round(dCurrent - dLastYear, 3);
+        return new EmsYoyRowDto
+        {
+            id          = nCircuitId,
+            name        = szName,
+            isMainMeter = isMainMeter,
+            currentKwh  = dCurrent,
+            lastYearKwh = dLastYear,
+            diffKwh     = dDiff,
+            // 去年為 0（含無資料）時無法算增減比，回 null 由前端顯示 --；負底取絕對值保留增減方向語意
+            pctChange   = dLastYear == 0 ? null : Math.Round(dDiff / Math.Abs(dLastYear) * 100, 1)
+        };
     }
 
     private static (DateTime Start, DateTime End) ParsePivot(string granularity, string pivot)

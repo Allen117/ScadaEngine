@@ -16,6 +16,14 @@ public class EnergyCircuitModel
     public bool isIsDemandEnabled { get; set; }
     /// <summary>主要電表標記 — 全系統唯一（應用層保證）；僅實體電表（綁 SID）有意義</summary>
     public bool isIsMainMeter { get; set; }
+    /// <summary>電表資訊 — 電壓點位 SID；僅主要電表有意義</summary>
+    public string? szVoltageSID { get; set; }
+    /// <summary>電表資訊 — 電流點位 SID；僅主要電表有意義</summary>
+    public string? szCurrentSID { get; set; }
+    /// <summary>電表資訊 — 功率點位 SID；僅主要電表有意義</summary>
+    public string? szPowerSID { get; set; }
+    /// <summary>電表資訊 — 功因點位 SID；僅主要電表有意義</summary>
+    public string? szPowerFactorSID { get; set; }
     public string? szDescription { get; set; }
     public DateTime dtCreatedAt { get; set; }
     public DateTime? dtUpdatedAt { get; set; }

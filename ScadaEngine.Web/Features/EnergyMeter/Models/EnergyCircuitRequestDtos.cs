@@ -12,6 +12,14 @@ public class CreateCircuitDto
     public bool isDemandEnabled { get; set; }
     /// <summary>主要電表標記 — 全系統唯一；僅實體電表（綁 SID）有效，虛擬迴路伺服器端強制 false</summary>
     public bool isMainMeter { get; set; }
+    /// <summary>電表資訊 — 電壓點位 SID；非主要電表伺服器端強制 NULL</summary>
+    public string? voltageSid { get; set; }
+    /// <summary>電表資訊 — 電流點位 SID；非主要電表伺服器端強制 NULL</summary>
+    public string? currentSid { get; set; }
+    /// <summary>電表資訊 — 功率點位 SID；非主要電表伺服器端強制 NULL</summary>
+    public string? powerSid { get; set; }
+    /// <summary>電表資訊 — 功因點位 SID；非主要電表伺服器端強制 NULL</summary>
+    public string? powerFactorSid { get; set; }
     public string? description { get; set; }
 }
 
@@ -26,6 +34,14 @@ public class UpdateCircuitDto
     public bool isDemandEnabled { get; set; }
     /// <summary>主要電表標記 — 全系統唯一；僅實體電表（綁 SID）有效，虛擬迴路伺服器端強制 false</summary>
     public bool isMainMeter { get; set; }
+    /// <summary>電表資訊 — 電壓點位 SID；非主要電表伺服器端強制 NULL</summary>
+    public string? voltageSid { get; set; }
+    /// <summary>電表資訊 — 電流點位 SID；非主要電表伺服器端強制 NULL</summary>
+    public string? currentSid { get; set; }
+    /// <summary>電表資訊 — 功率點位 SID；非主要電表伺服器端強制 NULL</summary>
+    public string? powerSid { get; set; }
+    /// <summary>電表資訊 — 功因點位 SID；非主要電表伺服器端強制 NULL</summary>
+    public string? powerFactorSid { get; set; }
     public string? description { get; set; }
 }
 

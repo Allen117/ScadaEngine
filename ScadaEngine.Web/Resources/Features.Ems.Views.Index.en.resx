@@ -48,4 +48,10 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
   <data name="ems.title" xml:space="preserve"><value>Energy Management</value></data>
+  <data name="ems.mainmeter.title" xml:space="preserve"><value>Main Meter Info</value></data>
+  <data name="ems.mainmeter.voltage" xml:space="preserve"><value>Voltage</value></data>
+  <data name="ems.mainmeter.current" xml:space="preserve"><value>Current</value></data>
+  <data name="ems.mainmeter.power" xml:space="preserve"><value>Power</value></data>
+  <data name="ems.mainmeter.pf" xml:space="preserve"><value>Power Factor</value></data>
+  <data name="ems.mainmeter.not_bound" xml:space="preserve"><value>Not set</value></data>
 </root>

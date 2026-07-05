@@ -48,4 +48,10 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
   <data name="ems.title" xml:space="preserve"><value>能源管理</value></data>
+  <data name="ems.mainmeter.title" xml:space="preserve"><value>主要電表資訊</value></data>
+  <data name="ems.mainmeter.voltage" xml:space="preserve"><value>電壓</value></data>
+  <data name="ems.mainmeter.current" xml:space="preserve"><value>電流</value></data>
+  <data name="ems.mainmeter.power" xml:space="preserve"><value>功率</value></data>
+  <data name="ems.mainmeter.pf" xml:space="preserve"><value>功因</value></data>
+  <data name="ems.mainmeter.not_bound" xml:space="preserve"><value>未設定</value></data>
 </root>

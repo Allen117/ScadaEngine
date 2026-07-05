@@ -2,11 +2,16 @@
     'use strict';
 
     var REFRESH_MS = 60000;
+    var MAIN_METER_REFRESH_MS = 5000;
     var _circuitId = '';
     var _refreshTimer = null;
     var _chart = null;
     var _dotTooltip = null;
     var _metas = []; // 與 chart labels 同步的狀態陣列：'ok' | 'bad' | 'missing' | 'future'
+
+    // 主要電表資訊卡狀態
+    var _mmFields = []; // [{ key:'Voltage', sid, unit }] — 只留有綁定的欄位
+    var _mmTimer = null;
 
     // ── 初始化 ───────────────────────────────────────────────
     function init() {
@@ -15,6 +20,7 @@
             _dotTooltip = new bootstrap.Tooltip(dot, { trigger: 'hover', placement: 'right' });
         }
 
+        loadMainMeterInfo();
         loadCircuits();
 
         document.getElementById('demandCircuitSelect').addEventListener('change', function () {
@@ -23,6 +29,71 @@
             if (_circuitId) refresh();
             else clearDisplay();
         });
+    }
+
+    // ── 主要電表資訊卡 ───────────────────────────────────────
+    // 載入一次綁定資訊（節點名 + 4 組 sid/pointName/unit），即時值走既有 by-sids 輪詢
+    function loadMainMeterInfo() {
+        var wrap = document.getElementById('mainMeterCardWrap');
+        if (!wrap) return;
+        var szNotBound = wrap.getAttribute('data-notbound') || '未設定';
+
+        fetch('/EMS/api/main-meter-info')
+            .then(function (r) { return r.json(); })
+            .then(function (info) {
+                if (!info.hasMainMeter) return; // 無主要電表 → 整卡隱藏
+
+                document.getElementById('mainMeterName').textContent = info.name || '';
+                _mmFields = [];
+                [
+                    { key: 'Voltage', binding: info.voltage },
+                    { key: 'Current', binding: info.current },
+                    { key: 'Power', binding: info.power },
+                    { key: 'PowerFactor', binding: info.powerFactor }
+                ].forEach(function (f) {
+                    var elName = document.getElementById('mm' + f.key + 'Name');
+                    var elValue = document.getElementById('mm' + f.key + 'Value');
+                    var elUnit = document.getElementById('mm' + f.key + 'Unit');
+                    if (f.binding && f.binding.sid) {
+                        elName.textContent = f.binding.pointName || f.binding.sid;
+                        elUnit.textContent = f.binding.unit || '';
+                        _mmFields.push({ key: f.key, sid: f.binding.sid });
+                    } else {
+                        elName.textContent = '';
+                        elValue.textContent = szNotBound;
+                        elValue.style.fontSize = '1rem';
+                        elValue.style.color = '#9e9e9e';
+                        elUnit.textContent = '';
+                    }
+                });
+
+                wrap.style.display = '';
+                if (_mmFields.length > 0) refreshMainMeter();
+            })
+            .catch(function (e) { console.error('載入主要電表資訊失敗', e); });
+    }
+
+    function refreshMainMeter() {
+        clearTimeout(_mmTimer);
+        fetch('/api/realtime/by-sids', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(_mmFields.map(function (f) { return f.sid; }))
+        }).then(function (r) { return r.json(); })
+          .then(function (res) {
+              if (!res.success || !res.data) return;
+              var map = {};
+              res.data.forEach(function (d) { map[d.sid] = d; });
+              _mmFields.forEach(function (f) {
+                  var el = document.getElementById('mm' + f.key + 'Value');
+                  var d = map[f.sid];
+                  el.textContent = d ? d.value : '--';
+              });
+          })
+          .catch(function (e) { console.error('刷新主要電表即時值失敗', e); })
+          .finally(function () {
+              _mmTimer = setTimeout(refreshMainMeter, MAIN_METER_REFRESH_MS);
+          });
     }
 
     // ── 載入迴路下拉 ─────────────────────────────────────────

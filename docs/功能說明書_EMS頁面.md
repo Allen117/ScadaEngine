@@ -111,15 +111,64 @@ footer 在 EmsMode 下背景換成 `linear-gradient(135deg, #66bb6a → #43a047)
 
 ## 7. 主內容區
 
-目前留白 — 僅渲染一個空 `<div class="ems-hub">`，後續決定要放 KPI / dashboard / 跳轉指引時再擴充。CSS 已預留 `min-height: calc(100vh - 200px)` 避免 footer 緊貼 navbar 視覺塌陷。
+Hub 主內容為卡片式 dashboard（`container-fluid` + Bootstrap grid，單一 `.row.g-3` 自動換行）：
+
+| 卡片 | 欄寬 (xl) | 說明 |
+|------|-----------|------|
+| 今日即時需量 | col-xl-4 | 迴路下拉 + 即時 kW + 今日最高需量 + 全日趨勢折線圖，60s 自動刷新（`ems.js`） |
+| 主要電表用電長條圖 | col-xl-8 | 主要電表的日/月/年用電長條圖（`ems-hub-energy.js`），詳見 §7.1 |
+| 子迴路用電圓餅圖 | col-xl-4 | 主要電表直接子迴路用電占比（`ems-hub-energy.js`），詳見 §7.2 |
+| 去年同期比較表 | col-xl-8 | 主要電表 + 直接子迴路本期 vs 去年同期比較（`ems-hub-energy.js`），詳見 §7.3 |
+
+### 7.1 主要電表用電長條圖卡片
+
+- 「主要電表」= `EnergyCircuit.IsMainMeter = 1`（全系統唯一，於 /EnergyMeter 頁勾選）。前端先打 `GET /EMS/api/main-meter` 拿 id，再走既有 `GET /EMS/api/circuit-energy` 取資料 — 與 /CircuitInfo 三張長條圖同一計算核心，數字完全一致
+- header 內「日 / 月 / 年」切換鈕（**預設「日」**）+ 對應 pivot 選擇器：日→`<input type="date">`、月→`<input type="month">`、年→年份數字。UI 粒度對應後端 granularity：日→`hour`、月→`day`、年→`month`
+- 「日」模式且選的是今天時，每 60 秒自動刷新（比照 /CircuitInfo 日卡片）；其他模式/日期不輪詢
+
+### 7.2 子迴路用電圓餅圖卡片
+
+- `GET /EMS/api/main-meter-breakdown?granularity=&pivot=` — 後端自行解析主要電表（前端不帶 circuitId），回傳各**直接子迴路**在所選期間的用電量（已乘子迴路 Sign）；**無子迴路時回主要電表自己一筆**（圓餅顯示自己 100%）
+- 期間總量 = 該粒度所有 bucket 加總（重用 `EnergyReportService` 同一計算核心，staleness window / 溢位規則與長條圖一致）
+- **負值處理**：期間總量為負的子迴路（Sign=-1 回饋/發電）不進圓餅，改在卡片下方以小字列出「XX：-N kWh（未列入占比）」；全部 ≤ 0 時顯示「期間內無用電資料」
+- tooltip 顯示 `名稱: N kWh (P%)`，圖例置底
+- 日/月/年切換與時間選擇器**與比較表共用同一組**（長條圖獨立一組）
+
+### 7.3 去年同期比較表卡片
+
+- `GET /EMS/api/main-meter-yoy?granularity=&pivot=` — 首列為主要電表（★ 標示 + 底色），其後各直接子迴路；欄位：本期 kWh、去年同期 kWh、差異 kWh、增減 %
+- 去年同期換算：pivot 起點 `AddYears(-1)`（2/29 天然落到 2/28），終點依同粒度公式重建
+- 去年同期為 0 或無資料時增減 % 顯示 `--`；增（▲ 紅）/ 減（▼ 綠）
+- 期間與圓餅圖同步，header 右側顯示「本期 vs 去年同期」pivot 字串
+
+### 7.4 未設定主要電表
+
+三張卡片（長條圖 / 圓餅 / 比較表）統一顯示「尚未設定主要電表，請至電表/迴路設定頁勾選」提示並停用切換鈕，不噴錯；既有需量卡片不受影響。
+
+### 7.5 API 一覽（本頁新增）
+
+| 方法 | 路由 | 回應 |
+|------|------|------|
+| GET | `/EMS/api/main-meter` | `{ hasMainMeter, id, name, hasChildren }` |
+| GET | `/EMS/api/main-meter-breakdown?granularity=&pivot=` | `{ hasMainMeter, meterName, items: [{ id, name, kwh }] }` |
+| GET | `/EMS/api/main-meter-yoy?granularity=&pivot=` | `{ hasMainMeter, rows: [{ id, name, isMainMeter, currentKwh, lastYearKwh, diffKwh, pctChange }] }` |
+
+granularity / pivot 協定同 `/EMS/api/circuit-energy`（`hour`→`yyyy-MM-dd`、`day`→`yyyy-MM`、`month`→`yyyy`）。DTO 位於 `Features/Ems/Models/EmsMainMeterDtos.cs`；服務層新增 `EnergyCircuitService.GetMainMeterAsync()` 與 `EnergyReportService.GetTotalKwhAsync()`（bucket 加總公開包裝）。
+
+> ⚠️ 已知限制：主要電表綁 SID 且掛有子迴路時，計算核心 `GetLeavesUnderAsync` 會把主錶自身 + 子孫葉子一併加總（/CircuitInfo、/EnergyReport 亦同此行為）。目前線上僅單一主錶無子迴路，尚未觸發；未來在主錶下掛分錶時需另案處理「主錶量測 vs 分錶加總」的語意。
 
 ## 8. 檔案位置
 
 ```
 ScadaEngine.Web/
 ├── Features/Ems/
-│   ├── Controllers/EmsController.cs
-│   └── Views/Index.cshtml
+│   ├── Controllers/EmsController.cs        ← +main-meter / breakdown / yoy API
+│   ├── Models/EmsMainMeterDtos.cs          ← 三支新 API 的回應 DTO
+│   └── Views/Index.cshtml                  ← +三張主要電表用電卡片
+├── Services/
+│   ├── EnergyCircuitService.cs             ← +GetMainMeterAsync()
+│   └── EnergyReportService.cs              ← +GetTotalKwhAsync()
+├── wwwroot/js/ems-hub-energy.js            ← 三張新卡片邏輯（IIFE）
 ├── Resources/
 │   ├── Features.Ems.Views.Index.resx
 │   └── Features.Ems.Views.Index.en.resx

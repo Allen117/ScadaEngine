@@ -135,6 +135,20 @@ public class EnergyReportService
     }
 
     /// <summary>
+    /// 取得指定迴路在區間內的總用電量 = 該粒度所有 bucket 的加總。
+    /// 與 GetReportAsync 共用同一計算核心（staleness window / 溢位規則一致），
+    /// 確保「期間總量」與長條圖各柱總和完全對得上。
+    /// 注意：回傳值未套用迴路自身對父層的 Sign — 子迴路呼叫端需比照 GetReportWithChildrenAsync 額外乘上。
+    /// </summary>
+    public async Task<double> GetTotalKwhAsync(int nCircuitId, string szGranularity, DateTime dtStart, DateTime dtEnd)
+    {
+        var boundaries = BuildBoundaries(szGranularity, dtStart, dtEnd);
+        using var conn = await GetConnectionAsync();
+        var (bucketSums, _) = await ComputeBucketSumsForCircuitAsync(nCircuitId, boundaries, conn);
+        return Math.Round(bucketSums.Sum(), 3);
+    }
+
+    /// <summary>
     /// 對單一迴路（葉子或虛擬皆可）計算每個 bucket 的 kWh 累計。
     /// 共用核心：取葉子 → 對每葉子查邊界值 → 套溢位規則加總。
     /// </summary>

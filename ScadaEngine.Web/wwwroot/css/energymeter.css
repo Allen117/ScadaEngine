@@ -175,3 +175,151 @@
     color: #dc3545;
     font-size: 0.75rem;
 }
+
+/* ============ 電表資訊設定 Modal ============ */
+
+/* 自動比對建議區塊 */
+.mi-suggest-box {
+    background: #f1f8ff;
+    border: 1px solid #b6d4fe;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+}
+
+.mi-suggest-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+}
+
+.mi-suggest-arrow {
+    color: #6c757d;
+}
+
+/* 四列綁定 */
+.mi-binding-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 6px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.mi-binding-row:last-child {
+    border-bottom: none;
+}
+
+.mi-binding-label {
+    width: 48px;
+    font-weight: 600;
+    color: #495057;
+    flex-shrink: 0;
+}
+
+.mi-binding-value {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mi-point-name {
+    color: #212529;
+}
+
+.mi-point-unit {
+    color: #b8860b;
+    font-size: 0.8rem;
+}
+
+/* ============ 兩步驟點位選擇器（仿 designer point-list-item，配合本頁淺色主題） ============ */
+
+.pp-panel-title {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+}
+
+.pp-list {
+    height: 320px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 4px;
+}
+
+.pp-group-label {
+    font-size: 0.72rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 6px 6px 2px;
+}
+
+.pp-device-item,
+.pp-subunit-item {
+    padding: 6px 8px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: #212529;
+    user-select: none;
+    transition: background 0.1s;
+}
+
+.pp-subunit-item {
+    margin-left: 16px;
+    font-size: 0.82rem;
+}
+
+.pp-device-item:hover,
+.pp-subunit-item:hover {
+    background: #e9ecef;
+}
+
+.pp-device-item.selected,
+.pp-subunit-item.selected {
+    background: #cfe2ff;
+    color: #0d6efd;
+}
+
+.point-list-item {
+    padding: 8px 10px;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 2px;
+    transition: background 0.1s;
+}
+
+.point-list-item:hover {
+    background: #e9ecef;
+}
+
+.point-list-item.selected {
+    background: #cfe2ff;
+}
+
+.point-list-item .point-name {
+    font-size: 0.85rem;
+    color: #212529;
+}
+
+.point-list-item .point-sid {
+    font-size: 0.7rem;
+    color: #6c757d;
+    font-family: monospace;
+}
+
+.point-list-item .point-unit {
+    font-size: 0.78rem;
+    color: #b8860b;
+    margin-left: auto;
+    white-space: nowrap;
+}

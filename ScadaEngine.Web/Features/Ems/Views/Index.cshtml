@@ -7,6 +7,54 @@
     <div class="container-fluid mt-3">
         <div class="row g-3">
 
+            <!-- 主要電表資訊寬幅卡片（無主要電表時整卡隱藏） -->
+            <div class="col-12" id="mainMeterCardWrap" style="display:none;"
+                 data-notbound="@Localizer["ems.mainmeter.not_bound"]">
+                <div class="card shadow-sm">
+                    <div class="card-header py-2 d-flex justify-content-between align-items-center"
+                         style="background:#43a047;color:#fff;">
+                        <span><i class="fas fa-star me-1"></i>@Localizer["ems.mainmeter.title"]</span>
+                        <span id="mainMeterName" class="small"></span>
+                    </div>
+                    <div class="card-body py-3">
+                        <div class="row g-3 text-center">
+                            <div class="col-6 col-md-3">
+                                <div class="small text-muted mb-1">
+                                    <i class="fas fa-bolt me-1"></i>@Localizer["ems.mainmeter.voltage"]
+                                    <span id="mmVoltageName" class="d-block text-truncate"></span>
+                                </div>
+                                <span id="mmVoltageValue" class="fw-bold" style="font-size:1.6rem;line-height:1;color:#2e7d32;">--</span>
+                                <span id="mmVoltageUnit" class="small text-muted"></span>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="small text-muted mb-1">
+                                    <i class="fas fa-wave-square me-1"></i>@Localizer["ems.mainmeter.current"]
+                                    <span id="mmCurrentName" class="d-block text-truncate"></span>
+                                </div>
+                                <span id="mmCurrentValue" class="fw-bold" style="font-size:1.6rem;line-height:1;color:#2e7d32;">--</span>
+                                <span id="mmCurrentUnit" class="small text-muted"></span>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="small text-muted mb-1">
+                                    <i class="fas fa-plug me-1"></i>@Localizer["ems.mainmeter.power"]
+                                    <span id="mmPowerName" class="d-block text-truncate"></span>
+                                </div>
+                                <span id="mmPowerValue" class="fw-bold" style="font-size:1.6rem;line-height:1;color:#2e7d32;">--</span>
+                                <span id="mmPowerUnit" class="small text-muted"></span>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="small text-muted mb-1">
+                                    <i class="fas fa-percentage me-1"></i>@Localizer["ems.mainmeter.pf"]
+                                    <span id="mmPowerFactorName" class="d-block text-truncate"></span>
+                                </div>
+                                <span id="mmPowerFactorValue" class="fw-bold" style="font-size:1.6rem;line-height:1;color:#2e7d32;">--</span>
+                                <span id="mmPowerFactorUnit" class="small text-muted"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- 今日即時需量卡片 -->
             <div class="col-md-6 col-lg-5 col-xl-4">
                 <div class="card shadow-sm">
@@ -50,6 +98,92 @@
                 </div>
             </div>
 
+            <!-- 主要電表用電長條圖卡片（日/月/年切換，日模式看今天時 60s 自動刷新） -->
+            <div class="col-md-6 col-lg-7 col-xl-8">
+                <div class="card shadow-sm h-100 d-flex flex-column">
+                    <div class="card-header py-2 d-flex justify-content-between align-items-center flex-wrap gap-2"
+                         style="background:#43a047;color:#fff;">
+                        <span>
+                            <i class="fas fa-chart-bar me-1"></i>主要電表用電
+                            <span id="barMeterName" class="small ms-1 opacity-75"></span>
+                        </span>
+                        <span class="d-flex align-items-center gap-2">
+                            <span class="btn-group btn-group-sm ems-gran-group" role="group" aria-label="長條圖粒度切換" id="barGranGroup">
+                                <button type="button" class="btn ems-gran-btn active" data-gran="hour">日</button>
+                                <button type="button" class="btn ems-gran-btn" data-gran="day">月</button>
+                                <button type="button" class="btn ems-gran-btn" data-gran="month">年</button>
+                            </span>
+                            <input type="date" id="barPivotDate" class="form-control form-control-sm ems-hub-picker" />
+                            <input type="month" id="barPivotMonth" class="form-control form-control-sm ems-hub-picker" style="display:none;" />
+                            <input type="number" id="barPivotYear" min="2000" max="2100" class="form-control form-control-sm ems-hub-picker" style="display:none;" />
+                        </span>
+                    </div>
+                    <div class="card-body p-2 flex-grow-1">
+                        <div id="barEmpty" class="ems-hub-empty" style="display:none;"></div>
+                        <div id="barChartWrap" class="ems-hub-chart-wrap">
+                            <canvas id="mainMeterBarChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 子迴路用電圓餅圖卡片（與比較表共用同一組日/月/年切換） -->
+            <div class="col-md-6 col-lg-5 col-xl-4">
+                <div class="card shadow-sm h-100 d-flex flex-column">
+                    <div class="card-header py-2 d-flex justify-content-between align-items-center flex-wrap gap-2"
+                         style="background:#43a047;color:#fff;">
+                        <span><i class="fas fa-chart-pie me-1"></i>子迴路用電占比</span>
+                        <span class="d-flex align-items-center gap-2">
+                            <span class="btn-group btn-group-sm ems-gran-group" role="group" aria-label="占比/比較粒度切換" id="pdGranGroup">
+                                <button type="button" class="btn ems-gran-btn active" data-gran="hour">日</button>
+                                <button type="button" class="btn ems-gran-btn" data-gran="day">月</button>
+                                <button type="button" class="btn ems-gran-btn" data-gran="month">年</button>
+                            </span>
+                            <input type="date" id="pdPivotDate" class="form-control form-control-sm ems-hub-picker" />
+                            <input type="month" id="pdPivotMonth" class="form-control form-control-sm ems-hub-picker" style="display:none;" />
+                            <input type="number" id="pdPivotYear" min="2000" max="2100" class="form-control form-control-sm ems-hub-picker" style="display:none;" />
+                        </span>
+                    </div>
+                    <div class="card-body p-2 flex-grow-1">
+                        <div id="pieEmpty" class="ems-hub-empty" style="display:none;"></div>
+                        <div id="pieChartWrap" class="ems-hub-chart-wrap">
+                            <canvas id="mainMeterPieChart"></canvas>
+                        </div>
+                        <div id="pieNegNote" class="small text-muted mt-1"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 去年同期比較表卡片（期間與圓餅圖同步） -->
+            <div class="col-md-6 col-lg-7 col-xl-8">
+                <div class="card shadow-sm h-100 d-flex flex-column">
+                    <div class="card-header py-2 d-flex justify-content-between align-items-center flex-wrap gap-2"
+                         style="background:#43a047;color:#fff;">
+                        <span><i class="fas fa-balance-scale me-1"></i>去年同期比較</span>
+                        <span id="yoyPeriodText" class="small opacity-75"></span>
+                    </div>
+                    <div class="card-body p-2 flex-grow-1">
+                        <div id="yoyEmpty" class="ems-hub-empty" style="display:none;"></div>
+                        <div id="yoyTableWrap" class="table-responsive">
+                            <table class="table table-sm table-hover align-middle mb-0 ems-yoy-table">
+                                <thead>
+                                    <tr>
+                                        <th>迴路</th>
+                                        <th class="text-end" id="yoyThCurrent">本期 kWh</th>
+                                        <th class="text-end" id="yoyThLastYear">去年同期 kWh</th>
+                                        <th class="text-end">差異 kWh</th>
+                                        <th class="text-end">增減 %</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="yoyTableBody">
+                                    <tr><td colspan="5" class="text-center text-muted py-3">載入中...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
@@ -57,4 +191,5 @@
 @section Scripts {
     <script src="~/lib/chartjs/chart.umd.min.js"></script>
     <script src="~/js/ems.js"></script>
+    <script src="~/js/ems-hub-energy.js"></script>
 }

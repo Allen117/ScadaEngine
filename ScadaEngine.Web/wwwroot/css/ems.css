@@ -285,3 +285,98 @@ body.ems-mode .cw-badge-point {
     background: #e8f5e9;
     color: #2e7d32;
 }
+
+/* ── EMS Hub 主要電表用電三卡片 ─────────────────────────────────── */
+
+/* 綠色 header 內的日/月/年切換鈕群（白色描邊、選中反白） */
+.ems-gran-group .ems-gran-btn {
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    background: transparent;
+    padding: 0.1rem 0.6rem;
+    font-size: 0.78rem;
+    line-height: 1.4;
+}
+
+.ems-gran-group .ems-gran-btn:hover {
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+}
+
+.ems-gran-group .ems-gran-btn.active {
+    background: #fff;
+    color: #2e7d32;
+    font-weight: 600;
+}
+
+.ems-gran-group .ems-gran-btn:disabled {
+    opacity: 0.5;
+}
+
+/* header 內的 pivot 選擇器（date / month / year） */
+.ems-hub-picker {
+    width: auto;
+    min-width: 105px;
+    max-width: 150px;
+    font-size: 0.78rem;
+    padding-top: 0.1rem;
+    padding-bottom: 0.1rem;
+}
+
+/* 圖表容器固定高度（長條圖 / 圓餅圖共用） */
+.ems-hub-chart-wrap {
+    position: relative;
+    height: 250px;
+}
+
+.ems-hub-chart-wrap canvas {
+    position: absolute;
+    inset: 0;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* 空狀態提示（未設定主要電表 / 期間內無用電資料） */
+.ems-hub-empty {
+    height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #9e9e9e;
+    font-size: 0.88rem;
+    white-space: pre-line;
+}
+
+/* 去年同期比較表 */
+.ems-yoy-table {
+    font-size: 0.85rem;
+}
+
+.ems-yoy-table thead th {
+    background: #f1f8f4;
+    color: #2e7d32;
+    border-bottom: 2px solid #c8e6c9;
+    white-space: nowrap;
+}
+
+.ems-yoy-table .ems-yoy-main-row {
+    background: #f6fbf7;
+}
+
+.ems-yoy-star {
+    color: #f9a825;
+    font-size: 0.75rem;
+}
+
+.ems-yoy-up {
+    color: #d32f2f;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.ems-yoy-down {
+    color: #2e7d32;
+    font-weight: 600;
+    white-space: nowrap;
+}

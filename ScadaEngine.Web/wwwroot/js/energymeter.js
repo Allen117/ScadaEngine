@@ -4,18 +4,39 @@
 
     let g_nodes = [];           // 平坦清單
     let g_sidOptions = [];      // kWh 點位下拉選項
+    let g_allPoints = [];       // 全點位清單（api/points）— 電表資訊比對 / 選點器 / 詳情顯示用
     let g_selectedId = null;
     let g_modal = null;
+    let g_miModal = null;       // 電表資訊 Modal
+    let g_ppModal = null;       // 兩步驟選點器 Modal
+
+    // 電表資訊 4 SID 暫存（隨 saveCircuit 一次送出，不即時落 DB）
+    const MI_ROLES = [
+        { key: 'voltageSid',     role: 'V',  label: '電壓' },
+        { key: 'currentSid',     role: 'A',  label: '電流' },
+        { key: 'powerSid',       role: 'KW', label: '功率' },
+        { key: 'powerFactorSid', role: 'PF', label: '功因' }
+    ];
+    let g_meterInfo = emptyMeterInfo();
+    let g_miSuggestions = {};   // roleKey → 候選點位（開電表資訊 Modal 時計算）
+
+    function emptyMeterInfo() {
+        return { voltageSid: null, currentSid: null, powerSid: null, powerFactorSid: null };
+    }
 
     // ============ 初始化 ============
     document.addEventListener('DOMContentLoaded', async () => {
         g_modal = new bootstrap.Modal(document.getElementById('circuitModal'));
+        g_miModal = new bootstrap.Modal(document.getElementById('meterInfoModal'));
+        g_ppModal = new bootstrap.Modal(document.getElementById('emPointPickerModal'));
         document.getElementsByName('emType').forEach(r => r.addEventListener('change', updateMeterFieldsVisibility));
         const maxKwhEl = document.getElementById('emMaxKwh');
         maxKwhEl.addEventListener('input', () => { maxKwhEl.value = formatThousand(maxKwhEl.value); });
         document.getElementById('emDevice').addEventListener('change', onDeviceChange);
         document.getElementById('emSubUnit').addEventListener('change', onSubUnitChange);
-        await Promise.all([loadTree(), loadSidOptions()]);
+        document.getElementById('emMainMeter').addEventListener('change', updateMeterInfoRowVisibility);
+        document.getElementById('ppSearch').addEventListener('input', renderPickerPointList);
+        await Promise.all([loadTree(), loadSidOptions(), loadAllPoints()]);
     });
 
     function formatThousand(v) {
@@ -51,6 +72,24 @@
         } catch (err) {
             console.error('[EnergyMeter] 載入 SID 清單失敗', err);
         }
+    }
+
+    async function loadAllPoints() {
+        try {
+            const res = await fetch('/EnergyMeter/api/points');
+            g_allPoints = await res.json();
+        } catch (err) {
+            console.error('[EnergyMeter] 載入全點位清單失敗', err);
+        }
+    }
+
+    function pointBySid(szSid) {
+        if (!szSid) return null;
+        return g_allPoints.find(o => o.sid === szSid) || null;
+    }
+
+    function pointLabelOf(o) {
+        return [o.coordName, o.deviceName, o.name].filter(s => s).join(' - ');
     }
 
     // 通訊設備下拉的 value 用「source|coordName」複合鍵，避免不同來源同名設備互撞
@@ -252,7 +291,8 @@
                         ? '<span class="em-badge-main"><i class="fas fa-star me-1"></i>主要電表</span>'
                         : '<span class="text-muted">否</span>'}
                 </div>
-            </div>` : ''}
+            </div>
+            ${node.isMainMeter ? renderMeterInfoDetailRows(node) : ''}` : ''}
             <div class="em-detail-row">
                 <div class="em-detail-label">說明</div>
                 <div class="em-detail-value">${node.description ? escapeHtml(node.description) : '<span class="text-muted">無</span>'}</div>
@@ -271,6 +311,22 @@
         document.getElementById('detailArea').innerHTML = html;
     }
 
+    // 詳情區：主要電表的 電壓/電流/功率/功因 綁定列
+    function renderMeterInfoDetailRows(node) {
+        return MI_ROLES.map(r => {
+            const szSid = node[r.key];
+            const opt = pointBySid(szSid);
+            const szVal = szSid
+                ? (opt ? `${escapeHtml(pointLabelOf(opt))}${opt.unit ? ' <span class="text-muted small">(' + escapeHtml(opt.unit) + ')</span>' : ''}`
+                       : '⚠ 找不到對應的點位（' + escapeHtml(szSid) + '）')
+                : '<span class="text-muted">未設定</span>';
+            return `<div class="em-detail-row">
+                <div class="em-detail-label">${r.label}點位</div>
+                <div class="em-detail-value">${szVal}</div>
+            </div>`;
+        }).join('');
+    }
+
     // ============ Modal 開啟 ============
     function openCreateModal(parentId) {
         document.getElementById('modalTitle').textContent = parentId == null ? '新增點表/迴路' : '新增子節點';
@@ -285,8 +341,10 @@
         document.getElementById('emDesc').value = '';
         document.getElementById('emTypeVirtual').checked = true;
         document.getElementById('emSignPos').checked = true;
+        g_meterInfo = emptyMeterInfo();
         updateMeterFieldsVisibility();
         updateSignRowVisibility(parentId);
+        updateMeterInfoRowVisibility();
         g_modal.show();
     }
 
@@ -320,14 +378,37 @@
         else document.getElementById('emTypeVirtual').checked = true;
         if (node.sign === -1) document.getElementById('emSignNeg').checked = true;
         else document.getElementById('emSignPos').checked = true;
+        g_meterInfo = {
+            voltageSid: node.voltageSid || null,
+            currentSid: node.currentSid || null,
+            powerSid: node.powerSid || null,
+            powerFactorSid: node.powerFactorSid || null
+        };
         updateMeterFieldsVisibility();
         updateSignRowVisibility(node.parentId);
+        updateMeterInfoRowVisibility();
         g_modal.show();
     }
 
     function updateMeterFieldsVisibility() {
         const isMeter = document.getElementById('emTypeMeter').checked;
         document.getElementById('emMeterFields').style.display = isMeter ? '' : 'none';
+        updateMeterInfoRowVisibility();
+    }
+
+    // 「電表資訊設定」按鈕：實體電表 + 勾選主要電表才顯示
+    function updateMeterInfoRowVisibility() {
+        const isMeter = document.getElementById('emTypeMeter').checked;
+        const isMain = document.getElementById('emMainMeter').checked;
+        document.getElementById('emMeterInfoRow').style.display = (isMeter && isMain) ? '' : 'none';
+        updateMeterInfoSummary();
+    }
+
+    function updateMeterInfoSummary() {
+        const nBound = MI_ROLES.filter(r => g_meterInfo[r.key]).length;
+        document.getElementById('emMeterInfoSummary').textContent =
+            nBound === 0 ? '電壓/電流/功率/功因 點位綁定（尚未設定）'
+                         : `電壓/電流/功率/功因 點位綁定（已綁定 ${nBound}/4）`;
     }
 
     function updateSignRowVisibility(parentId) {
@@ -365,6 +446,10 @@
             sign: nSign,
             isDemandEnabled: isDemandEnabled,
             isMainMeter: isMainMeter,
+            voltageSid: isMainMeter ? g_meterInfo.voltageSid : null,
+            currentSid: isMainMeter ? g_meterInfo.currentSid : null,
+            powerSid: isMainMeter ? g_meterInfo.powerSid : null,
+            powerFactorSid: isMainMeter ? g_meterInfo.powerFactorSid : null,
             description: szDesc || null
         };
 
@@ -423,6 +508,309 @@
         }
     }
 
+    // ============ 電表資訊設定 Modal（電壓/電流/功率/功因）============
+    // Modal 疊層採循序切換：circuitModal → meterInfoModal → picker，不疊窗
+
+    function openMeterInfoModal() {
+        g_modal.hide();
+        computeSuggestions();
+        renderMeterInfoModal();
+        g_miModal.show();
+    }
+
+    function closeMeterInfoModal() {
+        g_miModal.hide();
+        updateMeterInfoSummary();
+        g_modal.show();
+    }
+
+    function renderMeterInfoModal() {
+        renderSuggestBox();
+        renderBindingList();
+    }
+
+    // ── 四列綁定渲染 ──
+    function renderBindingList() {
+        const box = document.getElementById('miBindingList');
+        box.innerHTML = MI_ROLES.map(r => {
+            const szSid = g_meterInfo[r.key];
+            const opt = pointBySid(szSid);
+            const szVal = szSid
+                ? (opt ? `<span class="mi-point-name">${escapeHtml(pointLabelOf(opt))}</span>` +
+                         (opt.unit ? ` <span class="mi-point-unit">${escapeHtml(opt.unit)}</span>` : '')
+                       : `<span class="text-warning">⚠ ${escapeHtml(szSid)}（點位不存在）</span>`)
+                : '<span class="text-muted">未設定</span>';
+            return `<div class="mi-binding-row">
+                <div class="mi-binding-label">${r.label}</div>
+                <div class="mi-binding-value">${szVal}</div>
+                <button type="button" class="btn btn-sm btn-outline-primary py-0" onclick="window._em.openPointPicker('${r.key}')">
+                    <i class="fas fa-crosshairs me-1"></i>選擇
+                </button>
+            </div>`;
+        }).join('');
+    }
+
+    // ── 自動比對（依度數點位名稱 + ROLE_ALIASES 別名表）──
+    // 候選範圍 = 與度數點位相同 source+coordName+deviceName 的點位（排除度數點位本身）
+    function computeSuggestions() {
+        g_miSuggestions = {};
+        const szKwhSid = document.getElementById('emSid').value;
+        const kwhOpt = szKwhSid ? g_allPoints.find(o => o.sid === szKwhSid) : null;
+        if (!kwhOpt || !window._roleAliases) return;
+
+        const scope = g_allPoints.filter(o =>
+            o.sid !== kwhOpt.sid &&
+            o.source === kwhOpt.source &&
+            o.coordName === kwhOpt.coordName &&
+            o.deviceName === kwhOpt.deviceName);
+        if (scope.length === 0) return;
+
+        const szStem = kwhStemOf(kwhOpt.name);
+
+        MI_ROLES.forEach(r => {
+            let best = null, nBestScore = 0;
+            scope.forEach(o => {
+                const nScore = scorePointForRole(o, r, szStem);
+                if (nScore > nBestScore) { nBestScore = nScore; best = o; } // 同分取清單序最小（先到先贏）
+            });
+            if (best) g_miSuggestions[r.key] = best;
+        });
+    }
+
+    // 度數點名 stem = 去掉 KWH 組別名尾綴（含尾端分隔符）；無法去尾則空字串
+    function kwhStemOf(szName) {
+        if (!szName || !window._roleAliases || !window._roleAliases.KWH) return '';
+        const szLower = szName.toLowerCase();
+        const aliases = window._roleAliases.KWH.slice().sort((a, b) => b.length - a.length);
+        for (const alias of aliases) {
+            if (szLower.endsWith(alias) && szLower.length > alias.length) {
+                return szName.substring(0, szName.length - alias.length).replace(/[-_\s]+$/, '');
+            }
+        }
+        return '';
+    }
+
+    // 角色單位命中表：電壓 V、電流 A、功率 kW/W（排除 kWh/Wh — 用完整比對天然排除）、功因 PF/%/空白
+    function unitHitsRole(szUnit, szRole) {
+        const u = (szUnit || '').trim().toLowerCase();
+        switch (szRole) {
+            case 'V':  return u === 'v';
+            case 'A':  return u === 'a';
+            case 'KW': return u === 'kw' || u === 'w' || u === 'mw';
+            case 'PF': return u === 'pf' || u === '%' || u === '';
+            default:   return false;
+        }
+    }
+
+    // 評分規則（plan 決策 3）：尾段命中 +3 / 整體命中 +3 / 包含（alias≥2 字）+2 / 單位命中 +2 / 含 stem +1
+    function scorePointForRole(o, roleDef, szStem) {
+        const aliases = (window._roleAliases && window._roleAliases[roleDef.role]) || [];
+        const szNameLower = (o.name || '').toLowerCase();
+        if (!szNameLower) return 0;
+        let nScore = 0;
+
+        const segs = szNameLower.split(/[-_\s]+/).filter(s => s);
+        const szLastSeg = segs.length > 0 ? segs[segs.length - 1] : '';
+        if (szLastSeg && aliases.includes(szLastSeg)) nScore += 3;          // 尾段命中
+        if (aliases.includes(szNameLower)) nScore += 3;                      // 整體命中（點名就是角色）
+        if (aliases.some(a => a.length >= 2 && szNameLower.includes(a))) nScore += 2; // 包含（防單字母誤中）
+        if (unitHitsRole(o.unit, roleDef.role)) nScore += 2;                 // 單位命中
+        if (szStem && szNameLower.includes(szStem.toLowerCase())) nScore += 1; // 含度數 stem（同設備多迴路時挑同名組）
+
+        return nScore;
+    }
+
+    // ── 建議區塊渲染 ──
+    function renderSuggestBox() {
+        const box = document.getElementById('miSuggestBox');
+        const pending = MI_ROLES.filter(r => g_miSuggestions[r.key] && g_meterInfo[r.key] !== g_miSuggestions[r.key].sid);
+        if (pending.length === 0) {
+            box.style.display = 'none';
+            return;
+        }
+        box.style.display = '';
+        document.getElementById('miSuggestList').innerHTML = pending.map(r => {
+            const o = g_miSuggestions[r.key];
+            return `<div class="mi-suggest-row">
+                <span class="mi-binding-label">${r.label}</span>
+                <span class="mi-suggest-arrow">&#x2192;</span>
+                <span class="mi-point-name">${escapeHtml(pointLabelOf(o))}</span>
+                ${o.unit ? `<span class="mi-point-unit">${escapeHtml(o.unit)}</span>` : ''}
+                <button type="button" class="btn btn-sm btn-outline-success py-0 ms-auto" onclick="window._em.applySuggestion('${r.key}')">
+                    <i class="fas fa-check me-1"></i>帶入
+                </button>
+            </div>`;
+        }).join('');
+    }
+
+    function applySuggestion(szRoleKey) {
+        const o = g_miSuggestions[szRoleKey];
+        if (o) g_meterInfo[szRoleKey] = o.sid;
+        renderMeterInfoModal();
+    }
+
+    function applyAllSuggestions() {
+        MI_ROLES.forEach(r => {
+            if (g_miSuggestions[r.key]) g_meterInfo[r.key] = g_miSuggestions[r.key].sid;
+        });
+        renderMeterInfoModal();
+    }
+
+    // ============ 兩步驟點位選擇器（設備 → 點位清單＋搜尋）============
+    let g_pp = null; // { roleKey, deviceKey, subUnit, pickedSid }
+
+    // 全點位版本的設備複合鍵（同 deviceKeyOf 規則，對 g_allPoints 使用）
+    function ppDeviceKeyOf(o) {
+        return o.source + '|' + (o.coordName || '未指定');
+    }
+
+    function openPointPicker(szRoleKey) {
+        const roleDef = MI_ROLES.find(r => r.key === szRoleKey);
+        g_pp = { roleKey: szRoleKey, deviceKey: null, subUnit: null, pickedSid: g_meterInfo[szRoleKey] || null };
+
+        // 已綁定 → 預先定位到該點位的設備/子單元
+        const bound = pointBySid(g_pp.pickedSid);
+        if (bound) {
+            g_pp.deviceKey = ppDeviceKeyOf(bound);
+            g_pp.subUnit = bound.deviceName || null;
+        }
+
+        document.getElementById('ppTitle').textContent = `選擇${roleDef ? roleDef.label : ''}點位`;
+        document.getElementById('ppSearch').value = '';
+        g_miModal.hide();
+        renderPickerDeviceList();
+        renderPickerPointList();
+        g_ppModal.show();
+    }
+
+    // bConfirm=true 時把選取寫回暫存；一律回到電表資訊 Modal
+    function closePointPicker(bConfirm) {
+        if (bConfirm && g_pp && g_pp.pickedSid) {
+            g_meterInfo[g_pp.roleKey] = g_pp.pickedSid;
+        }
+        g_ppModal.hide();
+        renderMeterInfoModal();
+        g_miModal.show();
+    }
+
+    // 清除該列綁定並返回
+    function clearPickedPoint() {
+        if (g_pp) g_meterInfo[g_pp.roleKey] = null;
+        g_ppModal.hide();
+        renderMeterInfoModal();
+        g_miModal.show();
+    }
+
+    // ── 步驟 1：設備清單（多子單元可展開）──
+    function renderPickerDeviceList() {
+        const box = document.getElementById('ppDeviceList');
+        const groups = [
+            { source: 'Modbus', label: 'Modbus 通訊設備' },
+            { source: 'Calculated', label: '計算點位' },
+            { source: 'DB', label: 'DB 來源' }
+        ];
+        let html = '';
+        groups.forEach(g => {
+            const names = [...new Set(g_allPoints.filter(o => o.source === g.source)
+                .map(o => o.coordName || '未指定'))].sort();
+            if (names.length === 0) return;
+            html += `<div class="pp-group-label">${escapeHtml(g.label)}</div>`;
+            names.forEach(n => {
+                const szKey = g.source + '|' + n;
+                const list = g_allPoints.filter(o => ppDeviceKeyOf(o) === szKey);
+                const subUnits = [...new Set(list.map(o => o.deviceName || ''))].filter(s => s !== '')
+                    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+                const isOpen = g_pp.deviceKey === szKey;
+                html += `<div class="pp-device-item ${isOpen && !subUnits.length ? 'selected' : ''} ${isOpen ? 'open' : ''}"
+                              data-key="${escapeHtml(szKey)}">
+                    <i class="fas ${subUnits.length ? (isOpen ? 'fa-caret-down' : 'fa-caret-right') : 'fa-server'} me-1"></i>${escapeHtml(n)}
+                </div>`;
+                if (subUnits.length && isOpen) {
+                    html += subUnits.map(s =>
+                        `<div class="pp-subunit-item ${g_pp.subUnit === s ? 'selected' : ''}"
+                              data-key="${escapeHtml(szKey)}" data-sub="${escapeHtml(s)}">
+                            <i class="fas fa-microchip me-1"></i>${escapeHtml(s)}
+                        </div>`).join('');
+                }
+            });
+        });
+        box.innerHTML = html || '<div class="text-muted small p-2">尚無點位資料</div>';
+
+        box.querySelectorAll('.pp-device-item').forEach(el => {
+            el.addEventListener('click', () => {
+                const szKey = el.dataset.key;
+                const hasSub = g_allPoints.some(o => ppDeviceKeyOf(o) === szKey && (o.deviceName || '') !== '');
+                if (g_pp.deviceKey === szKey && hasSub) {
+                    g_pp.deviceKey = null;   // 再點一次收合
+                } else {
+                    g_pp.deviceKey = szKey;
+                }
+                g_pp.subUnit = null;
+                renderPickerDeviceList();
+                renderPickerPointList();
+            });
+        });
+        box.querySelectorAll('.pp-subunit-item').forEach(el => {
+            el.addEventListener('click', () => {
+                g_pp.deviceKey = el.dataset.key;
+                g_pp.subUnit = el.dataset.sub;
+                renderPickerDeviceList();
+                renderPickerPointList();
+            });
+        });
+    }
+
+    // ── 步驟 2：點位清單（搜尋過濾 + 已綁高亮）──
+    function renderPickerPointList() {
+        if (!g_pp) return;
+        const box = document.getElementById('ppPointList');
+        const btnConfirm = document.getElementById('ppConfirmBtn');
+        if (!g_pp.deviceKey) {
+            box.innerHTML = '<div class="text-muted small p-2">請先選擇左側設備</div>';
+            btnConfirm.disabled = !g_pp.pickedSid;
+            return;
+        }
+        const hasSub = g_allPoints.some(o => ppDeviceKeyOf(o) === g_pp.deviceKey && (o.deviceName || '') !== '');
+        if (hasSub && !g_pp.subUnit) {
+            box.innerHTML = '<div class="text-muted small p-2">請先選擇子單元</div>';
+            btnConfirm.disabled = !g_pp.pickedSid;
+            return;
+        }
+
+        const szFilter = document.getElementById('ppSearch').value.trim().toLowerCase();
+        let list = g_allPoints.filter(o => ppDeviceKeyOf(o) === g_pp.deviceKey &&
+            (!hasSub || (o.deviceName || '') === g_pp.subUnit));
+        if (szFilter) {
+            list = list.filter(o =>
+                (o.name || '').toLowerCase().includes(szFilter) ||
+                (o.sid || '').toLowerCase().includes(szFilter));
+        }
+
+        if (list.length === 0) {
+            box.innerHTML = '<div class="text-muted small p-2">無符合的點位</div>';
+        } else {
+            box.innerHTML = list.map(o =>
+                `<div class="point-list-item ${g_pp.pickedSid === o.sid ? 'selected' : ''}" data-sid="${escapeHtml(o.sid)}">
+                    <div>
+                        <div class="point-name">${escapeHtml(o.name)}</div>
+                        <div class="point-sid">${escapeHtml(o.sid)}</div>
+                    </div>
+                    ${o.unit ? `<span class="point-unit">${escapeHtml(o.unit)}</span>` : ''}
+                </div>`).join('');
+            box.querySelectorAll('.point-list-item').forEach(el => {
+                el.addEventListener('click', () => {
+                    g_pp.pickedSid = el.dataset.sid;
+                    box.querySelectorAll('.point-list-item').forEach(n => n.classList.remove('selected'));
+                    el.classList.add('selected');
+                    btnConfirm.disabled = false;
+                });
+            });
+            const sel = box.querySelector('.point-list-item.selected');
+            if (sel) sel.scrollIntoView({ block: 'nearest' });
+        }
+        btnConfirm.disabled = !g_pp.pickedSid;
+    }
+
     // ============ 工具 ============
     function escapeHtml(s) {
         if (s == null) return '';
@@ -432,5 +820,10 @@
     }
 
     // 對外介面
-    window._em = { openCreateModal, openEditModal, saveCircuit, deleteNode };
+    window._em = {
+        openCreateModal, openEditModal, saveCircuit, deleteNode,
+        openMeterInfoModal, closeMeterInfoModal,
+        applySuggestion, applyAllSuggestions,
+        openPointPicker, closePointPicker, clearPickedPoint
+    };
 })();

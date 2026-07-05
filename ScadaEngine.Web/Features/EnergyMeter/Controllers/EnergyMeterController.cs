@@ -47,12 +47,16 @@ public class EnergyMeterController : Controller
             sign = n.nSign,
             isDemandEnabled = n.isIsDemandEnabled,
             isMainMeter = n.isIsMainMeter,
+            voltageSid = n.szVoltageSID,
+            currentSid = n.szCurrentSID,
+            powerSid = n.szPowerSID,
+            powerFactorSid = n.szPowerFactorSID,
             description = n.szDescription
         }));
     }
 
-    [HttpGet("api/sids")]
-    public async Task<IActionResult> GetSidOptions()
+    /// <summary>組裝全點位清單（Modbus + Calculated + DB，含 coordName/deviceName 分組欄位）— api/sids 與 api/points 共用</summary>
+    private async Task<List<CircuitSidOptionDto>> BuildPointOptionsAsync()
     {
         var modbus = await _repository.GetAllModbusPointsAsync();
         var calc = await _repository.GetAllCalculatedPointsAsync();
@@ -91,8 +95,7 @@ public class EnergyMeterController : Controller
             return (szName, $"ID {nSubModbusId}");
         }
 
-        var list = modbus
-            .Where(p => string.Equals(p.szUnit, "kWh", StringComparison.OrdinalIgnoreCase))
+        return modbus
             .Select(p =>
             {
                 var (szCoordName, szSubUnit) = ResolveDevice(p.szSID);
@@ -100,25 +103,23 @@ public class EnergyMeterController : Controller
                 {
                     sid = p.szSID,
                     name = p.szName,
-                    unit = p.szUnit,
+                    unit = p.szUnit ?? string.Empty,
                     source = "Modbus",
                     coordName = szCoordName,
                     deviceName = szSubUnit
                 };
             })
             .Concat(calc
-                .Where(p => string.Equals(p.szUnit, "kWh", StringComparison.OrdinalIgnoreCase))
                 .Select(p => new CircuitSidOptionDto
                 {
                     sid = p.szSID,
                     name = p.szName,
-                    unit = p.szUnit,
+                    unit = p.szUnit ?? string.Empty,
                     source = "Calculated",
                     coordName = p.szGroupName ?? string.Empty,
                     deviceName = string.Empty
                 }))
             .Concat(dbPts
-                .Where(p => string.Equals(p.szUnit, "kWh", StringComparison.OrdinalIgnoreCase))
                 .Select(p => new CircuitSidOptionDto
                 {
                     sid = p.szSID,
@@ -127,8 +128,22 @@ public class EnergyMeterController : Controller
                     source = "DB",
                     coordName = dbCoords.FirstOrDefault(c => c.Id == p.nCoordinatorId)?.szName ?? string.Empty,
                     deviceName = string.Empty
-                }));
-        return Ok(list);
+                }))
+            .ToList();
+    }
+
+    [HttpGet("api/sids")]
+    public async Task<IActionResult> GetSidOptions()
+    {
+        var list = await BuildPointOptionsAsync();
+        return Ok(list.Where(o => string.Equals(o.unit, "kWh", StringComparison.OrdinalIgnoreCase)));
+    }
+
+    /// <summary>全部點位（不限單位）— 電表資訊自動比對與兩步驟選點器用</summary>
+    [HttpGet("api/points")]
+    public async Task<IActionResult> GetAllPoints()
+    {
+        return Ok(await BuildPointOptionsAsync());
     }
 
     [HttpPost("api/tree")]
@@ -139,6 +154,7 @@ public class EnergyMeterController : Controller
         if (dto.sign != 1 && dto.sign != -1)
             return BadRequest(new { success = false, message = "貢獻方向只能為 +1 或 -1" });
 
+        var isMainMeter = !string.IsNullOrWhiteSpace(dto.sid) && dto.isMainMeter;
         var nId = await _service.CreateAsync(new EnergyCircuitModel
         {
             szName = dto.name,
@@ -147,7 +163,12 @@ public class EnergyMeterController : Controller
             dMaxKwh = dto.maxKwh,
             nSign = dto.sign,
             isIsDemandEnabled = dto.isDemandEnabled,
-            isIsMainMeter = !string.IsNullOrWhiteSpace(dto.sid) && dto.isMainMeter,
+            isIsMainMeter = isMainMeter,
+            // 電表資訊 4 SID 僅主要電表有意義 — 非主要電表一律存 NULL，不殘留
+            szVoltageSID = isMainMeter && !string.IsNullOrWhiteSpace(dto.voltageSid) ? dto.voltageSid : null,
+            szCurrentSID = isMainMeter && !string.IsNullOrWhiteSpace(dto.currentSid) ? dto.currentSid : null,
+            szPowerSID = isMainMeter && !string.IsNullOrWhiteSpace(dto.powerSid) ? dto.powerSid : null,
+            szPowerFactorSID = isMainMeter && !string.IsNullOrWhiteSpace(dto.powerFactorSid) ? dto.powerFactorSid : null,
             szDescription = dto.description
         });
         return Ok(new { success = true, id = nId });
@@ -161,11 +182,17 @@ public class EnergyMeterController : Controller
         if (dto.sign != 1 && dto.sign != -1)
             return BadRequest(new { success = false, message = "貢獻方向只能為 +1 或 -1" });
 
+        var isMainMeter = !string.IsNullOrWhiteSpace(dto.sid) && dto.isMainMeter;
         var ok = await _service.UpdateAsync(nId, dto.name,
             string.IsNullOrWhiteSpace(dto.sid) ? null : dto.sid,
             dto.maxKwh, dto.sign,
             dto.isDemandEnabled,
-            !string.IsNullOrWhiteSpace(dto.sid) && dto.isMainMeter,
+            isMainMeter,
+            // 電表資訊 4 SID 僅主要電表有意義 — 非主要電表一律存 NULL，不殘留
+            isMainMeter && !string.IsNullOrWhiteSpace(dto.voltageSid) ? dto.voltageSid : null,
+            isMainMeter && !string.IsNullOrWhiteSpace(dto.currentSid) ? dto.currentSid : null,
+            isMainMeter && !string.IsNullOrWhiteSpace(dto.powerSid) ? dto.powerSid : null,
+            isMainMeter && !string.IsNullOrWhiteSpace(dto.powerFactorSid) ? dto.powerFactorSid : null,
             dto.description);
         return ok ? Ok(new { success = true }) : NotFound(new { success = false, message = "節點不存在" });
     }
