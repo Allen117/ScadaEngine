@@ -171,7 +171,17 @@
       "PowerShell(dotnet build \"c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine\\\\ScadaEngine.Web\\\\ScadaEngine.Web.csproj\" -o \"C:\\\\Users\\\\Allen\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-Allen-Desktop-ScadaEngine\\\\*)",
       "PowerShell(dotnet build \"c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine\\\\ScadaEngine.Engine\\\\ScadaEngine.Engine.csproj\" -o \"C:\\\\Users\\\\Allen\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-Allen-Desktop-ScadaEngine\\\\*)",
       "PowerShell(git add \"docs/�w��ݨD����.md\" .claude/settings.local.json)",
-      "PowerShell(git -C \"c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine\" diff --stat)"
+      "PowerShell(git -C \"c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine\" diff --stat)",
+      "PowerShell(dotnet build \"c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine\\\\ScadaEngine.Web\\\\ScadaEngine.Web.csproj\" -o \"C:\\\\Users\\\\Allen\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-Allen-Desktop-ScadaEngine\\\\f9b1299b-1863-4139-b8d1-9cf83bb77f2a\\\\scratchpad\\\\buildout\" --nologo -v minimal)",
+      "PowerShell(Get-Process -Id 16368)",
+      "PowerShell(Get-Process -Name 'ScadaEngine.Web' -ErrorAction SilentlyContinue)",
+      "PowerShell(Remove-Item -Recurse -Force \"C:\\\\Users\\\\Allen\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-Allen-Desktop-ScadaEngine\\\\a92b2c53-1342-42d2-a8a4-560f03d295b8\\\\scratchpad\\\\webobj\" -Confirm:$false)",
+      "PowerShell(dotnet build \"c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine\\\\ScadaEngine.Web\\\\ScadaEngine.Web.csproj\" -c Release -o \"C:\\\\Users\\\\Allen\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-Allen-Desktop-ScadaEngine\\\\a92b2c53-1342-42d2-a8a4-560f03d295b8\\\\scratchpad\\\\webbuild-rel\" --nologo -v q)",
+      "PowerShell(git -C c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine status --porcelain)",
+      "PowerShell(git -C c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine log --oneline -3)",
+      "PowerShell(git -C c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine ls-files ScadaEngine.Engine/OpcUaPoint)",
+      "PowerShell(git -C c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine diff --stat ScadaEngine.Web/Program.cs ScadaEngine.Web/ScadaEngine.Web.csproj ScadaEngine.Web/Services/PermissionService.cs ScadaEngine.Web/Resources/Views.Shared._Layout.resx)",
+      "Bash(git check-ignore *)"
     ]
   }
 }

@@ -86,29 +86,38 @@
     });
 
     // ── 編輯使用者 ───────────────────────────────────────────
-    function syncSelectAllPages() {
-        var all = document.querySelectorAll('.perm-page-cb');
-        var checked = document.querySelectorAll('.perm-page-cb:checked');
-        var cb = document.getElementById('cbSelectAllPages');
+    // SCADA / EMS 兩張頁面權限卡片：wrap = 勾選清單容器 id，cbId = 該卡片的全選 checkbox id
+    var _pageGroups = [
+        { wrapId: 'permScadaMainPages', cbId: 'cbSelectAllScadaMain', filter: function (p) { return !p.ems; } },
+        { wrapId: 'permEmsPages',       cbId: 'cbSelectAllEmsPages',  filter: function (p) { return p.ems; } }
+    ];
+
+    function syncSelectAllGroup(group) {
+        var wrap = document.getElementById(group.wrapId);
+        var all = wrap.querySelectorAll('.perm-page-cb');
+        var checked = wrap.querySelectorAll('.perm-page-cb:checked');
+        var cb = document.getElementById(group.cbId);
         cb.checked = all.length > 0 && all.length === checked.length;
         cb.indeterminate = checked.length > 0 && checked.length < all.length;
     }
 
     function renderPermMainPages(permData) {
-        var wrap = document.getElementById('permMainPages');
-        wrap.innerHTML = '';
-        _configurablePages.forEach(function (p) {
-            var isChecked = permData.pages && permData.pages.indexOf(p.route) >= 0;
-            var div = document.createElement('div');
-            div.className = 'form-check form-check-inline';
-            div.innerHTML = '<input class="form-check-input perm-page-cb" type="checkbox" value="' +
-                p.route + '" id="perm_' + p.route.replace(/\//g, '_') + '"' +
-                (isChecked ? ' checked' : '') + '>' +
-                '<label class="form-check-label small" for="perm_' + p.route.replace(/\//g, '_') + '">' +
-                p.name + '</label>';
-            wrap.appendChild(div);
+        _pageGroups.forEach(function (group) {
+            var wrap = document.getElementById(group.wrapId);
+            wrap.innerHTML = '';
+            _configurablePages.filter(group.filter).forEach(function (p) {
+                var isChecked = permData.pages && permData.pages.indexOf(p.route) >= 0;
+                var div = document.createElement('div');
+                div.className = 'form-check form-check-inline';
+                div.innerHTML = '<input class="form-check-input perm-page-cb" type="checkbox" value="' +
+                    p.route + '" id="perm_' + p.route.replace(/\//g, '_') + '"' +
+                    (isChecked ? ' checked' : '') + '>' +
+                    '<label class="form-check-label small" for="perm_' + p.route.replace(/\//g, '_') + '">' +
+                    p.name + '</label>';
+                wrap.appendChild(div);
+            });
+            syncSelectAllGroup(group);
         });
-        syncSelectAllPages();
     }
 
     function syncSelectAllScada() {
@@ -187,15 +196,18 @@
     }
 
     // ── 全選 checkbox 事件 ──────────────────────────────────
-    // 主功能頁面全選
-    document.getElementById('cbSelectAllPages').addEventListener('change', function () {
-        var isChecked = this.checked;
-        document.querySelectorAll('.perm-page-cb').forEach(function (cb) { cb.checked = isChecked; });
-    });
+    // SCADA / EMS 頁面卡片：全選只作用在自己卡片內；個別勾選變更 → 同步該卡片全選狀態
+    _pageGroups.forEach(function (group) {
+        document.getElementById(group.cbId).addEventListener('change', function () {
+            var isChecked = this.checked;
+            document.getElementById(group.wrapId)
+                .querySelectorAll('.perm-page-cb')
+                .forEach(function (cb) { cb.checked = isChecked; });
+        });
 
-    // 個別主功能頁面 checkbox 變更 → 同步全選狀態
-    document.getElementById('permMainPages').addEventListener('change', function (e) {
-        if (e.target.classList.contains('perm-page-cb')) syncSelectAllPages();
+        document.getElementById(group.wrapId).addEventListener('change', function (e) {
+            if (e.target.classList.contains('perm-page-cb')) syncSelectAllGroup(group);
+        });
     });
 
     // ScadaPage 可檢視/可控制全選（因表格是動態渲染，用事件委派）

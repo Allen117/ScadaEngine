@@ -87,7 +87,8 @@
   <data name="account.button.confirm_delete" xml:space="preserve"><value>確認刪除</value></data>
 
   <data name="account.permission.title" xml:space="preserve"><value>頁面存取權限</value></data>
-  <data name="account.permission.main_pages" xml:space="preserve"><value>主功能頁面</value></data>
+  <data name="account.permission.scada_main_pages" xml:space="preserve"><value>SCADA 頁面</value></data>
+  <data name="account.permission.ems_pages" xml:space="preserve"><value>EMS 頁面</value></data>
   <data name="account.permission.scada_pages" xml:space="preserve"><value>即時監控子頁面（ScadaPage）</value></data>
   <data name="account.permission.select_all" xml:space="preserve"><value>全選</value></data>
   <data name="account.permission.col_page" xml:space="preserve"><value>頁面</value></data>

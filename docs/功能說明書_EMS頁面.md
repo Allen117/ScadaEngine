@@ -2,16 +2,19 @@
 
 ## 1. 功能概述
 
-`/EMS` 是「能源管理」模組的進入點 Hub 頁，集中以 4 個子頁簽呈現該模組所有功能。
+`/EMS` 是「能源管理」模組的進入點 Hub 頁，集中呈現該模組所有子頁功能。
 
 | 子頁 | 路由 |
 |------|------|
+| 迴路資訊 | `/CircuitInfo` |
 | 水系統迴路設定 | `/ChilledWaterSystem` |
 | 電表/迴路設定 | `/EnergyMeter` |
 | 用電報表 | `/EnergyReport` |
 | 冷凍噸報表 | `/RefrigerationTonReport` |
+| 能源申報 | `/EnergyDeclaration` |
+| 月結週期設定 | `/BillingPeriodSetting` |
 
-點主 navbar 的「能源管理」會直接進入 `/EMS`（原本 dropdown 形式取消）；進入後 navbar 切換為淡綠/白主題、brand 變成「EMS 能源管理」、主選單只剩 4 個子頁簽（其餘隱藏）。
+點主 navbar 的「能源管理」會直接進入 `/EMS`（原本 dropdown 形式取消）；進入後 navbar 切換為淡綠/白主題、brand 變成「EMS 能源管理」、主選單只剩 EMS 子頁選單（其餘隱藏），且每個選單項目都以 `canAccess()` 依帳號權限個別過濾。
 
 ## 2. 路由 & 權限
 
@@ -21,9 +24,10 @@
 
 權限規則：
 
-- `/EMS` 已加入 `PermissionService.ConfigurablePages`，帳號管理 UI 可勾選。
-- 額外規則：使用者**未勾 /EMS** 但**勾了任一個 4 子頁**時，`CanAccessPage("/EMS")` 仍回 true（`PermissionService` 內 `_aEmsChildren` 特例）。這保證使用者一定能從主 navbar 走進子頁。
-- 4 個子頁皆無權限的使用者進 `/EMS` 會被 `EmsController.Index` redirect 回 `/ScadaPage`，避免進空殼頁。
+- `/EMS` 與全部 EMS 子頁都已加入 `PermissionService.ConfigurablePages`，帳號管理 UI 可逐頁勾選；Admin 角色不走勾選、預設全部可看（`IsAdmin` 直接放行）。
+- 額外規則：使用者**未勾 /EMS** 但**勾了任一個子頁**時，`CanAccessPage("/EMS")` 仍回 true（`CanAccessPage` 內對 `/EMS` 的特例，遍歷 `EmsRoutes`）。這保證使用者一定能從主 navbar 走進子頁。
+- 主 navbar「能源管理」入口同樣以 `canAccess("/EMS")` 判斷（等價於「勾了 /EMS 或任一子頁」），與上述特例單一來源，不另列子頁清單。
+- 所有子頁皆無權限的使用者進 `/EMS` 會被 `EmsController.Index` redirect 回 `/ScadaPage`，避免進空殼頁。
 
 ## 3. 視覺設計
 
@@ -57,9 +61,12 @@ public static readonly string[] EmsRoutes =
 [
     "/EMS",
     "/ChilledWaterSystem",
+    "/CircuitInfo",
     "/EnergyMeter",
     "/EnergyReport",
     "/RefrigerationTonReport",
+    "/EnergyDeclaration",
+    "/BillingPeriodSetting",
 ];
 ```
 
@@ -70,17 +77,17 @@ EmsMode 開關控制五件事：
 1. `<body>` 加 `ems-mode` class，吃 `ems.css` 樣式覆蓋（navbar + footer）
 2. `<nav>` class 從 `navbar-dark bg-primary` 換成 `navbar-light`
 3. brand href 從 `/ScadaPage` 換成 `/EMS`、icon 從 `fa-industry` 換成 `fa-leaf`、字串走 `layout.brand.ems` 而非 `layout.brand`
-4. navbar 主選單清單從「ScadaPage/RealTime/控制邏輯/歷史資料/能源管理/系統設定」整個改成「水系統迴路設定/電表迴路設定/用電報表/冷凍噸報表」4 個直接 nav-link
+4. navbar 主選單清單從「ScadaPage/RealTime/控制邏輯/歷史資料/能源管理/系統設定」整個改成 EMS 子頁選單（迴路資訊 + 報表/EMS 設定/歷史 dropdown），每項依 `canAccess()` 過濾
 5. navbar 右側「語系」左邊加上「← 回 SCADA」連結（`layout.ems.back_scada`，直連 `/ScadaPage`），讓使用者隨時跳回主模組
 
 footer 在 EmsMode 下背景換成 `linear-gradient(135deg, #66bb6a → #43a047)` 配白字；語系切換 / 使用者選單 / 登出 modal / 版本資訊完全共用。
 
 ## 5. 主 navbar 對 /EMS 的入口改造
 
-原本 `_Layout.cshtml` 的「能源管理」是一個 dropdown，內含 4 個 dropdown-item 直連各子頁。本次改造後（決策 2）：
+原本 `_Layout.cshtml` 的「能源管理」是一個 dropdown，內含 dropdown-item 直連各子頁。本次改造後（決策 2）：
 
 ```cshtml
-@if (canAccess("/ChilledWaterSystem") || canAccess("/EnergyMeter") || ...)
+@if (canAccess("/EMS"))
 {
     <li class="nav-item">
         <a class="nav-link" href="/EMS">
@@ -91,7 +98,9 @@ footer 在 EmsMode 下背景換成 `linear-gradient(135deg, #66bb6a → #43a047)
 }
 ```
 
-新流程：主 navbar 能源管理 → `/EMS` → 4 個子頁簽（在 EMS 模式 navbar 上）→ 子頁。單一動線，使用者不會被 dropdown 與 hub 兩種入口混淆。
+`canAccess("/EMS")` 內含「勾了任一 EMS 子頁即放行」特例，因此新增 EMS 子頁時**不需要**回來改這個判斷式。
+
+新流程：主 navbar 能源管理 → `/EMS` → EMS 模式 navbar 子頁選單 → 子頁。單一動線，使用者不會被 dropdown 與 hub 兩種入口混淆。
 
 ## 6. i18n
 

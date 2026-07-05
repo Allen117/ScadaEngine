@@ -149,6 +149,11 @@ public class AccountSettingService
     public string GetConfigurablePagesJson()
     {
         return System.Text.Json.JsonSerializer.Serialize(
-            PermissionService.ConfigurablePages.Select(p => new { route = p.Route, name = p.Name }));
+            PermissionService.ConfigurablePages.Select(p => new
+            {
+                route = p.Route,
+                name = p.Name,
+                ems = PermissionService.IsEmsRoute(p.Route)
+            }));
     }
 }

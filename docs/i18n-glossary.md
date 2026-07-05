@@ -31,6 +31,7 @@
 | 電表/迴路設定 | Energy Meter / Circuit | `/EnergyMeter` |
 | 水系統迴路設定 | Chilled Water Circuit Settings | `/ChilledWaterSystem` |
 | 月結週期設定 | Billing Cycle Settings | `/BillingPeriodSetting` |
+| 電費設定 | Tariff Settings | `/TariffSetting` |
 | 系統設定 | System Settings | top-level menu |
 | 畫面設計 | Designer | `/Designer` |
 | 警報設定 | Alarm Settings | `/AlarmSetting` |
@@ -52,6 +53,20 @@
 | 期別 | Billing Period | 一期 = 一個 YYYY-MM 結算區間；DB 表 `BillingPeriods` |
 | 空窗 | Gap | 期別間未被涵蓋的日數 |
 | 重疊 | Overlap | 期別間重複涵蓋的日數 |
+| 電價方案 | Tariff Plan | 台電電價表一種方案 |
+| 非時間電價（累進） | Non-TOU (Progressive) | 表燈累進級距計價 |
+| 時間電價 | Time-of-Use (TOU) | 依時段計價 |
+| 簡易型 / 標準型時間電價 | Simple / Standard TOU | 表燈 TOU 兩型 |
+| 二段式 / 三段式 | Two-Tier / Three-Tier | TOU 段數 |
+| 尖峰 / 半尖峰 / 離峰 | Peak / Semi-Peak / Off-Peak | TOU 時段別 |
+| 夏月 / 非夏月 | Summer / Non-Summer | 表燈低壓 6/1–9/30；高壓特高壓 5/16–10/15 |
+| 基本電費 | Base Charge | 按戶或按契約容量（瓩）計收 |
+| 流動電費 | Energy Charge | 按度計收 |
+| 經常契約 | Regular Contract | 契約容量項目 |
+| 離峰日 | Off-Peak Day | 台電指定假日，計價視同週日 |
+| 批次生產時間電價 | Batch Production TOU | 高壓/特高壓生產性質限定 |
+| 表燈（住商） | Lighting (Residential & Commercial) | 台電用戶類別 |
+| 低壓 / 高壓 / 特高壓電力 | Low / High / Extra High Voltage Power | 台電用戶類別 |
 | 計算點 / 計算點位 | Calculated Point | 同義 |
 | DB 來源 | DB Source | DBLatestData polling 系列 |
 | Modbus 來源 | Modbus Source | Modbus TCP polling 系列 |
@@ -256,7 +271,8 @@
 | 登出 | Log Out | |
 | 個人資料 | Profile | |
 | 頁面存取權限 | Page Access Permissions | |
-| 主功能頁面 | Main Pages | |
+| SCADA 頁面 | SCADA Pages | 帳號管理權限卡片 |
+| EMS 頁面 | EMS Pages | 帳號管理權限卡片 |
 | 即時監控子頁面 | SCADA Page Subpages | |
 | 可檢視 | View | 表頭 |
 | 可控制 | Control | 表頭 |

@@ -87,7 +87,8 @@
   <data name="account.button.confirm_delete" xml:space="preserve"><value>Delete</value></data>
 
   <data name="account.permission.title" xml:space="preserve"><value>Page Access Permissions</value></data>
-  <data name="account.permission.main_pages" xml:space="preserve"><value>Main Pages</value></data>
+  <data name="account.permission.scada_main_pages" xml:space="preserve"><value>SCADA Pages</value></data>
+  <data name="account.permission.ems_pages" xml:space="preserve"><value>EMS Pages</value></data>
   <data name="account.permission.scada_pages" xml:space="preserve"><value>SCADA Page Subpages</value></data>
   <data name="account.permission.select_all" xml:space="preserve"><value>Select all</value></data>
   <data name="account.permission.col_page" xml:space="preserve"><value>Page</value></data>
