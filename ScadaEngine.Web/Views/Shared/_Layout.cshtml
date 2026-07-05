@@ -165,7 +165,7 @@
                                     </ul>
                                 </li>
                             }
-                            @if (canAccess("/ChilledWaterSystem") || canAccess("/EnergyMeter") || canAccess("/BillingPeriodSetting"))
+                            @if (canAccess("/ChilledWaterSystem") || canAccess("/EnergyMeter") || canAccess("/BillingPeriodSetting") || canAccess("/TariffSetting"))
                             {
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
@@ -184,6 +184,10 @@
                                         @if (canAccess("/BillingPeriodSetting"))
                                         {
                                             <li><a class="dropdown-item" href="/BillingPeriodSetting"><i class="fas fa-calendar-check me-2"></i>@Localizer["layout.menu.billing_period"]</a></li>
+                                        }
+                                        @if (canAccess("/TariffSetting"))
+                                        {
+                                            <li><a class="dropdown-item" href="/TariffSetting"><i class="fas fa-file-invoice-dollar me-2"></i>@Localizer["layout.menu.tariff_setting"]</a></li>
                                         }
                                     </ul>
                                 </li>
@@ -270,7 +274,7 @@
                                     </ul>
                                 </li>
                             }
-                            @if (canAccess("/ChilledWaterSystem") || canAccess("/EnergyMeter") || canAccess("/EnergyReport") || canAccess("/RefrigerationTonReport"))
+                            @if (canAccess("/EMS"))
                             {
                                 <li class="nav-item">
                                     <a class="nav-link" href="/EMS">

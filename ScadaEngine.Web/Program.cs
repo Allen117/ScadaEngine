@@ -158,6 +158,8 @@ builder.Services.AddScoped<ScadaEngine.Web.Services.BillingPeriodService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyReportService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.RefrigerationTonReportService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyDeclarationService>();
+// 電費設定 — 台電電價方案（SystemSettings JSON + Setting/tariff-taipower-defaults.json seed）
+builder.Services.AddScoped<ScadaEngine.Web.Services.TariffSettingService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.DbCoordinatorService>();
 // OPC UA 來源設定（Scoped：依賴 IDataRepository 與 IStringLocalizer）
 builder.Services.AddScoped<ScadaEngine.Web.Services.OpcUaCoordinatorService>();

@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="tariffsetting.title" xml:space="preserve"><value>Tariff Settings</value></data>
+  <data name="tariffsetting.breadcrumb.energy" xml:space="preserve"><value>Energy Management</value></data>
+
+  <data name="tariffsetting.card.active_plan" xml:space="preserve"><value>Active Tariff Plan</value></data>
+  <data name="tariffsetting.card.no_active" xml:space="preserve"><value>Not selected</value></data>
+  <data name="tariffsetting.card.acc_kwh" xml:space="preserve"><value>Accumulated Consumption</value></data>
+  <data name="tariffsetting.card.acc_cost" xml:space="preserve"><value>Accumulated Cost</value></data>
+  <data name="tariffsetting.card.acc_hint" xml:space="preserve"><value>Cost calculation coming in a future release</value></data>
+  <data name="tariffsetting.unit.ntd" xml:space="preserve"><value>NT$</value></data>
+
+  <data name="tariffsetting.select.title" xml:space="preserve"><value>Tariff Plan Selection</value></data>
+  <data name="tariffsetting.select.category" xml:space="preserve"><value>Service Category</value></data>
+  <data name="tariffsetting.select.plan" xml:space="preserve"><value>Tariff Plan</value></data>
+  <data name="tariffsetting.button.set_active" xml:space="preserve"><value>Set as Active Plan</value></data>
+  <data name="tariffsetting.badge.active" xml:space="preserve"><value>Active</value></data>
+
+  <data name="tariffsetting.editor.loading" xml:space="preserve"><value>Loading…</value></data>
+  <data name="tariffsetting.button.save" xml:space="preserve"><value>Save</value></data>
+  <data name="tariffsetting.button.reset" xml:space="preserve"><value>Restore Taipower Defaults</value></data>
+  <data name="tariffsetting.button.add_range" xml:space="preserve"><value>Add Range</value></data>
+  <data name="tariffsetting.button.del_range" xml:space="preserve"><value>Remove this range</value></data>
+
+  <data name="tariffsetting.label.summer_range" xml:space="preserve"><value>Summer Period</value></data>
+  <data name="tariffsetting.label.month" xml:space="preserve"><value>M</value></data>
+  <data name="tariffsetting.label.day" xml:space="preserve"><value>D</value></data>
+
+  <data name="tariffsetting.section.tiers" xml:space="preserve"><value>Progressive Tiers (Energy Charge)</value></data>
+  <data name="tariffsetting.section.base_fees" xml:space="preserve"><value>Base Charges</value></data>
+  <data name="tariffsetting.section.flat" xml:space="preserve"><value>Energy Charge (per kWh)</value></data>
+  <data name="tariffsetting.section.flow" xml:space="preserve"><value>Time-of-Use Energy Charges</value></data>
+  <data name="tariffsetting.section.surcharge" xml:space="preserve"><value>Monthly Excess Consumption Surcharge</value></data>
+
+  <data name="tariffsetting.col.tier_range" xml:space="preserve"><value>Monthly Consumption Tier</value></data>
+  <data name="tariffsetting.col.summer" xml:space="preserve"><value>Summer</value></data>
+  <data name="tariffsetting.col.nonsummer" xml:space="preserve"><value>Non-Summer</value></data>
+  <data name="tariffsetting.col.base_item" xml:space="preserve"><value>Item</value></data>
+  <data name="tariffsetting.col.base_unit" xml:space="preserve"><value>Unit</value></data>
+  <data name="tariffsetting.col.season" xml:space="preserve"><value>Season</value></data>
+  <data name="tariffsetting.col.period_name" xml:space="preserve"><value>Period Name</value></data>
+  <data name="tariffsetting.col.time_ranges" xml:space="preserve"><value>Time Ranges</value></data>
+  <data name="tariffsetting.col.price" xml:space="preserve"><value>Price per kWh (NT$)</value></data>
+
+  <data name="tariffsetting.unit.per_kwh" xml:space="preserve"><value>NT$/kWh</value></data>
+  <data name="tariffsetting.na" xml:space="preserve"><value>—</value></data>
+
+  <data name="tariffsetting.tier.kwh" xml:space="preserve"><value>kWh</value></data>
+  <data name="tariffsetting.tier.kwh_below" xml:space="preserve"><value>kWh and below</value></data>
+  <data name="tariffsetting.tier.kwh_above" xml:space="preserve"><value>kWh and above</value></data>
+
+  <data name="tariffsetting.daytype.weekday" xml:space="preserve"><value>Monday–Friday</value></data>
+  <data name="tariffsetting.daytype.sat" xml:space="preserve"><value>Saturday</value></data>
+  <data name="tariffsetting.daytype.sun_offday" xml:space="preserve"><value>Sunday &amp; Off-Peak Days</value></data>
+  <data name="tariffsetting.season.summer" xml:space="preserve"><value>Summer</value></data>
+  <data name="tariffsetting.season.nonsummer" xml:space="preserve"><value>Non-Summer</value></data>
+
+  <data name="tariffsetting.surcharge.over" xml:space="preserve"><value>Threshold (kWh)</value></data>
+  <data name="tariffsetting.surcharge.price" xml:space="preserve"><value>Surcharge per kWh (NT$)</value></data>
+
+  <data name="tariffsetting.hint.midnight" xml:space="preserve"><value>An end time of 00:00 means 24:00 (end of day); a start time later than the end time means the range crosses midnight. Ranges in each "day type × season" group must cover 24 hours without overlap.</value></data>
+
+  <data name="tariffsetting.confirm.reset" xml:space="preserve"><value>Restore "{0}" to Taipower defaults? All changes to this plan will be overwritten.</value></data>
+  <data name="tariffsetting.confirm.switch_dirty" xml:space="preserve"><value>You have unsaved changes. Switching plans will discard them. Continue?</value></data>
+
+  <data name="tariffsetting.msg.saved" xml:space="preserve"><value>Saved</value></data>
+  <data name="tariffsetting.msg.save_fail" xml:space="preserve"><value>Save failed: {0}</value></data>
+  <data name="tariffsetting.msg.reset_fail" xml:space="preserve"><value>Restore failed: {0}</value></data>
+  <data name="tariffsetting.msg.active_fail" xml:space="preserve"><value>Failed to set active plan: {0}</value></data>
+  <data name="tariffsetting.msg.load_fail" xml:space="preserve"><value>Failed to load settings. Please refresh the page.</value></data>
+
+  <data name="tariffsetting.err.tier_order" xml:space="preserve"><value>Tier upper bound must be greater than its lower bound and strictly increasing</value></data>
+  <data name="tariffsetting.err.price_negative" xml:space="preserve"><value>Price cannot be negative</value></data>
+  <data name="tariffsetting.err.range_format" xml:space="preserve"><value>"{0}" has an invalid time range (start and end cannot be equal)</value></data>
+  <data name="tariffsetting.err.group_overlap" xml:space="preserve"><value>"{0}" time ranges overlap (around {1})</value></data>
+  <data name="tariffsetting.err.group_gap" xml:space="preserve"><value>"{0}" time ranges do not cover 24 hours (gap at {1})</value></data>
+
+  <data name="tariff.type.progressive" xml:space="preserve"><value>Non-TOU (Progressive)</value></data>
+  <data name="tariff.type.flat" xml:space="preserve"><value>Non-TOU (Flat Rate)</value></data>
+  <data name="tariff.type.tou" xml:space="preserve"><value>Time-of-Use</value></data>
+
+  <data name="tariff.category.lighting" xml:space="preserve"><value>Lighting (Residential &amp; Commercial)</value></data>
+  <data name="tariff.category.lv" xml:space="preserve"><value>Low Voltage Power</value></data>
+  <data name="tariff.category.hv" xml:space="preserve"><value>High Voltage Power</value></data>
+  <data name="tariff.category.ehv" xml:space="preserve"><value>Extra High Voltage Power</value></data>
+
+  <data name="tariff.category_desc.lighting" xml:space="preserve"><value>For households, institutions and small businesses (summer: Jun 1 – Sep 30)</value></data>
+  <data name="tariff.category_desc.lv" xml:space="preserve"><value>For premises with contracted capacity below 100 kW (summer: Jun 1 – Sep 30)</value></data>
+  <data name="tariff.category_desc.hv" xml:space="preserve"><value>For contracted capacity of 100 kW or more, supplied at 11.4 kV / 22.8 kV (summer: May 16 – Oct 15)</value></data>
+  <data name="tariff.category_desc.ehv" xml:space="preserve"><value>For contracted capacity of 1,000 kW or more, supplied at 69 kV or above (summer: May 16 – Oct 15)</value></data>
+
+  <data name="tariff.plan.lighting_res_prog" xml:space="preserve"><value>Non-TOU (Progressive) – Residential</value></data>
+  <data name="tariff.plan.lighting_nonbiz_prog" xml:space="preserve"><value>Non-TOU (Progressive) – Non-Business</value></data>
+  <data name="tariff.plan.lighting_biz_prog" xml:space="preserve"><value>Non-TOU (Progressive) – Business</value></data>
+  <data name="tariff.plan.lighting_simple_tou2" xml:space="preserve"><value>Simple TOU (Two-Tier)</value></data>
+  <data name="tariff.plan.lighting_simple_tou3" xml:space="preserve"><value>Simple TOU (Three-Tier)</value></data>
+  <data name="tariff.plan.lighting_std_tou2" xml:space="preserve"><value>Standard TOU (Two-Tier)</value></data>
+  <data name="tariff.plan.lighting_std_tou3" xml:space="preserve"><value>Standard TOU (Three-Tier)</value></data>
+  <data name="tariff.plan.lv_nontou" xml:space="preserve"><value>Non-TOU</value></data>
+  <data name="tariff.plan.lv_tou2" xml:space="preserve"><value>TOU (Two-Tier)</value></data>
+  <data name="tariff.plan.lv_tou3" xml:space="preserve"><value>TOU (Three-Tier)</value></data>
+  <data name="tariff.plan.lv_ev" xml:space="preserve"><value>EV Charging Facility Tariff</value></data>
+  <data name="tariff.plan.hv_tou2" xml:space="preserve"><value>Two-Tier TOU</value></data>
+  <data name="tariff.plan.hv_tou3_fixed" xml:space="preserve"><value>Three-Tier TOU (Fixed Peak)</value></data>
+  <data name="tariff.plan.hv_tou3_var" xml:space="preserve"><value>Three-Tier TOU (Variable Peak)</value></data>
+  <data name="tariff.plan.hv_batch" xml:space="preserve"><value>Batch Production TOU</value></data>
+  <data name="tariff.plan.hv_ev" xml:space="preserve"><value>EV Charging Facility Tariff</value></data>
+  <data name="tariff.plan.ehv_tou2" xml:space="preserve"><value>Two-Tier TOU</value></data>
+  <data name="tariff.plan.ehv_tou3_fixed" xml:space="preserve"><value>Three-Tier TOU (Fixed Peak)</value></data>
+  <data name="tariff.plan.ehv_tou3_var" xml:space="preserve"><value>Three-Tier TOU (Variable Peak)</value></data>
+  <data name="tariff.plan.ehv_batch" xml:space="preserve"><value>Batch Production TOU</value></data>
+
+  <data name="tariff.period.peak" xml:space="preserve"><value>Peak</value></data>
+  <data name="tariff.period.semipeak" xml:space="preserve"><value>Semi-Peak</value></data>
+  <data name="tariff.period.offpeak" xml:space="preserve"><value>Off-Peak</value></data>
+
+  <data name="tariff.unit.household" xml:space="preserve"><value>per customer / month</value></data>
+  <data name="tariff.unit.kw" xml:space="preserve"><value>per kW / month</value></data>
+
+  <data name="tariff.basefee.per_household" xml:space="preserve"><value>Customer charge</value></data>
+  <data name="tariff.basefee.per_household_1p" xml:space="preserve"><value>Customer charge (single-phase)</value></data>
+  <data name="tariff.basefee.per_household_3p" xml:space="preserve"><value>Customer charge (three-phase)</value></data>
+  <data name="tariff.basefee.device_household" xml:space="preserve"><value>Installed-capacity contract – customer charge</value></data>
+  <data name="tariff.basefee.device_kw" xml:space="preserve"><value>Installed-capacity contract</value></data>
+  <data name="tariff.basefee.demand_household" xml:space="preserve"><value>Demand contract – customer charge</value></data>
+  <data name="tariff.basefee.regular_kw" xml:space="preserve"><value>Regular contract</value></data>
+  <data name="tariff.basefee.nonsummer_kw" xml:space="preserve"><value>Non-summer contract</value></data>
+  <data name="tariff.basefee.semipeak_kw" xml:space="preserve"><value>Semi-peak contract</value></data>
+  <data name="tariff.basefee.sat_semipeak_kw" xml:space="preserve"><value>Saturday semi-peak contract</value></data>
+  <data name="tariff.basefee.offpeak_kw" xml:space="preserve"><value>Off-peak contract</value></data>
+
+  <data name="tariff.note.lv_nontou" xml:space="preserve"><value>Installed-capacity contract: capacity based on total installed equipment (no longer accepting new applications). Demand contract: capacity based on the agreed maximum demand (15-minute average).</value></data>
+  <data name="tariff.note.variable_peak" xml:space="preserve"><value>Peak hours are 16:00–22:00 on 30 summer days (180 hours) designated by Taipower (notified by 4 PM the previous day); on non-designated days, 09:00–24:00 is billed at the semi-peak rate.</value></data>
+  <data name="tariff.note.batch" xml:space="preserve"><value>Applicable to production-purpose premises.</value></data>
+  <data name="tariff.note.ev" xml:space="preserve"><value>Exclusively for EV charging/battery-swap equipment and auxiliary facilities.</value></data>
+  <data name="tariff.note.hv_ev" xml:space="preserve"><value>Exclusively for EV charging/battery-swap equipment and auxiliary facilities; when supplied at high voltage, billed at 95% of the listed rates.</value></data>
+</root>

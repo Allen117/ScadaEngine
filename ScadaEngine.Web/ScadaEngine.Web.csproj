@@ -27,6 +27,9 @@
     <None Update="Setting\dbSetting.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Setting\tariff-taipower-defaults.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <!-- Claude Code skill lock：開發用，不打包進 build/publish -->
     <Content Remove="skills-lock.json" />
     <None Remove="skills-lock.json" />

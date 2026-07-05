@@ -1,0 +1,112 @@
+@model ScadaEngine.Web.Features.TariffSetting.Models.TariffSettingViewModel
+@{
+    ViewData["Title"] = Localizer["tariffsetting.title"].Value;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-2">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="mb-0">
+            <i class="fas fa-file-invoice-dollar text-primary me-2"></i>@Localizer["tariffsetting.title"]
+        </h2>
+        <span class="text-muted small">
+            <i class="fas fa-leaf me-1"></i>@Localizer["tariffsetting.breadcrumb.energy"]
+        </span>
+    </div>
+
+    <!-- 頂部資訊卡：採用方案 + 累計度數/金額（本版不計算，顯示 --） -->
+    <div class="row g-3 mb-3">
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body py-2 d-flex align-items-center">
+                    <i class="fas fa-check-circle fa-2x text-primary me-3"></i>
+                    <div>
+                        <div class="text-muted small">@Localizer["tariffsetting.card.active_plan"]</div>
+                        <div class="fw-bold ts-card-value" id="tsActivePlanName">--</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body py-2 d-flex align-items-center">
+                    <i class="fas fa-bolt fa-2x text-primary me-3"></i>
+                    <div>
+                        <div class="text-muted small">@Localizer["tariffsetting.card.acc_kwh"]</div>
+                        <div class="fw-bold ts-card-value">-- kWh</div>
+                        <div class="text-muted ts-card-hint">@Localizer["tariffsetting.card.acc_hint"]</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body py-2 d-flex align-items-center">
+                    <i class="fas fa-dollar-sign fa-2x text-primary me-3"></i>
+                    <div>
+                        <div class="text-muted small">@Localizer["tariffsetting.card.acc_cost"]</div>
+                        <div class="fw-bold ts-card-value">-- @Localizer["tariffsetting.unit.ntd"]</div>
+                        <div class="text-muted ts-card-hint">@Localizer["tariffsetting.card.acc_hint"]</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 方案選擇 -->
+    <div class="card shadow-sm mb-3">
+        <div class="card-header bg-light py-2">
+            <i class="fas fa-list-ul me-1"></i>@Localizer["tariffsetting.select.title"]
+        </div>
+        <div class="card-body p-3">
+            <div class="ts-select-bar">
+                <div>
+                    <label class="form-label fw-semibold">@Localizer["tariffsetting.select.category"]</label>
+                    <select id="tsCategory" class="form-select form-select-sm"></select>
+                </div>
+                <div class="ts-plan-select">
+                    <label class="form-label fw-semibold">@Localizer["tariffsetting.select.plan"]</label>
+                    <select id="tsPlan" class="form-select form-select-sm"></select>
+                </div>
+                <div class="ts-active-btn">
+                    <button class="btn btn-primary btn-sm" id="btnTsSetActive" onclick="window._ts.setActive()">
+                        <i class="fas fa-check me-1"></i>@Localizer["tariffsetting.button.set_active"]
+                    </button>
+                    <span class="badge bg-success d-none" id="tsActiveBadge">
+                        <i class="fas fa-check me-1"></i>@Localizer["tariffsetting.badge.active"]
+                    </span>
+                </div>
+            </div>
+            <div class="text-muted small mt-2" id="tsCategoryDesc"></div>
+        </div>
+    </div>
+
+    <!-- 方案內容（JS 依方案型態渲染） -->
+    <div class="card shadow-sm mb-3">
+        <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-edit me-1"></i><span id="tsPlanTitle">@Localizer["tariffsetting.editor.loading"]</span></span>
+            <span id="tsTypeBadge"></span>
+        </div>
+        <div class="card-body p-3" id="tsPlanContainer">
+            <div class="text-center text-muted py-4">@Localizer["tariffsetting.editor.loading"]</div>
+        </div>
+        <div class="card-footer bg-light py-2 d-flex justify-content-between">
+            <button class="btn btn-outline-secondary btn-sm" onclick="window._ts.resetPlan()">
+                <i class="fas fa-undo me-1"></i>@Localizer["tariffsetting.button.reset"]
+            </button>
+            <button class="btn btn-primary btn-sm" onclick="window._ts.savePlan()">
+                <i class="fas fa-save me-1"></i>@Localizer["tariffsetting.button.save"]
+            </button>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="~/lib/flatpickr/flatpickr.min.css" />
+<link rel="stylesheet" href="~/css/tariffsetting.css" asp-append-version="true" />
+
+@section Scripts {
+    <script src="~/lib/flatpickr/flatpickr.min.js"></script>
+    <script src="~/lib/flatpickr/zh-tw.js"></script>
+    <script src="~/js/flatpickr-init.js" asp-append-version="true"></script>
+    <script src="~/js/tariffsetting.js" asp-append-version="true"></script>
+}

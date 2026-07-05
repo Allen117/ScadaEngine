@@ -28,6 +28,7 @@ public static class PermissionService
         ("/RefrigerationTonReport", "冷凍噸報表"),
         ("/EnergyDeclaration", "能源申報"),
         ("/BillingPeriodSetting", "月結週期設定"),
+        ("/TariffSetting",  "電費設定"),
         ("/Designer",       "畫面設計"),
         ("/Config",         "系統參數"),
         ("/ModbusCoordinator", "Modbus來源"),
@@ -59,6 +60,7 @@ public static class PermissionService
         "/RefrigerationTonReport",
         "/EnergyDeclaration",
         "/BillingPeriodSetting",
+        "/TariffSetting",
     ];
 
     /// <summary>

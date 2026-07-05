@@ -1,0 +1,543 @@
+{
+  "_comment": "台電各類電價表預設值（114年10月1日起實施版，來源：台電官網「各類電價表及計算範例」PDF）。此檔為唯讀 seed — 使用者修改存 SystemSettings.electricity_tariff；「還原台電預設」與首次載入以本檔為準。台電調價時只需更新本檔。",
+  "szActivePlanId": "",
+  "plans": [
+    {
+      "szPlanId": "lighting_res_prog",
+      "szCategory": "lighting",
+      "szType": "progressive",
+      "szSummerStart": "06-01",
+      "szSummerEnd": "09-30",
+      "szNoteKey": null,
+      "tiers": [
+        { "nFrom": 0, "nTo": 120, "dSummer": 1.78, "dNonSummer": 1.78 },
+        { "nFrom": 121, "nTo": 330, "dSummer": 2.55, "dNonSummer": 2.26 },
+        { "nFrom": 331, "nTo": 500, "dSummer": 3.80, "dNonSummer": 3.13 },
+        { "nFrom": 501, "nTo": 700, "dSummer": 5.14, "dNonSummer": 4.24 },
+        { "nFrom": 701, "nTo": 1000, "dSummer": 6.44, "dNonSummer": 5.27 },
+        { "nFrom": 1001, "nTo": null, "dSummer": 8.86, "dNonSummer": 7.03 }
+      ],
+      "flatRate": null,
+      "baseFees": [],
+      "flowRates": [],
+      "surcharge": null
+    },
+    {
+      "szPlanId": "lighting_nonbiz_prog",
+      "szCategory": "lighting",
+      "szType": "progressive",
+      "szSummerStart": "06-01",
+      "szSummerEnd": "09-30",
+      "szNoteKey": null,
+      "tiers": [
+        { "nFrom": 0, "nTo": 120, "dSummer": 1.78, "dNonSummer": 1.78 },
+        { "nFrom": 121, "nTo": 330, "dSummer": 2.55, "dNonSummer": 2.26 },
+        { "nFrom": 331, "nTo": 500, "dSummer": 3.80, "dNonSummer": 3.13 },
+        { "nFrom": 501, "nTo": 700, "dSummer": 5.14, "dNonSummer": 4.24 },
+        { "nFrom": 701, "nTo": 1000, "dSummer": 6.44, "dNonSummer": 5.27 },
+        { "nFrom": 1001, "nTo": null, "dSummer": 8.86, "dNonSummer": 7.03 }
+      ],
+      "flatRate": null,
+      "baseFees": [],
+      "flowRates": [],
+      "surcharge": null
+    },
+    {
+      "szPlanId": "lighting_biz_prog",
+      "szCategory": "lighting",
+      "szType": "progressive",
+      "szSummerStart": "06-01",
+      "szSummerEnd": "09-30",
+      "szNoteKey": null,
+      "tiers": [
+        { "nFrom": 0, "nTo": 330, "dSummer": 2.71, "dNonSummer": 2.28 },
+        { "nFrom": 331, "nTo": 700, "dSummer": 3.76, "dNonSummer": 3.10 },
+        { "nFrom": 701, "nTo": 1500, "dSummer": 4.46, "dNonSummer": 3.61 },
+        { "nFrom": 1501, "nTo": 3000, "dSummer": 7.08, "dNonSummer": 5.56 },
+        { "nFrom": 3001, "nTo": null, "dSummer": 7.43, "dNonSummer": 5.83 }
+      ],
+      "flatRate": null,
+      "baseFees": [],
+      "flowRates": [],
+      "surcharge": null
+    },
+    {
+      "szPlanId": "lighting_simple_tou2",
+      "szCategory": "lighting",
+      "szType": "tou",
+      "szSummerStart": "06-01",
+      "szSummerEnd": "09-30",
+      "szNoteKey": null,
+      "tiers": [],
+      "flatRate": null,
+      "baseFees": [
+        { "szKey": "per_household", "szUnit": "household", "dSummer": 75.00, "dNonSummer": 75.00 }
+      ],
+      "flowRates": [
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "peak", "szName": null, "ranges": ["09:00-24:00"], "dPrice": 5.16 },
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-09:00"], "dPrice": 2.06 },
+        { "szDayType": "weekday", "szSeason": "nonsummer", "szPeriod": "peak", "szName": null, "ranges": ["06:00-11:00", "14:00-24:00"], "dPrice": 4.93 },
+        { "szDayType": "weekday", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-06:00", "11:00-14:00"], "dPrice": 1.99 },
+        { "szDayType": "sat", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 2.06 },
+        { "szDayType": "sat", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 1.99 },
+        { "szDayType": "sun_offday", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 2.06 },
+        { "szDayType": "sun_offday", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 1.99 }
+      ],
+      "surcharge": { "nOverKwh": 2000, "dPrice": 1.04 }
+    },
+    {
+      "szPlanId": "lighting_simple_tou3",
+      "szCategory": "lighting",
+      "szType": "tou",
+      "szSummerStart": "06-01",
+      "szSummerEnd": "09-30",
+      "szNoteKey": null,
+      "tiers": [],
+      "flatRate": null,
+      "baseFees": [
+        { "szKey": "per_household", "szUnit": "household", "dSummer": 75.00, "dNonSummer": 75.00 }
+      ],
+      "flowRates": [
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "peak", "szName": null, "ranges": ["16:00-22:00"], "dPrice": 7.13 },
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "semipeak", "szName": null, "ranges": ["09:00-16:00", "22:00-24:00"], "dPrice": 4.69 },
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-09:00"], "dPrice": 2.06 },
+        { "szDayType": "weekday", "szSeason": "nonsummer", "szPeriod": "semipeak", "szName": null, "ranges": ["06:00-11:00", "14:00-24:00"], "dPrice": 4.48 },
+        { "szDayType": "weekday", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-06:00", "11:00-14:00"], "dPrice": 1.99 },
+        { "szDayType": "sat", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 2.06 },
+        { "szDayType": "sat", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 1.99 },
+        { "szDayType": "sun_offday", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 2.06 },
+        { "szDayType": "sun_offday", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 1.99 }
+      ],
+      "surcharge": { "nOverKwh": 2000, "dPrice": 1.04 }
+    },
+    {
+      "szPlanId": "lighting_std_tou2",
+      "szCategory": "lighting",
+      "szType": "tou",
+      "szSummerStart": "06-01",
+      "szSummerEnd": "09-30",
+      "szNoteKey": null,
+      "tiers": [],
+      "flatRate": null,
+      "baseFees": [
+        { "szKey": "per_household_1p", "szUnit": "household", "dSummer": 129.10, "dNonSummer": 129.10 },
+        { "szKey": "per_household_3p", "szUnit": "household", "dSummer": 262.50, "dNonSummer": 262.50 },
+        { "szKey": "regular_kw", "szUnit": "kw", "dSummer": 236.20, "dNonSummer": 173.20 },
+        { "szKey": "nonsummer_kw", "szUnit": "kw", "dSummer": null, "dNonSummer": 173.20 },
+        { "szKey": "sat_semipeak_kw", "szUnit": "kw", "dSummer": 47.20, "dNonSummer": 34.60 },
+        { "szKey": "offpeak_kw", "szUnit": "kw", "dSummer": 47.20, "dNonSummer": 34.60 }
+      ],
+      "flowRates": [
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "peak", "szName": null, "ranges": ["09:00-24:00"], "dPrice": 5.54 },
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-09:00"], "dPrice": 2.27 },
+        { "szDayType": "weekday", "szSeason": "nonsummer", "szPeriod": "peak", "szName": null, "ranges": ["06:00-11:00", "14:00-24:00"], "dPrice": 5.39 },
+        { "szDayType": "weekday", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-06:00", "11:00-14:00"], "dPrice": 2.15 },
+        { "szDayType": "sat", "szSeason": "summer", "szPeriod": "semipeak", "szName": null, "ranges": ["09:00-24:00"], "dPrice": 2.76 },
+        { "szDayType": "sat", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-09:00"], "dPrice": 2.27 },
+        { "szDayType": "sat", "szSeason": "nonsummer", "szPeriod": "semipeak", "szName": null, "ranges": ["06:00-11:00", "14:00-24:00"], "dPrice": 2.65 },
+        { "szDayType": "sat", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-06:00", "11:00-14:00"], "dPrice": 2.15 },
+        { "szDayType": "sun_offday", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 2.27 },
+        { "szDayType": "sun_offday", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 2.15 }
+      ],
+      "surcharge": null
+    },
+    {
+      "szPlanId": "lighting_std_tou3",
+      "szCategory": "lighting",
+      "szType": "tou",
+      "szSummerStart": "06-01",
+      "szSummerEnd": "09-30",
+      "szNoteKey": null,
+      "tiers": [],
+      "flatRate": null,
+      "baseFees": [
+        { "szKey": "per_household_1p", "szUnit": "household", "dSummer": 129.10, "dNonSummer": 129.10 },
+        { "szKey": "per_household_3p", "szUnit": "household", "dSummer": 262.50, "dNonSummer": 262.50 },
+        { "szKey": "regular_kw", "szUnit": "kw", "dSummer": 236.20, "dNonSummer": 173.20 },
+        { "szKey": "semipeak_kw", "szUnit": "kw", "dSummer": 173.20, "dNonSummer": 173.20 },
+        { "szKey": "sat_semipeak_kw", "szUnit": "kw", "dSummer": 47.20, "dNonSummer": 34.60 },
+        { "szKey": "offpeak_kw", "szUnit": "kw", "dSummer": 47.20, "dNonSummer": 34.60 }
+      ],
+      "flowRates": [
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "peak", "szName": null, "ranges": ["16:00-22:00"], "dPrice": 8.12 },
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "semipeak", "szName": null, "ranges": ["09:00-16:00", "22:00-24:00"], "dPrice": 5.02 },
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-09:00"], "dPrice": 2.23 },
+        { "szDayType": "weekday", "szSeason": "nonsummer", "szPeriod": "semipeak", "szName": null, "ranges": ["06:00-11:00", "14:00-24:00"], "dPrice": 4.86 },
+        { "szDayType": "weekday", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-06:00", "11:00-14:00"], "dPrice": 2.12 },
+        { "szDayType": "sat", "szSeason": "summer", "szPeriod": "semipeak", "szName": null, "ranges": ["09:00-24:00"], "dPrice": 2.50 },
+        { "szDayType": "sat", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-09:00"], "dPrice": 2.23 },
+        { "szDayType": "sat", "szSeason": "nonsummer", "szPeriod": "semipeak", "szName": null, "ranges": ["06:00-11:00", "14:00-24:00"], "dPrice": 2.40 },
+        { "szDayType": "sat", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-06:00", "11:00-14:00"], "dPrice": 2.12 },
+        { "szDayType": "sun_offday", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 2.23 },
+        { "szDayType": "sun_offday", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 2.12 }
+      ],
+      "surcharge": null
+    },
+    {
+      "szPlanId": "lv_nontou",
+      "szCategory": "lv",
+      "szType": "flat",
+      "szSummerStart": "06-01",
+      "szSummerEnd": "09-30",
+      "szNoteKey": "tariff.note.lv_nontou",
+      "tiers": [],
+      "flatRate": { "dSummer": 4.08, "dNonSummer": 3.87 },
+      "baseFees": [
+        { "szKey": "device_kw", "szUnit": "kw", "dSummer": 137.50, "dNonSummer": 137.50 },
+        { "szKey": "regular_kw", "szUnit": "kw", "dSummer": 236.20, "dNonSummer": 173.20 },
+        { "szKey": "nonsummer_kw", "szUnit": "kw", "dSummer": null, "dNonSummer": 173.20 }
+      ],
+      "flowRates": [],
+      "surcharge": null
+    },
+    {
+      "szPlanId": "lv_tou2",
+      "szCategory": "lv",
+      "szType": "tou",
+      "szSummerStart": "06-01",
+      "szSummerEnd": "09-30",
+      "szNoteKey": "tariff.note.lv_nontou",
+      "tiers": [],
+      "flatRate": null,
+      "baseFees": [
+        { "szKey": "device_household", "szUnit": "household", "dSummer": 105.00, "dNonSummer": 105.00 },
+        { "szKey": "device_kw", "szUnit": "kw", "dSummer": 137.50, "dNonSummer": 137.50 },
+        { "szKey": "demand_household", "szUnit": "household", "dSummer": 262.50, "dNonSummer": 262.50 },
+        { "szKey": "regular_kw", "szUnit": "kw", "dSummer": 236.20, "dNonSummer": 173.20 },
+        { "szKey": "nonsummer_kw", "szUnit": "kw", "dSummer": null, "dNonSummer": 173.20 },
+        { "szKey": "sat_semipeak_kw", "szUnit": "kw", "dSummer": 47.20, "dNonSummer": 34.60 },
+        { "szKey": "offpeak_kw", "szUnit": "kw", "dSummer": 47.20, "dNonSummer": 34.60 }
+      ],
+      "flowRates": [
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "peak", "szName": null, "ranges": ["09:00-24:00"], "dPrice": 5.54 },
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-09:00"], "dPrice": 2.27 },
+        { "szDayType": "weekday", "szSeason": "nonsummer", "szPeriod": "peak", "szName": null, "ranges": ["06:00-11:00", "14:00-24:00"], "dPrice": 5.39 },
+        { "szDayType": "weekday", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-06:00", "11:00-14:00"], "dPrice": 2.15 },
+        { "szDayType": "sat", "szSeason": "summer", "szPeriod": "semipeak", "szName": null, "ranges": ["09:00-24:00"], "dPrice": 2.76 },
+        { "szDayType": "sat", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-09:00"], "dPrice": 2.27 },
+        { "szDayType": "sat", "szSeason": "nonsummer", "szPeriod": "semipeak", "szName": null, "ranges": ["06:00-11:00", "14:00-24:00"], "dPrice": 2.65 },
+        { "szDayType": "sat", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-06:00", "11:00-14:00"], "dPrice": 2.15 },
+        { "szDayType": "sun_offday", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 2.27 },
+        { "szDayType": "sun_offday", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 2.15 }
+      ],
+      "surcharge": null
+    },
+    {
+      "szPlanId": "lv_tou3",
+      "szCategory": "lv",
+      "szType": "tou",
+      "szSummerStart": "06-01",
+      "szSummerEnd": "09-30",
+      "szNoteKey": null,
+      "tiers": [],
+      "flatRate": null,
+      "baseFees": [
+        { "szKey": "per_household", "szUnit": "household", "dSummer": 262.50, "dNonSummer": 262.50 },
+        { "szKey": "regular_kw", "szUnit": "kw", "dSummer": 236.20, "dNonSummer": 173.20 },
+        { "szKey": "semipeak_kw", "szUnit": "kw", "dSummer": 173.20, "dNonSummer": 173.20 },
+        { "szKey": "sat_semipeak_kw", "szUnit": "kw", "dSummer": 47.20, "dNonSummer": 34.60 },
+        { "szKey": "offpeak_kw", "szUnit": "kw", "dSummer": 47.20, "dNonSummer": 34.60 }
+      ],
+      "flowRates": [
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "peak", "szName": null, "ranges": ["16:00-22:00"], "dPrice": 8.12 },
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "semipeak", "szName": null, "ranges": ["09:00-16:00", "22:00-24:00"], "dPrice": 5.02 },
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-09:00"], "dPrice": 2.23 },
+        { "szDayType": "weekday", "szSeason": "nonsummer", "szPeriod": "semipeak", "szName": null, "ranges": ["06:00-11:00", "14:00-24:00"], "dPrice": 4.86 },
+        { "szDayType": "weekday", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-06:00", "11:00-14:00"], "dPrice": 2.12 },
+        { "szDayType": "sat", "szSeason": "summer", "szPeriod": "semipeak", "szName": null, "ranges": ["09:00-24:00"], "dPrice": 2.50 },
+        { "szDayType": "sat", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-09:00"], "dPrice": 2.23 },
+        { "szDayType": "sat", "szSeason": "nonsummer", "szPeriod": "semipeak", "szName": null, "ranges": ["06:00-11:00", "14:00-24:00"], "dPrice": 2.40 },
+        { "szDayType": "sat", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-06:00", "11:00-14:00"], "dPrice": 2.12 },
+        { "szDayType": "sun_offday", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 2.23 },
+        { "szDayType": "sun_offday", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 2.12 }
+      ],
+      "surcharge": null
+    },
+    {
+      "szPlanId": "lv_ev",
+      "szCategory": "lv",
+      "szType": "tou",
+      "szSummerStart": "06-01",
+      "szSummerEnd": "09-30",
+      "szNoteKey": "tariff.note.ev",
+      "tiers": [],
+      "flatRate": null,
+      "baseFees": [
+        { "szKey": "per_household", "szUnit": "household", "dSummer": 262.50, "dNonSummer": 262.50 },
+        { "szKey": "regular_kw", "szUnit": "kw", "dSummer": 47.20, "dNonSummer": 34.60 }
+      ],
+      "flowRates": [
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "peak", "szName": null, "ranges": ["16:00-22:00"], "dPrice": 12.47 },
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-16:00", "22:00-24:00"], "dPrice": 3.05 },
+        { "szDayType": "weekday", "szSeason": "nonsummer", "szPeriod": "peak", "szName": null, "ranges": ["15:00-21:00"], "dPrice": 12.14 },
+        { "szDayType": "weekday", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-15:00", "21:00-24:00"], "dPrice": 2.90 },
+        { "szDayType": "sat", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 3.05 },
+        { "szDayType": "sat", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 2.90 },
+        { "szDayType": "sun_offday", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 3.05 },
+        { "szDayType": "sun_offday", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 2.90 }
+      ],
+      "surcharge": null
+    },
+    {
+      "szPlanId": "hv_tou2",
+      "szCategory": "hv",
+      "szType": "tou",
+      "szSummerStart": "05-16",
+      "szSummerEnd": "10-15",
+      "szNoteKey": null,
+      "tiers": [],
+      "flatRate": null,
+      "baseFees": [
+        { "szKey": "regular_kw", "szUnit": "kw", "dSummer": 223.60, "dNonSummer": 166.90 },
+        { "szKey": "nonsummer_kw", "szUnit": "kw", "dSummer": null, "dNonSummer": 166.90 },
+        { "szKey": "sat_semipeak_kw", "szUnit": "kw", "dSummer": 44.70, "dNonSummer": 33.30 },
+        { "szKey": "offpeak_kw", "szUnit": "kw", "dSummer": 44.70, "dNonSummer": 33.30 }
+      ],
+      "flowRates": [
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "peak", "szName": null, "ranges": ["09:00-24:00"], "dPrice": 6.75 },
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-09:00"], "dPrice": 2.71 },
+        { "szDayType": "weekday", "szSeason": "nonsummer", "szPeriod": "peak", "szName": null, "ranges": ["06:00-11:00", "14:00-24:00"], "dPrice": 6.37 },
+        { "szDayType": "weekday", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-06:00", "11:00-14:00"], "dPrice": 2.46 },
+        { "szDayType": "sat", "szSeason": "summer", "szPeriod": "semipeak", "szName": null, "ranges": ["09:00-24:00"], "dPrice": 2.77 },
+        { "szDayType": "sat", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-09:00"], "dPrice": 2.71 },
+        { "szDayType": "sat", "szSeason": "nonsummer", "szPeriod": "semipeak", "szName": null, "ranges": ["06:00-11:00", "14:00-24:00"], "dPrice": 2.54 },
+        { "szDayType": "sat", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-06:00", "11:00-14:00"], "dPrice": 2.46 },
+        { "szDayType": "sun_offday", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 2.71 },
+        { "szDayType": "sun_offday", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 2.46 }
+      ],
+      "surcharge": null
+    },
+    {
+      "szPlanId": "hv_tou3_fixed",
+      "szCategory": "hv",
+      "szType": "tou",
+      "szSummerStart": "05-16",
+      "szSummerEnd": "10-15",
+      "szNoteKey": null,
+      "tiers": [],
+      "flatRate": null,
+      "baseFees": [
+        { "szKey": "regular_kw", "szUnit": "kw", "dSummer": 223.60, "dNonSummer": 166.90 },
+        { "szKey": "semipeak_kw", "szUnit": "kw", "dSummer": 166.90, "dNonSummer": 166.90 },
+        { "szKey": "sat_semipeak_kw", "szUnit": "kw", "dSummer": 44.70, "dNonSummer": 33.30 },
+        { "szKey": "offpeak_kw", "szUnit": "kw", "dSummer": 44.70, "dNonSummer": 33.30 }
+      ],
+      "flowRates": [
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "peak", "szName": null, "ranges": ["16:00-22:00"], "dPrice": 9.39 },
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "semipeak", "szName": null, "ranges": ["09:00-16:00", "22:00-24:00"], "dPrice": 5.85 },
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-09:00"], "dPrice": 2.53 },
+        { "szDayType": "weekday", "szSeason": "nonsummer", "szPeriod": "semipeak", "szName": null, "ranges": ["06:00-11:00", "14:00-24:00"], "dPrice": 5.47 },
+        { "szDayType": "weekday", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-06:00", "11:00-14:00"], "dPrice": 2.32 },
+        { "szDayType": "sat", "szSeason": "summer", "szPeriod": "semipeak", "szName": null, "ranges": ["09:00-24:00"], "dPrice": 2.60 },
+        { "szDayType": "sat", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-09:00"], "dPrice": 2.53 },
+        { "szDayType": "sat", "szSeason": "nonsummer", "szPeriod": "semipeak", "szName": null, "ranges": ["06:00-11:00", "14:00-24:00"], "dPrice": 2.41 },
+        { "szDayType": "sat", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-06:00", "11:00-14:00"], "dPrice": 2.32 },
+        { "szDayType": "sun_offday", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 2.53 },
+        { "szDayType": "sun_offday", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 2.32 }
+      ],
+      "surcharge": null
+    },
+    {
+      "szPlanId": "hv_tou3_var",
+      "szCategory": "hv",
+      "szType": "tou",
+      "szSummerStart": "05-16",
+      "szSummerEnd": "10-15",
+      "szNoteKey": "tariff.note.variable_peak",
+      "tiers": [],
+      "flatRate": null,
+      "baseFees": [
+        { "szKey": "regular_kw", "szUnit": "kw", "dSummer": 223.60, "dNonSummer": 166.90 },
+        { "szKey": "semipeak_kw", "szUnit": "kw", "dSummer": 166.90, "dNonSummer": 166.90 },
+        { "szKey": "sat_semipeak_kw", "szUnit": "kw", "dSummer": 44.70, "dNonSummer": 33.30 },
+        { "szKey": "offpeak_kw", "szUnit": "kw", "dSummer": 44.70, "dNonSummer": 33.30 }
+      ],
+      "flowRates": [
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "peak", "szName": null, "ranges": ["16:00-22:00"], "dPrice": 18.33 },
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "semipeak", "szName": null, "ranges": ["09:00-16:00", "22:00-24:00"], "dPrice": 5.85 },
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-09:00"], "dPrice": 2.53 },
+        { "szDayType": "weekday", "szSeason": "nonsummer", "szPeriod": "semipeak", "szName": null, "ranges": ["06:00-11:00", "14:00-24:00"], "dPrice": 5.47 },
+        { "szDayType": "weekday", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-06:00", "11:00-14:00"], "dPrice": 2.32 },
+        { "szDayType": "sat", "szSeason": "summer", "szPeriod": "semipeak", "szName": null, "ranges": ["09:00-24:00"], "dPrice": 2.60 },
+        { "szDayType": "sat", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-09:00"], "dPrice": 2.53 },
+        { "szDayType": "sat", "szSeason": "nonsummer", "szPeriod": "semipeak", "szName": null, "ranges": ["06:00-11:00", "14:00-24:00"], "dPrice": 2.41 },
+        { "szDayType": "sat", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-06:00", "11:00-14:00"], "dPrice": 2.32 },
+        { "szDayType": "sun_offday", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 2.53 },
+        { "szDayType": "sun_offday", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 2.32 }
+      ],
+      "surcharge": null
+    },
+    {
+      "szPlanId": "hv_batch",
+      "szCategory": "hv",
+      "szType": "tou",
+      "szSummerStart": "05-16",
+      "szSummerEnd": "10-15",
+      "szNoteKey": "tariff.note.batch",
+      "tiers": [],
+      "flatRate": null,
+      "baseFees": [
+        { "szKey": "regular_kw", "szUnit": "kw", "dSummer": 223.60, "dNonSummer": 166.90 },
+        { "szKey": "nonsummer_kw", "szUnit": "kw", "dSummer": null, "dNonSummer": 166.90 },
+        { "szKey": "sat_semipeak_kw", "szUnit": "kw", "dSummer": 44.70, "dNonSummer": 33.30 },
+        { "szKey": "offpeak_kw", "szUnit": "kw", "dSummer": 44.70, "dNonSummer": 33.30 }
+      ],
+      "flowRates": [
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "peak", "szName": null, "ranges": ["15:30-21:30"], "dPrice": 12.47 },
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-15:30", "21:30-24:00"], "dPrice": 3.18 },
+        { "szDayType": "weekday", "szSeason": "nonsummer", "szPeriod": "peak", "szName": null, "ranges": ["15:30-21:30"], "dPrice": 11.79 },
+        { "szDayType": "weekday", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-15:30", "21:30-24:00"], "dPrice": 2.88 },
+        { "szDayType": "sat", "szSeason": "summer", "szPeriod": "semipeak", "szName": null, "ranges": ["15:30-21:30"], "dPrice": 3.26 },
+        { "szDayType": "sat", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-15:30", "21:30-24:00"], "dPrice": 3.18 },
+        { "szDayType": "sat", "szSeason": "nonsummer", "szPeriod": "semipeak", "szName": null, "ranges": ["15:30-21:30"], "dPrice": 3.00 },
+        { "szDayType": "sat", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-15:30", "21:30-24:00"], "dPrice": 2.88 },
+        { "szDayType": "sun_offday", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 3.18 },
+        { "szDayType": "sun_offday", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 2.88 }
+      ],
+      "surcharge": null
+    },
+    {
+      "szPlanId": "hv_ev",
+      "szCategory": "hv",
+      "szType": "tou",
+      "szSummerStart": "06-01",
+      "szSummerEnd": "09-30",
+      "szNoteKey": "tariff.note.hv_ev",
+      "tiers": [],
+      "flatRate": null,
+      "baseFees": [
+        { "szKey": "per_household", "szUnit": "household", "dSummer": 262.50, "dNonSummer": 262.50 },
+        { "szKey": "regular_kw", "szUnit": "kw", "dSummer": 47.20, "dNonSummer": 34.60 }
+      ],
+      "flowRates": [
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "peak", "szName": null, "ranges": ["16:00-22:00"], "dPrice": 12.47 },
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-16:00", "22:00-24:00"], "dPrice": 3.05 },
+        { "szDayType": "weekday", "szSeason": "nonsummer", "szPeriod": "peak", "szName": null, "ranges": ["15:00-21:00"], "dPrice": 12.14 },
+        { "szDayType": "weekday", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-15:00", "21:00-24:00"], "dPrice": 2.90 },
+        { "szDayType": "sat", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 3.05 },
+        { "szDayType": "sat", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 2.90 },
+        { "szDayType": "sun_offday", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 3.05 },
+        { "szDayType": "sun_offday", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 2.90 }
+      ],
+      "surcharge": null
+    },
+    {
+      "szPlanId": "ehv_tou2",
+      "szCategory": "ehv",
+      "szType": "tou",
+      "szSummerStart": "05-16",
+      "szSummerEnd": "10-15",
+      "szNoteKey": null,
+      "tiers": [],
+      "flatRate": null,
+      "baseFees": [
+        { "szKey": "regular_kw", "szUnit": "kw", "dSummer": 217.30, "dNonSummer": 160.60 },
+        { "szKey": "nonsummer_kw", "szUnit": "kw", "dSummer": null, "dNonSummer": 160.60 },
+        { "szKey": "sat_semipeak_kw", "szUnit": "kw", "dSummer": 43.40, "dNonSummer": 32.10 },
+        { "szKey": "offpeak_kw", "szUnit": "kw", "dSummer": 43.40, "dNonSummer": 32.10 }
+      ],
+      "flowRates": [
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "peak", "szName": null, "ranges": ["09:00-24:00"], "dPrice": 6.17 },
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-09:00"], "dPrice": 2.55 },
+        { "szDayType": "weekday", "szSeason": "nonsummer", "szPeriod": "peak", "szName": null, "ranges": ["06:00-11:00", "14:00-24:00"], "dPrice": 5.79 },
+        { "szDayType": "weekday", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-06:00", "11:00-14:00"], "dPrice": 2.28 },
+        { "szDayType": "sat", "szSeason": "summer", "szPeriod": "semipeak", "szName": null, "ranges": ["09:00-24:00"], "dPrice": 2.73 },
+        { "szDayType": "sat", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-09:00"], "dPrice": 2.55 },
+        { "szDayType": "sat", "szSeason": "nonsummer", "szPeriod": "semipeak", "szName": null, "ranges": ["06:00-11:00", "14:00-24:00"], "dPrice": 2.48 },
+        { "szDayType": "sat", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-06:00", "11:00-14:00"], "dPrice": 2.28 },
+        { "szDayType": "sun_offday", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 2.55 },
+        { "szDayType": "sun_offday", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 2.28 }
+      ],
+      "surcharge": null
+    },
+    {
+      "szPlanId": "ehv_tou3_fixed",
+      "szCategory": "ehv",
+      "szType": "tou",
+      "szSummerStart": "05-16",
+      "szSummerEnd": "10-15",
+      "szNoteKey": null,
+      "tiers": [],
+      "flatRate": null,
+      "baseFees": [
+        { "szKey": "regular_kw", "szUnit": "kw", "dSummer": 217.30, "dNonSummer": 160.60 },
+        { "szKey": "semipeak_kw", "szUnit": "kw", "dSummer": 160.60, "dNonSummer": 160.60 },
+        { "szKey": "sat_semipeak_kw", "szUnit": "kw", "dSummer": 43.40, "dNonSummer": 32.10 },
+        { "szKey": "offpeak_kw", "szUnit": "kw", "dSummer": 43.40, "dNonSummer": 32.10 }
+      ],
+      "flowRates": [
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "peak", "szName": null, "ranges": ["16:00-22:00"], "dPrice": 8.69 },
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "semipeak", "szName": null, "ranges": ["09:00-16:00", "22:00-24:00"], "dPrice": 5.38 },
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-09:00"], "dPrice": 2.40 },
+        { "szDayType": "weekday", "szSeason": "nonsummer", "szPeriod": "semipeak", "szName": null, "ranges": ["06:00-11:00", "14:00-24:00"], "dPrice": 5.03 },
+        { "szDayType": "weekday", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-06:00", "11:00-14:00"], "dPrice": 2.18 },
+        { "szDayType": "sat", "szSeason": "summer", "szPeriod": "semipeak", "szName": null, "ranges": ["09:00-24:00"], "dPrice": 2.50 },
+        { "szDayType": "sat", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-09:00"], "dPrice": 2.40 },
+        { "szDayType": "sat", "szSeason": "nonsummer", "szPeriod": "semipeak", "szName": null, "ranges": ["06:00-11:00", "14:00-24:00"], "dPrice": 2.31 },
+        { "szDayType": "sat", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-06:00", "11:00-14:00"], "dPrice": 2.18 },
+        { "szDayType": "sun_offday", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 2.40 },
+        { "szDayType": "sun_offday", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 2.18 }
+      ],
+      "surcharge": null
+    },
+    {
+      "szPlanId": "ehv_tou3_var",
+      "szCategory": "ehv",
+      "szType": "tou",
+      "szSummerStart": "05-16",
+      "szSummerEnd": "10-15",
+      "szNoteKey": "tariff.note.variable_peak",
+      "tiers": [],
+      "flatRate": null,
+      "baseFees": [
+        { "szKey": "regular_kw", "szUnit": "kw", "dSummer": 217.30, "dNonSummer": 160.60 },
+        { "szKey": "semipeak_kw", "szUnit": "kw", "dSummer": 160.60, "dNonSummer": 160.60 },
+        { "szKey": "sat_semipeak_kw", "szUnit": "kw", "dSummer": 43.40, "dNonSummer": 32.10 },
+        { "szKey": "offpeak_kw", "szUnit": "kw", "dSummer": 43.40, "dNonSummer": 32.10 }
+      ],
+      "flowRates": [
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "peak", "szName": null, "ranges": ["16:00-22:00"], "dPrice": 17.05 },
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "semipeak", "szName": null, "ranges": ["09:00-16:00", "22:00-24:00"], "dPrice": 5.38 },
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-09:00"], "dPrice": 2.40 },
+        { "szDayType": "weekday", "szSeason": "nonsummer", "szPeriod": "semipeak", "szName": null, "ranges": ["06:00-11:00", "14:00-24:00"], "dPrice": 5.03 },
+        { "szDayType": "weekday", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-06:00", "11:00-14:00"], "dPrice": 2.18 },
+        { "szDayType": "sat", "szSeason": "summer", "szPeriod": "semipeak", "szName": null, "ranges": ["09:00-24:00"], "dPrice": 2.50 },
+        { "szDayType": "sat", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-09:00"], "dPrice": 2.40 },
+        { "szDayType": "sat", "szSeason": "nonsummer", "szPeriod": "semipeak", "szName": null, "ranges": ["06:00-11:00", "14:00-24:00"], "dPrice": 2.31 },
+        { "szDayType": "sat", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-06:00", "11:00-14:00"], "dPrice": 2.18 },
+        { "szDayType": "sun_offday", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 2.40 },
+        { "szDayType": "sun_offday", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 2.18 }
+      ],
+      "surcharge": null
+    },
+    {
+      "szPlanId": "ehv_batch",
+      "szCategory": "ehv",
+      "szType": "tou",
+      "szSummerStart": "05-16",
+      "szSummerEnd": "10-15",
+      "szNoteKey": "tariff.note.batch",
+      "tiers": [],
+      "flatRate": null,
+      "baseFees": [
+        { "szKey": "regular_kw", "szUnit": "kw", "dSummer": 217.30, "dNonSummer": 160.60 },
+        { "szKey": "nonsummer_kw", "szUnit": "kw", "dSummer": null, "dNonSummer": 160.60 },
+        { "szKey": "sat_semipeak_kw", "szUnit": "kw", "dSummer": 43.40, "dNonSummer": 32.10 },
+        { "szKey": "offpeak_kw", "szUnit": "kw", "dSummer": 43.40, "dNonSummer": 32.10 }
+      ],
+      "flowRates": [
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "peak", "szName": null, "ranges": ["15:30-21:30"], "dPrice": 11.44 },
+        { "szDayType": "weekday", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-15:30", "21:30-24:00"], "dPrice": 2.99 },
+        { "szDayType": "weekday", "szSeason": "nonsummer", "szPeriod": "peak", "szName": null, "ranges": ["15:30-21:30"], "dPrice": 10.80 },
+        { "szDayType": "weekday", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-15:30", "21:30-24:00"], "dPrice": 2.67 },
+        { "szDayType": "sat", "szSeason": "summer", "szPeriod": "semipeak", "szName": null, "ranges": ["15:30-21:30"], "dPrice": 3.20 },
+        { "szDayType": "sat", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-15:30", "21:30-24:00"], "dPrice": 2.99 },
+        { "szDayType": "sat", "szSeason": "nonsummer", "szPeriod": "semipeak", "szName": null, "ranges": ["15:30-21:30"], "dPrice": 2.89 },
+        { "szDayType": "sat", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-15:30", "21:30-24:00"], "dPrice": 2.67 },
+        { "szDayType": "sun_offday", "szSeason": "summer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 2.99 },
+        { "szDayType": "sun_offday", "szSeason": "nonsummer", "szPeriod": "offpeak", "szName": null, "ranges": ["00:00-24:00"], "dPrice": 2.67 }
+      ],
+      "surcharge": null
+    }
+  ]
+}

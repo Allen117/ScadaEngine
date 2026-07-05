@@ -1,0 +1,135 @@
+/* 電費設定頁 — 台電電價方案編輯 */
+
+/* 頂部資訊卡 */
+.ts-card-value {
+    font-size: 1.05rem;
+}
+
+.ts-card-hint {
+    font-size: 0.72rem;
+}
+
+/* 方案選擇列 */
+.ts-select-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1rem;
+    align-items: flex-end;
+}
+
+.ts-select-bar > div:first-child {
+    min-width: 180px;
+}
+
+.ts-plan-select {
+    min-width: 300px;
+    flex: 1 1 300px;
+    max-width: 480px;
+}
+
+.ts-active-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-bottom: 0.15rem;
+}
+
+/* 方案內容區塊 */
+.ts-section-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    padding-left: 0.5rem;
+    border-left: 3px solid var(--bs-primary, #0d6efd);
+}
+
+body.ems-mode .ts-section-title {
+    border-left-color: #43a047;
+}
+
+.ts-note {
+    font-size: 0.85rem;
+}
+
+/* 夏月起訖列 */
+.ts-summer-bar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+.ts-md-select {
+    display: inline-block;
+    width: auto;
+    min-width: 4.2rem;
+}
+
+/* 表格輸入欄寬 */
+.ts-table th {
+    white-space: nowrap;
+}
+
+.ts-price {
+    max-width: 7.5rem;
+}
+
+.ts-tier-to {
+    width: 6.5rem;
+}
+
+.ts-name {
+    min-width: 6rem;
+    max-width: 10rem;
+}
+
+.ts-col-season {
+    width: 5.5rem;
+}
+
+.ts-col-name {
+    width: 11rem;
+}
+
+.ts-col-price {
+    width: 8.5rem;
+}
+
+/* 日別區塊 */
+.ts-daytype-block .ts-daytype-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.35rem;
+    color: var(--bs-secondary-color, #6c757d);
+}
+
+/* 時段區間群組（起-訖 + 刪除鈕） */
+.ts-ranges-cell {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    align-items: center;
+}
+
+.ts-range-group {
+    display: inline-flex;
+    align-items: center;
+    background: var(--bs-light, #f8f9fa);
+    border: 1px solid var(--bs-border-color, #dee2e6);
+    border-radius: 0.375rem;
+    padding: 0.15rem 0.35rem;
+}
+
+.ts-range-group .ts-time {
+    width: 5.2rem;
+    text-align: center;
+}
+
+.ts-range-del {
+    border: none;
+    padding: 0.1rem 0.35rem;
+    margin-left: 0.25rem;
+}
+
+.ts-range-add {
+    white-space: nowrap;
+}
