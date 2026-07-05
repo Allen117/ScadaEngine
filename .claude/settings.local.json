@@ -147,7 +147,12 @@
       "PowerShell(netstat -ano | findstr /R \"5038 7189\" ; \"---\"; try { \\(Get-Process -Id 29440 -ErrorAction Stop\\).Responding } catch { \"PID 29440 不存在\" })",
       "Bash(git commit -m 'EMS Hub 主要電表儀表板三卡片 + 電表資訊 4 SID 綁定 — Hub 新增用電長條圖（日/月/年切換、日模式看今天 60s 自動刷新）/子迴路占比圓餅（負值迴路不入餅列小字）/去年同期比較表（去年 0 或無資料顯示 --），3 支 API 由後端解析 IsMainMeter 重用 EnergyReportService bucket 計算核心；EnergyMeter 主要電表新增電壓/電流/功率/功因 4 SID 綁定（電表資訊 Modal），Hub 頂部電表資訊寬幅卡即時輪詢顯示 *)",
       "PowerShell(try { Get-Content \".claude\\\\settings.local.json\" -Raw -Encoding utf8 | ConvertFrom-Json | Out-Null; \"JSON OK\" } catch { \"JSON ERROR: \" + $_.Exception.Message.Substring\\(0, 200\\) })",
-      "PowerShell(git -C \"c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine\" add .claude/settings.local.json)"
+      "PowerShell(git -C \"c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine\" add .claude/settings.local.json)",
+      "PowerShell(git -C \"c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine\" push 2>&1)",
+      "PowerShell(dotnet build \"c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine\\\\ScadaEngine.Web\\\\ScadaEngine.Web.csproj\" -o \"C:\\\\Users\\\\Allen\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-Allen-Desktop-ScadaEngine\\\\bebecd3e-26ad-4a7f-94c4-96336aa92c3a\\\\scratchpad\\\\edbuild\" --nologo -v minimal)",
+      "PowerShell(\"---\")",
+      "PowerShell(\"==== DatabaseSchema diff ====\")",
+      "PowerShell(git add .claude/settings.local.json ScadaEngine.Web/wwwroot/js/role-aliases.js ScadaEngine.Web/wwwroot/js/designer/row-template.js ScadaEngine.Web/Features/Designer/Views/Index.cshtml ScadaEngine.Web/Features/EnergyMeter/Views/Index.cshtml ScadaEngine.Web/Features/Ems/Views/Index.cshtml)"
     ]
   }
 }

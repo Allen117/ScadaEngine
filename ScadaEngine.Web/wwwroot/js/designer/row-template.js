@@ -1,10 +1,11 @@
 // ============================================================
 // Designer — 表格列範本（自動帶入建議面板）
 // ============================================================
-// 內容：ROLE_ALIASES（內建別名表）、matchRole 純函式（v1 = 最後一段
-// 直接比對 aliases，未來可平滑升級為模糊比對）、tryAutoFill 主流程、
-// 建議面板的 render / 三鍵動作（直接帶入 / 調整順序 / 不帶入）。
-// 依賴：picker.js（arrAllPoints）、widget-defs.js（initArrCells /
+// 內容：matchRole 純函式（v1 = 最後一段直接比對 aliases，未來可平滑
+// 升級為模糊比對）、tryAutoFill 主流程、建議面板的 render / 三鍵動作
+// （直接帶入 / 調整順序 / 不帶入）。
+// 依賴：role-aliases.js（window._roleAliases 別名表，須先載入）、
+// picker.js（arrAllPoints）、widget-defs.js（initArrCells /
 // _defaultDataCell）、widget-core.js（renderWidget）、prop-panel.js
 // （renderTableCellPropPanel）、ctx-menu.js（showDesignToast）。
 // ============================================================
@@ -16,41 +17,13 @@
         return window.i18n && window.i18n.t ? window.i18n.t(key, args) : key;
     }
 
-    // ── 內建角色目錄與別名 ──
+    // ── 角色目錄與別名（自 role-aliases.js 共用模組載入）──
     // 同時兼任：(1) matchRole 的比對來源、(2)「未使用角色」候選清單
-    // key   = canonical label (顯示用)
-    // value = aliases array (全 lower-case，比對時 candidate 也轉小寫)
-    const ROLE_ALIASES = {
-        'V':    ['v', 'u', 'voltage', 'volt', 'volts', 'vrms', 'vll', 'vln', 'l-l', 'l-n',
-                 'vab', 'vbc', 'vca', 'van', 'vbn', 'vcn',
-                 '電壓', '三相電壓', '線電壓', '相電壓'],
-        'A':    ['a', 'i', 'amp', 'amps', 'ampere', 'amperes', 'current', 'irms',
-                 'ia', 'ib', 'ic',
-                 '電流', '三相電流'],
-        'KW':   ['kw', 'p', 'w', 'mw', 'watt', 'watts', 'kilowatt', 'kilowatts',
-                 'power', 'active', 'active_power', 'activepower',
-                 'real_power', 'realpower', 'actpower',
-                 '功率', '有效功率', '實功', '實功率', '主動功率'],
-        'KVA':  ['kva', 's', 'apparent', 'apparent_power', 'apparentpower',
-                 '視在功率'],
-        'KVAr': ['kvar', 'kvars', 'q', 'var', 'vars',
-                 'reactive', 'reactive_power', 'reactivepower',
-                 '無效功率', '無功功率', '虛功', '虛功率'],
-        'PF':   ['pf', 'powerfactor', 'power_factor', 'cosphi', 'cos_phi',
-                 'cos', 'cosΦ', 'cos∅', 'λ', 'factor',
-                 '功率因數'],
-        'KWH':  ['kwh', 'kw_h', 'wh', 'mwh', 'kilowatthour', 'kilowatthours',
-                 'energy', 'consumption', 'accumulated',
-                 'kwh_total', 'kwhtotal', 'total_kwh',
-                 '度數', '用電量', '電能', '累計用電', '累積電能', '總電能',
-                 '用電度數', '總耗電'],
-        'Hz':   ['hz', 'f', 'frequency', 'freq', 'cycle',
-                 '頻率', '赫茲', '週期'],
-        'KWHr': ['kwhr', 'kvarh', 'reactiveenergy', 'reactive_energy',
-                 'kvarh_total', 'kvarhtotal',
-                 '無功電能', '累計無功', '無功累計']
-    };
+    const ROLE_ALIASES = window._roleAliases || {};
     const ALL_ROLES = Object.keys(ROLE_ALIASES);
+    if (ALL_ROLES.length === 0) {
+        console.warn('[row-template] window._roleAliases 未載入 — 請確認 role-aliases.js 先於本檔載入');
+    }
 
     // ── 角色別名查詢（lower-case 字串 → roleLabel 或 null）──
     function _findRoleByAlias(szCandidate) {
