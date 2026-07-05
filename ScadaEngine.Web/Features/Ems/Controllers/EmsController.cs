@@ -16,12 +16,18 @@ public class EmsController : Controller
     private readonly IDataRepository _repo;
     private readonly EnergyCircuitService _circuitService;
     private readonly EnergyReportService _reportService;
+    private readonly BillingPeriodService _billingPeriodService;
 
-    public EmsController(IDataRepository repo, EnergyCircuitService circuitService, EnergyReportService reportService)
+    public EmsController(
+        IDataRepository repo,
+        EnergyCircuitService circuitService,
+        EnergyReportService reportService,
+        BillingPeriodService billingPeriodService)
     {
-        _repo           = repo;
-        _circuitService = circuitService;
-        _reportService  = reportService;
+        _repo                 = repo;
+        _circuitService       = circuitService;
+        _reportService        = reportService;
+        _billingPeriodService = billingPeriodService;
     }
 
     [HttpGet("/EMS")]
@@ -155,7 +161,7 @@ public class EmsController : Controller
         DateTime dtStart, dtEnd;
         try
         {
-            (dtStart, dtEnd) = ParsePivot(granularity, pivot);
+            (dtStart, dtEnd) = await ParsePivotAsync(granularity, pivot);
         }
         catch
         {
@@ -199,7 +205,7 @@ public class EmsController : Controller
             return BadRequest(new { error = "granularity, pivot 皆為必填" });
 
         DateTime dtStart, dtEnd;
-        try { (dtStart, dtEnd) = ParsePivot(granularity, pivot); }
+        try { (dtStart, dtEnd) = await ParsePivotAsync(granularity, pivot); }
         catch { return BadRequest(new { error = "pivot 格式不正確" }); }
 
         var meter = await _circuitService.GetMainMeterAsync();
@@ -247,21 +253,17 @@ public class EmsController : Controller
             return BadRequest(new { error = "granularity, pivot 皆為必填" });
 
         DateTime dtStart, dtEnd;
-        try { (dtStart, dtEnd) = ParsePivot(granularity, pivot); }
+        try { (dtStart, dtEnd) = await ParsePivotAsync(granularity, pivot); }
         catch { return BadRequest(new { error = "pivot 格式不正確" }); }
 
         var meter = await _circuitService.GetMainMeterAsync();
         if (meter == null)
             return Ok(new EmsMainMeterYoyDto { hasMainMeter = false });
 
-        // 去年同期：起點減一年（AddYears 天然處理 2/29 → 2/28），終點依同粒度公式重建
-        var dtLastStart = dtStart.AddYears(-1);
-        var dtLastEnd = granularity switch
-        {
-            "month" => dtLastStart.AddYears(1),
-            "day"   => dtLastStart.AddMonths(1),
-            _       => dtLastStart.AddDays(1)
-        };
+        // 去年同期：重建去年 pivot 再走同一解析（月/日粒度會取去年期別設定，2/29 → 2/28）
+        DateTime dtLastStart, dtLastEnd;
+        try { (dtLastStart, dtLastEnd) = await ParsePivotAsync(granularity, LastYearPivot(granularity, pivot)); }
+        catch { return BadRequest(new { error = "pivot 格式不正確" }); }
 
         var dto = new EmsMainMeterYoyDto { hasMainMeter = true };
         dto.rows.Add(await BuildYoyRowAsync(meter.nId, meter.szName, true, 1,
@@ -296,27 +298,57 @@ public class EmsController : Controller
         };
     }
 
-    private static (DateTime Start, DateTime End) ParsePivot(string granularity, string pivot)
+    /// <summary>
+    /// pivot → 報表服務的 (dtStart, dtEnd)。
+    /// month（年檢視）：pivot=年份 → 期別 1~12 月（報表月粒度語意 = 含頭尾期別）；
+    /// day（月檢視）：pivot=YYYY-MM → 該期別的實際起訖日（日粒度 dtEnd 為含訖日）；
+    /// hour（日檢視）：pivot=YYYY-MM-DD → 該日（維持自然日，不受期別影響）。
+    /// </summary>
+    private async Task<(DateTime Start, DateTime End)> ParsePivotAsync(string granularity, string pivot)
     {
-        return granularity switch
+        switch (granularity)
         {
-            "month" => (
-                new DateTime(int.Parse(pivot), 1, 1),
-                new DateTime(int.Parse(pivot) + 1, 1, 1)
-            ),
-            "day" => (
-                DateTime.ParseExact(pivot + "-01", "yyyy-MM-dd",
-                    System.Globalization.CultureInfo.InvariantCulture),
-                DateTime.ParseExact(pivot + "-01", "yyyy-MM-dd",
-                    System.Globalization.CultureInfo.InvariantCulture).AddMonths(1)
-            ),
-            "hour" => (
-                DateTime.ParseExact(pivot, "yyyy-MM-dd",
-                    System.Globalization.CultureInfo.InvariantCulture),
-                DateTime.ParseExact(pivot, "yyyy-MM-dd",
-                    System.Globalization.CultureInfo.InvariantCulture).AddDays(1)
-            ),
-            _ => throw new ArgumentException("不支援的 granularity")
-        };
+            case "month":
+                {
+                    var nYear = int.Parse(pivot);
+                    return (new DateTime(nYear, 1, 1), new DateTime(nYear, 12, 1));
+                }
+            case "day":
+                {
+                    var dtYM = DateTime.ParseExact(pivot + "-01", "yyyy-MM-dd",
+                        System.Globalization.CultureInfo.InvariantCulture);
+                    var period = await _billingPeriodService.GetPeriodAsync(dtYM.Year, dtYM.Month);
+                    return (period.dtStart, period.dtEndInclusive);
+                }
+            case "hour":
+                {
+                    var dtDay = DateTime.ParseExact(pivot, "yyyy-MM-dd",
+                        System.Globalization.CultureInfo.InvariantCulture);
+                    return (dtDay, dtDay.AddDays(1));
+                }
+            default:
+                throw new ArgumentException("不支援的 granularity");
+        }
+    }
+
+    /// <summary>去年同期 pivot 字串（與前端 lastYearPivotStr 同邏輯；hour 粒度 2/29 → 2/28）</summary>
+    private static string LastYearPivot(string granularity, string pivot)
+    {
+        switch (granularity)
+        {
+            case "month":
+                return (int.Parse(pivot) - 1).ToString();
+            case "day":
+                {
+                    var aParts = pivot.Split('-');
+                    return $"{int.Parse(aParts[0]) - 1}-{aParts[1]}";
+                }
+            default:
+                {
+                    var aParts = pivot.Split('-');
+                    var szDay = aParts[1] == "02" && aParts[2] == "29" ? "28" : aParts[2];
+                    return $"{int.Parse(aParts[0]) - 1}-{aParts[1]}-{szDay}";
+                }
+        }
     }
 }

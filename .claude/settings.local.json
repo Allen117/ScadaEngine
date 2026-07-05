@@ -152,7 +152,15 @@
       "PowerShell(dotnet build \"c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine\\\\ScadaEngine.Web\\\\ScadaEngine.Web.csproj\" -o \"C:\\\\Users\\\\Allen\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-Allen-Desktop-ScadaEngine\\\\bebecd3e-26ad-4a7f-94c4-96336aa92c3a\\\\scratchpad\\\\edbuild\" --nologo -v minimal)",
       "PowerShell(\"---\")",
       "PowerShell(\"==== DatabaseSchema diff ====\")",
-      "PowerShell(git add .claude/settings.local.json ScadaEngine.Web/wwwroot/js/role-aliases.js ScadaEngine.Web/wwwroot/js/designer/row-template.js ScadaEngine.Web/Features/Designer/Views/Index.cshtml ScadaEngine.Web/Features/EnergyMeter/Views/Index.cshtml ScadaEngine.Web/Features/Ems/Views/Index.cshtml)"
+      "PowerShell(git add .claude/settings.local.json ScadaEngine.Web/wwwroot/js/role-aliases.js ScadaEngine.Web/wwwroot/js/designer/row-template.js ScadaEngine.Web/Features/Designer/Views/Index.cshtml ScadaEngine.Web/Features/EnergyMeter/Views/Index.cshtml ScadaEngine.Web/Features/Ems/Views/Index.cshtml)",
+      "PowerShell(dotnet build \"c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine\\\\ScadaEngine.Web\\\\ScadaEngine.Web.csproj\" -o \"C:\\\\Users\\\\Allen\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-Allen-Desktop-ScadaEngine\\\\bd37d144-f55b-4767-8c25-7e44f0bb578b\\\\scratchpad\\\\buildout\" --nologo -v q)",
+      "PowerShell(git -C \"c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine\" log --oneline -8)",
+      "WebFetch(domain:www.taipower.com.tw)",
+      "Bash(curl -sL -o \"C:\\\\Users\\\\Allen\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-Allen-Desktop-ScadaEngine\\\\f9b1299b-1863-4139-b8d1-9cf83bb77f2a\\\\scratchpad\\\\taipower_tariff.pdf\" \"https://www.taipower.com.tw/media/ba2angqi/%E5%90%84%E9%A1%9E%E9%9B%BB%E5%83%B9%E8%A1%A8%E5%8F%8A%E8%A8%88%E7%AE%97%E7%AF%84%E4%BE%8B.pdf?mediaDL=true\")",
+      "Bash(file taipower_tariff.pdf)",
+      "Bash(curl -sL -A \"Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/126.0 Safari/537.36\" -o taipower_tariff2.pdf \"https://www.taipower.com.tw/media/ba2angqi/%E5%90%84%E9%A1%9E%E9%9B%BB%E5%83%B9%E8%A1%A8%E5%8F%8A%E8%A8%88%E7%AE%97%E7%AF%84%E4%BE%8B.pdf?mediaDL=true\")",
+      "PowerShell(git -C \"c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine\" add -A)",
+      "PowerShell(git -C \"c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine\" reset -- \"ScadaEngine.Engine/OpcUaPoint/OpcUa1.json\")"
     ]
   }
 }

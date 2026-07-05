@@ -9,13 +9,20 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         initDefaults();
-        document.getElementById('erGranularity').addEventListener('change', updatePeriodVisibility);
+        applyCurrentPeriodDefaults();
+        document.getElementById('erGranularity').addEventListener('change', () => {
+            updatePeriodVisibility();
+            refreshPeriodHint();
+        });
+        document.getElementById('erMonthStart').addEventListener('change', refreshPeriodHint);
+        document.getElementById('erMonthEnd').addEventListener('change', refreshPeriodHint);
         updatePeriodVisibility();
         // 等 i18n 字典載入後再 fetch 迴路（其中 placeholder 字串需要翻譯）
         if (window.i18n) {
-            window.i18n.ready(loadCircuits);
+            window.i18n.ready(() => { loadCircuits(); refreshPeriodHint(); });
         } else {
             loadCircuits();
+            refreshPeriodHint();
         }
     });
 
@@ -53,6 +60,42 @@
         const g = document.getElementById('erGranularity').value;
         document.querySelectorAll('.er-period').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.er-period-' + g).forEach(el => el.classList.add('active'));
+    }
+
+    // 日粒度預設起訖 = 本期（今天所屬月結期別）起始～結束；失敗時保留 initDefaults 的自然月預設
+    async function applyCurrentPeriodDefaults() {
+        try {
+            const res = await fetch('/BillingPeriodSetting/api/current');
+            if (!res.ok) return;
+            const p = await res.json();
+            if (p && p.start && p.end) {
+                document.getElementById('erDayStart').value = p.start;
+                document.getElementById('erDayEnd').value = p.end;
+            }
+        } catch { /* 期別 API 不可用時維持自然月預設 */ }
+    }
+
+    // 月粒度：顯示所選起訖期別的實際日期區間（期別可能非自然月）
+    async function refreshPeriodHint() {
+        const hintEl = document.getElementById('erPeriodHint');
+        if (!hintEl) return;
+        if (document.getElementById('erGranularity').value !== 'month') {
+            hintEl.textContent = '';
+            return;
+        }
+        const fromYm = document.getElementById('erMonthStart').value;
+        const toYm = document.getElementById('erMonthEnd').value;
+        if (!fromYm || !toYm || toYm < fromYm) { hintEl.textContent = ''; return; }
+        try {
+            const res = await fetch(`/BillingPeriodSetting/api/range?fromYm=${encodeURIComponent(fromYm)}&toYm=${encodeURIComponent(toYm)}`);
+            if (!res.ok) { hintEl.textContent = ''; return; }
+            const periods = await res.json();
+            if (!periods.length) { hintEl.textContent = ''; return; }
+            hintEl.textContent = t('energyreport.period.hint',
+                { 0: periods[0].start, 1: periods[periods.length - 1].end });
+        } catch {
+            hintEl.textContent = '';
+        }
     }
 
     async function loadCircuits() {

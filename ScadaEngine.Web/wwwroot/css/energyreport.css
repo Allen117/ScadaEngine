@@ -41,6 +41,13 @@
     display: block;
 }
 
+/* 月粒度期別提示 — 與日期欄同列尾端，自身高度貼齊輸入框底部 */
+.er-filter-bar .er-period-hint {
+    flex: 1 1 auto;
+    padding-bottom: 6px;
+    min-width: 240px;
+}
+
 #erTableBody td {
     font-size: 0.85rem;
     padding: 6px 10px;

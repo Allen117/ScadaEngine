@@ -108,4 +108,6 @@
   <data name="energyreport.alert.export_failed" xml:space="preserve"><value>匯出失敗：{0}</value></data>
 
   <data name="energyreport.console.load_circuit_failed" xml:space="preserve"><value>[EnergyReport] 載入迴路失敗</value></data>
+
+  <data name="energyreport.period.hint" xml:space="preserve"><value>期別實際區間：{0} ～ {1}（依月結週期設定）</value></data>
 </root>

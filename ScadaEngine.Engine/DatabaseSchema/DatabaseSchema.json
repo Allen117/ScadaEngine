@@ -473,6 +473,23 @@
       ]
     },
     {
+      "_comment": "能源申報 — 申報報表設定。一列 = 一份申報報表，成對綁定用電迴路（EnergyCircuit.Id）與水系統迴路（WaterCircuit.Id），由 Web /EnergyDeclaration 頁 CRUD；參照為應用層維護，無 DB FK",
+      "TableName": "EnergyDeclarationReport",
+      "Columns": [
+        { "Name": "Id",              "Type": "int",      "IsPrimaryKey": true, "IsIdentity": true, "Nullable": false },
+        { "Name": "Name",            "Type": "nvarchar", "Length": 100, "Nullable": false,
+          "_comment": "申報報表名稱，例如 'A 棟申報'" },
+        { "Name": "EnergyCircuitId", "Type": "int",                     "Nullable": false,
+          "_comment": "用電度數來源 — EnergyCircuit.Id（葉子或虛擬皆可）" },
+        { "Name": "WaterCircuitId",  "Type": "int",                     "Nullable": false,
+          "_comment": "冷凍噸數來源 — WaterCircuit.Id（葉子或虛擬皆可）" },
+        { "Name": "SortOrder",       "Type": "int",                     "Nullable": false, "Default": 0 },
+        { "Name": "Description",     "Type": "nvarchar", "Length": 500, "Nullable": true },
+        { "Name": "CreatedAt",       "Type": "datetime",                "Nullable": false, "Default": "getdate()" },
+        { "Name": "UpdatedAt",       "Type": "datetime",                "Nullable": true }
+      ]
+    },
+    {
       "_comment": "需量計算結果 — 每分鐘寫一筆（每個啟用 IsDemandEnabled 的迴路各一），ΔkWh×4 法（取 15min 窗口首尾兩筆 kWh 差值×4）",
       "TableName": "DemandData",
       "Columns": [
@@ -540,6 +557,21 @@
         { "Name": "IsEnabled",    "Type": "bit",                     "Nullable": false, "Default": 1 },
         { "Name": "CreatedAt",    "Type": "datetime",                "Nullable": false, "Default": "getdate()" },
         { "Name": "UpdatedAt",    "Type": "datetime",                "Nullable": true }
+      ]
+    },
+    {
+      "_comment": "月結週期（期別）設定 — 只存被使用者自訂過的期別；沒有 row 的期別由 Web BillingPeriodService 依級聯規則推導（起始 = 上期結束 +1 天、長度一個月），完全無自訂 row 時 = 自然月。查詢時 exclusive 邊界 = EndDate + 1 天。",
+      "TableName": "BillingPeriods",
+      "Columns": [
+        { "Name": "PeriodYear",  "Type": "int",      "IsPrimaryKey": true, "Nullable": false,
+          "_comment": "期別年份（= 起始所在月份的年，台電慣例）" },
+        { "Name": "PeriodMonth", "Type": "int",      "IsPrimaryKey": true, "Nullable": false,
+          "_comment": "期別月份 1–12" },
+        { "Name": "StartDate",   "Type": "datetime", "Nullable": false,
+          "_comment": "起始日 00:00（含）" },
+        { "Name": "EndDate",     "Type": "datetime", "Nullable": false,
+          "_comment": "結束日 00:00（inclusive 語意 — 該日整天算入本期）" },
+        { "Name": "UpdatedAt",   "Type": "datetime", "Nullable": false, "Default": "getdate()" }
       ]
     },
     {

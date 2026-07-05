@@ -1,0 +1,52 @@
+/* 能源申報頁專屬樣式 */
+
+.ed-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+}
+
+.ed-filter-bar .ed-report {
+    flex: 0 0 220px;
+}
+
+.ed-filter-bar .ed-narrow-date {
+    flex: 0 0 130px;
+}
+
+.ed-filter-bar .ed-btn .btn {
+    white-space: nowrap;
+}
+
+.ed-config-table td,
+.ed-config-table th {
+    font-size: 0.875rem;
+    padding: 8px 12px;
+    vertical-align: middle;
+}
+
+.ed-config-table .ed-missing {
+    color: #dc3545;
+    font-weight: 500;
+}
+
+#edTableBody td {
+    font-size: 0.85rem;
+    padding: 6px 10px;
+}
+
+#edTableBody td.text-end {
+    font-family: monospace;
+    font-weight: 500;
+}
+
+#edTableBody tr.ed-total {
+    background-color: #fff3cd !important;
+    font-weight: bold;
+}
+
+#edWarnText {
+    color: #fd7e14;
+    font-weight: 500;
+}

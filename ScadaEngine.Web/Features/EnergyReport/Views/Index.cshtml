@@ -83,6 +83,11 @@
                     <input type="number" id="erYearEnd" class="form-control form-control-sm" min="2000" max="2100">
                 </div>
 
+                <!-- 月粒度：期別實際區間提示（由 /BillingPeriodSetting/api/range 帶出） -->
+                <div class="er-period er-period-month er-period-hint">
+                    <span id="erPeriodHint" class="text-muted small"></span>
+                </div>
+
                 <div class="er-btn">
                     <button class="btn btn-primary btn-sm" onclick="window._er.query()">
                         <i class="fas fa-search me-1"></i>@Localizer["energyreport.button.query"]

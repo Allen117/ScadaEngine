@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="billingperiod.title" xml:space="preserve"><value>Billing Cycle Settings</value></data>
+  <data name="billingperiod.breadcrumb.energy" xml:space="preserve"><value>Energy Management</value></data>
+  <data name="billingperiod.hint.overview" xml:space="preserve"><value>Set the utility-bill start/end dates for each billing period (month); periods without custom settings default to starting the day after the previous period ends, lasting one month (calendar month if nothing is customized). Changes take effect immediately — all monthly reports (Energy Report / Refrigeration Ton Report / EMS pages) are split by billing period, and historical monthly reports are recalculated with the new settings.</value></data>
+  <data name="billingperiod.hint.gap_overlap" xml:space="preserve"><value>Gaps or overlaps between periods are allowed (warning only): energy in a gap is not counted in any period, and energy in an overlap is counted in both periods.</value></data>
+  <data name="billingperiod.table.title" xml:space="preserve"><value>Billing Periods</value></data>
+  <data name="billingperiod.table.col_period" xml:space="preserve"><value>Period</value></data>
+  <data name="billingperiod.table.col_start" xml:space="preserve"><value>Start Date</value></data>
+  <data name="billingperiod.table.col_end" xml:space="preserve"><value>End Date (incl.)</value></data>
+  <data name="billingperiod.table.col_days" xml:space="preserve"><value>Days</value></data>
+  <data name="billingperiod.table.col_status" xml:space="preserve"><value>Status</value></data>
+  <data name="billingperiod.table.col_warning" xml:space="preserve"><value>Continuity</value></data>
+  <data name="billingperiod.table.col_actions" xml:space="preserve"><value>Actions</value></data>
+  <data name="billingperiod.table.loading" xml:space="preserve"><value>Loading…</value></data>
+  <data name="billingperiod.status.default" xml:space="preserve"><value>Default</value></data>
+  <data name="billingperiod.status.customized" xml:space="preserve"><value>Customized</value></data>
+  <data name="billingperiod.warn.invalid" xml:space="preserve"><value>End date cannot be earlier than start date</value></data>
+  <data name="billingperiod.warn.gap" xml:space="preserve"><value>{0}-day gap from previous period</value></data>
+  <data name="billingperiod.warn.overlap" xml:space="preserve"><value>Overlaps previous period by {0} day(s)</value></data>
+  <data name="billingperiod.button.save" xml:space="preserve"><value>Save</value></data>
+  <data name="billingperiod.button.reset" xml:space="preserve"><value>Reset to Default</value></data>
+  <data name="billingperiod.confirm.reset" xml:space="preserve"><value>Reset period {0} to default (delete custom dates)?</value></data>
+  <data name="billingperiod.msg.load_fail" xml:space="preserve"><value>Load failed: {0}</value></data>
+  <data name="billingperiod.msg.save_fail" xml:space="preserve"><value>Save failed: {0}</value></data>
+  <data name="billingperiod.msg.reset_fail" xml:space="preserve"><value>Reset failed: {0}</value></data>
+</root>

@@ -21,16 +21,19 @@ public class RefrigerationTonReportService
     private readonly ILogger<RefrigerationTonReportService> _logger;
     private readonly DatabaseConfigService _configService;
     private readonly WaterCircuitService _circuitService;
+    private readonly BillingPeriodService _billingPeriodService;
     private string _szConnectionString = string.Empty;
 
     public RefrigerationTonReportService(
         ILogger<RefrigerationTonReportService> logger,
         DatabaseConfigService configService,
-        WaterCircuitService circuitService)
+        WaterCircuitService circuitService,
+        BillingPeriodService billingPeriodService)
     {
         _logger = logger;
         _configService = configService;
         _circuitService = circuitService;
+        _billingPeriodService = billingPeriodService;
     }
 
     private async Task<SqlConnection> GetConnectionAsync()
@@ -49,22 +52,21 @@ public class RefrigerationTonReportService
         if (circuit == null)
             throw new InvalidOperationException($"水系統迴路 Id={nCircuitId} 不存在");
 
-        var boundaries = BuildBoundaries(szGranularity, dtStart, dtEnd);
-        var labels = BuildLabels(szGranularity, boundaries);
+        var (ranges, labels) = await BuildBucketRangesAsync(szGranularity, dtStart, dtEnd);
 
         var result = new RefrigerationTonReportResult
         {
             nCircuitId = nCircuitId,
             szCircuitName = circuit.szName,
             szGranularity = szGranularity,
-            dtStart = boundaries[0],
-            dtEnd = boundaries[^1],
+            dtStart = ranges[0].dtStart,
+            dtEnd = ranges[^1].dtEnd,
         };
 
         using var conn = await GetConnectionAsync();
-        var (bucketSums, bHasWarning) = await ComputeBucketSumsForCircuitAsync(nCircuitId, boundaries, conn);
+        var (bucketSums, bHasWarning) = await ComputeBucketSumsForCircuitAsync(nCircuitId, ranges, conn);
 
-        FillBucketsAndTotal(result, boundaries, labels, bucketSums);
+        FillBucketsAndTotal(result, ranges, labels, bucketSums);
         result.isHasWarning = bHasWarning;
         return result;
     }
@@ -77,21 +79,20 @@ public class RefrigerationTonReportService
         if (circuit == null)
             throw new InvalidOperationException($"水系統迴路 Id={nCircuitId} 不存在");
 
-        var boundaries = BuildBoundaries(szGranularity, dtStart, dtEnd);
-        var labels = BuildLabels(szGranularity, boundaries);
+        var (ranges, labels) = await BuildBucketRangesAsync(szGranularity, dtStart, dtEnd);
 
         var result = new RefrigerationTonReportResult
         {
             nCircuitId = nCircuitId,
             szCircuitName = circuit.szName,
             szGranularity = szGranularity,
-            dtStart = boundaries[0],
-            dtEnd = boundaries[^1],
+            dtStart = ranges[0].dtStart,
+            dtEnd = ranges[^1].dtEnd,
         };
 
         using var conn = await GetConnectionAsync();
-        var (bucketSums, bHasWarning) = await ComputeBucketSumsForCircuitAsync(nCircuitId, boundaries, conn);
-        FillBucketsAndTotal(result, boundaries, labels, bucketSums);
+        var (bucketSums, bHasWarning) = await ComputeBucketSumsForCircuitAsync(nCircuitId, ranges, conn);
+        FillBucketsAndTotal(result, ranges, labels, bucketSums);
         result.isHasWarning = bHasWarning;
 
         // 自己就是葉子 → 不展開子層
@@ -101,7 +102,7 @@ public class RefrigerationTonReportService
         var children = await _circuitService.GetDirectChildrenAsync(nCircuitId);
         foreach (var child in children)
         {
-            var (childSums, childWarning) = await ComputeBucketSumsForCircuitAsync(child.nId, boundaries, conn);
+            var (childSums, childWarning) = await ComputeBucketSumsForCircuitAsync(child.nId, ranges, conn);
             var series = new RefrigerationTonReportChildSeries
             {
                 nCircuitId = child.nId,
@@ -122,22 +123,88 @@ public class RefrigerationTonReportService
         return result;
     }
 
-    /// <summary>對單一迴路（葉子或虛擬皆可）計算每個 bucket 的 RT·h 累計。</summary>
-    private async Task<(double[] bucketSums, bool isHasWarning)> ComputeBucketSumsForCircuitAsync(
-        int nCircuitId, List<DateTime> boundaries, SqlConnection conn)
+    /// <summary>
+    /// 產生 N 個 bucket 的 [起, 訖) 邊界對與標籤 — 與 EnergyReportService 同構。
+    /// 月粒度 = 期別（BillingPeriodService 解析，期別間可能空窗/重疊）；其餘粒度沿用連續邊界切法。
+    /// </summary>
+    private async Task<(List<(DateTime dtStart, DateTime dtEnd)> ranges, List<string> labels)>
+        BuildBucketRangesAsync(string szGranularity, DateTime dtStart, DateTime dtEnd)
     {
-        var nBuckets = boundaries.Count - 1;
+        if (szGranularity == "month")
+        {
+            var periods = await _billingPeriodService.GetPeriodRangesAsync(dtStart, dtEnd);
+            return (periods.Select(p => (p.dtStart, p.dtEndExclusive)).ToList(),
+                    periods.Select(p => p.szLabel).ToList());
+        }
+        var boundaries = BuildBoundaries(szGranularity, dtStart, dtEnd);
+        var ranges = new List<(DateTime, DateTime)>(boundaries.Count - 1);
+        for (var i = 0; i < boundaries.Count - 1; i++)
+            ranges.Add((boundaries[i], boundaries[i + 1]));
+        return (ranges, BuildLabels(szGranularity, boundaries));
+    }
+
+    /// <summary>
+    /// 能源申報專用 — 指定年度的 12 個「曆月」bucket（每月 1 號 00:00 ~ 次月 1 號 00:00），
+    /// 不走月結期別（BillingPeriodService）。共用 ComputeBucketSumsForCircuitAsync 計算核心。
+    /// </summary>
+    public async Task<RefrigerationTonReportResult> GetCalendarMonthlyReportAsync(int nCircuitId, int nYear)
+    {
+        var circuit = await _circuitService.GetByIdAsync(nCircuitId);
+        if (circuit == null)
+            throw new InvalidOperationException($"水系統迴路 Id={nCircuitId} 不存在");
+
+        var (ranges, labels) = EnergyReportService.BuildCalendarMonthRanges(nYear);
+
+        var result = new RefrigerationTonReportResult
+        {
+            nCircuitId = nCircuitId,
+            szCircuitName = circuit.szName,
+            szGranularity = "month",
+            dtStart = ranges[0].dtStart,
+            dtEnd = ranges[^1].dtEnd,
+        };
+
+        using var conn = await GetConnectionAsync();
+        var (bucketSums, bHasWarning) = await ComputeBucketSumsForCircuitAsync(nCircuitId, ranges, conn);
+        FillBucketsAndTotal(result, ranges, labels, bucketSums);
+        result.isHasWarning = bHasWarning;
+        return result;
+    }
+
+    /// <summary>
+    /// 對單一迴路（葉子或虛擬皆可）計算每個 bucket 的 RT·h 累計。
+    /// bucket 連續時（時/日/年與自然月期別）走 binary search；
+    /// 期別不連續/重疊時逐 bucket 比對（重疊段依規格計入兩期、空窗段不計入任何期）。
+    /// </summary>
+    private async Task<(double[] bucketSums, bool isHasWarning)> ComputeBucketSumsForCircuitAsync(
+        int nCircuitId, List<(DateTime dtStart, DateTime dtEnd)> ranges, SqlConnection conn)
+    {
+        var nBuckets = ranges.Count;
         var bucketSums = new double[nBuckets];
         var bHasWarning = false;
 
         var leaves = await _circuitService.GetLeavesUnderAsync(nCircuitId);
         if (leaves.Count == 0) return (bucketSums, bHasWarning);
 
-        var dtRangeStart = boundaries[0];
-        var dtRangeEnd = boundaries[^1];   // exclusive
+        var dtRangeStart = ranges.Min(r => r.dtStart);
+        var dtRangeEnd = ranges.Max(r => r.dtEnd);   // exclusive
 
-        // 預期該迴路在區間內應有多少 hour（用來偵測「資料不全」警告）
-        var nExpectedHoursPerLeaf = (int)Math.Round((dtRangeEnd - dtRangeStart).TotalHours);
+        // 連續判定：全部 bucket 首尾相接 → 可用舊版 binary search 快路徑
+        var isContiguous = true;
+        for (var i = 0; i < nBuckets - 1; i++)
+        {
+            if (ranges[i].dtEnd != ranges[i + 1].dtStart) { isContiguous = false; break; }
+        }
+        List<DateTime>? boundaries = null;
+        if (isContiguous)
+        {
+            boundaries = new List<DateTime>(nBuckets + 1);
+            foreach (var r in ranges) boundaries.Add(r.dtStart);
+            boundaries.Add(ranges[^1].dtEnd);
+        }
+
+        // 預期該迴路在區間內應有多少 hour（用來偵測「資料不全」警告）— 以各 bucket 長度加總
+        var nExpectedHoursPerLeaf = (int)Math.Round(ranges.Sum(r => (r.dtEnd - r.dtStart).TotalHours));
 
         foreach (var leaf in leaves)
         {
@@ -147,10 +214,22 @@ public class RefrigerationTonReportService
             int nHoursGot = 0;
             foreach (var row in rows)
             {
-                var nIdx = FindBucketIndex(boundaries, row.dtHourStart);
-                if (nIdx < 0 || nIdx >= nBuckets) continue;
-                bucketSums[nIdx] += row.dRtHour;
-                nHoursGot++;
+                if (isContiguous)
+                {
+                    var nIdx = FindBucketIndex(boundaries!, row.dtHourStart);
+                    if (nIdx < 0 || nIdx >= nBuckets) continue;
+                    bucketSums[nIdx] += row.dRtHour;
+                    nHoursGot++;
+                }
+                else
+                {
+                    for (var i = 0; i < nBuckets; i++)
+                    {
+                        if (row.dtHourStart < ranges[i].dtStart || row.dtHourStart >= ranges[i].dtEnd) continue;
+                        bucketSums[i] += row.dRtHour;
+                        nHoursGot++;
+                    }
+                }
             }
 
             // 葉子在區間內覆蓋率 < 90% → 整體警告（避免使用者誤以為 total 完整）
@@ -195,13 +274,13 @@ public class RefrigerationTonReportService
     }
 
     private static void FillBucketsAndTotal(
-        RefrigerationTonReportResult result, List<DateTime> boundaries, List<string> labels, double[] bucketSums)
+        RefrigerationTonReportResult result, List<(DateTime dtStart, DateTime dtEnd)> ranges, List<string> labels, double[] bucketSums)
     {
         for (var i = 0; i < labels.Count; i++)
         {
             result.buckets.Add(new RefrigerationTonReportBucket
             {
-                dtBucketStart = boundaries[i],
+                dtBucketStart = ranges[i].dtStart,
                 szLabel = labels[i],
                 dRtHour = Math.Round(bucketSums[i], 3)
             });
@@ -238,17 +317,8 @@ public class RefrigerationTonReportService
                     break;
                 }
             case "month":
-                {
-                    var t = new DateTime(dtStart.Year, dtStart.Month, 1);
-                    var endMonth = new DateTime(dtEnd.Year, dtEnd.Month, 1);
-                    while (t <= endMonth)
-                    {
-                        list.Add(t);
-                        t = t.AddMonths(1);
-                    }
-                    list.Add(endMonth.AddMonths(1));
-                    break;
-                }
+                // 月粒度已改為期別切法（每期一對 [起, 訖) 邊界，可能不連續）— 走 BuildBucketRangesAsync
+                throw new ArgumentException("月粒度期界由 BillingPeriodService 解析，不支援 BuildBoundaries");
             case "year":
                 {
                     var t = new DateTime(dtStart.Year, 1, 1);

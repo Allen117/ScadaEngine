@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="energydeclaration.title" xml:space="preserve"><value>Energy Declaration</value></data>
+  <data name="energydeclaration.breadcrumb.energy" xml:space="preserve"><value>Energy Management</value></data>
+
+  <data name="energydeclaration.config.title" xml:space="preserve"><value>Declaration Report Settings</value></data>
+  <data name="energydeclaration.config.col_name" xml:space="preserve"><value>Report Name</value></data>
+  <data name="energydeclaration.config.col_energy_circuit" xml:space="preserve"><value>Energy Circuit</value></data>
+  <data name="energydeclaration.config.col_water_circuit" xml:space="preserve"><value>Refrigeration Circuit</value></data>
+  <data name="energydeclaration.config.col_description" xml:space="preserve"><value>Description</value></data>
+  <data name="energydeclaration.config.col_actions" xml:space="preserve"><value>Actions</value></data>
+  <data name="energydeclaration.config.loading" xml:space="preserve"><value>Loading…</value></data>
+  <data name="energydeclaration.config.empty" xml:space="preserve"><value>No declaration reports yet. Click "Add Report" to create one.</value></data>
+  <data name="energydeclaration.config.deleted_circuit" xml:space="preserve"><value>Circuit no longer exists</value></data>
+  <data name="energydeclaration.config.confirm_delete" xml:space="preserve"><value>Delete declaration report "{0}"?</value></data>
+
+  <data name="energydeclaration.filter.title" xml:space="preserve"><value>Query Conditions</value></data>
+  <data name="energydeclaration.filter.report" xml:space="preserve"><value>Declaration Report</value></data>
+  <data name="energydeclaration.filter.year" xml:space="preserve"><value>Declaration Year</value></data>
+
+  <data name="energydeclaration.button.add" xml:space="preserve"><value>Add Report</value></data>
+  <data name="energydeclaration.button.edit" xml:space="preserve"><value>Edit</value></data>
+  <data name="energydeclaration.button.delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="energydeclaration.button.query" xml:space="preserve"><value>Query</value></data>
+  <data name="energydeclaration.button.export" xml:space="preserve"><value>Export Excel</value></data>
+
+  <data name="energydeclaration.chart.title" xml:space="preserve"><value>Energy &amp; Refrigeration Distribution</value></data>
+  <data name="energydeclaration.chart.kwh_label" xml:space="preserve"><value>Energy (kWh)</value></data>
+  <data name="energydeclaration.chart.rt_label" xml:space="preserve"><value>Refrigeration (RT·h)</value></data>
+  <data name="energydeclaration.chart.efficiency_label" xml:space="preserve"><value>Efficiency: {0} kWh/RTh</value></data>
+  <data name="energydeclaration.chart.x_axis" xml:space="preserve"><value>Month</value></data>
+
+  <data name="energydeclaration.table.title" xml:space="preserve"><value>Data Details</value></data>
+  <data name="energydeclaration.table.col_period" xml:space="preserve"><value>Month</value></data>
+  <data name="energydeclaration.table.col_kwh" xml:space="preserve"><value>Energy (kWh)</value></data>
+  <data name="energydeclaration.table.col_rt" xml:space="preserve"><value>Refrigeration (RT·h)</value></data>
+  <data name="energydeclaration.table.col_efficiency" xml:space="preserve"><value>kWh/RTh</value></data>
+  <data name="energydeclaration.table.total" xml:space="preserve"><value>Total</value></data>
+  <data name="energydeclaration.table.empty" xml:space="preserve"><value>No query yet</value></data>
+  <data name="energydeclaration.table.no_data" xml:space="preserve"><value>No data</value></data>
+  <data name="energydeclaration.table.querying" xml:space="preserve"><value>Querying…</value></data>
+
+  <data name="energydeclaration.label.total_kwh" xml:space="preserve"><value>Total Energy</value></data>
+  <data name="energydeclaration.label.total_rt" xml:space="preserve"><value>Total Refrigeration</value></data>
+  <data name="energydeclaration.label.total_efficiency" xml:space="preserve"><value>Overall Efficiency</value></data>
+
+  <data name="energydeclaration.warning.kwh" xml:space="preserve"><value>⚠ Some meters detected value rollback without MaxKwh configured</value></data>
+  <data name="energydeclaration.warning.rt" xml:space="preserve"><value>⚠ Refrigeration data coverage insufficient (hourly aggregation pending or data missing)</value></data>
+
+  <data name="energydeclaration.select.loading" xml:space="preserve"><value>-- Loading --</value></data>
+  <data name="energydeclaration.select.placeholder" xml:space="preserve"><value>-- Select report --</value></data>
+  <data name="energydeclaration.select.empty" xml:space="preserve"><value>No declaration reports</value></data>
+
+  <data name="energydeclaration.modal.title_add" xml:space="preserve"><value>Add Declaration Report</value></data>
+  <data name="energydeclaration.modal.title_edit" xml:space="preserve"><value>Edit Declaration Report</value></data>
+  <data name="energydeclaration.modal.name" xml:space="preserve"><value>Report Name</value></data>
+  <data name="energydeclaration.modal.energy_circuit" xml:space="preserve"><value>Energy Source (Energy Circuit)</value></data>
+  <data name="energydeclaration.modal.water_circuit" xml:space="preserve"><value>Refrigeration Source (Water Circuit)</value></data>
+  <data name="energydeclaration.modal.description" xml:space="preserve"><value>Description</value></data>
+  <data name="energydeclaration.modal.select_circuit" xml:space="preserve"><value>-- Select circuit --</value></data>
+  <data name="energydeclaration.modal.cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="energydeclaration.modal.save" xml:space="preserve"><value>Save</value></data>
+
+  <data name="energydeclaration.alert.name_required" xml:space="preserve"><value>Please enter a report name</value></data>
+  <data name="energydeclaration.alert.energy_required" xml:space="preserve"><value>Please select an energy circuit</value></data>
+  <data name="energydeclaration.alert.water_required" xml:space="preserve"><value>Please select a refrigeration (water) circuit</value></data>
+  <data name="energydeclaration.alert.save_failed" xml:space="preserve"><value>Save failed: {0}</value></data>
+  <data name="energydeclaration.alert.delete_failed" xml:space="preserve"><value>Delete failed: {0}</value></data>
+  <data name="energydeclaration.alert.select_report" xml:space="preserve"><value>Please select a declaration report</value></data>
+  <data name="energydeclaration.alert.year_invalid" xml:space="preserve"><value>Please enter a valid year (2000–2100)</value></data>
+  <data name="energydeclaration.alert.query_failed" xml:space="preserve"><value>Query failed: {0}</value></data>
+  <data name="energydeclaration.alert.export_failed" xml:space="preserve"><value>Export failed: {0}</value></data>
+
+  <data name="energydeclaration.console.load_failed" xml:space="preserve"><value>[EnergyDeclaration] Failed to load data</value></data>
+</root>

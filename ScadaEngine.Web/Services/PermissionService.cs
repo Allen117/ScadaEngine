@@ -26,6 +26,8 @@ public static class PermissionService
         ("/EnergyMeter",    "電表/迴路設定"),
         ("/EnergyReport",   "用電報表"),
         ("/RefrigerationTonReport", "冷凍噸報表"),
+        ("/EnergyDeclaration", "能源申報"),
+        ("/BillingPeriodSetting", "月結週期設定"),
         ("/Designer",       "畫面設計"),
         ("/Config",         "系統參數"),
         ("/ModbusCoordinator", "Modbus來源"),
@@ -55,6 +57,8 @@ public static class PermissionService
         "/EnergyMeter",
         "/EnergyReport",
         "/RefrigerationTonReport",
+        "/EnergyDeclaration",
+        "/BillingPeriodSetting",
     ];
 
     /// <summary>

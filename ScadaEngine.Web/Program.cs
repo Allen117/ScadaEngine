@@ -153,8 +153,11 @@ builder.Services.AddScoped<ScadaEngine.Web.Services.LineTargetService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.EmailGroupService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyCircuitService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.WaterCircuitService>();
+// 月結週期（期別）— 全系統月粒度報表的唯一期界來源（內含 static 快取，寫入時失效）
+builder.Services.AddScoped<ScadaEngine.Web.Services.BillingPeriodService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyReportService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.RefrigerationTonReportService>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyDeclarationService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.DbCoordinatorService>();
 // OPC UA 來源設定（Scoped：依賴 IDataRepository 與 IStringLocalizer）
 builder.Services.AddScoped<ScadaEngine.Web.Services.OpcUaCoordinatorService>();
@@ -166,6 +169,7 @@ builder.Services.AddSingleton<ScadaEngine.Web.Services.ModbusConfigFileService>(
 // Scoped：依賴 IStringLocalizer<T>（Scoped），且 exporter 本身無狀態
 builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyReportExcelExporter>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.RefrigerationTonReportExcelExporter>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyDeclarationExcelExporter>();
 
 // Line 測試發送（內含 throttle 字典 → 必須 Singleton 才能跨請求保留狀態）
 builder.Services.AddHttpClient();

@@ -8,14 +8,16 @@ namespace ScadaEngine.Web.Services;
 
 /// <summary>
 /// 用電報表 — on-demand 計算。
-/// 流程：依粒度產生 N+1 個邊界時刻 → 一條 SQL 取每個葉子在每個邊界的最近值 →
-/// 相鄰邊界相減 (含 kWh 溢位處理) → 各葉子 delta 加總 = 該 bucket 用電量。
+/// 流程：依粒度產生 N 個 bucket 的 [起, 訖) 邊界對（月粒度 = 期別，見 BillingPeriodService）
+/// → 一條 SQL 取每個葉子在每個邊界時刻的最近值 →
+/// 每 bucket 訖值減起值 (含 kWh 溢位處理) → 各葉子 delta 加總 = 該 bucket 用電量。
 /// </summary>
 public class EnergyReportService
 {
     private readonly ILogger<EnergyReportService> _logger;
     private readonly DatabaseConfigService _configService;
     private readonly EnergyCircuitService _circuitService;
+    private readonly BillingPeriodService _billingPeriodService;
     private readonly int _nMaxStalenessHours;
     private string _szConnectionString = string.Empty;
 
@@ -23,11 +25,13 @@ public class EnergyReportService
         ILogger<EnergyReportService> logger,
         DatabaseConfigService configService,
         EnergyCircuitService circuitService,
+        BillingPeriodService billingPeriodService,
         IConfiguration configuration)
     {
         _logger = logger;
         _configService = configService;
         _circuitService = circuitService;
+        _billingPeriodService = billingPeriodService;
         // 邊界值有效期視窗（小時）：超過此值的「最近一筆」視為 null，避免電表斷線復原時將累積差異全壓在恢復首小時
         _nMaxStalenessHours = configuration.GetValue<int?>("EnergyAggregation:MaxStalenessHours") ?? 2;
     }
@@ -55,22 +59,21 @@ public class EnergyReportService
         if (circuit == null)
             throw new InvalidOperationException($"迴路 Id={nCircuitId} 不存在");
 
-        var boundaries = BuildBoundaries(szGranularity, dtStart, dtEnd);
-        var labels = BuildLabels(szGranularity, boundaries);
+        var (ranges, labels) = await BuildBucketRangesAsync(szGranularity, dtStart, dtEnd);
 
         var result = new EnergyReportResult
         {
             nCircuitId = nCircuitId,
             szCircuitName = circuit.szName,
             szGranularity = szGranularity,
-            dtStart = boundaries[0],
-            dtEnd = boundaries[^1],
+            dtStart = ranges[0].dtStart,
+            dtEnd = ranges[^1].dtEnd,
         };
 
         using var conn = await GetConnectionAsync();
-        var (bucketSums, bHasWarning) = await ComputeBucketSumsForCircuitAsync(nCircuitId, boundaries, conn);
+        var (bucketSums, bHasWarning) = await ComputeBucketSumsForCircuitAsync(nCircuitId, ranges, conn);
 
-        FillBucketsAndTotal(result, boundaries, labels, bucketSums);
+        FillBucketsAndTotal(result, ranges, labels, bucketSums);
         result.isHasWarning = bHasWarning;
         return result;
     }
@@ -86,21 +89,20 @@ public class EnergyReportService
         if (circuit == null)
             throw new InvalidOperationException($"迴路 Id={nCircuitId} 不存在");
 
-        var boundaries = BuildBoundaries(szGranularity, dtStart, dtEnd);
-        var labels = BuildLabels(szGranularity, boundaries);
+        var (ranges, labels) = await BuildBucketRangesAsync(szGranularity, dtStart, dtEnd);
 
         var result = new EnergyReportResult
         {
             nCircuitId = nCircuitId,
             szCircuitName = circuit.szName,
             szGranularity = szGranularity,
-            dtStart = boundaries[0],
-            dtEnd = boundaries[^1],
+            dtStart = ranges[0].dtStart,
+            dtEnd = ranges[^1].dtEnd,
         };
 
         using var conn = await GetConnectionAsync();
-        var (bucketSums, bHasWarning) = await ComputeBucketSumsForCircuitAsync(nCircuitId, boundaries, conn);
-        FillBucketsAndTotal(result, boundaries, labels, bucketSums);
+        var (bucketSums, bHasWarning) = await ComputeBucketSumsForCircuitAsync(nCircuitId, ranges, conn);
+        FillBucketsAndTotal(result, ranges, labels, bucketSums);
         result.isHasWarning = bHasWarning;
 
         // 自己就是葉子 → 不展開子層（與舊版單錶匯出格式相容）
@@ -112,7 +114,7 @@ public class EnergyReportService
         {
             // 子迴路內部 leaves 的 sign 已由 GetLeavesUnderAsync 累乘（相對於 child），
             // child 自己對父的方向需在這裡額外乘上。
-            var (childSums, childWarning) = await ComputeBucketSumsForCircuitAsync(child.nId, boundaries, conn);
+            var (childSums, childWarning) = await ComputeBucketSumsForCircuitAsync(child.nId, ranges, conn);
             var nChildSign = child.nSign == -1 ? -1 : 1;
             var series = new EnergyReportChildSeries
             {
@@ -135,6 +137,50 @@ public class EnergyReportService
     }
 
     /// <summary>
+    /// 能源申報專用 — 指定年度的 12 個「曆月」bucket（每月 1 號 00:00 ~ 次月 1 號 00:00），
+    /// 不走月結期別（BillingPeriodService）。共用 ComputeBucketSumsForCircuitAsync 計算核心，
+    /// 溢位/Sign/staleness 規則與一般報表完全一致。
+    /// </summary>
+    public async Task<EnergyReportResult> GetCalendarMonthlyReportAsync(int nCircuitId, int nYear)
+    {
+        var circuit = await _circuitService.GetByIdAsync(nCircuitId);
+        if (circuit == null)
+            throw new InvalidOperationException($"迴路 Id={nCircuitId} 不存在");
+
+        var (ranges, labels) = BuildCalendarMonthRanges(nYear);
+
+        var result = new EnergyReportResult
+        {
+            nCircuitId = nCircuitId,
+            szCircuitName = circuit.szName,
+            szGranularity = "month",
+            dtStart = ranges[0].dtStart,
+            dtEnd = ranges[^1].dtEnd,
+        };
+
+        using var conn = await GetConnectionAsync();
+        var (bucketSums, bHasWarning) = await ComputeBucketSumsForCircuitAsync(nCircuitId, ranges, conn);
+        FillBucketsAndTotal(result, ranges, labels, bucketSums);
+        result.isHasWarning = bHasWarning;
+        return result;
+    }
+
+    /// <summary>指定年度的 12 個曆月 [起, 訖) 邊界對與 yyyy-MM 標籤</summary>
+    public static (List<(DateTime dtStart, DateTime dtEnd)> ranges, List<string> labels)
+        BuildCalendarMonthRanges(int nYear)
+    {
+        var ranges = new List<(DateTime, DateTime)>(12);
+        var labels = new List<string>(12);
+        for (var m = 1; m <= 12; m++)
+        {
+            var dtMonthStart = new DateTime(nYear, m, 1);
+            ranges.Add((dtMonthStart, dtMonthStart.AddMonths(1)));
+            labels.Add(dtMonthStart.ToString("yyyy-MM", CultureInfo.InvariantCulture));
+        }
+        return (ranges, labels);
+    }
+
+    /// <summary>
     /// 取得指定迴路在區間內的總用電量 = 該粒度所有 bucket 的加總。
     /// 與 GetReportAsync 共用同一計算核心（staleness window / 溢位規則一致），
     /// 確保「期間總量」與長條圖各柱總和完全對得上。
@@ -142,35 +188,62 @@ public class EnergyReportService
     /// </summary>
     public async Task<double> GetTotalKwhAsync(int nCircuitId, string szGranularity, DateTime dtStart, DateTime dtEnd)
     {
-        var boundaries = BuildBoundaries(szGranularity, dtStart, dtEnd);
+        var (ranges, _) = await BuildBucketRangesAsync(szGranularity, dtStart, dtEnd);
         using var conn = await GetConnectionAsync();
-        var (bucketSums, _) = await ComputeBucketSumsForCircuitAsync(nCircuitId, boundaries, conn);
+        var (bucketSums, _) = await ComputeBucketSumsForCircuitAsync(nCircuitId, ranges, conn);
         return Math.Round(bucketSums.Sum(), 3);
+    }
+
+    /// <summary>
+    /// 產生 N 個 bucket 的 [起, 訖) 邊界對與標籤。
+    /// 月粒度 = 期別：dtStart/dtEnd 的年月視為期別編號，期界由 BillingPeriodService 解析
+    /// （期別間可能空窗/重疊 → 不共用邊界點）；其餘粒度沿用連續邊界切法。
+    /// </summary>
+    private async Task<(List<(DateTime dtStart, DateTime dtEnd)> ranges, List<string> labels)>
+        BuildBucketRangesAsync(string szGranularity, DateTime dtStart, DateTime dtEnd)
+    {
+        if (szGranularity == "month")
+        {
+            var periods = await _billingPeriodService.GetPeriodRangesAsync(dtStart, dtEnd);
+            return (periods.Select(p => (p.dtStart, p.dtEndExclusive)).ToList(),
+                    periods.Select(p => p.szLabel).ToList());
+        }
+        var boundaries = BuildBoundaries(szGranularity, dtStart, dtEnd);
+        var ranges = new List<(DateTime, DateTime)>(boundaries.Count - 1);
+        for (var i = 0; i < boundaries.Count - 1; i++)
+            ranges.Add((boundaries[i], boundaries[i + 1]));
+        return (ranges, BuildLabels(szGranularity, boundaries));
     }
 
     /// <summary>
     /// 對單一迴路（葉子或虛擬皆可）計算每個 bucket 的 kWh 累計。
     /// 共用核心：取葉子 → 對每葉子查邊界值 → 套溢位規則加總。
+    /// 邊界時刻去重後一次查詢 — 連續 bucket 共用邊界點時查詢量與舊版相同。
     /// </summary>
     private async Task<(double[] bucketSums, bool isHasWarning)> ComputeBucketSumsForCircuitAsync(
-        int nCircuitId, List<DateTime> boundaries, SqlConnection conn)
+        int nCircuitId, List<(DateTime dtStart, DateTime dtEnd)> ranges, SqlConnection conn)
     {
-        var nBuckets = boundaries.Count - 1;
+        var nBuckets = ranges.Count;
         var bucketSums = new double[nBuckets];
         var bHasWarning = false;
 
         var leaves = await _circuitService.GetLeavesUnderAsync(nCircuitId);
         if (leaves.Count == 0) return (bucketSums, bHasWarning);
 
+        var times = ranges.SelectMany(r => new[] { r.dtStart, r.dtEnd })
+            .Distinct().OrderBy(t => t).ToList();
+        var timeIndex = new Dictionary<DateTime, int>(times.Count);
+        for (var i = 0; i < times.Count; i++) timeIndex[times[i]] = i;
+
         foreach (var leafWithSign in leaves)
         {
             var leaf = leafWithSign.Leaf;
             var nEffectiveSign = leafWithSign.nEffectiveSign;
-            var values = await GetBoundaryValuesAsync(conn, leaf.szSID!, boundaries);
+            var values = await GetBoundaryValuesAsync(conn, leaf.szSID!, times);
             for (var i = 0; i < nBuckets; i++)
             {
-                var fStart = values[i];
-                var fEnd = values[i + 1];
+                var fStart = values[timeIndex[ranges[i].dtStart]];
+                var fEnd = values[timeIndex[ranges[i].dtEnd]];
                 if (fStart == null || fEnd == null) continue;
 
                 // 物理 delta 永遠 ≥ 0（含溢位處理），sign 在這裡套用合併方向
@@ -183,13 +256,13 @@ public class EnergyReportService
     }
 
     private static void FillBucketsAndTotal(
-        EnergyReportResult result, List<DateTime> boundaries, List<string> labels, double[] bucketSums)
+        EnergyReportResult result, List<(DateTime dtStart, DateTime dtEnd)> ranges, List<string> labels, double[] bucketSums)
     {
         for (var i = 0; i < labels.Count; i++)
         {
             result.buckets.Add(new EnergyReportBucket
             {
-                dtBucketStart = boundaries[i],
+                dtBucketStart = ranges[i].dtStart,
                 szLabel = labels[i],
                 dKwh = Math.Round(bucketSums[i], 3)
             });
@@ -285,18 +358,9 @@ public class EnergyReportService
                     break;
                 }
             case "month":
-                {
-                    // dtStart=當月 1 日，dtEnd=當月 1 日；產出 N+1 個月初邊界
-                    var t = new DateTime(dtStart.Year, dtStart.Month, 1);
-                    var endMonth = new DateTime(dtEnd.Year, dtEnd.Month, 1);
-                    while (t <= endMonth)
-                    {
-                        list.Add(t);
-                        t = t.AddMonths(1);
-                    }
-                    list.Add(endMonth.AddMonths(1));
-                    break;
-                }
+                // 月粒度已改為期別切法（每期一對 [起, 訖) 邊界，可能不連續），
+                // 不能用單一連續邊界列表表達 — 走 BuildBucketRangesAsync / BillingPeriodService
+                throw new ArgumentException("月粒度期界由 BillingPeriodService 解析，不支援 BuildBoundaries");
             case "year":
                 {
                     // dtStart=當年 1/1，dtEnd=當年 1/1

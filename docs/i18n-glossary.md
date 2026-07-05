@@ -27,8 +27,10 @@
 | 能源管理 | Energy Management | top-level menu |
 | 用電報表 | Energy Report | `/EnergyReport` |
 | 冷凍噸報表 | Refrigeration Ton Report | `/RefrigerationTonReport` |
+| 能源申報 | Energy Declaration | `/EnergyDeclaration` |
 | 電表/迴路設定 | Energy Meter / Circuit | `/EnergyMeter` |
 | 水系統迴路設定 | Chilled Water Circuit Settings | `/ChilledWaterSystem` |
+| 月結週期設定 | Billing Cycle Settings | `/BillingPeriodSetting` |
 | 系統設定 | System Settings | top-level menu |
 | 畫面設計 | Designer | `/Designer` |
 | 警報設定 | Alarm Settings | `/AlarmSetting` |
@@ -46,6 +48,10 @@
 | 點位 | Point | 通用詞 |
 | 設備 / 協調器 | Device / Coordinator | 設備層 |
 | 迴路 | Circuit | 能源管理用，**不**翻成 Loop |
+| 月結週期 / 結算週期 | Billing Cycle | 月粒度報表期界設定 |
+| 期別 | Billing Period | 一期 = 一個 YYYY-MM 結算區間；DB 表 `BillingPeriods` |
+| 空窗 | Gap | 期別間未被涵蓋的日數 |
+| 重疊 | Overlap | 期別間重複涵蓋的日數 |
 | 計算點 / 計算點位 | Calculated Point | 同義 |
 | DB 來源 | DB Source | DBLatestData polling 系列 |
 | Modbus 來源 | Modbus Source | Modbus TCP polling 系列 |
@@ -182,6 +188,10 @@
 | 用電量 | Energy | (kWh) |
 | 用電量分布 | Energy Consumption | chart 標題 |
 | 冷量分布 | Cooling Energy | RefrigerationTonReport chart 標題 |
+| 能源申報 | Energy Declaration | 頁面/選單名 |
+| 申報報表 | Declaration Report | 使用者自訂的申報報表設定 |
+| 冷凍噸數 | Refrigeration (RT·h) | 申報報表欄位，值為 RT·h 累計 |
+| 效率 (kWh/RTh) | Efficiency (kWh/RTh) | 用電量 ÷ 冷凍噸數，單位不翻 |
 | 數據明細 | Data Detail | 表格區塊 |
 | 時段 | Period | 表格欄 |
 | 粒度 / 單位 | Granularity | 時 / 日 / 月 / 年 |

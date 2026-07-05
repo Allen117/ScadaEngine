@@ -1,0 +1,16 @@
+/* 月結週期設定頁樣式 */
+
+.bp-year-nav .bp-year-input {
+    width: 90px;
+    text-align: center;
+}
+
+.bp-table .bp-col-month   { width: 100px; }
+.bp-table .bp-col-date    { width: 170px; }
+.bp-table .bp-col-days    { width: 80px; }
+.bp-table .bp-col-status  { width: 90px; }
+.bp-table .bp-col-actions { width: 190px; }
+
+/* 空窗（橙）/ 重疊（紅）警告 — 兩主題共用色，不阻擋儲存 */
+.bp-warn-gap     { color: #e65100; }
+.bp-warn-overlap { color: #c62828; }

@@ -1,0 +1,72 @@
+@model ScadaEngine.Web.Features.BillingPeriodSetting.Models.BillingPeriodSettingViewModel
+@{
+    ViewData["Title"] = Localizer["billingperiod.title"].Value;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-2">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="mb-0">
+            <i class="fas fa-calendar-check text-primary me-2"></i>@Localizer["billingperiod.title"]
+        </h2>
+        <span class="text-muted small">
+            <i class="fas fa-leaf me-1"></i>@Localizer["billingperiod.breadcrumb.energy"]
+        </span>
+    </div>
+
+    <!-- 說明卡 -->
+    <div class="card shadow-sm mb-3">
+        <div class="card-body py-2 px-3 text-muted small">
+            <i class="fas fa-info-circle me-1"></i>@Localizer["billingperiod.hint.overview"]<br />
+            <i class="fas fa-exclamation-triangle me-1 text-warning"></i>@Localizer["billingperiod.hint.gap_overlap"]
+        </div>
+    </div>
+
+    <!-- 年份切換 + 12 期列表 -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-table me-1"></i>@Localizer["billingperiod.table.title"]</span>
+            <div class="bp-year-nav d-flex align-items-center gap-1">
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window._bp.prevYear()">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <input type="number" id="bpYear" class="form-control form-control-sm bp-year-input"
+                       min="2000" max="2100" value="@Model.nCurrentYear" />
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window._bp.nextYear()">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered align-middle mb-0 bp-table">
+                    <thead class="table-dark">
+                        <tr>
+                            <th class="bp-col-month">@Localizer["billingperiod.table.col_period"]</th>
+                            <th class="bp-col-date">@Localizer["billingperiod.table.col_start"]</th>
+                            <th class="bp-col-date">@Localizer["billingperiod.table.col_end"]</th>
+                            <th class="bp-col-days text-end">@Localizer["billingperiod.table.col_days"]</th>
+                            <th class="bp-col-status">@Localizer["billingperiod.table.col_status"]</th>
+                            <th class="bp-col-warn">@Localizer["billingperiod.table.col_warning"]</th>
+                            <th class="bp-col-actions">@Localizer["billingperiod.table.col_actions"]</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bpTableBody">
+                        <tr><td colspan="7" class="text-center text-muted py-4">
+                            <div class="spinner-border spinner-border-sm text-primary me-1"></div>@Localizer["billingperiod.table.loading"]
+                        </td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="~/css/billingperiodsetting.css" />
+
+@section Scripts {
+    <script src="~/js/billingperiodsetting.js"></script>
+    <script>
+        window._bpInit = { year: @Model.nCurrentYear };
+    </script>
+}

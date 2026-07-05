@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="energydeclaration.title" xml:space="preserve"><value>能源申報</value></data>
+  <data name="energydeclaration.breadcrumb.energy" xml:space="preserve"><value>能源管理</value></data>
+
+  <data name="energydeclaration.config.title" xml:space="preserve"><value>申報報表設定</value></data>
+  <data name="energydeclaration.config.col_name" xml:space="preserve"><value>報表名稱</value></data>
+  <data name="energydeclaration.config.col_energy_circuit" xml:space="preserve"><value>用電迴路</value></data>
+  <data name="energydeclaration.config.col_water_circuit" xml:space="preserve"><value>冷凍噸迴路</value></data>
+  <data name="energydeclaration.config.col_description" xml:space="preserve"><value>描述</value></data>
+  <data name="energydeclaration.config.col_actions" xml:space="preserve"><value>操作</value></data>
+  <data name="energydeclaration.config.loading" xml:space="preserve"><value>載入中…</value></data>
+  <data name="energydeclaration.config.empty" xml:space="preserve"><value>尚無申報報表，請點右上「新增報表」建立</value></data>
+  <data name="energydeclaration.config.deleted_circuit" xml:space="preserve"><value>迴路已不存在</value></data>
+  <data name="energydeclaration.config.confirm_delete" xml:space="preserve"><value>確定要刪除申報報表「{0}」？</value></data>
+
+  <data name="energydeclaration.filter.title" xml:space="preserve"><value>查詢條件</value></data>
+  <data name="energydeclaration.filter.report" xml:space="preserve"><value>申報報表</value></data>
+  <data name="energydeclaration.filter.year" xml:space="preserve"><value>申報年度</value></data>
+
+  <data name="energydeclaration.button.add" xml:space="preserve"><value>新增報表</value></data>
+  <data name="energydeclaration.button.edit" xml:space="preserve"><value>編輯</value></data>
+  <data name="energydeclaration.button.delete" xml:space="preserve"><value>刪除</value></data>
+  <data name="energydeclaration.button.query" xml:space="preserve"><value>查詢</value></data>
+  <data name="energydeclaration.button.export" xml:space="preserve"><value>匯出 Excel</value></data>
+
+  <data name="energydeclaration.chart.title" xml:space="preserve"><value>用電量與冷凍噸分布</value></data>
+  <data name="energydeclaration.chart.kwh_label" xml:space="preserve"><value>用電量 (kWh)</value></data>
+  <data name="energydeclaration.chart.rt_label" xml:space="preserve"><value>冷凍噸數 (RT·h)</value></data>
+  <data name="energydeclaration.chart.efficiency_label" xml:space="preserve"><value>效率：{0} kWh/RTh</value></data>
+  <data name="energydeclaration.chart.x_axis" xml:space="preserve"><value>月份</value></data>
+
+  <data name="energydeclaration.table.title" xml:space="preserve"><value>數據明細</value></data>
+  <data name="energydeclaration.table.col_period" xml:space="preserve"><value>月份</value></data>
+  <data name="energydeclaration.table.col_kwh" xml:space="preserve"><value>用電量 (kWh)</value></data>
+  <data name="energydeclaration.table.col_rt" xml:space="preserve"><value>冷凍噸數 (RT·h)</value></data>
+  <data name="energydeclaration.table.col_efficiency" xml:space="preserve"><value>kWh/RTh</value></data>
+  <data name="energydeclaration.table.total" xml:space="preserve"><value>合計</value></data>
+  <data name="energydeclaration.table.empty" xml:space="preserve"><value>尚未查詢</value></data>
+  <data name="energydeclaration.table.no_data" xml:space="preserve"><value>無資料</value></data>
+  <data name="energydeclaration.table.querying" xml:space="preserve"><value>查詢中…</value></data>
+
+  <data name="energydeclaration.label.total_kwh" xml:space="preserve"><value>總用電量</value></data>
+  <data name="energydeclaration.label.total_rt" xml:space="preserve"><value>總冷凍噸數</value></data>
+  <data name="energydeclaration.label.total_efficiency" xml:space="preserve"><value>整體效率</value></data>
+
+  <data name="energydeclaration.warning.kwh" xml:space="preserve"><value>⚠ 部分電表偵測到累積值倒退但未設 MaxKwh</value></data>
+  <data name="energydeclaration.warning.rt" xml:space="preserve"><value>⚠ 冷凍噸資料覆蓋率不足（每小時聚合尚未完成或缺資料）</value></data>
+
+  <data name="energydeclaration.select.loading" xml:space="preserve"><value>-- 載入中 --</value></data>
+  <data name="energydeclaration.select.placeholder" xml:space="preserve"><value>-- 請選擇申報報表 --</value></data>
+  <data name="energydeclaration.select.empty" xml:space="preserve"><value>尚無申報報表</value></data>
+
+  <data name="energydeclaration.modal.title_add" xml:space="preserve"><value>新增申報報表</value></data>
+  <data name="energydeclaration.modal.title_edit" xml:space="preserve"><value>編輯申報報表</value></data>
+  <data name="energydeclaration.modal.name" xml:space="preserve"><value>報表名稱</value></data>
+  <data name="energydeclaration.modal.energy_circuit" xml:space="preserve"><value>用電度數來源（用電迴路）</value></data>
+  <data name="energydeclaration.modal.water_circuit" xml:space="preserve"><value>冷凍噸數來源（水系統迴路）</value></data>
+  <data name="energydeclaration.modal.description" xml:space="preserve"><value>描述</value></data>
+  <data name="energydeclaration.modal.select_circuit" xml:space="preserve"><value>-- 請選擇迴路 --</value></data>
+  <data name="energydeclaration.modal.cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="energydeclaration.modal.save" xml:space="preserve"><value>儲存</value></data>
+
+  <data name="energydeclaration.alert.name_required" xml:space="preserve"><value>請輸入報表名稱</value></data>
+  <data name="energydeclaration.alert.energy_required" xml:space="preserve"><value>請選擇用電迴路</value></data>
+  <data name="energydeclaration.alert.water_required" xml:space="preserve"><value>請選擇冷凍噸（水系統）迴路</value></data>
+  <data name="energydeclaration.alert.save_failed" xml:space="preserve"><value>儲存失敗：{0}</value></data>
+  <data name="energydeclaration.alert.delete_failed" xml:space="preserve"><value>刪除失敗：{0}</value></data>
+  <data name="energydeclaration.alert.select_report" xml:space="preserve"><value>請選擇申報報表</value></data>
+  <data name="energydeclaration.alert.year_invalid" xml:space="preserve"><value>請輸入有效年度（2000~2100）</value></data>
+  <data name="energydeclaration.alert.query_failed" xml:space="preserve"><value>查詢失敗：{0}</value></data>
+  <data name="energydeclaration.alert.export_failed" xml:space="preserve"><value>匯出失敗：{0}</value></data>
+
+  <data name="energydeclaration.console.load_failed" xml:space="preserve"><value>[EnergyDeclaration] 載入資料失敗</value></data>
+</root>

@@ -142,7 +142,7 @@
                                     </a>
                                 </li>
                             }
-                            @if (canAccess("/EnergyReport") || canAccess("/RefrigerationTonReport"))
+                            @if (canAccess("/EnergyReport") || canAccess("/RefrigerationTonReport") || canAccess("/EnergyDeclaration"))
                             {
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
@@ -158,10 +158,14 @@
                                         {
                                             <li><a class="dropdown-item" href="/RefrigerationTonReport"><i class="fas fa-snowflake me-2"></i>@Localizer["layout.menu.refrigeration_ton_report"]</a></li>
                                         }
+                                        @if (canAccess("/EnergyDeclaration"))
+                                        {
+                                            <li><a class="dropdown-item" href="/EnergyDeclaration"><i class="fas fa-file-signature me-2"></i>@Localizer["layout.menu.energy_declaration"]</a></li>
+                                        }
                                     </ul>
                                 </li>
                             }
-                            @if (canAccess("/ChilledWaterSystem") || canAccess("/EnergyMeter"))
+                            @if (canAccess("/ChilledWaterSystem") || canAccess("/EnergyMeter") || canAccess("/BillingPeriodSetting"))
                             {
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
@@ -176,6 +180,10 @@
                                         @if (canAccess("/EnergyMeter"))
                                         {
                                             <li><a class="dropdown-item" href="/EnergyMeter"><i class="fas fa-sitemap me-2"></i>@Localizer["layout.menu.energy_meter"]</a></li>
+                                        }
+                                        @if (canAccess("/BillingPeriodSetting"))
+                                        {
+                                            <li><a class="dropdown-item" href="/BillingPeriodSetting"><i class="fas fa-calendar-check me-2"></i>@Localizer["layout.menu.billing_period"]</a></li>
                                         }
                                     </ul>
                                 </li>

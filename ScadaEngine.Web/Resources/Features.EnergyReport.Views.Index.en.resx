@@ -108,4 +108,6 @@
   <data name="energyreport.alert.export_failed" xml:space="preserve"><value>Export failed: {0}</value></data>
 
   <data name="energyreport.console.load_circuit_failed" xml:space="preserve"><value>[EnergyReport] Failed to load circuits</value></data>
+
+  <data name="energyreport.period.hint" xml:space="preserve"><value>Actual period range: {0} ~ {1} (per billing cycle settings)</value></data>
 </root>
