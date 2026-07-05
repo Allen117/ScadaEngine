@@ -181,7 +181,13 @@
       "PowerShell(git -C c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine log --oneline -3)",
       "PowerShell(git -C c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine ls-files ScadaEngine.Engine/OpcUaPoint)",
       "PowerShell(git -C c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine diff --stat ScadaEngine.Web/Program.cs ScadaEngine.Web/ScadaEngine.Web.csproj ScadaEngine.Web/Services/PermissionService.cs ScadaEngine.Web/Resources/Views.Shared._Layout.resx)",
-      "Bash(git check-ignore *)"
+      "Bash(git check-ignore *)",
+      "PowerShell(git -C c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine push)",
+      "Bash(git fetch *)",
+      "Bash(mkdir -p docs/plans/_archive)",
+      "Bash(git mv *)",
+      "Bash(mv \"docs/plans/2026-07-05-tariff-setting.md\" \"docs/plans/_archive/2026-07-05-tariff-setting.md\")",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
