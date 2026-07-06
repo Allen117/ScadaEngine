@@ -380,7 +380,10 @@ public class EmsController : Controller
                 {
                     var dtDay = DateTime.ParseExact(pivot, "yyyy-MM-dd",
                         System.Globalization.CultureInfo.InvariantCulture);
-                    return (dtDay, dtDay.AddDays(1));
+                    // dtEnd 需與 day 粒度一致採「含訖」語意 = 最後一格 bucket 的起點；
+                    // 給 exclusive next-day midnight 會讓 BuildBoundaries 多生 07-07 00:00~01:00
+                    // 這格，觸發 bHourCrossDay=true → 標籤變成 "MM/dd HH:00"
+                    return (dtDay, dtDay.AddHours(23));
                 }
             default:
                 throw new ArgumentException("不支援的 granularity");

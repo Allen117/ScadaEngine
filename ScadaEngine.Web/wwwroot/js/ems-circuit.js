@@ -219,7 +219,15 @@
                         ticks: {
                             font: { size: 11 },
                             color: '#757575',
-                            callback: function (v) { return v.toFixed(0); }
+                            maxTicksLimit: 6,
+                            // 依數值級距自動決定小數位數，避免 toFixed(0) 把 0.5 壓成 0 造成整排重複
+                            callback: function (v) {
+                                if (v === 0) return '0';
+                                var abs = Math.abs(v);
+                                if (abs >= 10) return v.toFixed(0);
+                                if (abs >= 1)  return (+v.toFixed(1)).toString();
+                                return (+v.toFixed(2)).toString();
+                            }
                         },
                         grid: { color: 'rgba(0,0,0,0.05)' }
                     }
