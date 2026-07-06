@@ -161,7 +161,8 @@
 
         let nFilled = 0;
         let nQueueIdx = 0;
-        for (let ci = 0; ci < row.length && nQueueIdx < arrPointsToPlace.length; ci++) {
+        // 自「點選欄位」向右掃描填入（不從表格第一欄起算）
+        for (let ci = nPickedCol; ci < row.length && nQueueIdx < arrPointsToPlace.length; ci++) {
             if (ci === nPickedCol) continue;            // 跳過 picked cell（已綁定）
             const cell = row[ci];
             if (!cell) continue;

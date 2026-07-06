@@ -310,11 +310,13 @@ const TABLE_STYLE_PRESETS = {
 
 // ── 儲存格預設值 ──
 function _defaultHeaderCell(ci) {
-    return { szText: '', szFontColor: '#fff', szFontWeight: '500', szAlign: 'left', nFontSize: 14 };
+    // 第一列（表頭）預設置中
+    return { szText: '', szFontColor: '#fff', szFontWeight: '500', szAlign: 'center', nFontSize: 14 };
 }
 function _defaultDataCell(ri, ci) {
     return {
-        szText: '', szFontColor: '#444', szFontWeight: 'normal', szAlign: 'left', nFontSize: 14,
+        // 第一欄預設置中，其餘資料欄靠左
+        szText: '', szFontColor: '#444', szFontWeight: 'normal', szAlign: (ci === 0 ? 'center' : 'left'), nFontSize: 14,
         szSid: '', szPointName: '', szPointType: 'AI',
         szOnLabel: 'ON', szOffLabel: 'OFF',
         szHighColor: '#dc3545', szLowColor: '#fd7e14',

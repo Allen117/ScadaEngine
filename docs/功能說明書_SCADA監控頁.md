@@ -343,7 +343,7 @@ DOMContentLoaded
 
 | 屬性 | 說明 |
 |------|------|
-| `nCols` / `nRows` | 欄位數（1~4）/ 列數 |
+| `nCols` / `nRows` | 欄位數 / 列數（欄數不設上限，ScadaPage 依 `nCols` 完整顯示） |
 | `szHeaderColor` | 表頭背景色 |
 | `szBodyBgOdd` / `szBodyBgEven` | 奇/偶數資料列底色（`null` = 沿用預設外觀） |
 | `szBorderColor` | 資料列分隔線色（`null` = 預設 `#f0f0f0`） |

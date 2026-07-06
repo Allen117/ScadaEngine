@@ -259,6 +259,8 @@ main { padding: 0 !important; min-height: 0 !important; }
 /* 預留 widget-header (絕對定位於 top:0) 的空間，避免標題列疊在表頭上 */
 .canvas-widget[data-type="table"] .widget-body {
     padding-top: 18px;
+    /* 表格外框由 computeTableWidgetSize 依結構精算，內容剛好塞滿 — 關掉捲動避免殘留 scrollbar */
+    overflow: hidden;
 }
 
 .w-table {

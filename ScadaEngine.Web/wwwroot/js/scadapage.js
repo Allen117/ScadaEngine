@@ -320,7 +320,7 @@
             // 鎖定尺寸的 table 改用 props 重算 widget 外框，確保與 Designer 一致（plan 2026-06-01）
             var tProps = ws.props || {};
             if (tProps.bTableSizeLocked === true) {
-                var nTC = Math.max(1, Math.min(tProps.nCols || 3, 4));
+                var nTC = Math.max(1, tProps.nCols || 3);
                 var nTR = Math.max(1, tProps.nRows || 5);
                 var nTDefW = tProps.nDefaultColW || 80;
                 var nTDefH = tProps.nDefaultRowH || 20;
@@ -1585,7 +1585,7 @@
 
     // ── Table Widget ──
     function buildTableHtml(props) {
-        var nC = Math.max(1, Math.min(props.nCols || 3, 4));
+        var nC = Math.max(1, props.nCols || 3);
         var nR = Math.max(1, props.nRows || 5);
         var hdrColor = props.szHeaderColor || '#343a40';
         var arrColDec = props.arrColDecimals || [];
