@@ -94,6 +94,7 @@
 
   <data name="energyreport.label.total" xml:space="preserve"><value>總計</value></data>
   <data name="energyreport.warning.kwh_overflow" xml:space="preserve"><value>⚠ 部分電表偵測到累積值倒退但未設 MaxKwh</value></data>
+  <data name="energyreport.tooltip.stale" xml:space="preserve"><value>此區間電表資料不完整（可能斷線）</value></data>
 
   <data name="energyreport.select.loading" xml:space="preserve"><value>-- 載入中 --</value></data>
   <data name="energyreport.select.placeholder" xml:space="preserve"><value>-- 請選擇迴路 --</value></data>

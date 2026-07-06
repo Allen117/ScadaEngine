@@ -48,6 +48,12 @@ public class EnergyReportBucket
 
     /// <summary>該 bucket 用電量（kWh）</summary>
     public double dKwh { get; set; }
+
+    /// <summary>
+    /// 該 bucket 任一葉子的邊界值抓不到（staleness window 內無 Quality=1 資料 / 缺資料）→ true。
+    /// 前端據此在該柱/格 hover 提示「電表資料不完整、可能斷線」。
+    /// </summary>
+    public bool isStale { get; set; }
 }
 
 /// <summary>

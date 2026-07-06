@@ -203,8 +203,17 @@ public class RefrigerationTonReportService
             boundaries.Add(ranges[^1].dtEnd);
         }
 
-        // 預期該迴路在區間內應有多少 hour（用來偵測「資料不全」警告）— 以各 bucket 長度加總
-        var nExpectedHoursPerLeaf = (int)Math.Round(ranges.Sum(r => (r.dtEnd - r.dtStart).TotalHours));
+        // 預期該迴路在區間內應有多少 hour（用來偵測「資料不全」警告）— 以各 bucket 長度加總。
+        // 「當期未過完」：把每個 bucket 起訖夾到 min(t, 現在) 再算寬度，未來時數不計入分母，
+        // 否則當期（如當月、當日）尚未到來的小時會拉低覆蓋率而誤觸「資料不完整」警告。
+        var dtNow = DateTime.Now;
+        var nExpectedHoursPerLeaf = (int)Math.Round(ranges.Sum(r =>
+        {
+            var dtCs = r.dtStart < dtNow ? r.dtStart : dtNow;
+            var dtCe = r.dtEnd < dtNow ? r.dtEnd : dtNow;
+            var dHours = (dtCe - dtCs).TotalHours;
+            return dHours > 0 ? dHours : 0;
+        }));
 
         foreach (var leaf in leaves)
         {

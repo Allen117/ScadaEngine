@@ -247,13 +247,18 @@
             tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-3">${escapeHtml(t('energydeclaration.table.no_data'))}</td></tr>`;
         } else {
             const totalLabel = escapeHtml(t('energydeclaration.table.total'));
-            tbody.innerHTML = data.buckets.map(b => `
+            const staleTip = escapeHtml(t('energydeclaration.tooltip.stale'));
+            tbody.innerHTML = data.buckets.map(b => {
+                const mark = b.isKwhStale
+                    ? ` <span class="ed-stale-mark" title="${staleTip}">⚠</span>` : '';
+                return `
                 <tr>
                     <td>${escapeHtml(b.szLabel)}</td>
-                    <td class="text-end">${b.dKwh.toFixed(3)}</td>
+                    <td class="text-end"${b.isKwhStale ? ` title="${staleTip}"` : ''}>${b.dKwh.toFixed(3)}${mark}</td>
                     <td class="text-end">${b.dRtHour.toFixed(3)}</td>
                     <td class="text-end">${fmtEff(b.dKwhPerRtHour)}</td>
-                </tr>`).join('') +
+                </tr>`;
+            }).join('') +
                 `<tr class="ed-total">
                     <td>${totalLabel}</td>
                     <td class="text-end">${data.dTotalKwh.toFixed(3)}</td>
@@ -342,6 +347,12 @@
                                 if (!items.length) return '';
                                 const b = data.buckets[items[0].dataIndex];
                                 return t('energydeclaration.chart.efficiency_label', { 0: fmtEff(b ? b.dKwhPerRtHour : null) });
+                            },
+                            // kWh 側斷線時附註提示（依 bucket index 查 isKwhStale）
+                            afterBody: function (items) {
+                                if (!items.length) return undefined;
+                                const b = data.buckets[items[0].dataIndex];
+                                return (b && b.isKwhStale) ? t('energydeclaration.tooltip.stale') : undefined;
                             }
                         }
                     }

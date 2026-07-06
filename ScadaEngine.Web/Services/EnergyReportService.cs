@@ -71,9 +71,9 @@ public class EnergyReportService
         };
 
         using var conn = await GetConnectionAsync();
-        var (bucketSums, bHasWarning) = await ComputeBucketSumsForCircuitAsync(nCircuitId, ranges, conn);
+        var (bucketSums, bHasWarning, staleFlags) = await ComputeBucketSumsForCircuitAsync(nCircuitId, ranges, conn);
 
-        FillBucketsAndTotal(result, ranges, labels, bucketSums);
+        FillBucketsAndTotal(result, ranges, labels, bucketSums, staleFlags);
         result.isHasWarning = bHasWarning;
         return result;
     }
@@ -101,8 +101,8 @@ public class EnergyReportService
         };
 
         using var conn = await GetConnectionAsync();
-        var (bucketSums, bHasWarning) = await ComputeBucketSumsForCircuitAsync(nCircuitId, ranges, conn);
-        FillBucketsAndTotal(result, ranges, labels, bucketSums);
+        var (bucketSums, bHasWarning, staleFlags) = await ComputeBucketSumsForCircuitAsync(nCircuitId, ranges, conn);
+        FillBucketsAndTotal(result, ranges, labels, bucketSums, staleFlags);
         result.isHasWarning = bHasWarning;
 
         // 自己就是葉子 → 不展開子層（與舊版單錶匯出格式相容）
@@ -114,7 +114,7 @@ public class EnergyReportService
         {
             // 子迴路內部 leaves 的 sign 已由 GetLeavesUnderAsync 累乘（相對於 child），
             // child 自己對父的方向需在這裡額外乘上。
-            var (childSums, childWarning) = await ComputeBucketSumsForCircuitAsync(child.nId, ranges, conn);
+            var (childSums, childWarning, _) = await ComputeBucketSumsForCircuitAsync(child.nId, ranges, conn);
             var nChildSign = child.nSign == -1 ? -1 : 1;
             var series = new EnergyReportChildSeries
             {
@@ -159,8 +159,8 @@ public class EnergyReportService
         };
 
         using var conn = await GetConnectionAsync();
-        var (bucketSums, bHasWarning) = await ComputeBucketSumsForCircuitAsync(nCircuitId, ranges, conn);
-        FillBucketsAndTotal(result, ranges, labels, bucketSums);
+        var (bucketSums, bHasWarning, staleFlags) = await ComputeBucketSumsForCircuitAsync(nCircuitId, ranges, conn);
+        FillBucketsAndTotal(result, ranges, labels, bucketSums, staleFlags);
         result.isHasWarning = bHasWarning;
         return result;
     }
@@ -190,7 +190,7 @@ public class EnergyReportService
     {
         var (ranges, _) = await BuildBucketRangesAsync(szGranularity, dtStart, dtEnd);
         using var conn = await GetConnectionAsync();
-        var (bucketSums, _) = await ComputeBucketSumsForCircuitAsync(nCircuitId, ranges, conn);
+        var (bucketSums, _, _) = await ComputeBucketSumsForCircuitAsync(nCircuitId, ranges, conn);
         return Math.Round(bucketSums.Sum(), 3);
     }
 
@@ -220,17 +220,30 @@ public class EnergyReportService
     /// 共用核心：取葉子 → 對每葉子查邊界值 → 套溢位規則加總。
     /// 邊界時刻去重後一次查詢 — 連續 bucket 共用邊界點時查詢量與舊版相同。
     /// </summary>
-    private async Task<(double[] bucketSums, bool isHasWarning)> ComputeBucketSumsForCircuitAsync(
+    private async Task<(double[] bucketSums, bool isHasWarning, bool[] staleFlags)> ComputeBucketSumsForCircuitAsync(
         int nCircuitId, List<(DateTime dtStart, DateTime dtEnd)> ranges, SqlConnection conn)
     {
         var nBuckets = ranges.Count;
         var bucketSums = new double[nBuckets];
+        var staleFlags = new bool[nBuckets];
         var bHasWarning = false;
 
         var leaves = await _circuitService.GetLeavesUnderAsync(nCircuitId);
-        if (leaves.Count == 0) return (bucketSums, bHasWarning);
+        if (leaves.Count == 0) return (bucketSums, bHasWarning, staleFlags);
 
-        var times = ranges.SelectMany(r => new[] { r.dtStart, r.dtEnd })
+        // 「當期未過完」語意：把每個 bucket 的計算起訖夾到 min(t, 現在)，
+        // 讓當期期末（落在未來）改抓「現在的累積值」→ 得到期初到現在的差值；
+        // 純未來 bucket 被夾成零寬 → delta 0。顯示用 ranges/labels 維持原值（FillBucketsAndTotal 使用），此處僅供取邊界值。
+        var dtNow = DateTime.Now;
+        var clampedRanges = new (DateTime dtStart, DateTime dtEnd)[nBuckets];
+        for (var i = 0; i < nBuckets; i++)
+        {
+            var dtCs = ranges[i].dtStart < dtNow ? ranges[i].dtStart : dtNow;
+            var dtCe = ranges[i].dtEnd < dtNow ? ranges[i].dtEnd : dtNow;
+            clampedRanges[i] = (dtCs, dtCe);
+        }
+
+        var times = clampedRanges.SelectMany(r => new[] { r.dtStart, r.dtEnd })
             .Distinct().OrderBy(t => t).ToList();
         var timeIndex = new Dictionary<DateTime, int>(times.Count);
         for (var i = 0; i < times.Count; i++) timeIndex[times[i]] = i;
@@ -242,9 +255,14 @@ public class EnergyReportService
             var values = await GetBoundaryValuesAsync(conn, leaf.szSID!, times);
             for (var i = 0; i < nBuckets; i++)
             {
-                var fStart = values[timeIndex[ranges[i].dtStart]];
-                var fEnd = values[timeIndex[ranges[i].dtEnd]];
-                if (fStart == null || fEnd == null) continue;
+                var fStart = values[timeIndex[clampedRanges[i].dtStart]];
+                var fEnd = values[timeIndex[clampedRanges[i].dtEnd]];
+                if (fStart == null || fEnd == null)
+                {
+                    // 邊界值抓不到（staleness window 內無 Quality=1 資料 / 缺資料）→ 標記該 bucket 斷線
+                    staleFlags[i] = true;
+                    continue;
+                }
 
                 // 物理 delta 永遠 ≥ 0（含溢位處理），sign 在這裡套用合併方向
                 var (dDelta, isWarn) = CalcDeltaWithRollover(fStart.Value, fEnd.Value, leaf.dMaxKwh, leaf.szSID!, leaf.szName);
@@ -252,11 +270,11 @@ public class EnergyReportService
                 if (isWarn) bHasWarning = true;
             }
         }
-        return (bucketSums, bHasWarning);
+        return (bucketSums, bHasWarning, staleFlags);
     }
 
     private static void FillBucketsAndTotal(
-        EnergyReportResult result, List<(DateTime dtStart, DateTime dtEnd)> ranges, List<string> labels, double[] bucketSums)
+        EnergyReportResult result, List<(DateTime dtStart, DateTime dtEnd)> ranges, List<string> labels, double[] bucketSums, bool[] staleFlags)
     {
         for (var i = 0; i < labels.Count; i++)
         {
@@ -264,7 +282,8 @@ public class EnergyReportService
             {
                 dtBucketStart = ranges[i].dtStart,
                 szLabel = labels[i],
-                dKwh = Math.Round(bucketSums[i], 3)
+                dKwh = Math.Round(bucketSums[i], 3),
+                isStale = staleFlags[i]
             });
             result.dTotalKwh += bucketSums[i];
         }

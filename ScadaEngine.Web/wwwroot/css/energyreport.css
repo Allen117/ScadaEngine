@@ -20,7 +20,14 @@
 }
 
 .er-filter-bar .er-wide-date {
-    flex: 0 0 200px;
+    flex: 0 0 240px;
+}
+
+/* 斷線 bucket 標記 — 表格內以琥珀色 ⚠ 提示，hover 有 tooltip */
+.er-stale-mark {
+    color: #f0ad4e;
+    cursor: help;
+    font-size: 0.85em;
 }
 
 .er-hour-group .er-hour-select {

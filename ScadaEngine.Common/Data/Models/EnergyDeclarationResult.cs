@@ -65,4 +65,10 @@ public class EnergyDeclarationBucket
 
     /// <summary>效率 = kWh ÷ RT·h；RT·h 為 0 或缺值時為 null（前端顯示 --）</summary>
     public double? dKwhPerRtHour { get; set; }
+
+    /// <summary>
+    /// kWh 側該曆月 bucket 邊界值抓不到（電表可能斷線 / 缺資料）→ true。
+    /// 由 kWh 曆月 bucket 的 isStale 帶入，前端據此在 kWh 柱/格 hover 提示斷線。
+    /// </summary>
+    public bool isKwhStale { get; set; }
 }

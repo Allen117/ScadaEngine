@@ -213,11 +213,17 @@
             tbody.innerHTML = `<tr><td colspan="2" class="text-center text-muted py-3">${escapeHtml(t('energyreport.table.no_data'))}</td></tr>`;
         } else {
             const totalLabel = escapeHtml(t('energyreport.table.total'));
-            tbody.innerHTML = data.buckets.map(b => `
-                <tr>
-                    <td>${escapeHtml(b.szLabel)}</td>
+            const staleTip = escapeHtml(t('energyreport.tooltip.stale'));
+            tbody.innerHTML = data.buckets.map(b => {
+                const mark = b.isStale
+                    ? ` <span class="er-stale-mark" title="${staleTip}">⚠</span>` : '';
+                const rowAttr = b.isStale ? ` title="${staleTip}"` : '';
+                return `
+                <tr${rowAttr}>
+                    <td>${escapeHtml(b.szLabel)}${mark}</td>
                     <td class="text-end">${b.dKwh.toFixed(3)}</td>
-                </tr>`).join('') +
+                </tr>`;
+            }).join('') +
                 `<tr class="er-total"><td>${totalLabel}</td><td class="text-end">${data.dTotalKwh.toFixed(3)}</td></tr>`;
         }
         document.getElementById('erTotal').textContent = data.dTotalKwh.toFixed(3);
@@ -264,6 +270,14 @@
         let tooltipCallbacks;
         let bStacked;
 
+        // 斷線提示：依 bucket index 查主迴路 buckets[idx].isStale，兩種模式共用
+        const staleTip = t('energyreport.tooltip.stale');
+        const staleAfterBody = function (items) {
+            if (!items || !items.length) return undefined;
+            const idx = items[0].dataIndex;
+            return (data.buckets[idx] && data.buckets[idx].isStale) ? staleTip : undefined;
+        };
+
         if (bBreakdown) {
             bStacked = true;
             datasets = data.children.map((child, i) => ({
@@ -284,10 +298,12 @@
                     let sum = 0;
                     items.forEach(it => { if (it.parsed && it.parsed.y != null) sum += it.parsed.y; });
                     return t('energyreport.chart.breakdown_total_label', { 0: sum.toFixed(3) });
-                }
+                },
+                afterBody: staleAfterBody
             };
         } else {
             bStacked = false;
+            tooltipCallbacks = { afterBody: staleAfterBody };
             const values = data.buckets.map(b => b.dKwh);
             datasets = [{
                 label: t('energyreport.chart.dataset_label', { 0: data.szCircuitName }),
