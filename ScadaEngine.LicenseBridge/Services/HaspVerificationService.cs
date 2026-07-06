@@ -94,6 +94,13 @@ public class HaspVerificationService : BackgroundService
         HaspStatus loginStatus = hasp.Login(VENDOR_CODE);
         _logger.LogInformation("hasp.Login → {Status} ({Code})", loginStatus, (int)loginStatus);
 
+        // TODO: TerminalServiceDetected（遠端桌面 / RDP）暫時直接放行，後續再決定正式處理方式
+        if (loginStatus == HaspStatus.TerminalServiceDetected)
+        {
+            _logger.LogWarning("偵測到 TerminalServiceDetected — 暫時直接放行，不再檢查授權內容");
+            return (true, "");
+        }
+
         if (loginStatus != HaspStatus.StatusOk)
             return (false, $"HASP Login 失敗: {(int)loginStatus}");
 
