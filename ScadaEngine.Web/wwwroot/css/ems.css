@@ -349,6 +349,12 @@ body.ems-mode .cw-badge-point {
 }
 
 /* 去年同期比較表 */
+/* 列數多時表格自帶捲軸，避免撐高整個 EMS 頁產生外層捲軸；高度對齊左側圓餅圖容器 */
+#yoyTableWrap {
+    max-height: 250px;
+    overflow-y: auto;
+}
+
 .ems-yoy-table {
     font-size: 0.85rem;
 }
@@ -358,6 +364,10 @@ body.ems-mode .cw-badge-point {
     color: #2e7d32;
     border-bottom: 2px solid #c8e6c9;
     white-space: nowrap;
+    /* 表身捲動時表頭固定 */
+    position: sticky;
+    top: 0;
+    z-index: 1;
 }
 
 .ems-yoy-table .ems-yoy-main-row {

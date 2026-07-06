@@ -14,10 +14,10 @@
     var _pieChart = null;
     var _refreshTimer = null;
 
-    // 圓餅色盤 — 綠色為主的多色系列
-    var PIE_COLORS = ['#43a047', '#26a69a', '#9ccc65', '#00897b', '#66bb6a',
-                      '#7cb342', '#4db6ac', '#2e7d32', '#a5d6a7', '#c0ca33',
-                      '#00acc1', '#558b2f'];
+    // 圓餅色盤 — 首色維持 EMS 綠（識別度），其餘跨全色相分佈以利分辨相鄰扇形
+    var PIE_COLORS = ['#43a047', '#1e88e5', '#fb8c00', '#8e24aa', '#e53935',
+                      '#00acc1', '#fdd835', '#6d4c41', '#ec407a', '#26a69a',
+                      '#5c6bc0', '#c0ca33'];
 
     // ── 工具函式 ─────────────────────────────────────────────
     function pad2(n) { return n < 10 ? '0' + n : String(n); }
@@ -194,7 +194,15 @@
                         ticks: {
                             font: { size: 11 },
                             color: '#757575',
-                            callback: function (v) { return v.toFixed(0); }
+                            maxTicksLimit: 6,
+                            // 依數值級距自動決定小數位數，避免 toFixed(0) 把 0.5 壓成 0 造成整排重複（比照 CircuitInfo Y 軸）
+                            callback: function (v) {
+                                if (v === 0) return '0';
+                                var abs = Math.abs(v);
+                                if (abs >= 10) return v.toFixed(0);
+                                if (abs >= 1)  return (+v.toFixed(1)).toString();
+                                return (+v.toFixed(2)).toString();
+                            }
                         },
                         grid: { color: 'rgba(0,0,0,0.05)' }
                     }

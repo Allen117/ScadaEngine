@@ -14,6 +14,9 @@
     var _mmFields = [];   // 實體：[{ key:'Voltage', sid }]；虛擬：[{ key:'Voltage' }] — 純 key，值由聚合 API 給
     var _mmTimer = null;
 
+    // 點位未設定單位時的預設單位（PF 為無因次量，不顯示單位）
+    var MM_DEFAULT_UNITS = { Voltage: 'V', Current: 'A', Power: 'kW', PowerFactor: '' };
+
     // ── 初始化 ───────────────────────────────────────────────
     function init() {
         var dot = document.getElementById('demandStatusDot');
@@ -65,7 +68,7 @@
                         // 虛擬主表：不顯示點位名（來源是子孫葉子聚合，寫死名稱反而誤導），僅顯示數值 + 單位
                         if (f.binding && f.binding.unit != null) {
                             elName.textContent = '';
-                            elUnit.textContent = f.binding.unit || '';
+                            elUnit.textContent = f.binding.unit || MM_DEFAULT_UNITS[f.key] || '';
                             _mmFields.push({ key: f.key });
                         } else {
                             elName.textContent = '';
@@ -78,7 +81,7 @@
                         // 實體主表：既有行為
                         if (f.binding && f.binding.sid) {
                             elName.textContent = f.binding.pointName || f.binding.sid;
-                            elUnit.textContent = f.binding.unit || '';
+                            elUnit.textContent = f.binding.unit || MM_DEFAULT_UNITS[f.key] || '';
                             _mmFields.push({ key: f.key, sid: f.binding.sid });
                         } else {
                             elName.textContent = '';
@@ -154,10 +157,15 @@
     }
 
     // ── 載入迴路下拉 ─────────────────────────────────────────
+    // 預設優先選主要電表（若其本身有設定需量、在選單內），否則退回清單第一筆
     function loadCircuits() {
-        fetch('/EMS/api/demand-circuits')
-            .then(function (r) { return r.json(); })
-            .then(function (list) {
+        Promise.all([
+            fetch('/EMS/api/demand-circuits').then(function (r) { return r.json(); }),
+            fetch('/EMS/api/main-meter').then(function (r) { return r.json(); }).catch(function () { return null; })
+        ])
+            .then(function (res) {
+                var list = res[0];
+                var main = res[1];
                 var sel = document.getElementById('demandCircuitSelect');
                 if (!list || list.length === 0) {
                     sel.innerHTML = '<option value="">尚無設定需量的迴路</option>';
@@ -166,7 +174,11 @@
                 sel.innerHTML = list.map(function (c) {
                     return '<option value="' + escAttr(c.id) + '">' + escHtml(c.name) + '</option>';
                 }).join('');
-                _circuitId = String(list[0].id);
+
+                var mainId = (main && main.hasMainMeter) ? String(main.id) : null;
+                var hasMainInList = mainId && list.some(function (c) { return String(c.id) === mainId; });
+                _circuitId = hasMainInList ? mainId : String(list[0].id);
+                sel.value = _circuitId;
                 refresh();
             })
             .catch(function (e) { console.error('載入需量迴路失敗', e); });
@@ -337,10 +349,20 @@
                         grid: { display: false }
                     },
                     y: {
+                        beginAtZero: true,
                         ticks: {
                             font: { size: 10 },
                             color: '#9e9e9e',
-                            callback: function (v) { return v != null ? v.toFixed(0) : ''; }
+                            maxTicksLimit: 6,
+                            // 依數值級距自動決定小數位數，避免 toFixed(0) 把 0.5 壓成 0 造成整排重複（比照 CircuitInfo Y 軸）
+                            callback: function (v) {
+                                if (v == null) return '';
+                                if (v === 0) return '0';
+                                var abs = Math.abs(v);
+                                if (abs >= 10) return v.toFixed(0);
+                                if (abs >= 1)  return (+v.toFixed(1)).toString();
+                                return (+v.toFixed(2)).toString();
+                            }
                         },
                         grid: { color: 'rgba(0,0,0,0.04)' }
                     }
