@@ -323,3 +323,46 @@
     margin-left: auto;
     white-space: nowrap;
 }
+
+/* 虛擬主要電表詳情：自動聚合來源葉子清單 */
+.em-agg-leaf-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.em-agg-leaf {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    background: #f8f9fa;
+    border-left: 3px solid #ffc107;
+    border-radius: 3px;
+}
+
+.em-agg-leaf-name {
+    font-size: 0.85rem;
+    color: #212529;
+}
+
+.em-agg-leaf-badges {
+    display: flex;
+    gap: 3px;
+    flex-shrink: 0;
+}
+
+.em-badge-agg-role {
+    font-size: 0.7rem;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: #d1e7dd;
+    color: #0f5132;
+}
+
+.em-badge-agg-role--miss {
+    background: #f8d7da;
+    color: #842029;
+}

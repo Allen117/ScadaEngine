@@ -154,21 +154,23 @@ public class EnergyMeterController : Controller
         if (dto.sign != 1 && dto.sign != -1)
             return BadRequest(new { success = false, message = "貢獻方向只能為 +1 或 -1" });
 
-        var isMainMeter = !string.IsNullOrWhiteSpace(dto.sid) && dto.isMainMeter;
+        // 主要電表：實體 / 虛擬皆可（虛擬主表由 EMS 頁自動聚合子孫葉子的 V/I/P/PF）
+        var isMainMeter = dto.isMainMeter;
+        // 電表資訊 4 SIDs：實體電表可獨立設定（無論是否為主要電表）；虛擬迴路強制 NULL
+        var isPhysical = !string.IsNullOrWhiteSpace(dto.sid);
         var nId = await _service.CreateAsync(new EnergyCircuitModel
         {
             szName = dto.name,
             nParentId = dto.parentId,
-            szSID = string.IsNullOrWhiteSpace(dto.sid) ? null : dto.sid,
+            szSID = isPhysical ? dto.sid : null,
             dMaxKwh = dto.maxKwh,
             nSign = dto.sign,
             isIsDemandEnabled = dto.isDemandEnabled,
             isIsMainMeter = isMainMeter,
-            // 電表資訊 4 SID 僅主要電表有意義 — 非主要電表一律存 NULL，不殘留
-            szVoltageSID = isMainMeter && !string.IsNullOrWhiteSpace(dto.voltageSid) ? dto.voltageSid : null,
-            szCurrentSID = isMainMeter && !string.IsNullOrWhiteSpace(dto.currentSid) ? dto.currentSid : null,
-            szPowerSID = isMainMeter && !string.IsNullOrWhiteSpace(dto.powerSid) ? dto.powerSid : null,
-            szPowerFactorSID = isMainMeter && !string.IsNullOrWhiteSpace(dto.powerFactorSid) ? dto.powerFactorSid : null,
+            szVoltageSID = isPhysical && !string.IsNullOrWhiteSpace(dto.voltageSid) ? dto.voltageSid : null,
+            szCurrentSID = isPhysical && !string.IsNullOrWhiteSpace(dto.currentSid) ? dto.currentSid : null,
+            szPowerSID = isPhysical && !string.IsNullOrWhiteSpace(dto.powerSid) ? dto.powerSid : null,
+            szPowerFactorSID = isPhysical && !string.IsNullOrWhiteSpace(dto.powerFactorSid) ? dto.powerFactorSid : null,
             szDescription = dto.description
         });
         return Ok(new { success = true, id = nId });
@@ -182,17 +184,19 @@ public class EnergyMeterController : Controller
         if (dto.sign != 1 && dto.sign != -1)
             return BadRequest(new { success = false, message = "貢獻方向只能為 +1 或 -1" });
 
-        var isMainMeter = !string.IsNullOrWhiteSpace(dto.sid) && dto.isMainMeter;
+        // 主要電表：實體 / 虛擬皆可（虛擬主表由 EMS 頁自動聚合子孫葉子的 V/I/P/PF）
+        var isMainMeter = dto.isMainMeter;
+        // 電表資訊 4 SIDs：實體電表可獨立設定（無論是否為主要電表）；虛擬迴路強制 NULL
+        var isPhysical = !string.IsNullOrWhiteSpace(dto.sid);
         var ok = await _service.UpdateAsync(nId, dto.name,
-            string.IsNullOrWhiteSpace(dto.sid) ? null : dto.sid,
+            isPhysical ? dto.sid : null,
             dto.maxKwh, dto.sign,
             dto.isDemandEnabled,
             isMainMeter,
-            // 電表資訊 4 SID 僅主要電表有意義 — 非主要電表一律存 NULL，不殘留
-            isMainMeter && !string.IsNullOrWhiteSpace(dto.voltageSid) ? dto.voltageSid : null,
-            isMainMeter && !string.IsNullOrWhiteSpace(dto.currentSid) ? dto.currentSid : null,
-            isMainMeter && !string.IsNullOrWhiteSpace(dto.powerSid) ? dto.powerSid : null,
-            isMainMeter && !string.IsNullOrWhiteSpace(dto.powerFactorSid) ? dto.powerFactorSid : null,
+            isPhysical && !string.IsNullOrWhiteSpace(dto.voltageSid) ? dto.voltageSid : null,
+            isPhysical && !string.IsNullOrWhiteSpace(dto.currentSid) ? dto.currentSid : null,
+            isPhysical && !string.IsNullOrWhiteSpace(dto.powerSid) ? dto.powerSid : null,
+            isPhysical && !string.IsNullOrWhiteSpace(dto.powerFactorSid) ? dto.powerFactorSid : null,
             dto.description);
         return ok ? Ok(new { success = true }) : NotFound(new { success = false, message = "節點不存在" });
     }

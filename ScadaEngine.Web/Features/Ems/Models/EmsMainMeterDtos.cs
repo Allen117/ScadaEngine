@@ -45,3 +45,16 @@ public class EmsYoyRowDto
     /// <summary>增減 %（相對去年同期）；去年為 0 或無資料時為 null，前端顯示 --</summary>
     public double? pctChange { get; set; }
 }
+
+/// <summary>GET /EMS/api/main-meter-values 回應 — 虛擬主要電表的 V/I/P/PF 聚合值（實體主表不走此 API）</summary>
+public class EmsMainMeterValuesDto
+{
+    /// <summary>電壓（V）— 取第一顆有 VoltageSID 的葉子；無綁定或全 STALE/BAD 回 null</summary>
+    public double? voltage { get; set; }
+    /// <summary>電流（A）— Σ (I_i × sign_i)；無有效樣本回 null</summary>
+    public double? current { get; set; }
+    /// <summary>功率（單位取自子孫葉子 PowerSID 的 unit）— Σ (P_i × sign_i)；無有效樣本回 null</summary>
+    public double? power { get; set; }
+    /// <summary>功因（0~1）— ΣP_pf / √(ΣP_pf² + ΣQ²)，僅同時有 P/PF 的葉子入計；無有效樣本回 null</summary>
+    public double? powerFactor { get; set; }
+}

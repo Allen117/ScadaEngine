@@ -10,7 +10,8 @@
     var _metas = []; // 與 chart labels 同步的狀態陣列：'ok' | 'bad' | 'missing' | 'future'
 
     // 主要電表資訊卡狀態
-    var _mmFields = []; // [{ key:'Voltage', sid, unit }] — 只留有綁定的欄位
+    var _mmMode = null;   // 'realtime-by-sid'（實體主表）| 'aggregated'（虛擬主表）
+    var _mmFields = [];   // 實體：[{ key:'Voltage', sid }]；虛擬：[{ key:'Voltage' }] — 純 key，值由聚合 API 給
     var _mmTimer = null;
 
     // ── 初始化 ───────────────────────────────────────────────
@@ -32,7 +33,10 @@
     }
 
     // ── 主要電表資訊卡 ───────────────────────────────────────
-    // 載入一次綁定資訊（節點名 + 4 組 sid/pointName/unit），即時值走既有 by-sids 輪詢
+    // 載入一次綁定資訊（節點名 + 4 組資料），依 mode 決定即時值來源：
+    //   mode='realtime-by-sid'（實體主表）→ 走既有 /api/realtime/by-sids
+    //   mode='aggregated'（虛擬主表）→ 走新的 /EMS/api/main-meter-values（後端聚合）
+    // 舊 payload 無 mode 欄位時 fallback 為 by-sid（向下相容）
     function loadMainMeterInfo() {
         var wrap = document.getElementById('mainMeterCardWrap');
         if (!wrap) return;
@@ -44,7 +48,9 @@
                 if (!info.hasMainMeter) return; // 無主要電表 → 整卡隱藏
 
                 document.getElementById('mainMeterName').textContent = info.name || '';
+                _mmMode = info.mode || 'realtime-by-sid';
                 _mmFields = [];
+
                 [
                     { key: 'Voltage', binding: info.voltage },
                     { key: 'Current', binding: info.current },
@@ -54,21 +60,41 @@
                     var elName = document.getElementById('mm' + f.key + 'Name');
                     var elValue = document.getElementById('mm' + f.key + 'Value');
                     var elUnit = document.getElementById('mm' + f.key + 'Unit');
-                    if (f.binding && f.binding.sid) {
-                        elName.textContent = f.binding.pointName || f.binding.sid;
-                        elUnit.textContent = f.binding.unit || '';
-                        _mmFields.push({ key: f.key, sid: f.binding.sid });
+
+                    if (_mmMode === 'aggregated') {
+                        // 虛擬主表：不顯示點位名（來源是子孫葉子聚合，寫死名稱反而誤導），僅顯示數值 + 單位
+                        if (f.binding && f.binding.unit != null) {
+                            elName.textContent = '';
+                            elUnit.textContent = f.binding.unit || '';
+                            _mmFields.push({ key: f.key });
+                        } else {
+                            elName.textContent = '';
+                            elValue.textContent = szNotBound;
+                            elValue.style.fontSize = '1rem';
+                            elValue.style.color = '#9e9e9e';
+                            elUnit.textContent = '';
+                        }
                     } else {
-                        elName.textContent = '';
-                        elValue.textContent = szNotBound;
-                        elValue.style.fontSize = '1rem';
-                        elValue.style.color = '#9e9e9e';
-                        elUnit.textContent = '';
+                        // 實體主表：既有行為
+                        if (f.binding && f.binding.sid) {
+                            elName.textContent = f.binding.pointName || f.binding.sid;
+                            elUnit.textContent = f.binding.unit || '';
+                            _mmFields.push({ key: f.key, sid: f.binding.sid });
+                        } else {
+                            elName.textContent = '';
+                            elValue.textContent = szNotBound;
+                            elValue.style.fontSize = '1rem';
+                            elValue.style.color = '#9e9e9e';
+                            elUnit.textContent = '';
+                        }
                     }
                 });
 
                 wrap.style.display = '';
-                if (_mmFields.length > 0) refreshMainMeter();
+                if (_mmFields.length > 0) {
+                    if (_mmMode === 'aggregated') refreshMainMeterAggregated();
+                    else refreshMainMeter();
+                }
             })
             .catch(function (e) { console.error('載入主要電表資訊失敗', e); });
     }
@@ -94,6 +120,37 @@
           .finally(function () {
               _mmTimer = setTimeout(refreshMainMeter, MAIN_METER_REFRESH_MS);
           });
+    }
+
+    // 虛擬主表：拉後端聚合值（4 個 number|null）
+    function refreshMainMeterAggregated() {
+        clearTimeout(_mmTimer);
+        fetch('/EMS/api/main-meter-values')
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                // 欄位名對應 DTO：voltage / current / power / powerFactor
+                var mapping = {
+                    'Voltage': res.voltage,
+                    'Current': res.current,
+                    'Power': res.power,
+                    'PowerFactor': res.powerFactor
+                };
+                _mmFields.forEach(function (f) {
+                    var el = document.getElementById('mm' + f.key + 'Value');
+                    var v = mapping[f.key];
+                    if (v == null) {
+                        el.textContent = '--';
+                    } else if (f.key === 'PowerFactor') {
+                        el.textContent = v.toFixed(3);
+                    } else {
+                        el.textContent = (Math.round(v * 100) / 100).toFixed(2);
+                    }
+                });
+            })
+            .catch(function (e) { console.error('刷新主要電表聚合值失敗', e); })
+            .finally(function () {
+                _mmTimer = setTimeout(refreshMainMeterAggregated, MAIN_METER_REFRESH_MS);
+            });
     }
 
     // ── 載入迴路下拉 ─────────────────────────────────────────

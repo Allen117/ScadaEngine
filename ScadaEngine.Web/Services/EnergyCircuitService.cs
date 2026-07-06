@@ -300,6 +300,7 @@ public class EnergyCircuitService
     /// <summary>
     /// 展開指定迴路下的所有葉子（綁 SID 的節點）。虛擬迴路會遞迴展開。
     /// 每筆附帶從查詢根到該葉子的 sign 乘積（不含查詢根自己的 sign — 查詢根對自己沒有方向意義）。
+    /// 也帶回葉子自身的 V/I/P/PF 電表資訊 SIDs，供虛擬主要電表聚合使用（一般報表計算會忽略這 4 欄）。
     /// </summary>
     public async Task<List<LeafWithSign>> GetLeavesUnderAsync(int nCircuitId)
     {
@@ -307,28 +308,37 @@ public class EnergyCircuitService
         // 遞迴 CTE：anchor 為查詢根，EffectiveSign 起始 1（不含自己的 sign）；
         // 子層 EffectiveSign = 父 EffectiveSign × 自己的 Sign。
         var rows = await conn.QueryAsync<(int nId, string szName, int? nParentId, int nSortOrder,
-            string? szSID, double? dMaxKwh, int nSign, string? szDescription,
-            DateTime dtCreatedAt, DateTime? dtUpdatedAt, int nEffectiveSign)>(@"
+            string? szSID, double? dMaxKwh, int nSign,
+            string? szVoltageSID, string? szCurrentSID, string? szPowerSID, string? szPowerFactorSID,
+            string? szDescription, DateTime dtCreatedAt, DateTime? dtUpdatedAt, int nEffectiveSign)>(@"
             ;WITH CTE AS (
-                SELECT Id, Name, ParentId, SortOrder, SID, MaxKwh, [Sign], Description, CreatedAt, UpdatedAt,
+                SELECT Id, Name, ParentId, SortOrder, SID, MaxKwh, [Sign],
+                       VoltageSID, CurrentSID, PowerSID, PowerFactorSID,
+                       Description, CreatedAt, UpdatedAt,
                        CAST(1 AS INT) AS EffectiveSign
                 FROM   EnergyCircuit WHERE Id = @Id
                 UNION ALL
-                SELECT t.Id, t.Name, t.ParentId, t.SortOrder, t.SID, t.MaxKwh, t.[Sign], t.Description, t.CreatedAt, t.UpdatedAt,
+                SELECT t.Id, t.Name, t.ParentId, t.SortOrder, t.SID, t.MaxKwh, t.[Sign],
+                       t.VoltageSID, t.CurrentSID, t.PowerSID, t.PowerFactorSID,
+                       t.Description, t.CreatedAt, t.UpdatedAt,
                        CAST(c.EffectiveSign * t.[Sign] AS INT) AS EffectiveSign
                 FROM   EnergyCircuit t INNER JOIN CTE c ON t.ParentId = c.Id
             )
-            SELECT  Id          AS nId,
-                    Name        AS szName,
-                    ParentId    AS nParentId,
-                    SortOrder   AS nSortOrder,
-                    SID         AS szSID,
-                    MaxKwh      AS dMaxKwh,
-                    [Sign]      AS nSign,
-                    Description AS szDescription,
-                    CreatedAt   AS dtCreatedAt,
-                    UpdatedAt   AS dtUpdatedAt,
-                    EffectiveSign AS nEffectiveSign
+            SELECT  Id             AS nId,
+                    Name           AS szName,
+                    ParentId       AS nParentId,
+                    SortOrder      AS nSortOrder,
+                    SID            AS szSID,
+                    MaxKwh         AS dMaxKwh,
+                    [Sign]         AS nSign,
+                    VoltageSID     AS szVoltageSID,
+                    CurrentSID     AS szCurrentSID,
+                    PowerSID       AS szPowerSID,
+                    PowerFactorSID AS szPowerFactorSID,
+                    Description    AS szDescription,
+                    CreatedAt      AS dtCreatedAt,
+                    UpdatedAt      AS dtUpdatedAt,
+                    EffectiveSign  AS nEffectiveSign
             FROM    CTE
             WHERE   SID IS NOT NULL AND LEN(SID) > 0",
             new { Id = nCircuitId });
@@ -343,6 +353,10 @@ public class EnergyCircuitService
                 szSID = r.szSID,
                 dMaxKwh = r.dMaxKwh,
                 nSign = r.nSign,
+                szVoltageSID = r.szVoltageSID,
+                szCurrentSID = r.szCurrentSID,
+                szPowerSID = r.szPowerSID,
+                szPowerFactorSID = r.szPowerFactorSID,
                 szDescription = r.szDescription,
                 dtCreatedAt = r.dtCreatedAt,
                 dtUpdatedAt = r.dtUpdatedAt

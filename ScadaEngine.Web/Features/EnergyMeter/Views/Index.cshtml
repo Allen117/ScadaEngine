@@ -94,6 +94,17 @@
                     <small class="text-muted d-block mt-1">用於建立「總表 − 已分配子表」這類算式；根節點不適用</small>
                 </div>
 
+                <!-- 主要電表勾選：實體 / 虛擬皆可（虛擬主表由 EMS 頁自動聚合子孫葉子的 V/I/P/PF） -->
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="emMainMeter">
+                        <label class="form-check-label fw-semibold" for="emMainMeter">
+                            <i class="fas fa-star me-1"></i>主要電表
+                        </label>
+                    </div>
+                    <small class="text-muted d-block mt-1">全系統僅能有一顆主要電表；勾選後原本的主要電表會自動取消。虛擬迴路作主表時 V/I/P/PF 由子孫實體電表自動聚合</small>
+                </div>
+
                 <div class="mb-3" id="emMeterFields" style="display:none;">
                     <label class="form-label fw-semibold"><i class="fas fa-server me-1"></i>通訊設備</label>
                     <select class="form-select form-select-sm" id="emDevice">
@@ -123,14 +134,6 @@
                             <i class="fas fa-tachometer-alt me-1"></i>啟用需量計算
                         </label>
                     </div>
-
-                    <div class="form-check mt-2">
-                        <input class="form-check-input" type="checkbox" id="emMainMeter">
-                        <label class="form-check-label fw-semibold" for="emMainMeter">
-                            <i class="fas fa-star me-1"></i>主要電表
-                        </label>
-                    </div>
-                    <small class="text-muted d-block mt-1">全系統僅能有一顆主要電表；勾選後原本的主要電表會自動取消</small>
 
                     <div id="emMeterInfoRow" class="mt-2" style="display:none;">
                         <button type="button" class="btn btn-sm btn-outline-primary" onclick="window._em.openMeterInfoModal()">

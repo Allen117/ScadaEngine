@@ -292,7 +292,8 @@
                         : '<span class="text-muted">否</span>'}
                 </div>
             </div>
-            ${node.isMainMeter ? renderMeterInfoDetailRows(node) : ''}` : ''}
+            ${renderMeterInfoDetailRows(node)}` : ''}
+            ${(!isMeter && node.isMainMeter) ? renderVirtualMainAggregationRows(node) : ''}
             <div class="em-detail-row">
                 <div class="em-detail-label">說明</div>
                 <div class="em-detail-value">${node.description ? escapeHtml(node.description) : '<span class="text-muted">無</span>'}</div>
@@ -311,8 +312,10 @@
         document.getElementById('detailArea').innerHTML = html;
     }
 
-    // 詳情區：主要電表的 電壓/電流/功率/功因 綁定列
+    // 詳情區：實體電表的 電壓/電流/功率/功因 綁定列（至少綁一個角色才渲染，避免整頁 4 個「未設定」）
     function renderMeterInfoDetailRows(node) {
+        const hasAny = MI_ROLES.some(r => node[r.key]);
+        if (!hasAny) return '';
         return MI_ROLES.map(r => {
             const szSid = node[r.key];
             const opt = pointBySid(szSid);
@@ -325,6 +328,60 @@
                 <div class="em-detail-value">${szVal}</div>
             </div>`;
         }).join('');
+    }
+
+    // 詳情區：虛擬主要電表的「自動聚合」提示 + 參與聚合的子孫葉子清單（唯讀，方便驗證來源）
+    function renderVirtualMainAggregationRows(node) {
+        const leaves = collectDescendantLeaves(node.id);
+        if (leaves.length === 0) {
+            return `<div class="em-detail-row">
+                <div class="em-detail-label">電表資訊</div>
+                <div class="em-detail-value text-muted">
+                    <i class="fas fa-magic me-1"></i>自動聚合（子孫尚無實體電表 — EMS 卡片將顯示「--」）
+                </div>
+            </div>`;
+        }
+        const rowsHtml = leaves.map(l => {
+            const badges = MI_ROLES.map(r => l.node[r.key]
+                ? `<span class="em-badge-agg-role" title="${escapeHtml(r.label)}"><i class="fas fa-check me-1"></i>${escapeHtml(r.label)}</span>`
+                : `<span class="em-badge-agg-role em-badge-agg-role--miss" title="未綁${escapeHtml(r.label)}"><i class="fas fa-times me-1"></i>${escapeHtml(r.label)}</span>`
+            ).join('');
+            const signBadge = l.effectiveSign === -1
+                ? '<span class="em-sign-neg ms-1" title="反向">−</span>' : '';
+            return `<div class="em-agg-leaf">
+                <div class="em-agg-leaf-name">
+                    <i class="fas fa-bolt text-warning me-1"></i>${escapeHtml(l.node.name)}${signBadge}
+                </div>
+                <div class="em-agg-leaf-badges">${badges}</div>
+            </div>`;
+        }).join('');
+        return `<div class="em-detail-row">
+            <div class="em-detail-label">電表資訊</div>
+            <div class="em-detail-value">
+                <div class="text-muted small mb-1">
+                    <i class="fas fa-magic me-1"></i>自動聚合（功率/電流：Σ 帶 sign，電壓：取第一顆，功因：ΣP/ΣQ 反推）
+                </div>
+                <div class="em-agg-leaf-list">${rowsHtml}</div>
+            </div>
+        </div>`;
+    }
+
+    // 遞迴收集子孫葉子（綁 SID 的節點），並累乘 effective sign（不含查詢根本身）
+    function collectDescendantLeaves(nRootId) {
+        const results = [];
+        function walk(nParentId, nParentEffectiveSign) {
+            const children = g_nodes.filter(n => n.parentId === nParentId);
+            for (const child of children) {
+                const nEff = nParentEffectiveSign * (child.sign === -1 ? -1 : 1);
+                if (child.sid) {
+                    results.push({ node: child, effectiveSign: nEff });
+                } else {
+                    walk(child.id, nEff);
+                }
+            }
+        }
+        walk(nRootId, 1);
+        return results;
     }
 
     // ============ Modal 開啟 ============
@@ -396,11 +453,10 @@
         updateMeterInfoRowVisibility();
     }
 
-    // 「電表資訊設定」按鈕：實體電表 + 勾選主要電表才顯示
+    // 「電表資訊設定」按鈕：實體電表始終顯示（無論是否為主要電表）— 虛擬主表由子孫實體電表的 V/I/P/PF 自動聚合，故虛擬迴路本身不需綁點位
     function updateMeterInfoRowVisibility() {
         const isMeter = document.getElementById('emTypeMeter').checked;
-        const isMain = document.getElementById('emMainMeter').checked;
-        document.getElementById('emMeterInfoRow').style.display = (isMeter && isMain) ? '' : 'none';
+        document.getElementById('emMeterInfoRow').style.display = isMeter ? '' : 'none';
         updateMeterInfoSummary();
     }
 
@@ -431,7 +487,8 @@
         const szSid = isMeter ? document.getElementById('emSid').value : '';
         const nMaxKwh = isMeter ? parseThousand(document.getElementById('emMaxKwh').value) : null;
         const isDemandEnabled = isMeter && document.getElementById('emDemandEnabled').checked;
-        const isMainMeter = isMeter && document.getElementById('emMainMeter').checked;
+        // 主要電表：實體 / 虛擬皆可（虛擬主表由 EMS 頁自動聚合）
+        const isMainMeter = document.getElementById('emMainMeter').checked;
         const szDesc = document.getElementById('emDesc').value;
         const isRoot = szParentId === '';
         const nSign = isRoot ? 1 : (document.getElementById('emSignNeg').checked ? -1 : 1);
@@ -439,6 +496,7 @@
         if (!szName) { alert('請輸入名稱'); return; }
         if (isMeter && !szSid) { alert('實體電表必須選擇 SID'); return; }
 
+        // 電表資訊 4 SIDs：實體電表可獨立設定（無論是否為主要電表）；虛擬迴路一律 null
         const dto = {
             name: szName,
             sid: szSid || null,
@@ -446,10 +504,10 @@
             sign: nSign,
             isDemandEnabled: isDemandEnabled,
             isMainMeter: isMainMeter,
-            voltageSid: isMainMeter ? g_meterInfo.voltageSid : null,
-            currentSid: isMainMeter ? g_meterInfo.currentSid : null,
-            powerSid: isMainMeter ? g_meterInfo.powerSid : null,
-            powerFactorSid: isMainMeter ? g_meterInfo.powerFactorSid : null,
+            voltageSid: isMeter ? g_meterInfo.voltageSid : null,
+            currentSid: isMeter ? g_meterInfo.currentSid : null,
+            powerSid: isMeter ? g_meterInfo.powerSid : null,
+            powerFactorSid: isMeter ? g_meterInfo.powerFactorSid : null,
             description: szDesc || null
         };
 

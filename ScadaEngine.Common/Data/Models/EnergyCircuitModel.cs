@@ -14,15 +14,15 @@ public class EnergyCircuitModel
     /// <summary>對父節點的貢獻方向：+1=正向加入、-1=反向扣減。根節點固定 +1</summary>
     public int nSign { get; set; } = 1;
     public bool isIsDemandEnabled { get; set; }
-    /// <summary>主要電表標記 — 全系統唯一（應用層保證）；僅實體電表（綁 SID）有意義</summary>
+    /// <summary>主要電表標記 — 全系統唯一（應用層保證）；實體 / 虛擬皆可（虛擬主表由 EMS 頁自動聚合子孫 V/I/P/PF）</summary>
     public bool isIsMainMeter { get; set; }
-    /// <summary>電表資訊 — 電壓點位 SID；僅主要電表有意義</summary>
+    /// <summary>電表資訊 — 電壓點位 SID；僅實體電表可存（無論是否為主要電表）</summary>
     public string? szVoltageSID { get; set; }
-    /// <summary>電表資訊 — 電流點位 SID；僅主要電表有意義</summary>
+    /// <summary>電表資訊 — 電流點位 SID；僅實體電表可存（無論是否為主要電表）</summary>
     public string? szCurrentSID { get; set; }
-    /// <summary>電表資訊 — 功率點位 SID；僅主要電表有意義</summary>
+    /// <summary>電表資訊 — 功率點位 SID；僅實體電表可存（無論是否為主要電表）</summary>
     public string? szPowerSID { get; set; }
-    /// <summary>電表資訊 — 功因點位 SID；僅主要電表有意義</summary>
+    /// <summary>電表資訊 — 功因點位 SID；僅實體電表可存（無論是否為主要電表）</summary>
     public string? szPowerFactorSID { get; set; }
     public string? szDescription { get; set; }
     public DateTime dtCreatedAt { get; set; }

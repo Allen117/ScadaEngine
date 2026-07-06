@@ -10,15 +10,15 @@ public class CreateCircuitDto
     /// <summary>對父貢獻方向：+1 / -1，預設 +1。根節點伺服器端會強制覆寫為 +1</summary>
     public int sign { get; set; } = 1;
     public bool isDemandEnabled { get; set; }
-    /// <summary>主要電表標記 — 全系統唯一；僅實體電表（綁 SID）有效，虛擬迴路伺服器端強制 false</summary>
+    /// <summary>主要電表標記 — 全系統唯一（實體 / 虛擬皆可；虛擬主表的 V/I/P/PF 由子孫葉子自動聚合）</summary>
     public bool isMainMeter { get; set; }
-    /// <summary>電表資訊 — 電壓點位 SID；非主要電表伺服器端強制 NULL</summary>
+    /// <summary>電表資訊 — 電壓點位 SID；僅實體電表可存，虛擬迴路伺服器端強制 NULL</summary>
     public string? voltageSid { get; set; }
-    /// <summary>電表資訊 — 電流點位 SID；非主要電表伺服器端強制 NULL</summary>
+    /// <summary>電表資訊 — 電流點位 SID；僅實體電表可存，虛擬迴路伺服器端強制 NULL</summary>
     public string? currentSid { get; set; }
-    /// <summary>電表資訊 — 功率點位 SID；非主要電表伺服器端強制 NULL</summary>
+    /// <summary>電表資訊 — 功率點位 SID；僅實體電表可存，虛擬迴路伺服器端強制 NULL</summary>
     public string? powerSid { get; set; }
-    /// <summary>電表資訊 — 功因點位 SID；非主要電表伺服器端強制 NULL</summary>
+    /// <summary>電表資訊 — 功因點位 SID；僅實體電表可存，虛擬迴路伺服器端強制 NULL</summary>
     public string? powerFactorSid { get; set; }
     public string? description { get; set; }
 }
@@ -32,15 +32,15 @@ public class UpdateCircuitDto
     /// <summary>對父貢獻方向：+1 / -1。根節點伺服器端會強制覆寫為 +1</summary>
     public int sign { get; set; } = 1;
     public bool isDemandEnabled { get; set; }
-    /// <summary>主要電表標記 — 全系統唯一；僅實體電表（綁 SID）有效，虛擬迴路伺服器端強制 false</summary>
+    /// <summary>主要電表標記 — 全系統唯一（實體 / 虛擬皆可；虛擬主表的 V/I/P/PF 由子孫葉子自動聚合）</summary>
     public bool isMainMeter { get; set; }
-    /// <summary>電表資訊 — 電壓點位 SID；非主要電表伺服器端強制 NULL</summary>
+    /// <summary>電表資訊 — 電壓點位 SID；僅實體電表可存，虛擬迴路伺服器端強制 NULL</summary>
     public string? voltageSid { get; set; }
-    /// <summary>電表資訊 — 電流點位 SID；非主要電表伺服器端強制 NULL</summary>
+    /// <summary>電表資訊 — 電流點位 SID；僅實體電表可存，虛擬迴路伺服器端強制 NULL</summary>
     public string? currentSid { get; set; }
-    /// <summary>電表資訊 — 功率點位 SID；非主要電表伺服器端強制 NULL</summary>
+    /// <summary>電表資訊 — 功率點位 SID；僅實體電表可存，虛擬迴路伺服器端強制 NULL</summary>
     public string? powerSid { get; set; }
-    /// <summary>電表資訊 — 功因點位 SID；非主要電表伺服器端強制 NULL</summary>
+    /// <summary>電表資訊 — 功因點位 SID；僅實體電表可存，虛擬迴路伺服器端強制 NULL</summary>
     public string? powerFactorSid { get; set; }
     public string? description { get; set; }
 }

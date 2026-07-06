@@ -156,6 +156,8 @@ builder.Services.AddScoped<ScadaEngine.Web.Services.WaterCircuitService>();
 // 月結週期（期別）— 全系統月粒度報表的唯一期界來源（內含 static 快取，寫入時失效）
 builder.Services.AddScoped<ScadaEngine.Web.Services.BillingPeriodService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyReportService>();
+// 虛擬主要電表 V/I/P/PF 聚合器（依 EnergyCircuitService + MqttRealtimeSubscriberService；Scoped 對齊 EnergyCircuitService）
+builder.Services.AddScoped<ScadaEngine.Web.Services.MainMeterAggregationService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.RefrigerationTonReportService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyDeclarationService>();
 // 電費設定 — 台電電價方案（SystemSettings JSON + Setting/tariff-taipower-defaults.json seed）

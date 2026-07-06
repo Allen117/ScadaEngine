@@ -17,17 +17,20 @@ public class EmsController : Controller
     private readonly EnergyCircuitService _circuitService;
     private readonly EnergyReportService _reportService;
     private readonly BillingPeriodService _billingPeriodService;
+    private readonly MainMeterAggregationService _aggregation;
 
     public EmsController(
         IDataRepository repo,
         EnergyCircuitService circuitService,
         EnergyReportService reportService,
-        BillingPeriodService billingPeriodService)
+        BillingPeriodService billingPeriodService,
+        MainMeterAggregationService aggregation)
     {
         _repo                 = repo;
         _circuitService       = circuitService;
         _reportService        = reportService;
         _billingPeriodService = billingPeriodService;
+        _aggregation          = aggregation;
     }
 
     [HttpGet("/EMS")]
@@ -90,7 +93,11 @@ public class EmsController : Controller
         }));
     }
 
-    /// <summary>取得主要電表資訊卡資料 — 節點名 + 電壓/電流/功率/功因 綁定點位（unit 取點位本身）；即時值由前端走既有 /api/realtime/by-sids 輪詢</summary>
+    /// <summary>
+    /// 取得主要電表資訊卡資料。
+    /// 實體主表 → mode='realtime-by-sid'，回 4 組 { sid, pointName, unit }（前端走 /api/realtime/by-sids 輪詢）；
+    /// 虛擬主表 → mode='aggregated'，回 4 組 { unit }（前端走 /EMS/api/main-meter-values 輪詢聚合值）。
+    /// </summary>
     [HttpGet("/EMS/api/main-meter-info")]
     public async Task<IActionResult> GetMainMeterInfo()
     {
@@ -107,6 +114,40 @@ public class EmsController : Controller
         foreach (var p in calc) lookup.TryAdd(p.szSID, (p.szName, p.szUnit ?? string.Empty));
         foreach (var p in dbPts) lookup.TryAdd(p.szSID, (p.szName, p.szUnit ?? string.Empty));
 
+        // 虛擬主表：unit 取自「參與聚合的第一顆子孫葉子」對應角色的 SID（無綁定 → unit=""）
+        bool isVirtualMain = string.IsNullOrWhiteSpace(main.szSID);
+        if (isVirtualMain)
+        {
+            var leaves = await _circuitService.GetLeavesUnderAsync(main.nId);
+            var ordered = leaves
+                .OrderBy(l => l.Leaf.nSortOrder)
+                .ThenBy(l => l.Leaf.nId)
+                .ToList();
+
+            string FirstUnit(Func<Common.Data.Models.EnergyCircuitModel, string?> pickSid)
+            {
+                foreach (var l in ordered)
+                {
+                    var szSid = pickSid(l.Leaf);
+                    if (!string.IsNullOrWhiteSpace(szSid) && lookup.TryGetValue(szSid, out var v))
+                        return v.szUnit;
+                }
+                return string.Empty;
+            }
+
+            return Ok(new
+            {
+                hasMainMeter = true,
+                mode        = "aggregated",
+                name        = main.szName,
+                voltage     = new { unit = FirstUnit(x => x.szVoltageSID) },
+                current     = new { unit = FirstUnit(x => x.szCurrentSID) },
+                power       = new { unit = FirstUnit(x => x.szPowerSID) },
+                powerFactor = new { unit = FirstUnit(x => x.szPowerFactorSID) }
+            });
+        }
+
+        // 實體主表：維持既有 by-sid 語意
         object? Resolve(string? szSid)
         {
             if (string.IsNullOrWhiteSpace(szSid)) return null;
@@ -118,12 +159,27 @@ public class EmsController : Controller
         return Ok(new
         {
             hasMainMeter = true,
+            mode        = "realtime-by-sid",
             name        = main.szName,
             voltage     = Resolve(main.szVoltageSID),
             current     = Resolve(main.szCurrentSID),
             power       = Resolve(main.szPowerSID),
             powerFactor = Resolve(main.szPowerFactorSID)
         });
+    }
+
+    /// <summary>
+    /// 虛擬主要電表的 V/I/P/PF 聚合值（每 5 秒由 ems.js 輪詢一次）。
+    /// 實體主表不走此 API — 呼叫時回 hasMainMeter=false 或 hasMainMeter=true 但無值（前端不會呼叫，此為防呆）。
+    /// </summary>
+    [HttpGet("/EMS/api/main-meter-values")]
+    public async Task<IActionResult> GetMainMeterValues()
+    {
+        var main = await _circuitService.GetMainMeterAsync();
+        if (main == null || !string.IsNullOrWhiteSpace(main.szSID))
+            return Ok(new EmsMainMeterValuesDto());
+
+        return Ok(await _aggregation.ComputeAsync(main.nId));
     }
 
     /// <summary>取得完整迴路階層（flat 清單，前端組樹）</summary>
