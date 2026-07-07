@@ -31,8 +31,8 @@ const WIDGET_DEFS = {
             arrCells: null,
             arrColDecimals: null,
             // ─ 表格大小由結構決定（plan 2026-06-01）─
-            nDefaultRowH: 20,            // 預設列高（含 header）
-            nDefaultColW: 80,            // 預設欄寬
+            nDefaultRowH: 30,            // 預設列高（含 header）
+            nDefaultColW: 100,           // 預設欄寬
             arrColWidths: null,          // 長度 = nCols，null = 用 nDefaultColW
             arrRowHeights: null,         // 長度 = nRows（僅資料列；header 永遠用 nDefaultRowH）
             bTableSizeLocked: false      // false = 沿用舊 width/height（舊檔遷移）；true = 由 computeTableWidgetSize 接管
@@ -311,12 +311,12 @@ const TABLE_STYLE_PRESETS = {
 // ── 儲存格預設值 ──
 function _defaultHeaderCell(ci) {
     // 第一列（表頭）預設置中
-    return { szText: '', szFontColor: '#fff', szFontWeight: '500', szAlign: 'center', nFontSize: 14 };
+    return { szText: '', szFontColor: '#fff', szFontWeight: '500', szAlign: 'center', nFontSize: 16 };
 }
 function _defaultDataCell(ri, ci) {
     return {
-        // 第一欄預設置中，其餘資料欄靠左
-        szText: '', szFontColor: '#444', szFontWeight: 'normal', szAlign: (ci === 0 ? 'center' : 'left'), nFontSize: 14,
+        // 第一欄預設置中，其餘資料欄靠右（數值對齊）
+        szText: '', szFontColor: '#444', szFontWeight: 'normal', szAlign: (ci === 0 ? 'center' : 'right'), nFontSize: 16,
         szSid: '', szPointName: '', szPointType: 'AI',
         szOnLabel: 'ON', szOffLabel: 'OFF',
         szHighColor: '#dc3545', szLowColor: '#fd7e14',

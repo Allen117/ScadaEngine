@@ -152,34 +152,33 @@
         const row = props.arrCells[nRowIdx];
         if (!row) return { nFilled: 0, nMissingPoint: 0 };
 
-        let nMissingPoint = 0;
-        const arrPointsToPlace = [];
-        for (const a of assignments) {
-            if (a.point) arrPointsToPlace.push(a);
-            else         nMissingPoint++;
-        }
-
         let nFilled = 0;
-        let nQueueIdx = 0;
-        // 自「點選欄位」向右掃描填入（不從表格第一欄起算）
-        for (let ci = nPickedCol; ci < row.length && nQueueIdx < arrPointsToPlace.length; ci++) {
-            if (ci === nPickedCol) continue;            // 跳過 picked cell（已綁定）
-            const cell = row[ci];
-            if (!cell) continue;
-            if (cell.szSid) continue;                   // 已綁定 — 不覆蓋
-            const a = arrPointsToPlace[nQueueIdx++];
-            const p = a.point;
-            cell.szSid       = p.szSid;
-            cell.szPointName = p.szDeviceLabel ? (p.szDeviceLabel + ' / ' + p.szName) : p.szName;
-            // 表格 DI Cell 綁定 SID 時，繼承同 SID 已存在的 ON/OFF 標籤
-            if (cell.szPointType === 'DI' && typeof _findDiLabelsForSid === 'function') {
-                const diLabels = _findDiLabelsForSid(p.szSid);
-                if (diLabels) {
-                    cell.szOnLabel  = diLabels.szOnLabel;
-                    cell.szOffLabel = diLabels.szOffLabel;
+        let nMissingPoint = 0;
+        // 自「點選欄位」右鄰起，逐一為每個角色（含未找到者）配一個欄位：
+        // 找到 → 寫入；未找到 → 預留空欄（不覆蓋、不讓後續角色前移補位）
+        let ci = nPickedCol + 1;
+        for (const a of assignments) {
+            // 找下一個可用欄位：存在且未綁定（已綁定的不消耗角色配額）
+            while (ci < row.length && (!row[ci] || row[ci].szSid)) ci++;
+            if (ci >= row.length) break;                // 欄位用盡，其餘角色不再處理
+            if (a.point) {
+                const cell = row[ci];
+                const p = a.point;
+                cell.szSid       = p.szSid;
+                cell.szPointName = p.szDeviceLabel ? (p.szDeviceLabel + ' / ' + p.szName) : p.szName;
+                // 表格 DI Cell 綁定 SID 時，繼承同 SID 已存在的 ON/OFF 標籤
+                if (cell.szPointType === 'DI' && typeof _findDiLabelsForSid === 'function') {
+                    const diLabels = _findDiLabelsForSid(p.szSid);
+                    if (diLabels) {
+                        cell.szOnLabel  = diLabels.szOnLabel;
+                        cell.szOffLabel = diLabels.szOffLabel;
+                    }
                 }
+                nFilled++;
+            } else {
+                nMissingPoint++;                        // 預留此空欄，不寫入
             }
-            nFilled++;
+            ci++;                                        // 無論找到與否，前進一欄
         }
         return { nFilled, nMissingPoint };
     }

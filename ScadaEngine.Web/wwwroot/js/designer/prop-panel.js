@@ -1023,11 +1023,9 @@ function onTableCellClick(widgetEl, nRow, nCol) {
     const sel = widgetEl.querySelector(`.w-table [data-row="${nRow}"][data-col="${nCol}"]`);
     if (sel) sel.classList.add('selected-cell');
     renderTableCellPropPanel(widgetEl, nRow, nCol);
-    // 點選第一欄時，自動 focus 屬性面板的文字內容欄，便於直接輸入標籤
-    if (nCol === 0) {
-        const inp = document.getElementById('cellTextInput');
-        if (inp) { inp.focus(); inp.select(); }
-    }
+    // 點選任一格（含標題列與資料格）都自動 focus 屬性面板的文字內容欄，便於直接輸入標籤
+    const inp = document.getElementById('cellTextInput');
+    if (inp) { inp.focus(); inp.select(); }
 }
 
 function renderTableCellPropPanel(el, nRow, nCol) {
