@@ -6,6 +6,10 @@ main { padding: 0 !important; min-height: 0 !important; }
 .designer-outer {
     display: flex;
     flex-direction: column;
+    /* 釘在視窗高（沿用 _Layout main 的 100vh-140px 基準）：
+       讓內部 flex/overflow 高度鏈確定，元件過多時由各分類內捲，
+       而非撐高面板導致瀏覽器視窗長出整體捲軸 */
+    height: calc(100vh - 140px);
     overflow: hidden;
     background: #1e1e1e;
 }
@@ -35,9 +39,9 @@ main { padding: 0 !important; min-height: 0 !important; }
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
-    overflow-y: auto;
-    transition: width .25s ease, opacity .25s ease;
+    /* 面板本身不捲動（避免 100% 時整體多一條捲軸）；由各分類 .widget-cat-items 內部自捲 */
     overflow: hidden;
+    transition: width .25s ease, opacity .25s ease;
 }
 .component-panel.collapsed {
     width: 0;
@@ -101,6 +105,38 @@ main { padding: 0 !important; min-height: 0 !important; }
 
 .widget-lib-item i { font-size: 22px; }
 .widget-lib-item span { font-size: 11px; }
+
+/* ── 元件庫分類（三類：顯示 / 點位與控制 / 設備與動畫）──
+   各類自成一區並獨立捲動：當某類元件過多（或瀏覽器放大）超出該區高度時，
+   該類自帶 scrollbar，不擠壓其他類。 */
+.widget-cat {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;         /* 依內容起始，三類共享面板高度 */
+    min-height: 0;          /* 允許內部捲動區收縮 */
+    border-bottom: 1px solid #3a3a3a;
+}
+.widget-cat:last-child { border-bottom: none; }
+.widget-cat-title {
+    flex: 0 0 auto;
+    padding: 4px 10px;
+    color: #7a7a7a;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    background: #232323;
+    border-bottom: 1px solid #333;
+    user-select: none;
+}
+.widget-cat-items {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+}
+.widget-cat-items::-webkit-scrollbar { width: 6px; }
+.widget-cat-items::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+.widget-cat-items::-webkit-scrollbar-track { background: transparent; }
 
 /* ========== 畫布區（中間） ========== */
 .canvas-wrapper {
@@ -739,6 +775,51 @@ main { padding: 0 !important; min-height: 0 !important; }
 .canvas-widget.widget-di .widget-body,
 .canvas-widget.widget-ao .widget-body,
 .canvas-widget.widget-do .widget-body { cursor: move; overflow: visible; padding: 0; }
+
+/* ========== 管路流動元件（隱藏 header，body 可拖移） ========== */
+.canvas-widget.widget-pipe {
+    overflow: visible;
+    background: transparent;
+    border: none !important;
+    box-shadow: none !important;
+    min-height: 12px;
+}
+.canvas-widget.widget-pipe .widget-header { display: none; }
+.canvas-widget.widget-pipe .widget-body { cursor: move; overflow: visible; padding: 0; }
+
+/* 管路本體：直管段 + dash marching 流動動畫（水平/垂直） */
+.pipe-widget { position: relative; width: 100%; height: 100%; border-radius: 4px; }
+.pipe-track, .pipe-flow { position: absolute; pointer-events: none; }
+/* 水平 */
+.pipe-h .pipe-track, .pipe-h .pipe-flow {
+    left: 0; right: 0; top: 50%; transform: translateY(-50%);
+    height: var(--pipe-thickness, 8px);
+    border-radius: calc(var(--pipe-thickness, 8px) / 2);
+}
+.pipe-h .pipe-flow {
+    background: repeating-linear-gradient(90deg,
+        var(--flow-color, #0d6efd) 0, var(--flow-color, #0d6efd) 12px,
+        transparent 12px, transparent 22px);
+    background-size: 22px 100%;
+    animation: pipe-flow-h var(--flow-dur, .6s) linear infinite;
+}
+.pipe-h .pipe-flow.rev { animation-direction: reverse; }
+/* 垂直 */
+.pipe-v .pipe-track, .pipe-v .pipe-flow {
+    top: 0; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: var(--pipe-thickness, 8px);
+    border-radius: calc(var(--pipe-thickness, 8px) / 2);
+}
+.pipe-v .pipe-flow {
+    background: repeating-linear-gradient(180deg,
+        var(--flow-color, #0d6efd) 0, var(--flow-color, #0d6efd) 12px,
+        transparent 12px, transparent 22px);
+    background-size: 100% 22px;
+    animation: pipe-flow-v var(--flow-dur, .6s) linear infinite;
+}
+.pipe-v .pipe-flow.rev { animation-direction: reverse; }
+@keyframes pipe-flow-h { to { background-position: 22px 0; } }
+@keyframes pipe-flow-v { to { background-position: 0 22px; } }
 
 /* DI 指示燈自動縮放 */
 .di-indicator {

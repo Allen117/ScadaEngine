@@ -105,6 +105,10 @@ function renderWidget(el) {
                     : szType === 'aoPoint'        ? buildAoPointHtml(props)
                     : szType === 'doPoint'        ? buildDoPointHtml(props)
                     : szType === 'pump'           ? buildPumpHtml(props, 'stop')
+                    : szType === 'pipe'           ? buildPipeHtml(props, 'flow')
+                    : szType === 'coolingTower'   ? buildCoolingTowerHtml(props, 'stop')
+                    : szType === 'ahuFan'         ? buildAhuFanHtml(props, 'stop')
+                    : szType === 'chiller'        ? buildChillerHtml(props, 'stop')
                     : buildGaugeHtml(props);
 
     // hover tooltip（controlBtn / realtimeValue）
@@ -137,6 +141,8 @@ function renderWidget(el) {
         el.classList.add('widget-ao');
     } else if (szType === 'doPoint') {
         el.classList.add('widget-do');
+    } else if (szType === 'pipe') {
+        el.classList.add('widget-pipe');
     } else if ('szBgColor' in props) {
         const isBgTransparent = !props.szBgColor || props.szBgColor === 'transparent';
         el.classList.toggle('widget-transparent', isBgTransparent);
@@ -155,16 +161,16 @@ function renderWidget(el) {
         });
     }
 
-    // AI / DI / AO / DO 點位：整個 body 可拖移（header 已隱藏）
-    if (szType === 'realtimeValue' || szType === 'diPoint' || szType === 'aoPoint' || szType === 'doPoint') {
+    // AI / DI / AO / DO 點位 / 管路：整個 body 可拖移（header 已隱藏）
+    if (szType === 'realtimeValue' || szType === 'diPoint' || szType === 'aoPoint' || szType === 'doPoint' || szType === 'pipe') {
         el.querySelector('.widget-body').addEventListener('mousedown', e => {
             e.preventDefault();
             startMove(e, el);
         });
     }
 
-    // 拖移（header）— controlBtn / realtimeValue / diPoint 已用 body 拖移
-    if (szType !== 'controlBtn' && szType !== 'realtimeValue' && szType !== 'diPoint' && szType !== 'aoPoint' && szType !== 'doPoint') el.querySelector('.widget-header').addEventListener('mousedown', e => {
+    // 拖移（header）— controlBtn / realtimeValue / diPoint / pipe 已用 body 拖移
+    if (szType !== 'controlBtn' && szType !== 'realtimeValue' && szType !== 'diPoint' && szType !== 'aoPoint' && szType !== 'doPoint' && szType !== 'pipe') el.querySelector('.widget-header').addEventListener('mousedown', e => {
         if (e.target.classList.contains('widget-del')) return;
         e.preventDefault();
         startMove(e, el);

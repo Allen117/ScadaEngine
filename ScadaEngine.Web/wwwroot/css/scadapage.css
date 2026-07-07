@@ -31,6 +31,15 @@
     display: block !important;
 }
 
+.scada-pipe:hover .scada-hover-label {
+    display: block !important;
+}
+
+/* 馬達型設備（冷卻水塔 / 空調箱風扇 / 冰機）— hover 標籤，旋轉沿用 pump-spin */
+.scada-motor:hover .scada-hover-label {
+    display: block !important;
+}
+
 @keyframes di-alarm-pulse {
     0%, 100% { opacity: 1; }
     50%      { opacity: .4; }
@@ -40,6 +49,38 @@
     from { transform: rotate(0deg); }
     to   { transform: rotate(360deg); }
 }
+
+/* ── 管路流動元件（直管段 + dash marching 流動動畫） ── */
+.pipe-widget { position: relative; width: 100%; height: 100%; border-radius: 4px; }
+.pipe-track, .pipe-flow { position: absolute; pointer-events: none; }
+.pipe-h .pipe-track, .pipe-h .pipe-flow {
+    left: 0; right: 0; top: 50%; transform: translateY(-50%);
+    height: var(--pipe-thickness, 8px);
+    border-radius: calc(var(--pipe-thickness, 8px) / 2);
+}
+.pipe-h .pipe-flow {
+    background: repeating-linear-gradient(90deg,
+        var(--flow-color, #0d6efd) 0, var(--flow-color, #0d6efd) 12px,
+        transparent 12px, transparent 22px);
+    background-size: 22px 100%;
+    animation: pipe-flow-h var(--flow-dur, .6s) linear infinite;
+}
+.pipe-h .pipe-flow.rev { animation-direction: reverse; }
+.pipe-v .pipe-track, .pipe-v .pipe-flow {
+    top: 0; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: var(--pipe-thickness, 8px);
+    border-radius: calc(var(--pipe-thickness, 8px) / 2);
+}
+.pipe-v .pipe-flow {
+    background: repeating-linear-gradient(180deg,
+        var(--flow-color, #0d6efd) 0, var(--flow-color, #0d6efd) 12px,
+        transparent 12px, transparent 22px);
+    background-size: 100% 22px;
+    animation: pipe-flow-v var(--flow-dur, .6s) linear infinite;
+}
+.pipe-v .pipe-flow.rev { animation-direction: reverse; }
+@keyframes pipe-flow-h { to { background-position: 22px 0; } }
+@keyframes pipe-flow-v { to { background-position: 0 22px; } }
 
 /* 控制按鈕 3D 浮起 + 點擊回饋 */
 .ctrl-btn-exec {

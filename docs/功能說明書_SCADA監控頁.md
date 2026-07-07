@@ -366,6 +366,32 @@ DOMContentLoaded
 
 純文字顯示，可設定字型、大小、顏色、粗體、斜體、背景色，不綁定任何數據。
 
+#### (10) 馬達型設備 — 冷卻水塔 / 空調箱風扇 / 冰機（coolingTower / ahuFan / chiller）
+
+仿水泵（pump）的「馬達型設備」家族，**依設備差異客製**綁定與控制能力。三者的 SVG 圖形（本體 + 主數值條）由 **`wwwroot/js/common/motor-equip-svg.js`（`window.MotorEquip.build`）統一產生，供 Designer 預覽與 ScadaPage 執行期共用同一份圖**（避免兩處走樣）。此模組由 Designer 與 ScadaPage 兩頁的 View 各自 `<script>` 引入。
+
+**各設備綁定集**：
+
+| 設備 | SID 監控 | CID 控制 | 主數值條 | 旋轉 |
+|------|----------|----------|----------|------|
+| 冷卻水塔 `coolingTower` | 運轉 / 故障 / 手自動 / **風扇頻率** / **出水溫**(僅 tooltip) | 啟停 / 頻率設定 / 自動 | 頻率（VFD，可拖曳） | 頂部風扇 |
+| 空調箱風扇 `ahuFan` | 運轉 / 故障 / 手自動 / **頻率** | 啟停 / 頻率設定 / 自動 | 頻率（VFD，可拖曳） | 中央風扇 |
+| 冰機 `chiller` | 運轉 / 故障 / 手自動 / **負載%** / **冰水出水溫**(僅 tooltip) | 啟停 / **冰水設定溫度** / 自動 | 負載%（唯讀，不可拖曳） | 無（狀態以核心面板色表示） |
+
+props 命名沿用 pump 慣例（`szSidXxx` + `szXxxName` 成對）：共同 `szSidRun/szSidFault/szSidMode/szCidStartStop`；VFD 型另有 `szSidFreq/szCidFreqSet/nFreqSetMin/Max/nFreqMax`，冷卻水塔加 `szSidWaterTemp`；冰機為 `szSidLoad/szSidChwOut/szCidSetTemp/nLoadMax`。外觀色與 pump 相同（`szRunColor/szStopColor/szFaultColor/szManualColor/szAutoColor/szBgColor`），三者**不提供出口方向**。
+
+**執行期行為**（`scadapage.js`，class = `.scada-motor`，`dataset.motorType` 區分）：
+- 狀態判定同 pump：故障 > 運轉 > 停止，運轉時風扇 `pump-spin` 旋轉（冰機不轉）
+- 手動模式顯示 M 角標（`szCidStartStop`；VFD 型另有 `szCidFreqSet`）
+- **右鍵選單**：啟動停止（子選單）+ VFD 頻率設定（子選單）/ 冰機設定溫度（項目）+ 監控點位趨勢圖
+- **VFD 頻率條拖曳**：與 pump 共用同一 mousedown 處理（選擇器擴充為 `.scada-pump, .scada-motor`，重用 `pump-gauge-*` class）
+- **冰機設定溫度**：**無上下限**，於元件**右下角常駐顯示**目前設定值，**雙擊即可編輯**（prompt 輸入 → 寫入 `szCidSetTemp`，`actionType='ao_manual'`）；顯示值取自 AO 手動值快取
+- 斷線（Bad quality）顯示「斷線」；hover 顯示「標題 — 狀態 — 模式 — 主數值 — 額外溫度」
+
+> **控制 EventLog**：啟停 / 頻率 / 自動沿用 pump 的 `pump_start_stop` / `pump_freq` / `pump_auto` actionType，訊息帶設備名稱（`displayName`）以資區別（例「啟動泵浦「1F 冷卻水塔」」）；冰機設定溫度走 `ao_manual`。此為刻意選擇的零後端改動方案。
+
+> **設計決策**：採「抽共用核心」策略——三設備共用一份 `MotorEquip` 圖形模組與一套執行期邏輯（右鍵 / 拖曳 / 輪詢），並重用 pump 既有 helper（`_buildModeBadgeHtml` / `_pumpStartStop` 等）。水泵本身未遷移以避免生產回歸風險。詳見 `docs/plans/_archive/2026-07-07-designer-冰機冷卻水塔空調箱風扇元件.md`。
+
 ---
 
 ## 8. 即時數據更新機制

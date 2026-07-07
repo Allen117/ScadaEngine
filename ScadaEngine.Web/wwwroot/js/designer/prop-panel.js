@@ -607,6 +607,210 @@ function renderPropPanel(el) {
                    style="width:100%;margin-top:4px;${isBgTransparent ? 'display:none;' : ''}"
                    oninput="setProp('szBgColor', this.value)">
         </div>`;
+    } else if (szType === 'pipe') {
+        const isBgTransparent = !props.szBgColor || props.szBgColor === 'transparent';
+        const szBgColorVal    = isBgTransparent ? '#ffffff' : props.szBgColor;
+        const szMode = props.szBindMode || '';
+
+        // 綁定顯示：目前生效模式該列顯示點名，另一列顯示未綁提示
+        const szDiName = (szMode === 'di' && props.szPointName)
+            ? `<span style="font-size:12px;color:#c8c8c8;">${escHtml(props.szPointName)}</span>`
+            : szUnboundLabel;
+        const szAnName = (szMode === 'analog' && props.szPointName)
+            ? `<span style="font-size:12px;color:#c8c8c8;">${escHtml(props.szPointName)}</span>`
+            : szUnboundLabel;
+
+        szHtml += `
+        <div style="font-size:11px;color:#aaa;margin-bottom:4px;letter-spacing:1px;">${escHtml(t('designer.prop.pipe.binding'))}</div>
+        <div style="font-size:10px;color:#888;margin-bottom:6px;">${escHtml(t('designer.prop.pipe.binding_hint'))}</div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.pipe.bind_di'))}</label>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                ${szDiName}
+                <button class="btn btn-outline-success btn-sm py-0 px-2" style="font-size:11px;"
+                        onclick="reroutePipeBinding('di')">
+                    <i class="fas fa-exchange-alt me-1"></i>${escHtml(t(szMode === 'di' ? 'designer.prop.reselect' : 'designer.prop.bind'))}
+                </button>
+            </div>
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.pipe.bind_analog'))}</label>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                ${szAnName}
+                <button class="btn btn-outline-info btn-sm py-0 px-2" style="font-size:11px;"
+                        onclick="reroutePipeBinding('analog')">
+                    <i class="fas fa-exchange-alt me-1"></i>${escHtml(t(szMode === 'analog' ? 'designer.prop.reselect' : 'designer.prop.bind'))}
+                </button>
+            </div>
+        </div>`;
+        if (szMode === 'analog') {
+            szHtml += `
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.pipe.compare'))}</label>
+            <select onchange="setProp('szCompare', this.value)"
+                    style="width:100%;background:#3c3c3c;border:1px solid #555;color:#d4d4d4;padding:4px 6px;font-size:12px;border-radius:3px;">
+                <option value="gt"  ${(props.szCompare || 'gt') === 'gt'  ? 'selected' : ''}>${escHtml(t('designer.prop.pipe.compare_gt'))}</option>
+                <option value="gte" ${props.szCompare === 'gte' ? 'selected' : ''}>${escHtml(t('designer.prop.pipe.compare_gte'))}</option>
+            </select>
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.pipe.threshold'))}</label>
+            <input type="number" value="${props.fThreshold ?? 0}" step="any"
+                   oninput="setProp('fThreshold', +this.value)">
+        </div>`;
+        }
+        szHtml += `
+        <hr class="prop-divider">
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.pipe.orient'))}</label>
+            <select onchange="setProp('szOrient', this.value)"
+                    style="width:100%;background:#3c3c3c;border:1px solid #555;color:#d4d4d4;padding:4px 6px;font-size:12px;border-radius:3px;">
+                <option value="h" ${(props.szOrient || 'h') === 'h' ? 'selected' : ''}>${escHtml(t('designer.prop.pipe.orient_h'))}</option>
+                <option value="v" ${props.szOrient === 'v' ? 'selected' : ''}>${escHtml(t('designer.prop.pipe.orient_v'))}</option>
+            </select>
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.pipe.direction'))}</label>
+            <select onchange="setProp('szDir', this.value)"
+                    style="width:100%;background:#3c3c3c;border:1px solid #555;color:#d4d4d4;padding:4px 6px;font-size:12px;border-radius:3px;">
+                <option value="fwd" ${(props.szDir || 'fwd') === 'fwd' ? 'selected' : ''}>${escHtml(t('designer.prop.pipe.dir_fwd'))}</option>
+                <option value="rev" ${props.szDir === 'rev' ? 'selected' : ''}>${escHtml(t('designer.prop.pipe.dir_rev'))}</option>
+            </select>
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.pipe.thickness'))}</label>
+            <input type="number" value="${props.nThickness || 8}" min="2" max="40" step="1"
+                   oninput="setProp('nThickness', +this.value)">
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.pipe.speed'))}</label>
+            <input type="number" value="${props.nSpeed || 3}" min="1" max="5" step="1"
+                   oninput="setProp('nSpeed', +this.value)">
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.pipe.flow_color'))}</label>
+            <input type="color" value="${props.szFlowColor || '#0d6efd'}"
+                   oninput="setProp('szFlowColor', this.value)">
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.pipe.stop_color'))}</label>
+            <input type="color" value="${props.szStopColor || '#adb5bd'}"
+                   oninput="setProp('szStopColor', this.value)">
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.pipe.bad_color'))}</label>
+            <input type="color" value="${props.szBadColor || '#6c757d'}"
+                   oninput="setProp('szBadColor', this.value)">
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.background_color'))}</label>
+            <label style="display:inline-flex;align-items:center;gap:3px;font-size:11px;color:#9d9d9d;
+                          font-weight:normal;text-transform:none;letter-spacing:0;cursor:pointer;margin-top:4px;white-space:nowrap;">
+                <input type="checkbox" style="cursor:pointer;width:auto;"
+                       ${isBgTransparent ? 'checked' : ''}
+                       onchange="onPipeBgTransparentChange(this.checked)">
+                ${escHtml(t('designer.prop.transparent_bg'))}
+            </label>
+            <input type="color" id="pipeBgPicker" value="${szBgColorVal}"
+                   style="width:100%;margin-top:4px;${isBgTransparent ? 'display:none;' : ''}"
+                   oninput="setProp('szBgColor', this.value)">
+        </div>`;
+    } else if (szType === 'coolingTower' || szType === 'ahuFan' || szType === 'chiller') {
+        // 馬達型設備（冷卻水塔 / 空調箱風扇 / 冰機）— 仿水泵，依設備差異客製綁定
+        const isBgTransparent = !props.szBgColor || props.szBgColor === 'transparent';
+        const szBgColorVal    = isBgTransparent ? '#ffffff' : props.szBgColor;
+        const szPickerId      = szType + 'BgPicker';
+
+        function motorBindRow(szLabel, szSidKey, szNameKey, szBtnClass) {
+            const szName = props[szNameKey];
+            const szDisp = szName
+                ? `<span style="font-size:12px;color:#c8c8c8;">${escHtml(szName)}</span>`
+                : szUnboundLabel;
+            return `<div class="prop-group">
+                <label>${escHtml(szLabel)}</label>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                    ${szDisp}
+                    <button class="btn ${szBtnClass} btn-sm py-0 px-2" style="font-size:11px;"
+                            onclick="rerouteMotorBinding('${szSidKey}','${szNameKey}')">
+                        <i class="fas fa-exchange-alt me-1"></i>${escHtml(t('designer.prop.reselect'))}
+                    </button>
+                </div>
+            </div>`;
+        }
+
+        // ── SID 監控段（共同：運轉/故障/手自動）──
+        szHtml += `
+        <div style="font-size:11px;color:#aaa;margin-bottom:4px;letter-spacing:1px;">${escHtml(t('designer.prop.pump.sid_monitor'))}</div>
+        ${motorBindRow(t('designer.prop.pump.run_status'),   'szSidRun',   'szRunName',   'btn-outline-info')}
+        ${motorBindRow(t('designer.prop.pump.fault_status'), 'szSidFault', 'szFaultName', 'btn-outline-danger')}
+        ${motorBindRow(t('designer.prop.pump.mode_status'),  'szSidMode',  'szModeName',  'btn-outline-warning')}`;
+
+        // ── 依設備差異的監控/控制點 ──
+        if (szType === 'chiller') {
+            szHtml += `
+        ${motorBindRow(t('designer.prop.motor.load'),    'szSidLoad',  'szLoadName',  'btn-outline-info')}
+        ${motorBindRow(t('designer.prop.motor.chw_out'), 'szSidChwOut','szChwOutName','btn-outline-info')}
+        <hr class="prop-divider">
+        <div style="font-size:11px;color:#aaa;margin-bottom:4px;letter-spacing:1px;">${escHtml(t('designer.prop.pump.cid_control'))}</div>
+        ${motorBindRow(t('designer.prop.pump.start_stop'), 'szCidStartStop', 'szStartStopName', 'btn-outline-success')}
+        ${motorBindRow(t('designer.prop.motor.set_temp'),  'szCidSetTemp',   'szSetTempName',   'btn-outline-success')}
+        <hr class="prop-divider">`;
+        } else {
+            // coolingTower / ahuFan — VFD（頻率）
+            szHtml += `
+        ${motorBindRow(t('designer.prop.pump.frequency'), 'szSidFreq', 'szFreqName', 'btn-outline-info')}`;
+            if (szType === 'coolingTower') {
+                szHtml += `
+        ${motorBindRow(t('designer.prop.motor.water_temp'), 'szSidWaterTemp', 'szWaterTempName', 'btn-outline-info')}`;
+            }
+            szHtml += `
+        <hr class="prop-divider">
+        <div style="font-size:11px;color:#aaa;margin-bottom:4px;letter-spacing:1px;">${escHtml(t('designer.prop.pump.cid_control'))}</div>
+        ${motorBindRow(t('designer.prop.pump.start_stop'), 'szCidStartStop', 'szStartStopName', 'btn-outline-success')}
+        ${motorBindRow(t('designer.prop.pump.freq_set'),   'szCidFreqSet',   'szFreqSetName',   'btn-outline-success')}
+        <hr class="prop-divider">`;
+        }
+
+        // ── 共同外觀色（沿用 pump i18n key）──
+        szHtml += `
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.pump.run_color'))}</label>
+            <input type="color" value="${props.szRunColor || '#28a745'}"
+                   oninput="setProp('szRunColor', this.value)">
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.pump.stop_color'))}</label>
+            <input type="color" value="${props.szStopColor || '#6c757d'}"
+                   oninput="setProp('szStopColor', this.value)">
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.pump.fault_color'))}</label>
+            <input type="color" value="${props.szFaultColor || '#dc3545'}"
+                   oninput="setProp('szFaultColor', this.value)">
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.pump.manual_color'))}</label>
+            <input type="color" value="${props.szManualColor || '#ffc107'}"
+                   oninput="setProp('szManualColor', this.value)">
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.pump.auto_color'))}</label>
+            <input type="color" value="${props.szAutoColor || '#0d6efd'}"
+                   oninput="setProp('szAutoColor', this.value)">
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.background_color'))}</label>
+            <label style="display:inline-flex;align-items:center;gap:3px;font-size:11px;color:#9d9d9d;
+                          font-weight:normal;text-transform:none;letter-spacing:0;cursor:pointer;margin-top:4px;white-space:nowrap;">
+                <input type="checkbox" style="cursor:pointer;width:auto;"
+                       ${isBgTransparent ? 'checked' : ''}
+                       onchange="onMotorBgTransparentChange('${szPickerId}', this.checked)">
+                ${escHtml(t('designer.prop.transparent_bg'))}
+            </label>
+            <input type="color" id="${szPickerId}" value="${szBgColorVal}"
+                   style="width:100%;margin-top:4px;${isBgTransparent ? 'display:none;' : ''}"
+                   oninput="setProp('szBgColor', this.value)">
+        </div>`;
     }
 
     document.getElementById('propBody').innerHTML = szHtml;
@@ -1572,6 +1776,32 @@ function onPumpBgTransparentChange(isChecked) {
         if (picker) picker.style.display = 'none';
     } else {
         const picker = document.getElementById('pumpBgPicker');
+        const szColor = picker ? picker.value : '#ffffff';
+        setProp('szBgColor', szColor);
+        if (picker) picker.style.display = '';
+    }
+}
+
+function onPipeBgTransparentChange(isChecked) {
+    if (isChecked) {
+        setProp('szBgColor', 'transparent');
+        const picker = document.getElementById('pipeBgPicker');
+        if (picker) picker.style.display = 'none';
+    } else {
+        const picker = document.getElementById('pipeBgPicker');
+        const szColor = picker ? picker.value : '#ffffff';
+        setProp('szBgColor', szColor);
+        if (picker) picker.style.display = '';
+    }
+}
+
+// 馬達型設備（冷卻水塔 / 空調箱風扇 / 冰機）共用 — picker id 由呼叫端傳入
+function onMotorBgTransparentChange(szPickerId, isChecked) {
+    const picker = document.getElementById(szPickerId);
+    if (isChecked) {
+        setProp('szBgColor', 'transparent');
+        if (picker) picker.style.display = 'none';
+    } else {
         const szColor = picker ? picker.value : '#ffffff';
         setProp('szBgColor', szColor);
         if (picker) picker.style.display = '';

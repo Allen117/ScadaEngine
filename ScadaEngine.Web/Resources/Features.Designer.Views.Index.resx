@@ -85,6 +85,9 @@
   <data name="designer.component_panel.title" xml:space="preserve"><value>元件庫</value></data>
   <data name="designer.component_panel.expand_tooltip" xml:space="preserve"><value>展開元件庫</value></data>
   <data name="designer.component_panel.collapse_tooltip" xml:space="preserve"><value>收起元件庫</value></data>
+  <data name="designer.component_panel.cat_display" xml:space="preserve"><value>顯示元件</value></data>
+  <data name="designer.component_panel.cat_point" xml:space="preserve"><value>點位與控制</value></data>
+  <data name="designer.component_panel.cat_equip" xml:space="preserve"><value>設備與動畫</value></data>
 
   <data name="designer.widget.table" xml:space="preserve"><value>表格</value></data>
   <data name="designer.widget.gauge" xml:space="preserve"><value>儀錶板</value></data>
@@ -95,6 +98,10 @@
   <data name="designer.widget.aoPoint" xml:space="preserve"><value>AO 點位</value></data>
   <data name="designer.widget.doPoint" xml:space="preserve"><value>DO 點位</value></data>
   <data name="designer.widget.pump" xml:space="preserve"><value>水泵</value></data>
+  <data name="designer.widget.pipe" xml:space="preserve"><value>管路</value></data>
+  <data name="designer.widget.coolingTower" xml:space="preserve"><value>冷卻水塔</value></data>
+  <data name="designer.widget.ahuFan" xml:space="preserve"><value>空調箱風扇</value></data>
+  <data name="designer.widget.chiller" xml:space="preserve"><value>冰機</value></data>
 
   <data name="designer.widget_tooltip.table" xml:space="preserve"><value>拖曳至畫布以新增資料表格</value></data>
   <data name="designer.widget_tooltip.gauge" xml:space="preserve"><value>拖曳至畫布以新增儀錶板</value></data>
@@ -105,6 +112,10 @@
   <data name="designer.widget_tooltip.aoPoint" xml:space="preserve"><value>拖曳至畫布以新增 AO 點位（可綁定 CID，寫入類比輸出值）</value></data>
   <data name="designer.widget_tooltip.doPoint" xml:space="preserve"><value>拖曳至畫布以新增 DO 點位（可綁定 CID，ON/OFF 切換寫入）</value></data>
   <data name="designer.widget_tooltip.pump" xml:space="preserve"><value>拖曳至畫布以新增水泵圖示（可綁定 SID，運轉時旋轉）</value></data>
+  <data name="designer.widget_tooltip.pipe" xml:space="preserve"><value>拖曳至畫布以新增管路（直管段，可綁定 DI 或 類比量＋閾值，符合條件時流動）</value></data>
+  <data name="designer.widget_tooltip.coolingTower" xml:space="preserve"><value>拖曳至畫布以新增冷卻水塔（可綁定 SID，運轉時風扇旋轉，含 VFD 頻率控制）</value></data>
+  <data name="designer.widget_tooltip.ahuFan" xml:space="preserve"><value>拖曳至畫布以新增空調箱風扇（可綁定 SID，運轉時風扇旋轉，含 VFD 頻率控制）</value></data>
+  <data name="designer.widget_tooltip.chiller" xml:space="preserve"><value>拖曳至畫布以新增冰機（可綁定 SID，顯示負載%，右下角設定溫度可雙擊編輯）</value></data>
 
   <!-- Property Panel -->
   <data name="designer.property_panel.title" xml:space="preserve"><value>屬性</value></data>
@@ -221,6 +232,10 @@
   <data name="designer.default.doPoint_menu_off" xml:space="preserve"><value>手動OFF</value></data>
   <data name="designer.default.doPoint_menu_auto" xml:space="preserve"><value>自動控制</value></data>
   <data name="designer.default.pump_title" xml:space="preserve"><value>水泵</value></data>
+  <data name="designer.default.pipe_title" xml:space="preserve"><value>管路</value></data>
+  <data name="designer.default.coolingTower_title" xml:space="preserve"><value>冷卻水塔</value></data>
+  <data name="designer.default.ahuFan_title" xml:space="preserve"><value>空調箱風扇</value></data>
+  <data name="designer.default.chiller_title" xml:space="preserve"><value>冰機</value></data>
 
   <!-- Table sample data -->
   <data name="designer.table.header.name" xml:space="preserve"><value>名稱</value></data>
@@ -361,6 +376,36 @@
   <data name="designer.prop.pump.fault_color" xml:space="preserve"><value>故障顏色</value></data>
   <data name="designer.prop.pump.manual_color" xml:space="preserve"><value>手動顏色</value></data>
   <data name="designer.prop.pump.auto_color" xml:space="preserve"><value>自動顏色</value></data>
+
+  <!-- Prop Panel - motor（馬達型設備：冷卻水塔 / 空調箱風扇 / 冰機，其餘沿用 pump.*）-->
+  <data name="designer.prop.motor.load" xml:space="preserve"><value>負載</value></data>
+  <data name="designer.prop.motor.chw_out" xml:space="preserve"><value>冰水出水溫</value></data>
+  <data name="designer.prop.motor.water_temp" xml:space="preserve"><value>出水溫</value></data>
+  <data name="designer.prop.motor.set_temp" xml:space="preserve"><value>冰水設定溫度</value></data>
+  <data name="designer.motor.set_temp_prefix" xml:space="preserve"><value>設定</value></data>
+
+  <!-- Prop Panel - pipe（管路流動元件）-->
+  <data name="designer.prop.pipe.binding" xml:space="preserve"><value>綁定（二擇一）</value></data>
+  <data name="designer.prop.pipe.binding_hint" xml:space="preserve"><value>DI 或 類比量＋閾值，僅能擇一；切換時會提示清除另一個</value></data>
+  <data name="designer.prop.pipe.bind_di" xml:space="preserve"><value>DI 綁定</value></data>
+  <data name="designer.prop.pipe.bind_analog" xml:space="preserve"><value>類比綁定</value></data>
+  <data name="designer.prop.pipe.compare" xml:space="preserve"><value>流動條件</value></data>
+  <data name="designer.prop.pipe.compare_gt" xml:space="preserve"><value>大於閾值（&gt;）</value></data>
+  <data name="designer.prop.pipe.compare_gte" xml:space="preserve"><value>大於等於閾值（≥）</value></data>
+  <data name="designer.prop.pipe.threshold" xml:space="preserve"><value>閾值</value></data>
+  <data name="designer.prop.pipe.orient" xml:space="preserve"><value>方向</value></data>
+  <data name="designer.prop.pipe.orient_h" xml:space="preserve"><value>水平</value></data>
+  <data name="designer.prop.pipe.orient_v" xml:space="preserve"><value>垂直</value></data>
+  <data name="designer.prop.pipe.direction" xml:space="preserve"><value>流向</value></data>
+  <data name="designer.prop.pipe.dir_fwd" xml:space="preserve"><value>正向</value></data>
+  <data name="designer.prop.pipe.dir_rev" xml:space="preserve"><value>逆向</value></data>
+  <data name="designer.prop.pipe.thickness" xml:space="preserve"><value>管線粗細</value></data>
+  <data name="designer.prop.pipe.speed" xml:space="preserve"><value>流速（1-5）</value></data>
+  <data name="designer.prop.pipe.flow_color" xml:space="preserve"><value>流動色</value></data>
+  <data name="designer.prop.pipe.stop_color" xml:space="preserve"><value>停止色</value></data>
+  <data name="designer.prop.pipe.bad_color" xml:space="preserve"><value>斷線色</value></data>
+  <data name="designer.pipe.confirm_switch_to_analog" xml:space="preserve"><value>目前為 DI 綁定，改為類比綁定會清除原本的 DI 綁定，確定？</value></data>
+  <data name="designer.pipe.confirm_switch_to_di" xml:space="preserve"><value>目前為類比綁定，改為 DI 綁定會清除原本的類比綁定，確定？</value></data>
 
   <!-- Prop Panel - text -->
   <data name="designer.prop.text.bold" xml:space="preserve"><value>粗體</value></data>

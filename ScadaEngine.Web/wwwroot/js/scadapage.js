@@ -479,6 +479,62 @@
             el.style.overflow = 'visible';
             el.innerHTML = buildPumpViewHtml(p, 'stop', '', '');
             el.addEventListener('contextmenu', function (e) { onPumpContextMenu(e, el); });
+        } else if (ws.szType === 'pipe') {
+            var p = ws.props || {};
+            el.dataset.sid         = p.szSid       || '';
+            el.dataset.bindMode    = p.szBindMode  || '';
+            el.dataset.fThreshold  = (p.fThreshold != null ? p.fThreshold : 0);
+            el.dataset.szCompare   = p.szCompare   || 'gt';
+            el.dataset.szOrient    = p.szOrient    || 'h';
+            el.dataset.nThickness  = p.nThickness  || 8;
+            el.dataset.szFlowColor = p.szFlowColor || '#0d6efd';
+            el.dataset.szStopColor = p.szStopColor || '#adb5bd';
+            el.dataset.szBadColor  = p.szBadColor  || '#6c757d';
+            el.dataset.nSpeed      = p.nSpeed      || 3;
+            el.dataset.szDir       = p.szDir       || 'fwd';
+            el.dataset.szBgColor   = p.szBgColor   || 'transparent';
+            el.dataset.szTitle     = p.szTitle     || '';
+            el.classList.add('scada-pipe');
+            el.style.overflow = 'visible';
+            // 未綁定 → 純裝飾固定流動；已綁定 → 初始靜止，待 polling 更新
+            el.innerHTML = buildPipeViewHtml(p, p.szBindMode ? 'stop' : 'flow', '');
+            if (p.szSid) el.addEventListener('contextmenu', function (ev) { onTrendContextMenu(ev, el.dataset.sid); });
+        } else if (ws.szType === 'coolingTower' || ws.szType === 'ahuFan' || ws.szType === 'chiller') {
+            // 馬達型設備（冷卻水塔 / 空調箱風扇 / 冰機）— 仿水泵，共用 MotorEquip 圖形
+            var p = ws.props || {};
+            el.dataset.motorType    = ws.szType;
+            el.dataset.sidRun       = p.szSidRun       || '';
+            el.dataset.sidFault     = p.szSidFault     || '';
+            el.dataset.sidMode      = p.szSidMode      || '';
+            el.dataset.sidFreq      = p.szSidFreq      || '';
+            el.dataset.sidLoad      = p.szSidLoad      || '';
+            el.dataset.sidWaterTemp = p.szSidWaterTemp || '';
+            el.dataset.sidChwOut    = p.szSidChwOut    || '';
+            el.dataset.cidStartStop = p.szCidStartStop || '';
+            el.dataset.cidFreqSet   = p.szCidFreqSet   || '';
+            el.dataset.cidSetTemp   = p.szCidSetTemp   || '';
+            el.dataset.nFreqSetMin  = p.nFreqSetMin    || 0;
+            el.dataset.nFreqSetMax  = p.nFreqSetMax    || 60;
+            el.dataset.nFreqMax     = p.nFreqMax       || 60;
+            el.dataset.nLoadMax     = p.nLoadMax       || 100;
+            el.dataset.szTitle      = p.szTitle || (ws.szType === 'chiller' ? '冰機' : ws.szType === 'coolingTower' ? '冷卻水塔' : '空調箱風扇');
+            el.dataset.szRunColor   = p.szRunColor    || '#28a745';
+            el.dataset.szStopColor  = p.szStopColor   || '#6c757d';
+            el.dataset.szFaultColor = p.szFaultColor  || '#dc3545';
+            el.dataset.szManualColor = p.szManualColor || '#ffc107';
+            el.dataset.szAutoColor  = p.szAutoColor   || '#0d6efd';
+            el.dataset.szBgColor    = p.szBgColor     || 'transparent';
+            el.classList.add('scada-motor');
+            el.style.overflow = 'visible';
+            el.innerHTML = _buildMotorViewHtml(p, ws.szType, 'stop', '', '', '');
+            el.addEventListener('contextmenu', function (e) { onMotorContextMenu(e, el); });
+            if (ws.szType === 'chiller') {
+                el.addEventListener('dblclick', function (ev) {
+                    if (!ev.target.closest('.chiller-settemp')) return;
+                    if (!_canControlPage(scadaCurrentId)) return;
+                    _motorPromptSetTemp(el);
+                });
+            }
         }
         canvas.appendChild(el);
     }
@@ -707,6 +763,7 @@
         _removeAoContextMenu();
         _removeDoContextMenu();
         _removePumpContextMenu();
+        if (typeof _removeMotorContextMenu === 'function') _removeMotorContextMenu();
         _removeTrendContextMenu();
     }
 
@@ -1200,6 +1257,43 @@
             '</div>';
     }
 
+    // ── 管路流動元件 HTML（純顯示，無控制）──
+    var PIPE_SPEED_DUR = { 1: '1.2s', 2: '0.9s', 3: '0.6s', 4: '0.4s', 5: '0.25s' };
+    // szState: 'flow' 流動 | 'stop' 靜止 | 'bad' 斷線；szValueText 選填（類比值顯示於 tooltip）
+    function buildPipeViewHtml(props, szState, szValueText) {
+        var szOrient = props.szOrient === 'v' ? 'v' : 'h';
+        var nThk     = Math.max(2, parseFloat(props.nThickness) || 8);
+        var szFlow   = props.szFlowColor || '#0d6efd';
+        var szStop   = props.szStopColor || '#adb5bd';
+        var szBad    = props.szBadColor  || '#6c757d';
+        var nSpeed   = Math.min(5, Math.max(1, parseInt(props.nSpeed) || 3));
+        var szDur    = PIPE_SPEED_DUR[nSpeed] || '0.6s';
+        var bRev     = props.szDir === 'rev';
+        var szBg     = (props.szBgColor && props.szBgColor !== 'transparent') ? props.szBgColor : 'transparent';
+        var szTitle  = props.szTitle || '';
+
+        var szTrackColor = szState === 'bad' ? szBad : szStop;
+        var bFlowing     = szState === 'flow';
+        var szFlowDiv = bFlowing
+            ? '<div class="pipe-flow' + (bRev ? ' rev' : '') + '" style="--flow-color:' + szFlow + ';--flow-dur:' + szDur + ';"></div>'
+            : '';
+
+        var szStateText = szState === 'bad' ? '斷線' : szState === 'flow' ? '流動' : '靜止';
+        var arrTip = [];
+        if (szTitle) arrTip.push(escViewHtml(szTitle));
+        arrTip.push(szStateText);
+        if (szValueText) arrTip.push(escViewHtml(szValueText));
+        var szTooltip = '<div class="scada-hover-label" style="display:none;position:absolute;bottom:100%;' +
+            'margin-bottom:4px;left:50%;transform:translateX(-50%);white-space:nowrap;' +
+            'background:rgba(33,37,41,.85);color:#fff;font-size:11px;padding:3px 10px;border-radius:4px;' +
+            'pointer-events:none;z-index:10;">' + arrTip.join(' — ') + '</div>';
+
+        return '<div class="pipe-widget pipe-' + szOrient + '" style="--pipe-thickness:' + nThk + 'px;background:' + szBg + ';">' +
+            '<div class="pipe-track" style="background:' + szTrackColor + ';"></div>' +
+            szFlowDiv + szTooltip +
+            '</div>';
+    }
+
     // ── 水泵 Linear Gauge 拖拽控制 ──
     var _pumpGaugeDrag = null;
     var GAUGE_BAR_TOP = 22, GAUGE_BAR_H = 68;
@@ -1207,7 +1301,8 @@
     document.addEventListener('mousedown', function (e) {
         var handle = e.target.closest('.pump-gauge-handle');
         if (!handle) return;
-        var pumpEl = handle.closest('.scada-pump');
+        // 頻率條拖曳共用：水泵（.scada-pump）與 VFD 型馬達設備（.scada-motor）
+        var pumpEl = handle.closest('.scada-pump, .scada-motor');
         if (!pumpEl) return;
         var szCid = pumpEl.dataset.cidFreqSet;
         if (!szCid) return;
@@ -1531,6 +1626,263 @@
         } catch (err) {
             alert('\u81ea\u52d5\u63a7\u5236\u8acb\u6c42\u5931\u6557\uff1a' + err.message);
         }
+    }
+
+    // ============================================================
+    // 馬達型設備（冷卻水塔 / 空調箱風扇 / 冰機）執行期
+    // ============================================================
+    // 圖形共用 MotorEquip（同 Designer），控制沿用 pump 的 _pumpStartStop /
+    // _pumpFreqSet / _pumpAutoControl（generic by cid+title；EventLog 帶設備名）。
+
+    // 組執行期 widget 內層 HTML（含 M 角標、冰機設定溫度覆蓋層、hover 標籤）
+    function _buildMotorViewHtml(props, szType, szState, szPrimaryVal, szModeVal, szExtraTip) {
+        var bVfd    = (szType !== 'chiller');
+        var bHasBar = bVfd ? !!props.szSidFreq : !!props.szSidLoad;
+
+        var szStateText = szState === 'fault' ? '故障' : szState === 'run' ? '運轉中' : '停止';
+        var szModeText  = (szModeVal !== undefined && szModeVal !== '')
+            ? (szModeVal == 1 || szModeVal === '1' || szModeVal === 'true' ? '自動' : '手動') : '';
+        var szPrimaryText = '';
+        if (szPrimaryVal !== undefined && szPrimaryVal !== '' && szPrimaryVal !== '--') {
+            szPrimaryText = bVfd ? parseFloat(szPrimaryVal).toFixed(1) + ' Hz'
+                                 : parseFloat(szPrimaryVal).toFixed(0) + ' %';
+        }
+        var szTitle = props.szTitle || (szType === 'chiller' ? '冰機' : szType === 'coolingTower' ? '冷卻水塔' : '空調箱風扇');
+
+        // M 角標（cidStartStop 一律；VFD 另有 cidFreqSet；有主數值條時本體角標移左上）
+        var szCidSS = props.szCidStartStop || '';
+        var szCidFQ = props.szCidFreqSet || '';
+        var szBadgeSS = '', szBadgeFQ = '';
+        if (szCidSS) {
+            szBadgeSS = bHasBar ? _buildModeBadgeHtml(szCidSS, 'left:-4px;right:auto;') : _buildModeBadgeHtml(szCidSS);
+        }
+        if (bVfd && szCidFQ && bHasBar) szBadgeFQ = _buildModeBadgeHtml(szCidFQ);
+
+        // 冰機設定溫度覆蓋層（右下角，雙擊編輯；顯示值取自 AO 手動快取）
+        var szOverlay = '';
+        if (szType === 'chiller' && props.szCidSetTemp) {
+            var cachedST = _aoManualValueMap[props.szCidSetTemp];
+            var szTempVal = (cachedST && cachedST.value != null) ? (Math.round(cachedST.value * 10) / 10) : '--';
+            var bEditable = _canControlPage(scadaCurrentId);
+            szOverlay = '<div class="chiller-settemp"' +
+                (bEditable ? ' title="雙擊編輯設定溫度" style="cursor:pointer;' : ' style="') +
+                'position:absolute;bottom:3px;right:4px;font-size:10px;color:#fff;background:rgba(33,37,41,.72);' +
+                'padding:1px 6px;border-radius:4px;white-space:nowrap;z-index:11;">設定 ' + szTempVal + '°C</div>';
+        }
+
+        var aTip = [escViewHtml(szTitle), szStateText];
+        if (szModeText) aTip.push(szModeText);
+        if (szPrimaryText) aTip.push(szPrimaryText);
+        if (szExtraTip) aTip.push(szExtraTip);
+        var szHover = '<div class="scada-hover-label" style="display:none;position:absolute;bottom:4px;left:50%;' +
+            'transform:translateX(-50%);white-space:nowrap;background:rgba(33,37,41,.85);color:#fff;' +
+            'font-size:11px;padding:3px 10px;border-radius:4px;pointer-events:none;z-index:10;">' +
+            aTip.join(' — ') + '</div>';
+
+        return MotorEquip.build({
+            szType: szType, props: props, szState: szState,
+            szPrimaryVal: szPrimaryVal, szModeVal: szModeVal, bInteractive: true,
+            szBadgesHtml: szBadgeSS + szBadgeFQ, szOverlayHtml: szOverlay, szHoverHtml: szHover
+        });
+    }
+
+    // ── 冰機設定溫度：雙擊 → prompt（無上下限）→ 寫入 ──
+    function _motorPromptSetTemp(el) {
+        var szCid = el.dataset.cidSetTemp;
+        if (!szCid) return;
+        var szTitle = el.dataset.szTitle || '冰機';
+        var cached = _aoManualValueMap[szCid];
+        var szCur = (cached && cached.value != null) ? String(cached.value) : '';
+        var szInput = prompt('輸入「' + szTitle + '」冰水設定溫度（°C）：', szCur);
+        if (szInput === null) return;
+        var fVal = parseFloat(szInput);
+        if (isNaN(fVal)) { alert('請輸入有效數值'); return; }
+        _motorSetTemp(szCid, szTitle, fVal);
+    }
+
+    async function _motorSetTemp(szCid, szTitle, fValue) {
+        if (!confirm('確定要設定「' + szTitle + '」冰水溫度為 ' + fValue + ' °C？')) return;
+        try {
+            var resp = await fetch('/api/control/write', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cid: szCid, value: fValue, actionType: 'ao_manual', displayName: szTitle })
+            });
+            var result = await resp.json();
+            if (result.success) {
+                _aoManualValueMap[szCid] = { value: fValue, isAuto: false };
+                var szShow = '設定 ' + (Math.round(fValue * 10) / 10) + '°C';
+                document.querySelectorAll('.scada-motor').forEach(function (el) {
+                    if (el.dataset.cidSetTemp === szCid) {
+                        var st = el.querySelector('.chiller-settemp');
+                        if (st) st.textContent = szShow;
+                    }
+                });
+                showControlToast('已送出設定溫度：' + szTitle + ' → ' + fValue + ' °C');
+            } else {
+                alert('設定失敗：' + (result.error || '未知錯誤'));
+            }
+        } catch (err) {
+            alert('設定請求失敗：' + err.message);
+        }
+    }
+
+    // ── 馬達型設備右鍵控制選單 ──
+    var _motorContextMenu = null;
+    function _removeMotorContextMenu() {
+        if (_motorContextMenu) { _motorContextMenu.remove(); _motorContextMenu = null; }
+    }
+
+    function onMotorContextMenu(e, el) {
+        e.preventDefault();
+        _removeAllContextMenus();
+
+        var szType  = el.dataset.motorType;
+        var bVfd    = (szType !== 'chiller');
+        var szCidSS = el.dataset.cidStartStop || '';
+        var szCidFQ = el.dataset.cidFreqSet   || '';
+        var szTitle = el.dataset.szTitle || (szType === 'chiller' ? '冰機' : szType === 'coolingTower' ? '冷卻水塔' : '空調箱風扇');
+
+        var menu = document.createElement('div');
+        menu.style.cssText = 'position:fixed;z-index:99999;background:#fff;border:1px solid #dee2e6;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.15);min-width:160px;padding:4px 0;font-size:13px;';
+
+        var cachedSS = szCidSS ? _aoManualValueMap[szCidSS] : null;
+        var cachedFQ = szCidFQ ? _aoManualValueMap[szCidFQ] : null;
+        var hasControl = _canControlPage(scadaCurrentId);
+
+        // 啟動停止（子選單）
+        if (hasControl && szCidSS) {
+            var parentRow = document.createElement('div');
+            parentRow.style.cssText = 'position:relative;display:flex;align-items:center;gap:8px;padding:6px 10px;margin:2px 4px;cursor:pointer;transition:background .1s;';
+            parentRow.innerHTML = '<i class="fas fa-power-off" style="color:#17a2b8;width:16px;text-align:center;font-size:13px;"></i><span>啟動停止</span><i class="fas fa-chevron-right" style="margin-left:auto;font-size:10px;color:#adb5bd;"></i>';
+            var subMenu = document.createElement('div');
+            subMenu.style.cssText = 'position:absolute;left:100%;top:-1px;background:#fff;border:1px solid #dee2e6;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.15);min-width:130px;padding:4px 0;font-size:13px;display:none;';
+            [{ label: '啟動', icon: 'fas fa-play', color: '#28a745', action: function () { _pumpStartStop(szCidSS, szTitle, 1); },
+               isActive: cachedSS && !cachedSS.isAuto && cachedSS.value === 1 },
+             { label: '停止', icon: 'fas fa-stop', color: '#dc3545', action: function () { _pumpStartStop(szCidSS, szTitle, 0); },
+               isActive: cachedSS && !cachedSS.isAuto && cachedSS.value === 0 },
+             { label: '自動控制', icon: 'fas fa-sync-alt', color: '#6c757d', action: function () { _pumpAutoControl(szCidSS, szTitle); },
+               isActive: cachedSS && cachedSS.isAuto }
+            ].forEach(function (item) {
+                var row = document.createElement('div');
+                row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 10px;margin:2px 4px;cursor:pointer;transition:background .1s;';
+                row.innerHTML = '<i class="' + item.icon + '" style="color:' + item.color + ';width:16px;text-align:center;font-size:13px;"></i><span>' + escViewHtml(item.label) + '</span>';
+                if (item.isActive) _applyActiveStyle(row);
+                row.addEventListener('mouseenter', function () { if (!item.isActive) row.style.background = '#f0f0f0'; });
+                row.addEventListener('mouseleave', function () { if (!item.isActive) row.style.background = ''; });
+                row.addEventListener('click', function () { _removeMotorContextMenu(); item.action(); });
+                subMenu.appendChild(row);
+            });
+            parentRow.appendChild(subMenu);
+            parentRow.addEventListener('mouseenter', function () { parentRow.style.background = '#f0f0f0'; subMenu.style.display = 'block'; });
+            parentRow.addEventListener('mouseleave', function () { parentRow.style.background = ''; subMenu.style.display = 'none'; });
+            menu.appendChild(parentRow);
+        }
+
+        // 頻率設定（子選單）— 僅 VFD 型（水塔/風扇）
+        if (bVfd && hasControl && szCidFQ) {
+            var nFqMin = parseFloat(el.dataset.nFreqSetMin) || 0;
+            var nFqMax = parseFloat(el.dataset.nFreqSetMax) || 60;
+            var szLastFreq = (cachedFQ && !cachedFQ.isAuto && cachedFQ.value != null) ? String(cachedFQ.value) : '';
+            var fqParentRow = document.createElement('div');
+            fqParentRow.style.cssText = 'position:relative;display:flex;align-items:center;gap:8px;padding:6px 10px;margin:2px 4px;cursor:pointer;transition:background .1s;';
+            fqParentRow.innerHTML = '<i class="fas fa-tachometer-alt" style="color:#17a2b8;width:16px;text-align:center;font-size:13px;"></i><span style="white-space:nowrap;">頻率設定</span><i class="fas fa-chevron-right" style="margin-left:auto;font-size:10px;color:#adb5bd;"></i>';
+            var fqSubMenu = document.createElement('div');
+            fqSubMenu.style.cssText = 'position:absolute;left:100%;top:-1px;background:#fff;border:1px solid #dee2e6;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.15);min-width:200px;padding:4px 0;font-size:13px;display:none;';
+            var fqInputRow = document.createElement('div');
+            fqInputRow.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 10px;margin:2px 4px;';
+            fqInputRow.innerHTML = '<i class="fas fa-sliders-h" style="color:#17a2b8;width:16px;text-align:center;font-size:13px;"></i>' +
+                                    '<input type="number" class="pump-freq-input" value="' + szLastFreq + '" style="width:70px;padding:2px 5px;border:1px solid #adb5bd;border-radius:4px;font-size:12px;text-align:center;background:#fff;color:#212529;" step="0.1" min="' + nFqMin + '" max="' + nFqMax + '" placeholder="Hz">' +
+                                    '<button class="pump-freq-btn" style="padding:2px 8px;border:none;border-radius:4px;background:#17a2b8;color:#fff;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;">確定</button>';
+            if (cachedFQ && !cachedFQ.isAuto) _applyActiveStyle(fqInputRow);
+            fqInputRow.addEventListener('click', function (ev) { ev.stopPropagation(); });
+            fqInputRow.querySelector('.pump-freq-btn').addEventListener('click', function () {
+                var fVal = parseFloat(fqInputRow.querySelector('.pump-freq-input').value);
+                if (isNaN(fVal)) { alert('請輸入有效數值'); return; }
+                if (fVal < nFqMin || fVal > nFqMax) { alert('輸入值 ' + fVal + ' 超出範圍，允許範圍：' + nFqMin + ' ~ ' + nFqMax); return; }
+                _removeMotorContextMenu();
+                _pumpFreqSet(szCidFQ, szTitle, fVal, nFqMax);
+            });
+            fqSubMenu.appendChild(fqInputRow);
+            var fqAutoRow = document.createElement('div');
+            fqAutoRow.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 10px;margin:2px 4px;cursor:pointer;transition:background .1s;';
+            fqAutoRow.innerHTML = '<i class="fas fa-sync-alt" style="color:#6c757d;width:16px;text-align:center;font-size:13px;"></i><span>自動控制</span>';
+            var fqIsActiveAuto = !!(cachedFQ && cachedFQ.isAuto);
+            if (fqIsActiveAuto) _applyActiveStyle(fqAutoRow);
+            fqAutoRow.addEventListener('mouseenter', function () { if (!fqIsActiveAuto) fqAutoRow.style.background = '#f0f0f0'; });
+            fqAutoRow.addEventListener('mouseleave', function () { if (!fqIsActiveAuto) fqAutoRow.style.background = ''; });
+            fqAutoRow.addEventListener('click', function () { _removeMotorContextMenu(); _pumpAutoControl(szCidFQ, szTitle); });
+            fqSubMenu.appendChild(fqAutoRow);
+            fqParentRow.appendChild(fqSubMenu);
+            fqParentRow.addEventListener('mouseenter', function () { fqParentRow.style.background = '#f0f0f0'; fqSubMenu.style.display = 'block'; });
+            fqParentRow.addEventListener('mouseleave', function () { fqParentRow.style.background = ''; fqSubMenu.style.display = 'none'; });
+            menu.appendChild(fqParentRow);
+        }
+
+        // 冰機設定溫度（右鍵入口，另可雙擊右下角）
+        if (szType === 'chiller' && hasControl && el.dataset.cidSetTemp) {
+            var stRow = document.createElement('div');
+            stRow.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 10px;margin:2px 4px;cursor:pointer;transition:background .1s;';
+            stRow.innerHTML = '<i class="fas fa-temperature-low" style="color:#17a2b8;width:16px;text-align:center;font-size:13px;"></i><span>設定溫度</span>';
+            stRow.addEventListener('mouseenter', function () { stRow.style.background = '#f0f0f0'; });
+            stRow.addEventListener('mouseleave', function () { stRow.style.background = ''; });
+            stRow.addEventListener('click', function () { _removeMotorContextMenu(); _motorPromptSetTemp(el); });
+            menu.appendChild(stRow);
+        }
+
+        // 監控點位 → 趨勢圖
+        var monitorSids = [
+            { label: '運轉', sid: el.dataset.sidRun || '' },
+            { label: '故障', sid: el.dataset.sidFault || '' },
+            { label: '手自動', sid: el.dataset.sidMode || '' }
+        ];
+        if (szType === 'chiller') {
+            monitorSids.push({ label: '負載', sid: el.dataset.sidLoad || '' });
+            monitorSids.push({ label: '冰水出水溫', sid: el.dataset.sidChwOut || '' });
+        } else {
+            monitorSids.push({ label: '頻率', sid: el.dataset.sidFreq || '' });
+            if (szType === 'coolingTower') monitorSids.push({ label: '出水溫', sid: el.dataset.sidWaterTemp || '' });
+        }
+        monitorSids = monitorSids.filter(function (m) { return m.sid; });
+
+        if (monitorSids.length > 0) {
+            var divider = document.createElement('div');
+            divider.style.cssText = 'height:1px;background:#dee2e6;margin:4px 8px;';
+            menu.appendChild(divider);
+            var sectionTitle = document.createElement('div');
+            sectionTitle.style.cssText = 'padding:4px 10px 2px;font-size:11px;color:#6c757d;font-weight:600;';
+            sectionTitle.textContent = '監控點位';
+            menu.appendChild(sectionTitle);
+            monitorSids.forEach(function (m) {
+                var info = _findPointInfo(m.sid);
+                var cbRow = document.createElement('div');
+                cbRow.style.cssText = 'display:flex;align-items:center;gap:6px;padding:3px 10px;margin:1px 4px;';
+                cbRow.innerHTML = '<input type="checkbox" class="pump-trend-cb" data-sid="' + m.sid + '" data-name="' + escViewHtml(info.name) + '" data-unit="' + escViewHtml(info.unit) + '" checked style="margin:0;cursor:pointer;"><span style="font-size:12px;">' + m.label + '</span>';
+                cbRow.addEventListener('click', function (ev) { ev.stopPropagation(); });
+                menu.appendChild(cbRow);
+            });
+            var btnRow = document.createElement('div');
+            btnRow.style.cssText = 'padding:4px 10px 6px;';
+            btnRow.innerHTML = '<button class="pump-trend-btn" style="width:100%;padding:4px 0;border:none;border-radius:4px;background:#0d6efd;color:#fff;font-size:12px;font-weight:600;cursor:pointer;"><i class="fas fa-chart-line" style="margin-right:4px;"></i>趨勢圖</button>';
+            btnRow.addEventListener('click', function (ev) {
+                ev.stopPropagation();
+                var cbs = menu.querySelectorAll('.pump-trend-cb:checked');
+                if (cbs.length === 0) { alert('請至少勾選一個監控點位'); return; }
+                var arr = [];
+                cbs.forEach(function (cb) { arr.push({ sid: cb.dataset.sid, name: cb.dataset.name, unit: cb.dataset.unit }); });
+                _removeMotorContextMenu();
+                _addToTrendQueue(arr);
+            });
+            menu.appendChild(btnRow);
+        }
+
+        document.body.appendChild(menu);
+        _positionContextMenu(menu, e.clientX, e.clientY);
+        _motorContextMenu = menu;
+        var closeHandler = function (ev) {
+            if (!menu.contains(ev.target)) { _removeMotorContextMenu(); document.removeEventListener('click', closeHandler); }
+        };
+        setTimeout(function () { document.addEventListener('click', closeHandler); }, 0);
     }
 
     // ── 半圓 SVG Gauge ──
@@ -1929,6 +2281,111 @@
                 var textEl = el.querySelector('.pump-gauge-text');
                 if (textEl) { textEl.textContent = szFreqText; textEl.setAttribute('y', nFillY + nFillH / 2 + 3); }
             }
+        });
+
+        // 更新馬達型設備（冷卻水塔 / 空調箱風扇 / 冰機）
+        document.querySelectorAll('.scada-motor').forEach(function (el) {
+            if (_pumpGaugeDrag && _pumpGaugeDrag.el === el) return;   // 頻率條拖曳中略過
+
+            var szType = el.dataset.motorType;
+            var bVfd   = (szType !== 'chiller');
+            var sidRun     = el.dataset.sidRun   || '';
+            var sidFault   = el.dataset.sidFault || '';
+            var sidMode    = el.dataset.sidMode  || '';
+            var sidPrimary = bVfd ? (el.dataset.sidFreq || '') : (el.dataset.sidLoad || '');
+            var sidExtra   = bVfd ? (szType === 'coolingTower' ? (el.dataset.sidWaterTemp || '') : '')
+                                  : (el.dataset.sidChwOut || '');
+            if (!sidRun && !sidFault && !sidMode && !sidPrimary) return;
+
+            if (sidRun && isBadQuality(sidRun)) {
+                el.innerHTML = '<div style="position:relative;width:100%;height:100%;display:flex;' +
+                    'align-items:center;justify-content:center;">' +
+                    '<span style="font-size:13px;color:#dc3545;font-weight:700;">斷線</span></div>';
+                el.dataset._motorKey = '';
+                return;
+            }
+
+            var bIsRunning = false;
+            if (sidRun && sidValueMap[sidRun] !== undefined && sidValueMap[sidRun] !== '--') {
+                var mraw = sidValueMap[sidRun];
+                bIsRunning = (mraw === 1 || mraw === '1' || mraw === true || mraw === 'true'
+                    || (typeof mraw === 'string' && mraw.toUpperCase() === 'ON') || parseFloat(mraw) >= 1);
+            }
+            var bIsFault = false;
+            if (sidFault && sidValueMap[sidFault] !== undefined && sidValueMap[sidFault] !== '--') {
+                var mrawF = sidValueMap[sidFault];
+                bIsFault = (mrawF === 1 || mrawF === '1' || mrawF === true || mrawF === 'true' || parseFloat(mrawF) >= 1);
+            }
+
+            var szState = bIsFault ? 'fault' : bIsRunning ? 'run' : 'stop';
+            var szPrimaryVal = (sidPrimary && sidValueMap[sidPrimary] !== undefined) ? sidValueMap[sidPrimary] : '';
+            var szModeVal = (sidMode && sidValueMap[sidMode] !== undefined) ? sidValueMap[sidMode] : '';
+
+            // 額外監控溫度（僅 hover tooltip 顯示）
+            var szExtraTip = '';
+            if (sidExtra && sidMap[sidExtra] !== undefined) {
+                var info = _findPointInfo(sidExtra);
+                szExtraTip = Number(sidMap[sidExtra]).toFixed(1) + (info.unit || '°C');
+            }
+
+            var szMotorKey = szState + '|' + szModeVal;
+            if (el.dataset._motorKey !== szMotorKey) {
+                el.dataset._motorKey = szMotorKey;
+                el.innerHTML = _buildMotorViewHtml(_motorPropsFromEl(el), szType, szState, szPrimaryVal, szModeVal, szExtraTip);
+            } else if (sidPrimary) {
+                // 僅更新主數值條 fill/text（頻率 或 負載%）
+                var nMotMax = bVfd ? (parseFloat(el.dataset.nFreqMax) || 60) : (parseFloat(el.dataset.nLoadMax) || 100);
+                var fMotVal = (szPrimaryVal !== '' && szPrimaryVal !== '--') ? parseFloat(szPrimaryVal) : 0;
+                var fMotRatio = Math.max(0, Math.min(1, fMotVal / (nMotMax || 1)));
+                var nMBarTop = 22, nMBarH = 68;
+                var nMFillH = Math.round(nMBarH * fMotRatio);
+                var nMFillY = nMBarTop + nMBarH - nMFillH;
+                var szMotText = (szPrimaryVal !== '' && szPrimaryVal !== '--')
+                    ? (bVfd ? parseFloat(szPrimaryVal).toFixed(1) + ' Hz' : parseFloat(szPrimaryVal).toFixed(0) + ' %') : '';
+                var mFill = el.querySelector('.pump-gauge-fill');
+                if (mFill) { mFill.setAttribute('y', nMFillY); mFill.setAttribute('height', nMFillH); }
+                var mText = el.querySelector('.pump-gauge-text');
+                if (mText) { mText.textContent = szMotText; mText.setAttribute('y', nMFillY + nMFillH / 2 + 3); }
+            }
+        });
+
+        // 更新管路流動元件
+        document.querySelectorAll('.scada-pipe').forEach(function (el) {
+            var szBindMode = el.dataset.bindMode || '';
+            if (!szBindMode) return;   // 未綁定 → 純裝飾固定流動，不更新
+            var sid = el.dataset.sid || '';
+            if (!sid) return;
+
+            var szState;
+            var szValueText = '';
+            if (isBadQuality(sid)) {
+                szState = 'bad';
+            } else if (szBindMode === 'di') {
+                var raw = sidValueMap[sid];
+                if (raw === undefined || raw === '--') return;
+                var bIsOn = (raw === 1 || raw === '1' || raw === true || raw === 'true'
+                    || (typeof raw === 'string' && raw.toUpperCase() === 'ON')
+                    || parseFloat(raw) >= 1);
+                szState = bIsOn ? 'flow' : 'stop';
+            } else {   // analog：越過閾值才流動
+                if (sidMap[sid] === undefined) return;
+                var fVal = sidMap[sid];
+                var fThr = parseFloat(el.dataset.fThreshold) || 0;
+                var bFlow = (el.dataset.szCompare === 'gte') ? (fVal >= fThr) : (fVal > fThr);
+                szState = bFlow ? 'flow' : 'stop';
+                szValueText = Number(fVal).toFixed(2);
+            }
+
+            var szKey = szState + '|' + szValueText;
+            if (el.dataset._pipeKey === szKey) return;
+            el.dataset._pipeKey = szKey;
+            el.innerHTML = buildPipeViewHtml({
+                szOrient: el.dataset.szOrient, nThickness: el.dataset.nThickness,
+                szFlowColor: el.dataset.szFlowColor, szStopColor: el.dataset.szStopColor,
+                szBadColor: el.dataset.szBadColor, nSpeed: el.dataset.nSpeed,
+                szDir: el.dataset.szDir, szBgColor: el.dataset.szBgColor,
+                szTitle: el.dataset.szTitle
+            }, szState, szValueText);
         });
 
         // 更新表格 SID 儲存格

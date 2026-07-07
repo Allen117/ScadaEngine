@@ -85,6 +85,10 @@
   <data name="designer.component_panel.title" xml:space="preserve"><value>Components</value></data>
   <data name="designer.component_panel.expand_tooltip" xml:space="preserve"><value>Expand components panel</value></data>
   <data name="designer.component_panel.collapse_tooltip" xml:space="preserve"><value>Collapse components panel</value></data>
+  <data name="designer.component_panel.cat_display" xml:space="preserve"><value>Display</value></data>
+  <data name="designer.component_panel.cat_point" xml:space="preserve"><value>Points &amp; Control</value></data>
+  <data name="designer.component_panel.cat_equip" xml:space="preserve"><value>Equipment &amp; Graphics</value></data>
+
 
   <data name="designer.widget.table" xml:space="preserve"><value>Table</value></data>
   <data name="designer.widget.gauge" xml:space="preserve"><value>Gauge</value></data>
@@ -95,6 +99,10 @@
   <data name="designer.widget.aoPoint" xml:space="preserve"><value>AO Point</value></data>
   <data name="designer.widget.doPoint" xml:space="preserve"><value>DO Point</value></data>
   <data name="designer.widget.pump" xml:space="preserve"><value>Pump</value></data>
+  <data name="designer.widget.pipe" xml:space="preserve"><value>Pipe</value></data>
+  <data name="designer.widget.coolingTower" xml:space="preserve"><value>Cooling Tower</value></data>
+  <data name="designer.widget.ahuFan" xml:space="preserve"><value>AHU Fan</value></data>
+  <data name="designer.widget.chiller" xml:space="preserve"><value>Chiller</value></data>
 
   <data name="designer.widget_tooltip.table" xml:space="preserve"><value>Drag to canvas to add a data table</value></data>
   <data name="designer.widget_tooltip.gauge" xml:space="preserve"><value>Drag to canvas to add a gauge</value></data>
@@ -105,6 +113,10 @@
   <data name="designer.widget_tooltip.aoPoint" xml:space="preserve"><value>Drag to canvas to add an AO point (bind CID, writes analog output)</value></data>
   <data name="designer.widget_tooltip.doPoint" xml:space="preserve"><value>Drag to canvas to add a DO point (bind CID, ON/OFF toggle)</value></data>
   <data name="designer.widget_tooltip.pump" xml:space="preserve"><value>Drag to canvas to add a pump (bind SID, rotates while running)</value></data>
+  <data name="designer.widget_tooltip.pipe" xml:space="preserve"><value>Drag to canvas to add a pipe (straight segment; bind DI or analog+threshold, flows when the condition is met)</value></data>
+  <data name="designer.widget_tooltip.coolingTower" xml:space="preserve"><value>Drag to canvas to add a cooling tower (bind SID; fan spins when running, VFD frequency control)</value></data>
+  <data name="designer.widget_tooltip.ahuFan" xml:space="preserve"><value>Drag to canvas to add an AHU fan (bind SID; fan spins when running, VFD frequency control)</value></data>
+  <data name="designer.widget_tooltip.chiller" xml:space="preserve"><value>Drag to canvas to add a chiller (bind SID; shows load %, double-click the corner setpoint to edit)</value></data>
 
   <!-- Property Panel -->
   <data name="designer.property_panel.title" xml:space="preserve"><value>Properties</value></data>
@@ -221,6 +233,10 @@
   <data name="designer.default.doPoint_menu_off" xml:space="preserve"><value>Manual OFF</value></data>
   <data name="designer.default.doPoint_menu_auto" xml:space="preserve"><value>Auto Control</value></data>
   <data name="designer.default.pump_title" xml:space="preserve"><value>Pump</value></data>
+  <data name="designer.default.pipe_title" xml:space="preserve"><value>Pipe</value></data>
+  <data name="designer.default.coolingTower_title" xml:space="preserve"><value>Cooling Tower</value></data>
+  <data name="designer.default.ahuFan_title" xml:space="preserve"><value>AHU Fan</value></data>
+  <data name="designer.default.chiller_title" xml:space="preserve"><value>Chiller</value></data>
 
   <!-- Table sample data -->
   <data name="designer.table.header.name" xml:space="preserve"><value>Name</value></data>
@@ -361,6 +377,36 @@
   <data name="designer.prop.pump.fault_color" xml:space="preserve"><value>Fault Color</value></data>
   <data name="designer.prop.pump.manual_color" xml:space="preserve"><value>Manual Color</value></data>
   <data name="designer.prop.pump.auto_color" xml:space="preserve"><value>Auto Color</value></data>
+
+  <!-- Prop Panel - motor (cooling tower / AHU fan / chiller; other labels reuse pump.*) -->
+  <data name="designer.prop.motor.load" xml:space="preserve"><value>Load</value></data>
+  <data name="designer.prop.motor.chw_out" xml:space="preserve"><value>Chilled Water Outlet Temp</value></data>
+  <data name="designer.prop.motor.water_temp" xml:space="preserve"><value>Outlet Water Temp</value></data>
+  <data name="designer.prop.motor.set_temp" xml:space="preserve"><value>Chilled Water Setpoint</value></data>
+  <data name="designer.motor.set_temp_prefix" xml:space="preserve"><value>Set</value></data>
+
+  <!-- Prop Panel - pipe -->
+  <data name="designer.prop.pipe.binding" xml:space="preserve"><value>Binding (choose one)</value></data>
+  <data name="designer.prop.pipe.binding_hint" xml:space="preserve"><value>DI or analog+threshold, only one applies; switching prompts to clear the other</value></data>
+  <data name="designer.prop.pipe.bind_di" xml:space="preserve"><value>DI binding</value></data>
+  <data name="designer.prop.pipe.bind_analog" xml:space="preserve"><value>Analog binding</value></data>
+  <data name="designer.prop.pipe.compare" xml:space="preserve"><value>Flow condition</value></data>
+  <data name="designer.prop.pipe.compare_gt" xml:space="preserve"><value>Greater than threshold (&gt;)</value></data>
+  <data name="designer.prop.pipe.compare_gte" xml:space="preserve"><value>At or above threshold (≥)</value></data>
+  <data name="designer.prop.pipe.threshold" xml:space="preserve"><value>Threshold</value></data>
+  <data name="designer.prop.pipe.orient" xml:space="preserve"><value>Orientation</value></data>
+  <data name="designer.prop.pipe.orient_h" xml:space="preserve"><value>Horizontal</value></data>
+  <data name="designer.prop.pipe.orient_v" xml:space="preserve"><value>Vertical</value></data>
+  <data name="designer.prop.pipe.direction" xml:space="preserve"><value>Flow direction</value></data>
+  <data name="designer.prop.pipe.dir_fwd" xml:space="preserve"><value>Forward</value></data>
+  <data name="designer.prop.pipe.dir_rev" xml:space="preserve"><value>Reverse</value></data>
+  <data name="designer.prop.pipe.thickness" xml:space="preserve"><value>Thickness</value></data>
+  <data name="designer.prop.pipe.speed" xml:space="preserve"><value>Speed (1-5)</value></data>
+  <data name="designer.prop.pipe.flow_color" xml:space="preserve"><value>Flow Color</value></data>
+  <data name="designer.prop.pipe.stop_color" xml:space="preserve"><value>Stop Color</value></data>
+  <data name="designer.prop.pipe.bad_color" xml:space="preserve"><value>Offline Color</value></data>
+  <data name="designer.pipe.confirm_switch_to_analog" xml:space="preserve"><value>Currently bound to DI. Switching to analog binding will clear the DI binding. Continue?</value></data>
+  <data name="designer.pipe.confirm_switch_to_di" xml:space="preserve"><value>Currently bound to analog. Switching to DI binding will clear the analog binding. Continue?</value></data>
 
   <!-- Prop Panel - text -->
   <data name="designer.prop.text.bold" xml:space="preserve"><value>Bold</value></data>

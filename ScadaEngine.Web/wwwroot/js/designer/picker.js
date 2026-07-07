@@ -32,6 +32,9 @@ const DB_DEVICE_ID   = -998; // DB 來源點位的虛擬設備 ID
 let _pumpPickerSlot    = '';   // 目前正在選擇的 pump 綁定欄位 key（如 'szSidRun'、'szCidStartStop'）
 let _pumpPickerNameKey = '';   // 對應的名稱 key（如 'szRunName'、'szStartStopName'）
 
+// 管路綁定模式（'di' | 'analog'，二擇一互斥；使用者正在綁哪一種）
+let _pipePickerMode    = '';
+
 // SID 格式: {coordinatorId*65536 + modbusId*256 + 1}-S{N}
 // 某設備所屬 SID 的數字前綴落在 [Id*65536, (Id+1)*65536-1] 範圍內
 function getSidNumericPrefix(szSid) {
@@ -777,9 +780,10 @@ function confirmPointPick() {
             selectedEl.widgetProps.szCid       = point.szSid;
             selectedEl.widgetProps.szPointName = szFullName;
             selectedEl.widgetProps.szTitle     = szFullName;
-        } else if (szType === 'pump') {
+        } else if (szType === 'pump' || szType === 'coolingTower' || szType === 'ahuFan' || szType === 'chiller') {
+            // 馬達型設備多綁定欄位（pump 與三種新設備共用同一 slot 機制）
             if (_pumpPickerSlot) {
-                selectedEl.widgetProps[_pumpPickerSlot]  = point.szSid;
+                selectedEl.widgetProps[_pumpPickerSlot]    = point.szSid;
                 selectedEl.widgetProps[_pumpPickerNameKey] = szFullName;
                 if (_pumpPickerSlot === 'szSidFreq') {
                     selectedEl.widgetProps.nFreqMax = point.fMax ?? 60;
@@ -788,6 +792,30 @@ function confirmPointPick() {
                     selectedEl.widgetProps.nFreqSetMin = point.fMin ?? 0;
                     selectedEl.widgetProps.nFreqSetMax = point.fMax ?? 60;
                 }
+                if (_pumpPickerSlot === 'szSidLoad') {
+                    selectedEl.widgetProps.nLoadMax = point.fMax ?? 100;
+                }
+            }
+        } else if (szType === 'pipe') {
+            const props = selectedEl.widgetProps;
+            const szNewMode = (_pipePickerMode === 'analog') ? 'analog' : 'di';
+            // 互斥確認（plan 決策 6）：已綁另一種模式且有值時，先確認再清除
+            if (props.szBindMode && props.szBindMode !== szNewMode && props.szSid) {
+                const szMsg = szNewMode === 'analog'
+                    ? t('designer.pipe.confirm_switch_to_analog')
+                    : t('designer.pipe.confirm_switch_to_di');
+                if (!confirm(szMsg)) return;   // 取消 → 完全不改（原綁定保留）
+            }
+            const bWasAnalog = props.szBindMode === 'analog';
+            props.szBindMode  = szNewMode;
+            props.szSid       = point.szSid;
+            props.szPointName = szFullName;
+            props.szTitle     = szFullName;
+            if (szNewMode === 'analog' && !bWasAnalog) {
+                // 首次進入類比模式：以點位中間值作為預設閾值（可再調）
+                const fMin = point.fMin ?? 0;
+                const fMax = point.fMax ?? 100;
+                props.fThreshold = Math.round((fMin + fMax) / 2 * 100) / 100;
             }
         }
         renderWidget(selectedEl);
@@ -945,6 +973,43 @@ async function reroutePumpBinding(szSlotKey, szNameKey) {
         await _ensurePickerData();
         // 嘗試定位到已綁定的 SID
         const szBoundSid = selectedEl.widgetProps[szSlotKey] || '';
+        _showPickerForBoundSid(szBoundSid);
+    } catch (_) { /* 已在 _ensurePickerData 顯示 alert */ }
+}
+
+// 從屬性面板「重選」呼叫（冷卻水塔 / 空調箱風扇 / 冰機 多綁定欄位）
+async function rerouteMotorBinding(szSlotKey, szNameKey) {
+    if (!selectedEl) return;
+    const szType = selectedEl.dataset.type;
+    if (szType !== 'coolingTower' && szType !== 'ahuFan' && szType !== 'chiller') return;
+    _pumpPickerSlot    = szSlotKey;
+    _pumpPickerNameKey = szNameKey;
+    pendingGaugeX      = -1;
+    pendingGaugeY      = -1;
+    szPickerWidgetType = szType;
+    szPickedSid        = null;
+    nPickedDevId       = -1;
+    try {
+        await _ensurePickerData();
+        const szBoundSid = selectedEl.widgetProps[szSlotKey] || '';
+        _showPickerForBoundSid(szBoundSid);
+    } catch (_) { /* 已在 _ensurePickerData 顯示 alert */ }
+}
+
+// 從屬性面板「綁定/重選」呼叫（pipe — DI 或 類比二擇一互斥）
+async function reroutePipeBinding(szMode) {
+    if (!selectedEl || selectedEl.dataset.type !== 'pipe') return;
+    _pipePickerMode    = (szMode === 'analog') ? 'analog' : 'di';
+    pendingGaugeX      = -1;
+    pendingGaugeY      = -1;
+    szPickerWidgetType = 'pipe';
+    szPickedSid        = null;
+    nPickedDevId       = -1;
+    try {
+        await _ensurePickerData();
+        // 目前已綁同一模式 → 定位到該 SID；否則從頭選
+        const szBoundSid = (selectedEl.widgetProps.szBindMode === _pipePickerMode)
+            ? (selectedEl.widgetProps.szSid || '') : '';
         _showPickerForBoundSid(szBoundSid);
     } catch (_) { /* 已在 _ensurePickerData 顯示 alert */ }
 }

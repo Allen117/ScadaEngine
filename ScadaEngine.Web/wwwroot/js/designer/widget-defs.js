@@ -215,6 +215,110 @@ const WIDGET_DEFS = {
             szOutletDir:      'right',
             szBgColor:        'transparent'
         }
+    },
+    pipe: {
+        szLabel: '管路',
+        szIcon: 'fas fa-grip-lines',
+        nDefaultW: 160,
+        nDefaultH: 24,
+        nMinW: 24, nMinH: 12,
+        defaultProps: {
+            szTitle:      '__i18n__:designer.default.pipe_title',
+            // 綁定（二擇一互斥；szBindMode 為單一真相，決定哪種綁定生效）
+            szBindMode:   '',          // '' 未綁 | 'di' | 'analog'
+            szSid:        '',
+            szPointName:  '',
+            fThreshold:   0,           // 僅 analog 模式：越過此值才流動
+            szCompare:    'gt',        // 'gt'（>）| 'gte'（>=）
+            // 外觀
+            szOrient:     'h',         // 'h' 水平 | 'v' 垂直
+            nThickness:   8,           // 管線粗細 px
+            szFlowColor:  '#0d6efd',   // 流動色
+            szStopColor:  '#adb5bd',   // 停止色（管身底色）
+            szBadColor:   '#6c757d',   // 斷線色
+            nSpeed:       3,           // 流速檔 1..5
+            szDir:        'fwd',       // 'fwd' 正向 | 'rev' 逆向
+            szBgColor:    'transparent'
+        }
+    },
+    coolingTower: {
+        szLabel: '冷卻水塔',
+        szIcon: 'fas fa-fan',
+        nDefaultW: 130,
+        nDefaultH: 130,
+        nMinW: 60, nMinH: 60,
+        defaultProps: {
+            szTitle:          '__i18n__:designer.default.coolingTower_title',
+            // SID 點位（唯讀監控）
+            szSidRun:         '',   szRunName:       '',
+            szSidFault:       '',   szFaultName:     '',
+            szSidMode:        '',   szModeName:      '',
+            szSidFreq:        '',   szFreqName:      '',   // 風扇頻率
+            szSidWaterTemp:   '',   szWaterTempName: '',   // 出水溫（僅 tooltip）
+            // CID 點位（控制寫入）
+            szCidStartStop:   '',   szStartStopName: '',
+            szCidFreqSet:     '',   szFreqSetName:   '',
+            nFreqSetMin:      0,
+            nFreqSetMax:      60,
+            nFreqMax:         60,
+            szManualColor:    '#ffc107',
+            szAutoColor:      '#0d6efd',
+            szRunColor:       '#28a745',
+            szStopColor:      '#6c757d',
+            szFaultColor:     '#dc3545',
+            szBgColor:        'transparent'
+        }
+    },
+    ahuFan: {
+        szLabel: '空調箱風扇',
+        szIcon: 'fas fa-wind',
+        nDefaultW: 130,
+        nDefaultH: 120,
+        nMinW: 60, nMinH: 60,
+        defaultProps: {
+            szTitle:          '__i18n__:designer.default.ahuFan_title',
+            szSidRun:         '',   szRunName:       '',
+            szSidFault:       '',   szFaultName:     '',
+            szSidMode:        '',   szModeName:      '',
+            szSidFreq:        '',   szFreqName:      '',
+            szCidStartStop:   '',   szStartStopName: '',
+            szCidFreqSet:     '',   szFreqSetName:   '',
+            nFreqSetMin:      0,
+            nFreqSetMax:      60,
+            nFreqMax:         60,
+            szManualColor:    '#ffc107',
+            szAutoColor:      '#0d6efd',
+            szRunColor:       '#28a745',
+            szStopColor:      '#6c757d',
+            szFaultColor:     '#dc3545',
+            szBgColor:        'transparent'
+        }
+    },
+    chiller: {
+        szLabel: '冰機',
+        szIcon: 'fas fa-snowflake',
+        nDefaultW: 150,
+        nDefaultH: 120,
+        nMinW: 70, nMinH: 60,
+        defaultProps: {
+            szTitle:          '__i18n__:designer.default.chiller_title',
+            // SID 點位（唯讀監控）
+            szSidRun:         '',   szRunName:       '',
+            szSidFault:       '',   szFaultName:     '',
+            szSidMode:        '',   szModeName:      '',
+            szSidLoad:        '',   szLoadName:      '',   // 負載%（主數值條）
+            szSidChwOut:      '',   szChwOutName:    '',   // 冰水出水溫（僅 tooltip）
+            // CID 點位（控制寫入）
+            szCidStartStop:   '',   szStartStopName: '',
+            szCidSetTemp:     '',   szSetTempName:   '',   // 冰水設定溫度（右下角雙擊編輯，無上下限）
+            nLoadMax:         100,
+            szManualColor:    '#ffc107',
+            szAutoColor:      '#0d6efd',
+            szRunColor:       '#28a745',
+            szStopColor:      '#6c757d',
+            szFaultColor:     '#dc3545',
+            szBgColor:        'transparent'
+        }
     }
 };
 
@@ -771,4 +875,70 @@ function buildPumpHtml(props, szState) {
             <circle cx="59" cy="49" r="1.2" fill="rgba(255,255,255,.25)"/>
         </g>${szGaugeHtml}
     </svg></div>`;
+}
+
+// ============================================================
+// 冷卻水塔 / 空調箱風扇 / 冰機 — Designer 預覽（共用 MotorEquip 模組）
+// ============================================================
+// 三者執行期渲染在 scadapage.js，Designer 預覽與其共用同一份 SVG（plan 決策 3-A）。
+// 冰機額外於右下角顯示「設定溫度」文字（Designer 為靜態預覽，執行期才可雙擊編輯）。
+function buildCoolingTowerHtml(props, szState) {
+    return MotorEquip.build({
+        szType: 'coolingTower', props: props, szState: szState || 'stop',
+        szPrimaryVal: '', szModeVal: '', bInteractive: false,
+        szBadgesHtml: '', szOverlayHtml: '', szHoverHtml: ''
+    });
+}
+
+function buildAhuFanHtml(props, szState) {
+    return MotorEquip.build({
+        szType: 'ahuFan', props: props, szState: szState || 'stop',
+        szPrimaryVal: '', szModeVal: '', bInteractive: false,
+        szBadgesHtml: '', szOverlayHtml: '', szHoverHtml: ''
+    });
+}
+
+function buildChillerHtml(props, szState) {
+    const szOverlay = props.szCidSetTemp
+        ? `<div class="chiller-settemp" style="position:absolute;bottom:3px;right:4px;
+              font-size:10px;color:#fff;background:rgba(33,37,41,.7);
+              padding:1px 6px;border-radius:4px;white-space:nowrap;pointer-events:none;">
+              ${escHtml(t('designer.motor.set_temp_prefix'))} --°C</div>`
+        : '';
+    return MotorEquip.build({
+        szType: 'chiller', props: props, szState: szState || 'stop',
+        szPrimaryVal: '', szModeVal: '', bInteractive: false,
+        szBadgesHtml: '', szOverlayHtml: szOverlay, szHoverHtml: ''
+    });
+}
+
+// ============================================================
+// 管路流動元件（直管段：水平/垂直 + dash marching 流動動畫）
+// ============================================================
+// 流速檔 1..5 → CSS 動畫時長（值越大越快）
+const PIPE_SPEED_DUR = { 1: '1.2s', 2: '0.9s', 3: '0.6s', 4: '0.4s', 5: '0.25s' };
+
+// szState: 'flow'（流動）| 'stop'（靜止）| 'bad'（斷線）。Designer 預覽固定 'flow'。
+function buildPipeHtml(props, szState) {
+    const szOrient = props.szOrient === 'v' ? 'v' : 'h';
+    const nThk     = Math.max(2, props.nThickness || 8);
+    const szFlow   = props.szFlowColor || '#0d6efd';
+    const szStop   = props.szStopColor || '#adb5bd';
+    const szBad    = props.szBadColor  || '#6c757d';
+    const nSpeed   = Math.min(5, Math.max(1, props.nSpeed || 3));
+    const szDur    = PIPE_SPEED_DUR[nSpeed] || '0.6s';
+    const bRev     = props.szDir === 'rev';
+    const szBg     = (props.szBgColor && props.szBgColor !== 'transparent') ? props.szBgColor : 'transparent';
+
+    // 管身底色：斷線→斷線色，其餘→停止色（流動時上面再疊 dash 動畫）
+    const szTrackColor = szState === 'bad' ? szBad : szStop;
+    const bFlowing     = szState === 'flow';
+    const szFlowDiv = bFlowing
+        ? `<div class="pipe-flow${bRev ? ' rev' : ''}" style="--flow-color:${szFlow};--flow-dur:${szDur};"></div>`
+        : '';
+
+    return `<div class="pipe-widget pipe-${szOrient}" style="--pipe-thickness:${nThk}px;background:${szBg};">
+        <div class="pipe-track" style="background:${szTrackColor};"></div>
+        ${szFlowDiv}
+    </div>`;
 }
