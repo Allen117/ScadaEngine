@@ -392,6 +392,31 @@ props 命名沿用 pump 慣例（`szSidXxx` + `szXxxName` 成對）：共同 `sz
 
 > **設計決策**：採「抽共用核心」策略——三設備共用一份 `MotorEquip` 圖形模組與一套執行期邏輯（右鍵 / 拖曳 / 輪詢），並重用 pump 既有 helper（`_buildModeBadgeHtml` / `_pumpStartStop` 等）。水泵本身未遷移以避免生產回歸風險。詳見 `docs/plans/_archive/2026-07-07-designer-冰機冷卻水塔空調箱風扇元件.md`。
 
+#### (11) pipe — 管路流動元件
+
+直管段（水平 / 垂直）+ dash marching 流動動畫，用於在設備之間表現介質流動（冰水 / 冷卻水 / 風管）。採 **方案 A：直管段** — 一個矩形定位框內含一條沿方向的流動線，多段轉折以多個 pipe 框拼接（完全套用既有 bounding-box widget 模型，不需自由折線編輯器）。
+
+**流動動畫技術**：以 CSS `repeating-linear-gradient` + `background-position` 動畫（marching-ants）呈現，**非** SVG `stroke-dashoffset`。原因：widget 可縮放，SVG viewBox 非等比縮放會扭曲 dash；CSS 固定 px dash pattern + 百分比定位，縮放不變形。keyframes `pipe-flow-h` / `pipe-flow-v`，流向以 `animation-direction:reverse` 切換，流速檔 1-5 映射動畫時長（`PIPE_SPEED_DUR`）。
+
+**綁定（二擇一互斥）** — `szBindMode` 為單一真相（`''` 未綁 / `'di'` / `'analog'`），DI 與「類比量＋閾值」共用同一 `szSid` 欄，任一時刻僅一種生效：
+
+| 模式 | 流動判定 |
+|------|----------|
+| DI (`di`) | 即時值為 ON（1 / true / ≥1）→ 流動；OFF → 靜止 |
+| 類比 (`analog`) | 即時值 `> 閾值`（或 `≥`，由 `szCompare` 決定）→ 流動；否則靜止 |
+
+於屬性面板點另一種綁定並完成選點時，若已綁另一模式且有值 → **跳 confirm**：確認則清除原綁定改綁新的、取消則完全不動（互斥收斂在 `picker.js` 的 `confirmPointPick` pipe 分支）。首次進入類比模式以點位中間值作為預設閾值。
+
+props：`szBindMode / szSid / szPointName / fThreshold / szCompare('gt'|'gte') / szOrient('h'|'v') / nThickness / szFlowColor / szStopColor / szBadColor / nSpeed(1-5) / szDir('fwd'|'rev') / szBgColor`。
+
+- 拖入畫布**直接建立**（不先開 picker），綁定於屬性面板完成
+- 斷線（Bad quality）→ 以 `szBadColor` 靜止顯示、不流動，tooltip 顯示「斷線」
+- 未綁定 → 純裝飾，固定流動
+- hover 顯示「標題 — 狀態（流動 / 靜止 / 斷線）— 數值(類比)」tooltip
+- Designer `buildPipeHtml`（widget-defs.js）與 ScadaPage `buildPipeViewHtml`（scadapage.js 本地）各一份，樣式共用 `.pipe-widget / .pipe-track / .pipe-flow`
+
+> **元件庫分類（Designer）**：元件庫改為三類 — 顯示元件（表格 / 儀錶板 / 文字）、點位與控制（控制按鈕 / AI / DI / AO / DO）、設備與動畫（水泵 / 管路 / 冷卻水塔 / 空調箱風扇 / 冰機）。各類獨立捲動（`.widget-cat-items` overflow-y:auto），`.designer-outer` 釘視窗高使面板本身不捲，避免 100% 時多餘的整體捲軸。
+
 ---
 
 ## 8. 即時數據更新機制
@@ -414,6 +439,7 @@ props 命名沿用 pump 慣例（`szSidXxx` + `szXxxName` 成對）：共同 `sz
     ├─ .scada-rt-value     → 重建 HTML（含警報色判定）
     ├─ .scada-di-point     → 重建 HTML（含 DI 警報脈動）
     ├─ .scada-pump         → 比對 stateKey 決定是否重建 SVG / 僅更新 Gauge
+    ├─ .scada-pipe         → 依 bindMode（DI ON/OFF｜類比 vs 閾值｜Bad）比對 pipeKey 決定是否重建
     └─ .scada-table td[data-sid] → 逐格更新文字與色彩
 ```
 
