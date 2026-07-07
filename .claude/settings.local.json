@@ -64,7 +64,8 @@
       "Bash(python -c \"import json; json.load\\(open\\(r'c:\\\\Users\\\\Allen\\\\Desktop\\\\ScadaEngine\\\\.claude\\\\settings.local.json', encoding='utf-8'\\)\\); print\\('JSON OK'\\)\")",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(dotnet build *)"
     ]
   }
 }
