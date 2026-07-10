@@ -157,7 +157,7 @@ ScadaEngine.sln
 | `ScadaEngine.Engine/MqttSetting/MqttSetting.json` | MQTT broker IP/port/topic/retain |
 | `ScadaEngine.Engine/Modbus/Modbus.json` | Modbus device definitions (IP, port, tags) |
 | `ScadaEngine.Engine/DatabaseSchema/DatabaseSchema.json` | 建表 + 欄位自動同步的**唯一真相來源** — 加欄位只改此檔，Engine 與 Web 啟動時自動補缺欄位（只加不減不改，詳見 docs/架構.md §資料庫結構初始化與欄位同步） |
-| `ScadaEngine.Engine/DBPoint/*.json` | DB 來源 Coordinator 點位定義（由 `DB通訊檔案產生工具.xlsm` 巨集產生，Engine 啟動 + reload MQTT 訊號時載入） |
+| `ScadaEngine.Engine/DBPoint/*.json` | DB 來源 Coordinator 點位定義（由 `DB通訊檔案產生工具.xlsm` 巨集產生，Engine 啟動 + reload MQTT 訊號時載入）。Web「DB 來源」頁可編輯**點位名稱與單位**回寫此檔（只改 Name/Unit 不動陣列結構），寫檔路徑由 Web `appsettings.json` 的 `EngineDbPointConfig`（WatchedFolder + MirrorFolder）明定，同 `EngineModbusConfig` 慣例 |
 | `ScadaEngine.Engine/OpcUaPoint/*.json` | OPC UA 來源定義（一檔一 Server 含 Devices 分組；由 Web「OPC UA 來源」頁動態編輯回寫，Engine 啟動 + reload MQTT 訊號時載入，免重啟）。Web 寫檔路徑由 Web `appsettings.json` 的 `EngineOpcUaConfig`（WatchedFolder + MirrorFolder）明定，同 `EngineModbusConfig` 慣例 |
 | `ScadaEngine.Engine/Setting/LineSetting.json` | Line Messaging API token + rate limit |
 | `ScadaEngine.Engine/Setting/EmailSetting.json` | SMTP host/port/帳密 + rate limit（MailKit）|

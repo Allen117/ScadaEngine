@@ -47,7 +47,15 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
-  <data name="dbcoord.api.reload_success" xml:space="preserve"><value>Notified Engine to reload JSON</value></data>
-  <data name="dbcoord.api.reload_failure" xml:space="preserve"><value>Notification failed. Please check MQTT broker.</value></data>
-  <data name="dbcoord.api.rename_saved_reload_failed" xml:space="preserve"><value>Point saved, but failed to notify Engine to reload. Please click "Notify Engine to Reload JSON" manually.</value></data>
+  <data name="dbpointcfg.svc.name_required" xml:space="preserve"><value>Point name cannot be empty</value></data>
+  <data name="dbpointcfg.svc.name_too_long" xml:space="preserve"><value>Point name cannot exceed 100 characters</value></data>
+  <data name="dbpointcfg.svc.unit_too_long" xml:space="preserve"><value>Unit cannot exceed 50 characters</value></data>
+  <data name="dbpointcfg.svc.sequence_invalid" xml:space="preserve"><value>Invalid point sequence (must be 1~100)</value></data>
+  <data name="dbpointcfg.svc.coordinator_not_found" xml:space="preserve"><value>DB source not found</value></data>
+  <data name="dbpointcfg.svc.folder_not_configured" xml:space="preserve"><value>EngineDbPointConfig:WatchedFolder is not configured; cannot write config file (please set it in appsettings.json)</value></data>
+  <data name="dbpointcfg.svc.json_not_found" xml:space="preserve"><value>Config file not found: {0}</value></data>
+  <data name="dbpointcfg.svc.json_invalid" xml:space="preserve"><value>Config file JSON is invalid and cannot be parsed</value></data>
+  <data name="dbpointcfg.svc.point_not_found" xml:space="preserve"><value>Point with sequence {0} not found in config file (JSON and database may be out of sync; click "Notify Engine to Reload JSON" first)</value></data>
+  <data name="dbpointcfg.svc.save_success" xml:space="preserve"><value>Point name saved; Engine notified to reload</value></data>
+  <data name="dbpointcfg.svc.json_write_failed" xml:space="preserve"><value>Failed to write config file: {0}</value></data>
 </root>

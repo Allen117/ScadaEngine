@@ -1,0 +1,20 @@
+﻿{
+  "Name": "TimeSim",
+  "PollingInterval": 1000,
+  "ConnectTimeout": 1000,
+  "MonitorEnabled": true,
+  "Points": [
+    {
+      "Name": "MinuteOfDay",
+      "Unit": "kWh",
+      "Min": 0,
+      "Max": 1439
+    },
+    {
+      "Name": "HourOfDay",
+      "Unit": "kWh",
+      "Min": 0,
+      "Max": 23
+    }
+  ]
+}

@@ -71,6 +71,19 @@
   <data name="dbcoord.value.yes" xml:space="preserve"><value>是</value></data>
   <data name="dbcoord.value.no" xml:space="preserve"><value>否</value></data>
 
+  <data name="dbcoord.label.points" xml:space="preserve"><value>點位列表（雙擊名稱/單位或點鉛筆可編輯）</value></data>
+  <data name="dbcoord.th.sid" xml:space="preserve"><value>SID</value></data>
+  <data name="dbcoord.th.name" xml:space="preserve"><value>名稱</value></data>
+  <data name="dbcoord.th.unit" xml:space="preserve"><value>單位</value></data>
+  <data name="dbcoord.th.min" xml:space="preserve"><value>Min</value></data>
+  <data name="dbcoord.th.max" xml:space="preserve"><value>Max</value></data>
+
+  <data name="dbcoord.point.empty" xml:space="preserve"><value>此來源尚無點位</value></data>
+  <data name="dbcoord.point.edit" xml:space="preserve"><value>編輯名稱</value></data>
+  <data name="dbcoord.point.save" xml:space="preserve"><value>儲存</value></data>
+  <data name="dbcoord.point.cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="dbcoord.point.name_required" xml:space="preserve"><value>點位名稱不可為空白</value></data>
+
   <data name="dbcoord.msg.success_default" xml:space="preserve"><value>成功</value></data>
   <data name="dbcoord.msg.failure_default" xml:space="preserve"><value>失敗</value></data>
   <data name="dbcoord.msg.call_failed_with" xml:space="preserve"><value>呼叫失敗：{error}</value></data>

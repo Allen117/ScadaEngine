@@ -47,7 +47,15 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
-  <data name="dbcoord.api.reload_success" xml:space="preserve"><value>Notified Engine to reload JSON</value></data>
-  <data name="dbcoord.api.reload_failure" xml:space="preserve"><value>Notification failed. Please check MQTT broker.</value></data>
-  <data name="dbcoord.api.rename_saved_reload_failed" xml:space="preserve"><value>Point saved, but failed to notify Engine to reload. Please click "Notify Engine to Reload JSON" manually.</value></data>
+  <data name="dbpointcfg.svc.name_required" xml:space="preserve"><value>點位名稱不可為空白</value></data>
+  <data name="dbpointcfg.svc.name_too_long" xml:space="preserve"><value>點位名稱長度不可超過 100 字元</value></data>
+  <data name="dbpointcfg.svc.unit_too_long" xml:space="preserve"><value>單位長度不可超過 50 字元</value></data>
+  <data name="dbpointcfg.svc.sequence_invalid" xml:space="preserve"><value>點位序號無效（須為 1~100）</value></data>
+  <data name="dbpointcfg.svc.coordinator_not_found" xml:space="preserve"><value>找不到指定的 DB 來源</value></data>
+  <data name="dbpointcfg.svc.folder_not_configured" xml:space="preserve"><value>未設定 EngineDbPointConfig:WatchedFolder，無法寫入設定檔（請聯絡系統管理員設定 appsettings.json）</value></data>
+  <data name="dbpointcfg.svc.json_not_found" xml:space="preserve"><value>找不到設定檔：{0}</value></data>
+  <data name="dbpointcfg.svc.json_invalid" xml:space="preserve"><value>設定檔 JSON 格式錯誤，無法解析</value></data>
+  <data name="dbpointcfg.svc.point_not_found" xml:space="preserve"><value>設定檔內找不到序號 {0} 的點位（JSON 與資料庫可能不同步，請先按「通知 Engine 重新載入 JSON」）</value></data>
+  <data name="dbpointcfg.svc.save_success" xml:space="preserve"><value>點位名稱已儲存並通知 Engine 重新載入</value></data>
+  <data name="dbpointcfg.svc.json_write_failed" xml:space="preserve"><value>寫入設定檔失敗：{0}</value></data>
 </root>

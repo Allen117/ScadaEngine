@@ -10,7 +10,7 @@ DB 來源是 Modbus / 計算點位之外的**第三類點位來源**。專供「
 - **設定唯一來源**：`ScadaEngine.Engine/DBPoint/DB通訊檔案產生工具.xlsm` 的巨集 → 各 sheet → `DBPoint/{SheetName}.json`
 - **即時生效**：Web 端按「通知 Engine 重新載入 JSON」→ MQTT `SCADA/Sys/DbCoordinator/Reload` → Engine 重讀 JSON、UPSERT DB、重建 polling loops，免重啟 Engine
 - **DBLatestData.Value 即工程值**：外部系統直接寫工程值，Engine 不再做任何縮放（不再有 Ratio）
-- **Phase 1 唯讀 UI**：Web `/DbCoordinator` 顯示已載入結果（Coordinator + 點位狀態），編輯透過 Excel 巨集
+- **UI 以唯讀為主，點位名稱/單位可編輯**：Web `/DbCoordinator` 顯示已載入結果（Coordinator + 點位列表）；點位**名稱與單位**可行內編輯並回寫 JSON（見 §8.3），結構性編輯（增刪點位、改 Min/Max）仍透過 Excel 巨集
 
 ---
 
@@ -18,8 +18,9 @@ DB 來源是 Modbus / 計算點位之外的**第三類點位來源**。專供「
 
 | 方法 | 路由 | 說明 | 認證 |
 |------|------|------|------|
-| GET  | `/DbCoordinator`        | DB 來源管理頁面（唯讀清單） | 需登入 |
+| GET  | `/DbCoordinator`        | DB 來源管理頁面（清單 + 點位名稱/單位編輯） | 需登入 |
 | POST | `/DbCoordinator/Reload` | 通知 Engine 重新載入 `DBPoint/*.json`（發 MQTT） | 需登入 |
+| POST | `/DbCoordinator/UpdatePoint` | 更新單一點位名稱+單位（回寫 JSON + UPSERT DBPoints + 自動發 reload MQTT） | 需登入 |
 
 ---
 
@@ -179,9 +180,9 @@ DbCoordinatorReloadSubscriber (Engine BackgroundService)
 
 - **上方按鈕列**：「重新整理頁面」「通知 Engine 重新載入 JSON」
 - **左側「DB 通訊」卡**：列出所有已載入的 DB Coordinator（依 `DBPoint/*.json` 順序），停用者顯示灰色「停用」徽章
-- **右側「設備詳細資料」卡**：點擊左側項目後顯示該 Coordinator 的 Id / Name / PollingInterval / ConnectTimeout / MonitorEnabled / 點位數
+- **右側「設備詳細資料」卡**：點擊左側項目後顯示該 Coordinator 的 Id / Name / PollingInterval / ConnectTimeout / MonitorEnabled / 點位數，下方附**點位列表**（SID / 名稱 / 單位 / Min / Max，名稱與單位可行內編輯）
 - 預設自動載入第一筆 Coordinator
-- 唯讀（Phase 1）；編輯透過 `DBPoint/DB通訊檔案產生工具.xlsm`，按右上「通知 Engine 重新載入 JSON」即時生效
+- 結構性編輯（增刪點位、改 Min/Max）透過 `DBPoint/DB通訊檔案產生工具.xlsm`，按右上「通知 Engine 重新載入 JSON」即時生效
 
 ### 8.2 SID 下拉清單整合
 
@@ -193,6 +194,33 @@ DB 來源 SID 已自動納入下列功能的「選擇 SID」下拉：
 - 畫面設計（`/Designer`）— 點位 GroupName="DB"
 - 電表/迴路設定（`/EnergyMeter`）— 僅 Unit=kWh 的點位
 - 即時數據快取預填（`/RealTime`）
+
+### 8.3 點位名稱/單位編輯（回寫 JSON）
+
+點位列表中雙擊名稱或單位（或點鉛筆 icon）進入行內編輯（名稱 + 單位同一編輯列），Enter / ✓ 儲存、Esc / ✗ 取消。
+
+```
+使用者儲存
+    ↓ POST /DbCoordinator/UpdatePoint { id, sequence, newName, newUnit }
+DbPointConfigFileService（Web，Scoped；static SemaphoreSlim 檔案互斥）
+    1) 讀 WatchedFolder/{Name}.json（依 BOM 自動偵測編碼 — Excel 巨集產出為 UTF-16 LE）
+    2) 只改 Points[sequence-1] 的 Name / Unit — 陣列順序與數量不動，SID 不位移
+    3) 原子寫回：*.json.tmp → File.Replace（留 *.json.bak），統一 UTF-8 indented
+       MirrorFolder 有設定時同步鏡像寫回原始碼資料夾
+    4) 以剛寫回的 JSON 為準 UPSERT DBPoints（走既有 SaveDbPointsAsync，映射與 Engine 載入器一致）
+    ↓ 成功後 Controller 自動發 reload MQTT（SCADA/Sys/DbCoordinator/Reload）
+Engine 熱重載 → 之後 MQTT payload / Realtime 頁即帶新名稱；依 Unit 篩選的自動帶入功能
+（如電表/迴路設定只列 Unit=kWh 點位）即認得新單位
+```
+
+設計要點：
+
+- **只開放改 Name / Unit**：SID = `DB{Id}-S{陣列索引+1}`，增刪或重排會使後續 SID 位移、歷史資料錯接；改名/單位不動陣列結構，絕對安全。單位驗證：≤50 字元、可空白；名稱：非空、≤100 字元
+- **JSON 仍為唯一真相來源**：只改 DB 會在下次 Engine 重載時被 JSON 蓋回去，故必須回寫檔案
+- **寫檔路徑由 `appsettings.json` 的 `EngineDbPointConfig` 明定**（`WatchedFolder` + `MirrorFolder`，比照 `EngineModbusConfig` / `EngineOpcUaConfig` 慣例）；`WatchedFolder` 未設定時儲存回傳明確錯誤，不猜路徑
+- **reload MQTT 發布失敗不回滾**：點位已存檔，UI 提示使用者手動按「通知 Engine 重新載入 JSON」
+
+⚠️ **Excel 巨集覆蓋須知**：日後重跑 `DB通訊檔案產生工具.xlsm` 會以巨集輸出覆蓋 Web 端改的名稱/單位 — 請在 Excel 端同步維護，或以 Web 端為準時避免重跑巨集。
 
 ---
 
@@ -233,13 +261,46 @@ DB 來源 SID 已自動納入下列功能的「選擇 SID」下拉：
 ### Web
 - `ScadaEngine.Web/Features/DbCoordinator/Controllers/DbCoordinatorController.cs`
 - `ScadaEngine.Web/Features/DbCoordinator/Models/DbCoordinatorViewModel.cs`
+- `ScadaEngine.Web/Features/DbCoordinator/Models/UpdatePointRequest.cs` — 點位編輯（名稱+單位）請求 DTO
+- `ScadaEngine.Web/Features/DbCoordinator/Models/DbPointJsonFileDtos.cs` — DBPoint JSON 檔結構（Web 端持有，Engine 端為 internal）
 - `ScadaEngine.Web/Features/DbCoordinator/Views/Index.cshtml`
 - `ScadaEngine.Web/Services/DbCoordinatorService.cs`
+- `ScadaEngine.Web/Services/DbPointConfigFileService.cs` — 點位名稱/單位回寫 JSON + UPSERT DBPoints
 - `ScadaEngine.Web/Services/DbCoordinatorReloadPublisher.cs`
 - `ScadaEngine.Web/wwwroot/css/dbcoordinator.css`
 - `ScadaEngine.Web/wwwroot/js/dbcoordinator.js`
+- `ScadaEngine.Web/appsettings.json` — `EngineDbPointConfig`（WatchedFolder + MirrorFolder）
 
 ### 共用
 - `ScadaEngine.Engine/Data/Interfaces/IDataRepository.cs` — 新增 `GetAllDbCoordinatorsAsync` / `GetAllDbPointsAsync` / `GetDbPointsByCoordinatorIdAsync` / `SaveDbCoordinatorAsync` / `SaveDbPointsAsync` / `GetDbLatestDataByPrefixAsync`
 - `ScadaEngine.Engine/Data/Repositories/SqlServerDataRepository.cs` — 對應實作
 - `ScadaEngine.Engine/DatabaseSchema/DatabaseSchema.json` — DBCoordinator / DBPoints / DBLatestData 三張表
+
+---
+
+## 12. 時間模擬點位（TimeSim）
+
+DB 來源的實際應用範例：兩個「時間點位」讓警報 / 計算點位 / LogicFlow / 趨勢能取得當日時間進度，
+完全走 DB 來源設計本意（外部排程寫 `DBLatestData`），**Engine / Web 程式碼零改動**。
+
+| SID | 名稱 | 值 | 範圍 |
+|-----|------|----|------|
+| `DB2-S1` | MinuteOfDay | 當日分鐘數 | 0–1439，跨日歸零 |
+| `DB2-S2` | HourOfDay | 當日小時數 | 0–23，跨日歸零 |
+
+> SID 中的 `DB2` 為本機 IDENTITY 配發結果，換環境部署會不同 — 一切以 `DBCoordinator.Name='TimeSim'` 定位。
+
+組成：
+
+- **`DBPoint/TimeSim.json`** — 獨立 coordinator（不塞 DB1：DB1 已滿 100 點上限；且獨立檔不會被 Excel 巨集覆蓋）
+- **`DBPoint/UpdateTimeSim.sql`** — 每分鐘執行的 UPDATE：`分鐘 = DATEDIFF(MINUTE, 當日0點, GETDATE())`、`小時 = DATEPART(HOUR, GETDATE())`，同時更新 `Timestamp=GETDATE(), Quality=1`；以 `DBCoordinator.Name + DBPoints.Sequence` JOIN 定位 SID，不寫死 `DB{n}`
+- **Windows 排程 `ScadaTimeSimUpdate`** — 每 1 分鐘以 SYSTEM 身分跑 `sqlcmd -i UpdateTimeSim.sql`。
+  線上 SQL 為 **SQL Server 2019 Express（無 SQL Agent）**，故用 Task Scheduler 等價替代
+
+成本：HistoryData 本來就是每點每分鐘固定 1 筆（分鐘 dedup），「每分鐘變化的點」不比靜止點多寫任何一筆；MQTT 分鐘點 1 次/分、小時點 24 次/天，可忽略。
+
+維運須知：
+
+- 排程停掉時值停滯（Timestamp 不再變化 → 不再推播），Engine 不會報錯 — 同外部系統停寫場景
+- 排程管理：`Get-ScheduledTask -TaskName ScadaTimeSimUpdate`（停用 `Disable-ScheduledTask` / 啟用 `Enable-ScheduledTask`）
+- 換機部署順序：放 `TimeSim.json` → Engine reload（產生 SID + seed `DBLatestData`）→ 註冊排程

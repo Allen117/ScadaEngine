@@ -49,4 +49,5 @@
 
   <data name="dbcoord.api.reload_success" xml:space="preserve"><value>已通知 Engine 重新載入 JSON</value></data>
   <data name="dbcoord.api.reload_failure" xml:space="preserve"><value>通知失敗（請確認 MQTT broker 是否運作）</value></data>
+  <data name="dbcoord.api.rename_saved_reload_failed" xml:space="preserve"><value>點位已儲存，但通知 Engine 重新載入失敗 — 請手動按「通知 Engine 重新載入 JSON」</value></data>
 </root>

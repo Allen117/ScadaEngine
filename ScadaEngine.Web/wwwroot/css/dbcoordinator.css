@@ -10,3 +10,30 @@
     background-color: #e8f0fe !important;
     color: #0d6efd !important;
 }
+
+/* 點位列表 */
+.point-table-wrap {
+    max-height: 420px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: .25rem;
+}
+.point-table-wrap thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+.btn-point-edit {
+    opacity: 0;
+    transition: opacity .15s;
+}
+#pointTableBody tr:hover .btn-point-edit {
+    opacity: 1;
+}
+.point-name-input {
+    max-width: 260px;
+}
+.point-row-saved td {
+    background-color: #d1e7dd;
+    transition: background-color 1s;
+}

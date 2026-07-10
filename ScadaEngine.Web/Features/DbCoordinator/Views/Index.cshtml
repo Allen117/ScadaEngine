@@ -65,6 +65,25 @@
                             <label class="form-label fw-bold text-muted small">@Localizer["dbcoord.label.point_count"]</label>
                             <input type="text" class="form-control form-control-sm" id="fieldPointCount" readonly />
                         </div>
+
+                        <!-- 點位列表（名稱可行內編輯，回寫 DBPoint/*.json） -->
+                        <div class="col-12">
+                            <label class="form-label fw-bold text-muted small">@Localizer["dbcoord.label.points"]</label>
+                            <div class="table-responsive point-table-wrap">
+                                <table class="table table-sm table-hover align-middle mb-0" id="pointTable">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width:110px;">@Localizer["dbcoord.th.sid"]</th>
+                                            <th>@Localizer["dbcoord.th.name"]</th>
+                                            <th style="width:110px;">@Localizer["dbcoord.th.unit"]</th>
+                                            <th style="width:80px;" class="text-end">@Localizer["dbcoord.th.min"]</th>
+                                            <th style="width:80px;" class="text-end">@Localizer["dbcoord.th.max"]</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="pointTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
 
                     <div id="emptyDetail" class="text-center text-muted py-5">
