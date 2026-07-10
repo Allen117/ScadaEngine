@@ -33,8 +33,8 @@
                     <i class="fas fa-bolt fa-2x text-primary me-3"></i>
                     <div>
                         <div class="text-muted small">@Localizer["tariffsetting.card.acc_kwh"]</div>
-                        <div class="fw-bold ts-card-value">-- kWh</div>
-                        <div class="text-muted ts-card-hint">@Localizer["tariffsetting.card.acc_hint"]</div>
+                        <div class="fw-bold ts-card-value"><span id="tsAccKwh">--</span> kWh</div>
+                        <div class="text-muted ts-card-hint" id="tsAccKwhHint">@Localizer["tariffsetting.card.acc_hint"]</div>
                     </div>
                 </div>
             </div>
@@ -43,11 +43,14 @@
             <div class="card shadow-sm h-100">
                 <div class="card-body py-2 d-flex align-items-center">
                     <i class="fas fa-dollar-sign fa-2x text-primary me-3"></i>
-                    <div>
+                    <div class="flex-grow-1">
                         <div class="text-muted small">@Localizer["tariffsetting.card.acc_cost"]</div>
-                        <div class="fw-bold ts-card-value">-- @Localizer["tariffsetting.unit.ntd"]</div>
-                        <div class="text-muted ts-card-hint">@Localizer["tariffsetting.card.acc_hint"]</div>
+                        <div class="fw-bold ts-card-value"><span id="tsAccCost">--</span> @Localizer["tariffsetting.unit.ntd"]</div>
+                        <div class="text-muted ts-card-hint" id="tsAccCostHint">@Localizer["tariffsetting.card.acc_hint"]</div>
                     </div>
+                    <button class="btn btn-outline-primary btn-sm text-nowrap" id="btnTsRecalc" onclick="window._ts.openRecalc()">
+                        <i class="fas fa-sync-alt me-1"></i>@Localizer["tariffsetting.button.recalculate"]
+                    </button>
                 </div>
             </div>
         </div>
@@ -97,6 +100,41 @@
             <button class="btn btn-primary btn-sm" onclick="window._ts.savePlan()">
                 <i class="fas fa-save me-1"></i>@Localizer["tariffsetting.button.save"]
             </button>
+        </div>
+    </div>
+</div>
+
+<!-- 重新計算電費 Modal（date-only 用原生 input type=date，無 AM/PM 問題不需 flatpickr） -->
+<div class="modal fade" id="tsRecalcModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h5 class="modal-title"><i class="fas fa-sync-alt me-2"></i>@Localizer["tariffsetting.recalc.title"]</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning py-2 small">
+                    <i class="fas fa-exclamation-triangle me-1"></i>@Localizer["tariffsetting.recalc.warning"]
+                </div>
+                <div class="row g-3">
+                    <div class="col-6">
+                        <label class="form-label small mb-1" for="tsRecalcStart">@Localizer["tariffsetting.recalc.start"]</label>
+                        <input type="date" id="tsRecalcStart" class="form-control form-control-sm" />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small mb-1" for="tsRecalcEnd">@Localizer["tariffsetting.recalc.end"]</label>
+                        <input type="date" id="tsRecalcEnd" class="form-control form-control-sm" />
+                    </div>
+                </div>
+                <div class="text-muted small mt-2">@Localizer["tariffsetting.recalc.hint"]</div>
+                <div id="tsRecalcResult" class="small mt-2"></div>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">@Localizer["tariffsetting.recalc.close"]</button>
+                <button type="button" class="btn btn-primary btn-sm" id="btnTsRecalcRun" onclick="window._ts.runRecalc()">
+                    <i class="fas fa-play me-1"></i>@Localizer["tariffsetting.recalc.run"]
+                </button>
+            </div>
         </div>
     </div>
 </div>

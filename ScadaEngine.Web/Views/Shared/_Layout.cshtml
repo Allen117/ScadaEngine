@@ -142,7 +142,7 @@
                                     </a>
                                 </li>
                             }
-                            @if (canAccess("/EnergyReport") || canAccess("/RefrigerationTonReport") || canAccess("/EnergyDeclaration"))
+                            @if (canAccess("/EnergyReport") || canAccess("/ElectricityCostReport") || canAccess("/RefrigerationTonReport") || canAccess("/EnergyDeclaration"))
                             {
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
@@ -153,6 +153,10 @@
                                         @if (canAccess("/EnergyReport"))
                                         {
                                             <li><a class="dropdown-item" href="/EnergyReport"><i class="fas fa-chart-bar me-2"></i>@Localizer["layout.menu.energy_report"]</a></li>
+                                        }
+                                        @if (canAccess("/ElectricityCostReport"))
+                                        {
+                                            <li><a class="dropdown-item" href="/ElectricityCostReport"><i class="fas fa-file-invoice-dollar me-2"></i>@Localizer["layout.menu.electricity_cost_report"]</a></li>
                                         }
                                         @if (canAccess("/RefrigerationTonReport"))
                                         {
@@ -165,7 +169,7 @@
                                     </ul>
                                 </li>
                             }
-                            @if (canAccess("/ChilledWaterSystem") || canAccess("/EnergyMeter") || canAccess("/BillingPeriodSetting") || canAccess("/TariffSetting"))
+                            @if (canAccess("/ChilledWaterSystem") || canAccess("/EnergyMeter") || canAccess("/BillingPeriodSetting") || canAccess("/TariffSetting") || canAccess("/HolidaySetting"))
                             {
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
@@ -188,6 +192,10 @@
                                         @if (canAccess("/TariffSetting"))
                                         {
                                             <li><a class="dropdown-item" href="/TariffSetting"><i class="fas fa-file-invoice-dollar me-2"></i>@Localizer["layout.menu.tariff_setting"]</a></li>
+                                        }
+                                        @if (canAccess("/HolidaySetting"))
+                                        {
+                                            <li><a class="dropdown-item" href="/HolidaySetting"><i class="fas fa-calendar-day me-2"></i>@Localizer["layout.menu.holiday_setting"]</a></li>
                                         }
                                     </ul>
                                 </li>
@@ -274,15 +282,6 @@
                                     </ul>
                                 </li>
                             }
-                            @if (canAccess("/EMS"))
-                            {
-                                <li class="nav-item">
-                                    <a class="nav-link" href="/EMS">
-                                        <i class="fas fa-leaf me-1"></i>
-                                        @Localizer["layout.menu.energy"]
-                                    </a>
-                                </li>
-                            }
                             bool showPointSettings = canAccess("/ModbusCoordinator") || canAccess("/DbCoordinator") || canAccess("/OpcUaCoordinator") || canAccess("/CalcPoint");
                             bool showSettings = canAccess("/Designer") || canAccess("/AlarmSetting") || canAccess("/AccountSetting") || showPointSettings;
                             @if (showSettings)
@@ -344,6 +343,15 @@
                                 <a class="nav-link" href="/ScadaPage">
                                     <i class="fas fa-arrow-left me-1"></i>
                                     @Localizer["layout.ems.back_scada"]
+                                </a>
+                            </li>
+                        }
+                        else if (!isEmsMode && canAccess("/EMS"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" href="/EMS">
+                                    <i class="fas fa-arrow-left me-1"></i>
+                                    @Localizer["layout.scada.back_ems"]
                                 </a>
                             </li>
                         }

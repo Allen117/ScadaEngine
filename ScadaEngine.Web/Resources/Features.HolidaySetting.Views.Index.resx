@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="holidaysetting.title" xml:space="preserve"><value>國定假日設定</value></data>
+  <data name="holidaysetting.breadcrumb.energy" xml:space="preserve"><value>能源管理</value></data>
+  <data name="holidaysetting.loading" xml:space="preserve"><value>載入中…</value></data>
+
+  <data name="holidaysetting.legend.holiday" xml:space="preserve"><value>國定假日（離峰日計價）</value></data>
+  <data name="holidaysetting.legend.weekend" xml:space="preserve"><value>週六 / 週日（本來即非平日費率，不需標註）</value></data>
+  <data name="holidaysetting.legend.today" xml:space="preserve"><value>今日</value></data>
+
+  <data name="holidaysetting.button.save" xml:space="preserve"><value>儲存</value></data>
+  <data name="holidaysetting.hint.unsaved" xml:space="preserve"><value>有未儲存的變更</value></data>
+  <data name="holidaysetting.hint.usage" xml:space="preserve"><value>點選日期標註/取消國定假日。標註日在時間電價（TOU）計價時以「週日及離峰日」費率計價，儲存後自動計價立即生效；已計算過的歷史區間如需回溯，請至「電費設定」頁執行重新計算。</value></data>
+  <data name="holidaysetting.label.count" xml:space="preserve"><value>本年已標註 {0} 天</value></data>
+
+  <data name="holidaysetting.confirm.switch_dirty" xml:space="preserve"><value>尚有未儲存的變更，切換年份將放棄變更，確定繼續？</value></data>
+  <data name="holidaysetting.msg.saved" xml:space="preserve"><value>已儲存。標註變更自下一次自動計價起生效；歷史區間如需回溯，請至電費設定執行重新計算。</value></data>
+  <data name="holidaysetting.msg.save_fail" xml:space="preserve"><value>儲存失敗：{0}</value></data>
+  <data name="holidaysetting.msg.load_fail" xml:space="preserve"><value>載入失敗，請重新整理頁面</value></data>
+
+  <data name="holidaysetting.week.sun" xml:space="preserve"><value>日</value></data>
+  <data name="holidaysetting.week.mon" xml:space="preserve"><value>一</value></data>
+  <data name="holidaysetting.week.tue" xml:space="preserve"><value>二</value></data>
+  <data name="holidaysetting.week.wed" xml:space="preserve"><value>三</value></data>
+  <data name="holidaysetting.week.thu" xml:space="preserve"><value>四</value></data>
+  <data name="holidaysetting.week.fri" xml:space="preserve"><value>五</value></data>
+  <data name="holidaysetting.week.sat" xml:space="preserve"><value>六</value></data>
+
+  <data name="holidaysetting.month.1" xml:space="preserve"><value>1 月</value></data>
+  <data name="holidaysetting.month.2" xml:space="preserve"><value>2 月</value></data>
+  <data name="holidaysetting.month.3" xml:space="preserve"><value>3 月</value></data>
+  <data name="holidaysetting.month.4" xml:space="preserve"><value>4 月</value></data>
+  <data name="holidaysetting.month.5" xml:space="preserve"><value>5 月</value></data>
+  <data name="holidaysetting.month.6" xml:space="preserve"><value>6 月</value></data>
+  <data name="holidaysetting.month.7" xml:space="preserve"><value>7 月</value></data>
+  <data name="holidaysetting.month.8" xml:space="preserve"><value>8 月</value></data>
+  <data name="holidaysetting.month.9" xml:space="preserve"><value>9 月</value></data>
+  <data name="holidaysetting.month.10" xml:space="preserve"><value>10 月</value></data>
+  <data name="holidaysetting.month.11" xml:space="preserve"><value>11 月</value></data>
+  <data name="holidaysetting.month.12" xml:space="preserve"><value>12 月</value></data>
+</root>

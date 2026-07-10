@@ -390,3 +390,20 @@ body.ems-mode .cw-badge-point {
     font-weight: 600;
     white-space: nowrap;
 }
+
+/* ── EMS Hub 電費狀態卡 ─────────────────────────────── */
+
+.ems-cost-table {
+    font-size: 0.85rem;
+}
+
+.ems-cost-table thead th {
+    background: #f1f8f4;
+    color: #2e7d32;
+    border-bottom: 2px solid #c8e6c9;
+    white-space: nowrap;
+}
+
+.ems-cost-table td {
+    white-space: nowrap;
+}

@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="costreport.title" xml:space="preserve"><value>Electricity Cost Report</value></data>
+  <data name="costreport.breadcrumb.energy" xml:space="preserve"><value>Energy Management</value></data>
+
+  <data name="costreport.filter.title" xml:space="preserve"><value>Query Conditions</value></data>
+  <data name="costreport.filter.circuit" xml:space="preserve"><value>Circuit</value></data>
+  <data name="costreport.filter.granularity" xml:space="preserve"><value>Granularity</value></data>
+  <data name="costreport.filter.hour_start" xml:space="preserve"><value>Start Hour</value></data>
+  <data name="costreport.filter.hour_end" xml:space="preserve"><value>End Hour</value></data>
+  <data name="costreport.filter.day_start" xml:space="preserve"><value>Start Date</value></data>
+  <data name="costreport.filter.day_end" xml:space="preserve"><value>End Date</value></data>
+  <data name="costreport.filter.month_start" xml:space="preserve"><value>From Month</value></data>
+  <data name="costreport.filter.month_end" xml:space="preserve"><value>To Month</value></data>
+  <data name="costreport.filter.year_start" xml:space="preserve"><value>From Year</value></data>
+  <data name="costreport.filter.year_end" xml:space="preserve"><value>To Year</value></data>
+
+  <data name="costreport.granularity.hour" xml:space="preserve"><value>Hour</value></data>
+  <data name="costreport.granularity.day" xml:space="preserve"><value>Day</value></data>
+  <data name="costreport.granularity.month" xml:space="preserve"><value>Month</value></data>
+  <data name="costreport.granularity.year" xml:space="preserve"><value>Year</value></data>
+
+  <data name="costreport.button.query" xml:space="preserve"><value>Query</value></data>
+  <data name="costreport.button.export" xml:space="preserve"><value>Export Excel</value></data>
+
+  <data name="costreport.chart.title" xml:space="preserve"><value>Electricity Cost</value></data>
+  <data name="costreport.chart.y_axis" xml:space="preserve"><value>NT$</value></data>
+  <data name="costreport.chart.x_axis" xml:space="preserve"><value>Period</value></data>
+  <data name="costreport.chart.dataset_label" xml:space="preserve"><value>{0} (NT$)</value></data>
+  <data name="costreport.chart.no_data" xml:space="preserve"><value>No cost data in this range</value></data>
+  <data name="costreport.chart.no_data_hint" xml:space="preserve"><value>Make sure an active tariff plan is selected and run "Recalculate Cost" for this range on the Tariff Settings page</value></data>
+
+  <data name="costreport.table.title" xml:space="preserve"><value>Data Detail</value></data>
+  <data name="costreport.table.col_period" xml:space="preserve"><value>Period</value></data>
+  <data name="costreport.table.col_kwh" xml:space="preserve"><value>Energy (kWh)</value></data>
+  <data name="costreport.table.col_cost" xml:space="preserve"><value>Cost (NT$)</value></data>
+  <data name="costreport.table.total" xml:space="preserve"><value>Total</value></data>
+  <data name="costreport.table.empty" xml:space="preserve"><value>No query yet</value></data>
+  <data name="costreport.table.no_data" xml:space="preserve"><value>No data</value></data>
+  <data name="costreport.table.querying" xml:space="preserve"><value>Querying…</value></data>
+
+  <data name="costreport.label.total" xml:space="preserve"><value>Total</value></data>
+  <data name="costreport.label.total_kwh" xml:space="preserve"><value>Total Energy</value></data>
+  <data name="costreport.unit.ntd" xml:space="preserve"><value>NT$</value></data>
+  <data name="costreport.note.exclude_base" xml:space="preserve"><value>(excludes basic charges)</value></data>
+  <data name="costreport.note.estimated" xml:space="preserve"><value>⚠ Includes tier-allocated estimates (progressive plans allocated by kWh share)</value></data>
+
+  <data name="costreport.select.loading" xml:space="preserve"><value>-- Loading --</value></data>
+  <data name="costreport.select.placeholder" xml:space="preserve"><value>-- Select a circuit --</value></data>
+  <data name="costreport.select.empty" xml:space="preserve"><value>No circuits configured</value></data>
+
+  <data name="costreport.alert.select_circuit" xml:space="preserve"><value>Please select a circuit</value></data>
+  <data name="costreport.alert.month_order" xml:space="preserve"><value>End month cannot be earlier than start month</value></data>
+  <data name="costreport.alert.day_order" xml:space="preserve"><value>End date cannot be earlier than start date</value></data>
+  <data name="costreport.alert.hour_order" xml:space="preserve"><value>End hour cannot be earlier than start hour</value></data>
+  <data name="costreport.alert.year_order" xml:space="preserve"><value>End year cannot be earlier than start year</value></data>
+  <data name="costreport.alert.query_failed" xml:space="preserve"><value>Query failed: {0}</value></data>
+  <data name="costreport.alert.export_failed" xml:space="preserve"><value>Export failed: {0}</value></data>
+
+  <data name="costreport.period.hint" xml:space="preserve"><value>Actual period range: {0} ~ {1} (per billing cycle settings)</value></data>
+</root>

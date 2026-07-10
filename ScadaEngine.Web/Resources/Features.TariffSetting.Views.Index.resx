@@ -58,7 +58,8 @@
   <data name="tariffsetting.card.no_active" xml:space="preserve"><value>尚未選擇</value></data>
   <data name="tariffsetting.card.acc_kwh" xml:space="preserve"><value>目前累計用電度數</value></data>
   <data name="tariffsetting.card.acc_cost" xml:space="preserve"><value>目前累計電費</value></data>
-  <data name="tariffsetting.card.acc_hint" xml:space="preserve"><value>電費計算功能後續版本提供</value></data>
+  <data name="tariffsetting.card.acc_hint" xml:space="preserve"><value>選擇採用方案後自動計算</value></data>
+  <data name="tariffsetting.card.acc_period_hint" xml:space="preserve"><value>本期 {0}・{1}（不含基本電費）</value></data>
   <data name="tariffsetting.unit.ntd" xml:space="preserve"><value>元</value></data>
 
   <data name="tariffsetting.select.title" xml:space="preserve"><value>電價方案選擇</value></data>
@@ -72,6 +73,21 @@
   <data name="tariffsetting.button.reset" xml:space="preserve"><value>還原台電預設</value></data>
   <data name="tariffsetting.button.add_range" xml:space="preserve"><value>加時段</value></data>
   <data name="tariffsetting.button.del_range" xml:space="preserve"><value>刪除此時段</value></data>
+  <data name="tariffsetting.button.recalculate" xml:space="preserve"><value>重新計算電費</value></data>
+
+  <data name="tariffsetting.recalc.title" xml:space="preserve"><value>重新計算電費</value></data>
+  <data name="tariffsetting.recalc.warning" xml:space="preserve"><value>將以「目前採用方案」的費率覆蓋重算所選區間的電費資料（換方案或修改費率後回溯用）。</value></data>
+  <data name="tariffsetting.recalc.start" xml:space="preserve"><value>起日（含）</value></data>
+  <data name="tariffsetting.recalc.end" xml:space="preserve"><value>訖日（含）</value></data>
+  <data name="tariffsetting.recalc.hint" xml:space="preserve"><value>區間上限 366 天。自動計價每小時執行一次，僅覆蓋近 48 小時；更早的歷史請用此功能回溯。</value></data>
+  <data name="tariffsetting.recalc.run" xml:space="preserve"><value>執行重算</value></data>
+  <data name="tariffsetting.recalc.close" xml:space="preserve"><value>關閉</value></data>
+  <data name="tariffsetting.recalc.running" xml:space="preserve"><value>重算中，請稍候…</value></data>
+  <data name="tariffsetting.recalc.done" xml:space="preserve"><value>重算完成：{0} ~ {1}，處理 {2} 個小時、寫入 {3} 列。</value></data>
+  <data name="tariffsetting.recalc.fail" xml:space="preserve"><value>重算失敗：{0}</value></data>
+  <data name="tariffsetting.recalc.no_active" xml:space="preserve"><value>尚未選擇採用方案，請先設定採用方案再執行重算。</value></data>
+  <data name="tariffsetting.recalc.err_range" xml:space="preserve"><value>請選擇正確的起訖日期（起日不可晚於訖日）。</value></data>
+  <data name="tariffsetting.recalc.err_too_large" xml:space="preserve"><value>重算區間不可超過 366 天。</value></data>
 
   <data name="tariffsetting.label.summer_range" xml:space="preserve"><value>夏月期間</value></data>
   <data name="tariffsetting.label.month" xml:space="preserve"><value>月</value></data>

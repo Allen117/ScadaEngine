@@ -54,4 +54,27 @@
   <data name="ems.mainmeter.power" xml:space="preserve"><value>Power</value></data>
   <data name="ems.mainmeter.pf" xml:space="preserve"><value>Power Factor</value></data>
   <data name="ems.mainmeter.not_bound" xml:space="preserve"><value>Not set</value></data>
+
+  <data name="ems.cost.title" xml:space="preserve"><value>Electricity Cost</value></data>
+  <data name="ems.cost.loading" xml:space="preserve"><value>Loading…</value></data>
+  <data name="ems.cost.period" xml:space="preserve"><value>Period {0}</value></data>
+  <data name="ems.cost.no_plan" xml:space="preserve"><value>No tariff plan selected</value></data>
+  <data name="ems.cost.goto_tariff" xml:space="preserve"><value>Go to Tariff Settings</value></data>
+  <data name="ems.cost.no_circuit" xml:space="preserve"><value>No energy circuit configured. Create one in "Energy Meter / Circuit" first.</value></data>
+  <data name="ems.cost.unit_ntd" xml:space="preserve"><value>NT$</value></data>
+  <data name="ems.cost.total_kwh" xml:space="preserve"><value>Period total {0} kWh</value></data>
+  <data name="ems.cost.today" xml:space="preserve"><value>Today</value></data>
+  <data name="ems.cost.col_period" xml:space="preserve"><value>Period</value></data>
+  <data name="ems.cost.col_cost" xml:space="preserve"><value>Cost (NT$)</value></data>
+  <data name="ems.cost.surcharge" xml:space="preserve"><value>Surcharge (&gt;{0} kWh)</value></data>
+  <data name="ems.cost.current_tier" xml:space="preserve"><value>Current tier</value></data>
+  <data name="ems.cost.tier_n" xml:space="preserve"><value>Tier {0}</value></data>
+  <data name="ems.cost.tier_range" xml:space="preserve"><value>{0}~{1} kWh</value></data>
+  <data name="ems.cost.tier_above" xml:space="preserve"><value>{0} kWh and above</value></data>
+  <data name="ems.cost.flat_price" xml:space="preserve"><value>Current unit price</value></data>
+  <data name="ems.cost.per_kwh" xml:space="preserve"><value>NT$/kWh</value></data>
+  <data name="ems.cost.estimated" xml:space="preserve"><value>Est.</value></data>
+  <data name="ems.cost.estimated_note" xml:space="preserve"><value>Tier/surcharge amounts are estimates allocated by kWh share</value></data>
+  <data name="ems.cost.exclude_base" xml:space="preserve"><value>Excludes basic (demand) charges</value></data>
+  <data name="ems.cost.data_until" xml:space="preserve"><value>Data calculated up to {0}</value></data>
 </root>

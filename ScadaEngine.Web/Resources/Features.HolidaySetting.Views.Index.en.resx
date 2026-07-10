@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="holidaysetting.title" xml:space="preserve"><value>National Holiday Settings</value></data>
+  <data name="holidaysetting.breadcrumb.energy" xml:space="preserve"><value>Energy Management</value></data>
+  <data name="holidaysetting.loading" xml:space="preserve"><value>Loading…</value></data>
+
+  <data name="holidaysetting.legend.holiday" xml:space="preserve"><value>National holiday (off-peak day pricing)</value></data>
+  <data name="holidaysetting.legend.weekend" xml:space="preserve"><value>Sat / Sun (already non-weekday rate, no marking needed)</value></data>
+  <data name="holidaysetting.legend.today" xml:space="preserve"><value>Today</value></data>
+
+  <data name="holidaysetting.button.save" xml:space="preserve"><value>Save</value></data>
+  <data name="holidaysetting.hint.unsaved" xml:space="preserve"><value>Unsaved changes</value></data>
+  <data name="holidaysetting.hint.usage" xml:space="preserve"><value>Click a date to mark/unmark it as a national holiday. Marked days are billed at the "Sunday &amp; off-peak day" rate under time-of-use (TOU) plans. Changes take effect for future automatic calculation immediately after saving; to backfill already-calculated history, run Recalculate on the Tariff Settings page.</value></data>
+  <data name="holidaysetting.label.count" xml:space="preserve"><value>{0} day(s) marked this year</value></data>
+
+  <data name="holidaysetting.confirm.switch_dirty" xml:space="preserve"><value>There are unsaved changes. Switching year will discard them. Continue?</value></data>
+  <data name="holidaysetting.msg.saved" xml:space="preserve"><value>Saved. Changes apply from the next automatic calculation; to backfill history, run Recalculate on the Tariff Settings page.</value></data>
+  <data name="holidaysetting.msg.save_fail" xml:space="preserve"><value>Save failed: {0}</value></data>
+  <data name="holidaysetting.msg.load_fail" xml:space="preserve"><value>Load failed. Please refresh the page.</value></data>
+
+  <data name="holidaysetting.week.sun" xml:space="preserve"><value>Su</value></data>
+  <data name="holidaysetting.week.mon" xml:space="preserve"><value>Mo</value></data>
+  <data name="holidaysetting.week.tue" xml:space="preserve"><value>Tu</value></data>
+  <data name="holidaysetting.week.wed" xml:space="preserve"><value>We</value></data>
+  <data name="holidaysetting.week.thu" xml:space="preserve"><value>Th</value></data>
+  <data name="holidaysetting.week.fri" xml:space="preserve"><value>Fr</value></data>
+  <data name="holidaysetting.week.sat" xml:space="preserve"><value>Sa</value></data>
+
+  <data name="holidaysetting.month.1" xml:space="preserve"><value>January</value></data>
+  <data name="holidaysetting.month.2" xml:space="preserve"><value>February</value></data>
+  <data name="holidaysetting.month.3" xml:space="preserve"><value>March</value></data>
+  <data name="holidaysetting.month.4" xml:space="preserve"><value>April</value></data>
+  <data name="holidaysetting.month.5" xml:space="preserve"><value>May</value></data>
+  <data name="holidaysetting.month.6" xml:space="preserve"><value>June</value></data>
+  <data name="holidaysetting.month.7" xml:space="preserve"><value>July</value></data>
+  <data name="holidaysetting.month.8" xml:space="preserve"><value>August</value></data>
+  <data name="holidaysetting.month.9" xml:space="preserve"><value>September</value></data>
+  <data name="holidaysetting.month.10" xml:space="preserve"><value>October</value></data>
+  <data name="holidaysetting.month.11" xml:space="preserve"><value>November</value></data>
+  <data name="holidaysetting.month.12" xml:space="preserve"><value>December</value></data>
+</root>

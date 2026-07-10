@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="costreport.title" xml:space="preserve"><value>電費報表</value></data>
+  <data name="costreport.breadcrumb.energy" xml:space="preserve"><value>能源管理</value></data>
+
+  <data name="costreport.filter.title" xml:space="preserve"><value>查詢條件</value></data>
+  <data name="costreport.filter.circuit" xml:space="preserve"><value>迴路</value></data>
+  <data name="costreport.filter.granularity" xml:space="preserve"><value>單位</value></data>
+  <data name="costreport.filter.hour_start" xml:space="preserve"><value>起時</value></data>
+  <data name="costreport.filter.hour_end" xml:space="preserve"><value>訖時</value></data>
+  <data name="costreport.filter.day_start" xml:space="preserve"><value>起日</value></data>
+  <data name="costreport.filter.day_end" xml:space="preserve"><value>訖日</value></data>
+  <data name="costreport.filter.month_start" xml:space="preserve"><value>起月</value></data>
+  <data name="costreport.filter.month_end" xml:space="preserve"><value>訖月</value></data>
+  <data name="costreport.filter.year_start" xml:space="preserve"><value>起年</value></data>
+  <data name="costreport.filter.year_end" xml:space="preserve"><value>訖年</value></data>
+
+  <data name="costreport.granularity.hour" xml:space="preserve"><value>時</value></data>
+  <data name="costreport.granularity.day" xml:space="preserve"><value>日</value></data>
+  <data name="costreport.granularity.month" xml:space="preserve"><value>月</value></data>
+  <data name="costreport.granularity.year" xml:space="preserve"><value>年</value></data>
+
+  <data name="costreport.button.query" xml:space="preserve"><value>查詢</value></data>
+  <data name="costreport.button.export" xml:space="preserve"><value>匯出 Excel</value></data>
+
+  <data name="costreport.chart.title" xml:space="preserve"><value>電費分布</value></data>
+  <data name="costreport.chart.y_axis" xml:space="preserve"><value>元</value></data>
+  <data name="costreport.chart.x_axis" xml:space="preserve"><value>時段</value></data>
+  <data name="costreport.chart.dataset_label" xml:space="preserve"><value>{0}（元）</value></data>
+  <data name="costreport.chart.no_data" xml:space="preserve"><value>該區間尚無電費資料</value></data>
+  <data name="costreport.chart.no_data_hint" xml:space="preserve"><value>請確認已於電費設定選擇採用方案，並對此區間執行「重新計算電費」</value></data>
+
+  <data name="costreport.table.title" xml:space="preserve"><value>數據明細</value></data>
+  <data name="costreport.table.col_period" xml:space="preserve"><value>時段</value></data>
+  <data name="costreport.table.col_kwh" xml:space="preserve"><value>用電量 (kWh)</value></data>
+  <data name="costreport.table.col_cost" xml:space="preserve"><value>電費（元）</value></data>
+  <data name="costreport.table.total" xml:space="preserve"><value>合計</value></data>
+  <data name="costreport.table.empty" xml:space="preserve"><value>尚未查詢</value></data>
+  <data name="costreport.table.no_data" xml:space="preserve"><value>無資料</value></data>
+  <data name="costreport.table.querying" xml:space="preserve"><value>查詢中…</value></data>
+
+  <data name="costreport.label.total" xml:space="preserve"><value>總計</value></data>
+  <data name="costreport.label.total_kwh" xml:space="preserve"><value>總用電量</value></data>
+  <data name="costreport.unit.ntd" xml:space="preserve"><value>元</value></data>
+  <data name="costreport.note.exclude_base" xml:space="preserve"><value>（不含基本電費）</value></data>
+  <data name="costreport.note.estimated" xml:space="preserve"><value>⚠ 含級距分攤估算金額（累進方案按 kWh 占比分攤）</value></data>
+
+  <data name="costreport.select.loading" xml:space="preserve"><value>-- 載入中 --</value></data>
+  <data name="costreport.select.placeholder" xml:space="preserve"><value>-- 請選擇迴路 --</value></data>
+  <data name="costreport.select.empty" xml:space="preserve"><value>尚未設定迴路</value></data>
+
+  <data name="costreport.alert.select_circuit" xml:space="preserve"><value>請選擇迴路</value></data>
+  <data name="costreport.alert.month_order" xml:space="preserve"><value>訖月不可早於起月</value></data>
+  <data name="costreport.alert.day_order" xml:space="preserve"><value>訖日不可早於起日</value></data>
+  <data name="costreport.alert.hour_order" xml:space="preserve"><value>訖時不可早於起時</value></data>
+  <data name="costreport.alert.year_order" xml:space="preserve"><value>訖年不可早於起年</value></data>
+  <data name="costreport.alert.query_failed" xml:space="preserve"><value>查詢失敗：{0}</value></data>
+  <data name="costreport.alert.export_failed" xml:space="preserve"><value>匯出失敗：{0}</value></data>
+
+  <data name="costreport.period.hint" xml:space="preserve"><value>期別實際區間：{0} ～ {1}（依月結週期設定）</value></data>
+</root>

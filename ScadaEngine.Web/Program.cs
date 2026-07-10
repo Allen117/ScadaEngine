@@ -162,6 +162,12 @@ builder.Services.AddScoped<ScadaEngine.Web.Services.RefrigerationTonReportServic
 builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyDeclarationService>();
 // 電費設定 — 台電電價方案（SystemSettings JSON + Setting/tariff-taipower-defaults.json seed）
 builder.Services.AddScoped<ScadaEngine.Web.Services.TariffSettingService>();
+// 國定假日設定 — Holidays 表讀寫（static 快取，寫入時失效；TOU 計價 DayType 判定用）
+builder.Services.AddScoped<ScadaEngine.Web.Services.HolidayService>();
+// 電費計算核心 — 逐時計價 + EMS 電費狀態卡查詢彙總
+builder.Services.AddScoped<ScadaEngine.Web.Services.ElectricityCostService>();
+// 電費逐時計價背景服務（每小時 XX:05 重算近 48h rolling window，啟動 catch-up 近 N 天）
+builder.Services.AddHostedService<ScadaEngine.Web.Services.ElectricityCostAggregationService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.DbCoordinatorService>();
 // DB 來源點位名稱熱編輯 — 回寫 DBPoint/*.json + UPSERT DBPoints（Scoped：依賴 IDataRepository 與 IStringLocalizer）
 builder.Services.AddScoped<ScadaEngine.Web.Services.DbPointConfigFileService>();
@@ -176,6 +182,7 @@ builder.Services.AddSingleton<ScadaEngine.Web.Services.ModbusConfigFileService>(
 builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyReportExcelExporter>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.RefrigerationTonReportExcelExporter>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyDeclarationExcelExporter>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.ElectricityCostReportExcelExporter>();
 
 // Line 測試發送（內含 throttle 字典 → 必須 Singleton 才能跨請求保留狀態）
 builder.Services.AddHttpClient();

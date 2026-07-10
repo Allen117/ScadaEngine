@@ -37,6 +37,7 @@
         }
 
         fillCategorySelect();
+        loadCostSummary();
 
         // 預設選到採用方案；未設定則第一類別第一方案
         var active = findPlan(g_config.szActivePlanId);
@@ -61,6 +62,28 @@
     function findPlan(planId) {
         if (!planId || !g_config) return null;
         return g_config.plans.find(function (p) { return p.szPlanId === planId; }) || null;
+    }
+
+    // 頂部累計卡片 — 主要電表本期 kWh / 流動電費（同 EMS 電費狀態卡資料源）
+    async function loadCostSummary() {
+        try {
+            var res = await fetch('/TariffSetting/api/cost-summary');
+            if (!res.ok) return;   // 失敗維持 -- 預設
+            var d = await res.json();
+            if (!d.hasPlan || !d.hasCircuit) return;
+
+            document.getElementById('tsAccKwh').textContent =
+                d.totalKwh.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+            if (d.totalCost != null) {
+                document.getElementById('tsAccCost').textContent =
+                    d.totalCost.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            }
+            var hint = t('tariffsetting.card.acc_period_hint', { 0: d.periodLabel, 1: d.circuitName });
+            document.getElementById('tsAccKwhHint').textContent = hint;
+            document.getElementById('tsAccCostHint').textContent = hint;
+        } catch (err) {
+            console.error('cost summary load failed', err);
+        }
     }
 
     function planLabel(p) {
@@ -551,6 +574,72 @@
         }
     }
 
+    // ── 重新計算電費 ─────────────────────────────────────
+
+    function pad2n(n) { return n < 10 ? '0' + n : String(n); }
+
+    function dateStr(d) {
+        return d.getFullYear() + '-' + pad2n(d.getMonth() + 1) + '-' + pad2n(d.getDate());
+    }
+
+    function openRecalc() {
+        if (!g_config || !g_config.szActivePlanId) {
+            alert(t('tariffsetting.recalc.no_active'));
+            return;
+        }
+        // 預設區間：近 7 天（含今日）
+        var end = new Date();
+        var start = new Date();
+        start.setDate(start.getDate() - 6);
+        document.getElementById('tsRecalcStart').value = dateStr(start);
+        document.getElementById('tsRecalcEnd').value = dateStr(end);
+        document.getElementById('tsRecalcResult').innerHTML = '';
+        new bootstrap.Modal(document.getElementById('tsRecalcModal')).show();
+    }
+
+    async function runRecalc() {
+        var start = document.getElementById('tsRecalcStart').value;
+        var end = document.getElementById('tsRecalcEnd').value;
+        var resultEl = document.getElementById('tsRecalcResult');
+        if (!start || !end || start > end) {
+            resultEl.innerHTML = '<span class="text-danger">' + escapeHtml(t('tariffsetting.recalc.err_range')) + '</span>';
+            return;
+        }
+        // 前端同步後端 366 天上限防呆
+        if ((new Date(end) - new Date(start)) / 86400000 > 366) {
+            resultEl.innerHTML = '<span class="text-danger">' + escapeHtml(t('tariffsetting.recalc.err_too_large')) + '</span>';
+            return;
+        }
+
+        var btn = document.getElementById('btnTsRecalcRun');
+        btn.disabled = true;
+        resultEl.innerHTML = '<span class="text-muted"><i class="fas fa-spinner fa-spin me-1"></i>' +
+            escapeHtml(t('tariffsetting.recalc.running')) + '</span>';
+        try {
+            var res = await fetch('/TariffSetting/api/recalculate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ start: start, end: end })
+            });
+            var data = await res.json().catch(function () { return {}; });
+            if (!res.ok) {
+                var key = data.errorCode === 'no_active_plan' ? 'tariffsetting.recalc.no_active'
+                    : data.errorCode === 'range_too_large' ? 'tariffsetting.recalc.err_too_large'
+                    : data.errorCode === 'invalid_range' ? 'tariffsetting.recalc.err_range'
+                    : null;
+                throw new Error(key ? t(key) : (data.errorCode || res.statusText));
+            }
+            resultEl.innerHTML = '<span class="text-success"><i class="fas fa-check-circle me-1"></i>' +
+                escapeHtml(t('tariffsetting.recalc.done', { 0: data.from, 1: data.to, 2: data.hours, 3: data.rows })) + '</span>';
+            loadCostSummary();   // 重算後刷新頂部累計卡片
+        } catch (e) {
+            resultEl.innerHTML = '<span class="text-danger">' +
+                escapeHtml(t('tariffsetting.recalc.fail', { 0: e.message })) + '</span>';
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
     // 時段區間增刪 — 先 collect 保留使用者已輸入內容再重繪
     function addRange(flowIdx) {
         collect();
@@ -579,6 +668,8 @@
         setActive: setActive,
         resetPlan: resetPlan,
         addRange: addRange,
-        removeRange: removeRange
+        removeRange: removeRange,
+        openRecalc: openRecalc,
+        runRecalc: runRecalc
     };
 })();

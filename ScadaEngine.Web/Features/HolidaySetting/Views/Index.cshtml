@@ -1,0 +1,60 @@
+@model ScadaEngine.Web.Features.HolidaySetting.Models.HolidaySettingViewModel
+@{
+    ViewData["Title"] = Localizer["holidaysetting.title"].Value;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-2">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="mb-0">
+            <i class="fas fa-calendar-day text-primary me-2"></i>@Localizer["holidaysetting.title"]
+        </h2>
+        <span class="text-muted small">
+            <i class="fas fa-leaf me-1"></i>@Localizer["holidaysetting.breadcrumb.energy"]
+        </span>
+    </div>
+
+    <!-- 工具列：年份切換 + 儲存 -->
+    <div class="card shadow-sm mb-3">
+        <div class="card-body py-2 d-flex flex-wrap align-items-center gap-3">
+            <div class="d-flex align-items-center gap-1">
+                <button class="btn btn-outline-secondary btn-sm" onclick="window._hs.prevYear()" title="&#x2039;">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <span class="fw-bold fs-5 px-2" id="hsYearLabel">----</span>
+                <button class="btn btn-outline-secondary btn-sm" onclick="window._hs.nextYear()" title="&#x203A;">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+            <span class="hs-legend">
+                <span class="hs-legend-swatch hs-swatch-holiday"></span>@Localizer["holidaysetting.legend.holiday"]
+                <span class="hs-legend-swatch hs-swatch-weekend ms-3"></span>@Localizer["holidaysetting.legend.weekend"]
+                <span class="hs-legend-swatch hs-swatch-today ms-3"></span>@Localizer["holidaysetting.legend.today"]
+            </span>
+            <span class="ms-auto d-flex align-items-center gap-2">
+                <span id="hsDirtyHint" class="small text-warning d-none">
+                    <i class="fas fa-exclamation-triangle me-1"></i>@Localizer["holidaysetting.hint.unsaved"]
+                </span>
+                <span id="hsCountLabel" class="small text-muted"></span>
+                <button class="btn btn-primary btn-sm" id="btnHsSave" onclick="window._hs.save()">
+                    <i class="fas fa-save me-1"></i>@Localizer["holidaysetting.button.save"]
+                </button>
+            </span>
+        </div>
+    </div>
+
+    <div class="alert alert-info py-2 small mb-3">
+        <i class="fas fa-info-circle me-1"></i>@Localizer["holidaysetting.hint.usage"]
+    </div>
+
+    <!-- 12 個月年曆（JS 渲染） -->
+    <div id="hsCalendarGrid" class="hs-calendar-grid">
+        <div class="text-center text-muted py-4 w-100">@Localizer["holidaysetting.loading"]</div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="~/css/holidaysetting.css" asp-append-version="true" />
+
+@section Scripts {
+    <script src="~/js/holidaysetting.js" asp-append-version="true"></script>
+}

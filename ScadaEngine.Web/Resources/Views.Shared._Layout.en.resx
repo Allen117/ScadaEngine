@@ -54,6 +54,7 @@
   <data name="layout.brand" xml:space="preserve"><value>SCADA Monitoring System</value></data>
   <data name="layout.brand.ems" xml:space="preserve"><value>EMS Energy Management</value></data>
   <data name="layout.ems.back_scada" xml:space="preserve"><value>Back to SCADA</value></data>
+  <data name="layout.scada.back_ems" xml:space="preserve"><value>Back to EMS</value></data>
 
   <data name="layout.menu.scadapage" xml:space="preserve"><value>SCADA Page</value></data>
   <data name="layout.menu.realtime" xml:space="preserve"><value>Realtime Data</value></data>
@@ -67,16 +68,17 @@
   <data name="layout.menu.trend" xml:space="preserve"><value>Trend</value></data>
   <data name="layout.menu.eventlog" xml:space="preserve"><value>Event Log</value></data>
 
-  <data name="layout.menu.energy" xml:space="preserve"><value>Energy Management</value></data>
   <data name="layout.menu.ems_settings" xml:space="preserve"><value>EMS Settings</value></data>
   <data name="layout.menu.reports" xml:space="preserve"><value>Reports</value></data>
   <data name="layout.menu.energy_meter" xml:space="preserve"><value>Energy Meter / Circuit</value></data>
   <data name="layout.menu.energy_report" xml:space="preserve"><value>Energy Report</value></data>
+  <data name="layout.menu.electricity_cost_report" xml:space="preserve"><value>Electricity Cost Report</value></data>
   <data name="layout.menu.refrigeration_ton_report" xml:space="preserve"><value>Refrigeration Ton Report</value></data>
   <data name="layout.menu.energy_declaration" xml:space="preserve"><value>Energy Declaration</value></data>
   <data name="layout.menu.chilled_water" xml:space="preserve"><value>Chilled Water Circuit Settings</value></data>
   <data name="layout.menu.billing_period" xml:space="preserve"><value>Billing Cycle Settings</value></data>
   <data name="layout.menu.tariff_setting" xml:space="preserve"><value>Tariff Settings</value></data>
+  <data name="layout.menu.holiday_setting" xml:space="preserve"><value>National Holidays</value></data>
   <data name="layout.menu.circuit_info" xml:space="preserve"><value>Circuit Info</value></data>
 
   <data name="layout.menu.system" xml:space="preserve"><value>System Settings</value></data>

@@ -18,19 +18,22 @@ public class EmsController : Controller
     private readonly EnergyReportService _reportService;
     private readonly BillingPeriodService _billingPeriodService;
     private readonly MainMeterAggregationService _aggregation;
+    private readonly ElectricityCostService _costService;
 
     public EmsController(
         IDataRepository repo,
         EnergyCircuitService circuitService,
         EnergyReportService reportService,
         BillingPeriodService billingPeriodService,
-        MainMeterAggregationService aggregation)
+        MainMeterAggregationService aggregation,
+        ElectricityCostService costService)
     {
         _repo                 = repo;
         _circuitService       = circuitService;
         _reportService        = reportService;
         _billingPeriodService = billingPeriodService;
         _aggregation          = aggregation;
+        _costService          = costService;
     }
 
     [HttpGet("/EMS")]
@@ -180,6 +183,16 @@ public class EmsController : Controller
             return Ok(new EmsMainMeterValuesDto());
 
         return Ok(await _aggregation.ComputeAsync(main.nId));
+    }
+
+    /// <summary>
+    /// 電費狀態卡 — 指定迴路（未指定 = 主要電表/根迴路）本期各時段 kWh 與流動電費。
+    /// 依採用方案型態自適應（tou 時段明細 / progressive 級距 / flat 當季單價）；未選方案回 hasPlan=false。
+    /// </summary>
+    [HttpGet("/EMS/api/electricity-cost")]
+    public async Task<IActionResult> GetElectricityCost([FromQuery] int? circuitId)
+    {
+        return Ok(await _costService.GetStatusAsync(circuitId));
     }
 
     /// <summary>取得完整迴路階層（flat 清單，前端組樹）</summary>

@@ -584,6 +584,42 @@
           "_comment": "FK → AlarmRules.Id" },
         { "Name": "CreatedAt",   "Type": "datetime",                   "Nullable": false, "Default": "getdate()" }
       ]
+    },
+    {
+      "_comment": "電費計算 — 葉子層逐時計價結果（Web ElectricityCostService 寫入）。一列 = 一葉子 SID × 一小時 × 一時段；kWh 快照自 EnergyLeafHourly.DeltaKwh（未套 sign），TOU 邊界非整點時該小時按分鐘比例拆成多列（PK 含 Period）。progressive 方案 UnitPrice/Cost 為 NULL（查詢時取本期累計 kWh 套級距）。",
+      "TableName": "ElectricityCostHourly",
+      "Columns": [
+        { "Name": "SID",       "Type": "nvarchar", "Length": 50, "IsPrimaryKey": true, "Nullable": false,
+          "_comment": "葉子迴路 SID（同 EnergyLeafHourly）" },
+        { "Name": "HourStart", "Type": "datetime",               "IsPrimaryKey": true, "Nullable": false,
+          "_comment": "小時起點（local time）" },
+        { "Name": "Period",    "Type": "nvarchar", "Length": 20, "IsPrimaryKey": true, "Nullable": false,
+          "_comment": "tou：peak / semipeak / offpeak；flat / progressive：all" },
+        { "Name": "Kwh",       "Type": "float",                  "Nullable": false,
+          "_comment": "該時段分攤 kWh（邊界非整點按分鐘比例分攤，未套 sign）" },
+        { "Name": "UnitPrice", "Type": "float",                  "Nullable": true,
+          "_comment": "每度單價（tou/flat 計算當下費率；progressive = NULL）" },
+        { "Name": "Cost",      "Type": "float",                  "Nullable": true,
+          "_comment": "Kwh × UnitPrice（progressive = NULL，查詢時套級距）" },
+        { "Name": "PlanId",    "Type": "nvarchar", "Length": 50, "Nullable": false,
+          "_comment": "計算當下採用方案 szPlanId" },
+        { "Name": "PlanType",  "Type": "nvarchar", "Length": 20, "Nullable": false,
+          "_comment": "tou / flat / progressive" },
+        { "Name": "Season",    "Type": "nvarchar", "Length": 10, "Nullable": false,
+          "_comment": "summer / nonsummer（按日判定）" },
+        { "Name": "Quality",   "Type": "tinyint",                "Nullable": false, "Default": 1,
+          "_comment": "承 EnergyLeafHourly.Quality" },
+        { "Name": "CreatedAt", "Type": "datetime",               "Nullable": false, "Default": "getdate()" }
+      ]
+    },
+    {
+      "_comment": "國定假日設定 — 一列 = 一個標註為國定假日/離峰日的日期。TOU 計價時標註日以 sun_offday（週日及離峰日）費率落段。由 Web /HolidaySetting 頁整年批次覆蓋維護。",
+      "TableName": "Holidays",
+      "Columns": [
+        { "Name": "HolidayDate", "Type": "date",     "IsPrimaryKey": true, "Nullable": false,
+          "_comment": "標註日期" },
+        { "Name": "CreatedAt",   "Type": "datetime", "Nullable": false, "Default": "getdate()" }
+      ]
     }
   ]
 }

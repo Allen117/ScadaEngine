@@ -58,7 +58,8 @@
   <data name="tariffsetting.card.no_active" xml:space="preserve"><value>Not selected</value></data>
   <data name="tariffsetting.card.acc_kwh" xml:space="preserve"><value>Accumulated Consumption</value></data>
   <data name="tariffsetting.card.acc_cost" xml:space="preserve"><value>Accumulated Cost</value></data>
-  <data name="tariffsetting.card.acc_hint" xml:space="preserve"><value>Cost calculation coming in a future release</value></data>
+  <data name="tariffsetting.card.acc_hint" xml:space="preserve"><value>Calculated automatically once an active plan is selected</value></data>
+  <data name="tariffsetting.card.acc_period_hint" xml:space="preserve"><value>Period {0} - {1} (excl. basic charges)</value></data>
   <data name="tariffsetting.unit.ntd" xml:space="preserve"><value>NT$</value></data>
 
   <data name="tariffsetting.select.title" xml:space="preserve"><value>Tariff Plan Selection</value></data>
@@ -72,6 +73,21 @@
   <data name="tariffsetting.button.reset" xml:space="preserve"><value>Restore Taipower Defaults</value></data>
   <data name="tariffsetting.button.add_range" xml:space="preserve"><value>Add Range</value></data>
   <data name="tariffsetting.button.del_range" xml:space="preserve"><value>Remove this range</value></data>
+  <data name="tariffsetting.button.recalculate" xml:space="preserve"><value>Recalculate Cost</value></data>
+
+  <data name="tariffsetting.recalc.title" xml:space="preserve"><value>Recalculate Electricity Cost</value></data>
+  <data name="tariffsetting.recalc.warning" xml:space="preserve"><value>This overwrites cost data in the selected range using the rates of the CURRENT active plan (for backfilling after switching plans or editing rates).</value></data>
+  <data name="tariffsetting.recalc.start" xml:space="preserve"><value>Start date (incl.)</value></data>
+  <data name="tariffsetting.recalc.end" xml:space="preserve"><value>End date (incl.)</value></data>
+  <data name="tariffsetting.recalc.hint" xml:space="preserve"><value>Up to 366 days per run. Automatic calculation runs hourly and only covers the last 48 hours; use this to backfill earlier history.</value></data>
+  <data name="tariffsetting.recalc.run" xml:space="preserve"><value>Run</value></data>
+  <data name="tariffsetting.recalc.close" xml:space="preserve"><value>Close</value></data>
+  <data name="tariffsetting.recalc.running" xml:space="preserve"><value>Recalculating, please wait…</value></data>
+  <data name="tariffsetting.recalc.done" xml:space="preserve"><value>Done: {0} ~ {1}, {2} hour(s) processed, {3} row(s) written.</value></data>
+  <data name="tariffsetting.recalc.fail" xml:space="preserve"><value>Recalculation failed: {0}</value></data>
+  <data name="tariffsetting.recalc.no_active" xml:space="preserve"><value>No active plan selected. Set an active plan before recalculating.</value></data>
+  <data name="tariffsetting.recalc.err_range" xml:space="preserve"><value>Please choose a valid date range (start must not be later than end).</value></data>
+  <data name="tariffsetting.recalc.err_too_large" xml:space="preserve"><value>The range must not exceed 366 days.</value></data>
 
   <data name="tariffsetting.label.summer_range" xml:space="preserve"><value>Summer Period</value></data>
   <data name="tariffsetting.label.month" xml:space="preserve"><value>M</value></data>

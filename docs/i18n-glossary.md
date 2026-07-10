@@ -26,12 +26,14 @@
 | 事件記錄 | Event Log | `/EventLog` |
 | 能源管理 | Energy Management | top-level menu |
 | 用電報表 | Energy Report | `/EnergyReport` |
+| 電費報表 | Electricity Cost Report | `/ElectricityCostReport` |
 | 冷凍噸報表 | Refrigeration Ton Report | `/RefrigerationTonReport` |
 | 能源申報 | Energy Declaration | `/EnergyDeclaration` |
 | 電表/迴路設定 | Energy Meter / Circuit | `/EnergyMeter` |
 | 水系統迴路設定 | Chilled Water Circuit Settings | `/ChilledWaterSystem` |
 | 月結週期設定 | Billing Cycle Settings | `/BillingPeriodSetting` |
 | 電費設定 | Tariff Settings | `/TariffSetting` |
+| 國定假日設定 | National Holidays / National Holiday Settings | `/HolidaySetting`（選單用短形） |
 | 系統設定 | System Settings | top-level menu |
 | 畫面設計 | Designer | `/Designer` |
 | 警報設定 | Alarm Settings | `/AlarmSetting` |
@@ -64,6 +66,15 @@
 | 流動電費 | Energy Charge | 按度計收 |
 | 經常契約 | Regular Contract | 契約容量項目 |
 | 離峰日 | Off-Peak Day | 台電指定假日，計價視同週日 |
+| 國定假日 | National Holiday | Holidays 表標註日，TOU 計價落 sun_offday |
+| 電費狀態 | Electricity Cost | EMS 卡片標題 |
+| 重新計算電費 | Recalculate Cost | TariffSetting 按鈕 |
+| 級距 | Tier | 累進計價分段（tariffsetting.section.tiers 沿用「累進級距」） |
+| 超額加價 | Surcharge | 簡易型 TOU 月總度數超額加價 |
+| 估算 | Estimated (Est.) | 子迴路級距/加價金額占比分攤註記 |
+| 今日小計 | Today (subtotal) | EMS 電費卡 |
+| 本期 | Period / Current Period | 月結期別語境 |
+| 不含基本電費 | Excludes basic (demand) charges | EMS 電費卡註記 |
 | 批次生產時間電價 | Batch Production TOU | 高壓/特高壓生產性質限定 |
 | 表燈（住商） | Lighting (Residential & Commercial) | 台電用戶類別 |
 | 低壓 / 高壓 / 特高壓電力 | Low / High / Extra High Voltage Power | 台電用戶類別 |
@@ -196,6 +207,8 @@
 | zh-TW | en | 備註 |
 |---|---|---|
 | 用電報表 | Energy Report | |
+| 電費報表 | Electricity Cost Report | 結果為電費（元）的用電報表對應頁 |
+| 電費分布 | Electricity Cost | ElectricityCostReport chart 標題 |
 | 冷凍噸報表 | Refrigeration Ton Report | |
 | 冷凍噸 / 冷量 | Refrigeration Ton / Cooling Energy | RT 為瞬時，RT·h 為累計冷量 |
 | RT | RT | 冷凍噸單位，不翻 |
