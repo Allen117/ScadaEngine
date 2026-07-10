@@ -324,3 +324,30 @@
     opacity: .4;
     cursor: not-allowed;
 }
+
+/* =========== 歷史值讀取 =========== */
+/* 節點上的「⏱ -N分」標記 */
+.hist-badge {
+    display: inline-block; padding: 1px 6px; border-radius: 999px;
+    font-size: .65rem; font-weight: 700; letter-spacing: .3px;
+    line-height: 1.4; white-space: nowrap; user-select: none;
+    background: #fff3cd; color: #997404; border: 1px solid #ffe69c;
+}
+/* 點位選擇 Modal 的歷史值讀取區塊 */
+.pp-hist-section {
+    margin-top: 10px; padding-top: 8px;
+    border-top: 1px solid #dee2e6;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.pp-hist-offset-wrap {
+    display: flex; align-items: center; gap: 6px;
+}
+.pp-hist-offset-wrap input[type="number"] {
+    width: 90px;
+}
+.pp-hist-suffix {
+    font-size: .8rem; color: #212529; white-space: nowrap;
+}
+.pp-hist-hint {
+    font-size: .7rem; white-space: nowrap;
+}

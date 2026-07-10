@@ -151,12 +151,17 @@ public class RealtimeController : Controller
     /// API: 按 SID 集合取得即時資料（輕量，供 LogicFlow 等畫布使用）
     /// </summary>
     [HttpPost("~/api/realtime/by-sids")]
-    public IActionResult GetDataBySids([FromBody] List<string> sids)
+    public async Task<IActionResult> GetDataBySids([FromBody] List<string> sids)
     {
         try
         {
             if (sids == null || sids.Count == 0)
                 return Json(new { success = true, data = Array.Empty<object>() });
+
+            // DB 來源點位不透過 MQTT 更新快取 → 含 DB SID 時直讀 DBLatestData（1 秒節流），
+            // 否則 LogicFlow 等畫布只會拿到 Web 啟動時的預填快照（凍結值）
+            if (sids.Any(s => s != null && s.StartsWith("DB", StringComparison.Ordinal)))
+                await _mqttService.RefreshDbSourcesThrottledAsync();
 
             var items = _mqttService.GetRealtimeDataBySids(sids);
             return Json(new

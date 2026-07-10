@@ -31,12 +31,15 @@ public class LogicFlowExecutionService : BackgroundService
     private Dictionary<string, (double dValue, bool isAuto)> _manualControlCache = new();
     private List<ModbusDeviceConfigModel> _deviceConfigs = new();
     private Dictionary<int, ScheduleRecord> _scheduleCache = new();
+    // 歷史值快取：key = (SID, offset 分鐘)，每分鐘刷新一次（HistoryData 一分鐘一筆），主迴圈同步讀取
+    private Dictionary<(string szSid, int nOffsetMinutes), (double dValue, bool isGood)> _historyCache = new();
 
     // 重載計時
     private DateTime _dtLastDiagramReload = DateTime.MinValue;
     private DateTime _dtLastDeviceConfigReload = DateTime.MinValue;
     private DateTime _dtLastManualControlReload = DateTime.MinValue;
     private DateTime _dtLastScheduleReload = DateTime.MinValue;
+    private DateTime _dtLastHistoryReload = DateTime.MinValue;
 
     // 啟動保護期：服務啟動後不執行 Modbus 寫入，僅評估邏輯並填充 OutputPrevState
     private DateTime _dtStartupTime;
@@ -68,6 +71,9 @@ public class LogicFlowExecutionService : BackgroundService
     private static readonly TimeSpan MANUAL_CONTROL_RELOAD_INTERVAL = TimeSpan.FromSeconds(3);
     private static readonly TimeSpan SCHEDULE_RELOAD_INTERVAL = TimeSpan.FromSeconds(15);
     private static readonly TimeSpan EVAL_INTERVAL = TimeSpan.FromMilliseconds(200);
+    private static readonly TimeSpan HISTORY_RELOAD_INTERVAL = TimeSpan.FromMinutes(1);
+    // 歷史值回溯容忍窗：目標時間往前最多 5 分鐘取最近一筆 Quality=1，否則視為 Bad
+    private static readonly TimeSpan HISTORY_LOOKBACK_WINDOW = TimeSpan.FromMinutes(5);
 
     private const string TIMER_STATE_TOPIC = "SCADA/LogicFlow/TimerState";
 
@@ -292,11 +298,83 @@ public class LogicFlowExecutionService : BackgroundService
                 _scheduleCache = schedules.ToDictionary(s => s.Id);
                 _dtLastScheduleReload = DateTime.Now;
             }
+
+            // 歷史值快取：每分鐘刷新（HistoryData 一分鐘一筆，target 時間戳每分鐘才變，更頻繁無資訊增量）
+            if (DateTime.Now - _dtLastHistoryReload >= HISTORY_RELOAD_INTERVAL)
+            {
+                await RefreshHistoryCacheAsync();
+                _dtLastHistoryReload = DateTime.Now;
+            }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "LogicFlow 刷新快取失敗");
         }
+    }
+
+    /// <summary>刷新歷史值快取：收集所有啟用歷史讀取節點的 (SID, offset) 組合，
+    /// 每組查 HistoryData「目標時間往前 5 分鐘窗」內最近一筆 Quality=1，查無 → Bad。
+    /// 主迴圈（200ms）只讀快取不打 DB；DB 每分鐘查詢次數 = 不同組合數。</summary>
+    private async Task RefreshHistoryCacheAsync()
+    {
+        try
+        {
+            var combos = _diagrams.Values
+                .SelectMany(ctx => ctx.Nodes)
+                .Where(nd => nd.HistEnabled
+                             && nd.HistOffsetMinutes.HasValue
+                             && !string.IsNullOrEmpty(nd.Sid)
+                             && nd.Type is "input" or "contact_no" or "contact_nc")
+                .Select(nd => (Sid: nd.Sid!, Offset: nd.HistOffsetMinutes!.Value))
+                .Distinct()
+                .ToList();
+
+            if (combos.Count == 0)
+            {
+                if (_historyCache.Count > 0) _historyCache = new();
+                return;
+            }
+
+            var newCache = new Dictionary<(string, int), (double, bool)>(combos.Count);
+            using var scope = _serviceProvider.CreateScope();
+            var repo = scope.ServiceProvider.GetRequiredService<IDataRepository>();
+            var dtNow = DateTime.Now;
+
+            foreach (var (szSid, nOffset) in combos)
+            {
+                var dtTarget = dtNow.AddMinutes(-nOffset);
+                var rows = await repo.GetHistoryTableDataAsync(szSid, dtTarget - HISTORY_LOOKBACK_WINDOW, dtTarget);
+                var latest = rows.Where(r => r.nQuality == 1)
+                    .OrderByDescending(r => r.dtTimestamp)
+                    .FirstOrDefault();
+                newCache[(szSid, nOffset)] = latest != null ? (latest.fValue, true) : (0, false);
+            }
+
+            _historyCache = newCache; // snapshot swap（照 _latestCache 模式，主迴圈讀取無鎖）
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "LogicFlow 刷新歷史值快取失敗");
+        }
+    }
+
+    /// <summary>讀取啟用歷史讀取節點的歷史值；快取無該組合或查無資料（Bad）→ false。</summary>
+    private bool TryGetHistoryValue(FlowNode nd, out double dValue)
+    {
+        dValue = 0;
+        if (string.IsNullOrEmpty(nd.Sid) || !nd.HistOffsetMinutes.HasValue) return false;
+        if (!_historyCache.TryGetValue((nd.Sid, nd.HistOffsetMinutes.Value), out var hv) || !hv.isGood)
+            return false;
+        dValue = hv.dValue;
+        return true;
+    }
+
+    /// <summary>input 節點是否 Bad：啟用歷史讀取 → 查歷史快取；否則查即時快取品質。</summary>
+    private bool IsInputSourceBad(FlowNode srcNode)
+    {
+        if (srcNode.HistEnabled)
+            return !TryGetHistoryValue(srcNode, out _);
+        return !_latestCache.TryGetValue(srcNode.Sid!, out var lv) || lv.nQuality != 1;
     }
 
     /// <summary>多輪迭代求值所有節點</summary>
@@ -642,7 +720,7 @@ public class LogicFlowExecutionService : BackgroundService
         if (srcNode == null) return false;
         if (srcNode.Type == "input" && !string.IsNullOrEmpty(srcNode.Sid))
         {
-            if (!_latestCache.TryGetValue(srcNode.Sid, out var lv) || lv.nQuality != 1)
+            if (IsInputSourceBad(srcNode))
                 return true;
         }
         if (srcNode.Type == "algorithm" && IsAlgoPortBad(srcNode, szSourcePort))
@@ -1132,10 +1210,20 @@ public class LogicFlowExecutionService : BackgroundService
         // ── 點位模式 ──
         if (string.IsNullOrEmpty(nd.Sid)) return false;
 
-        if (!_latestCache.TryGetValue(nd.Sid, out var lv)) return false;
-        if (lv.nQuality != 1) return false;
+        double dPointVal;
+        if (nd.HistEnabled)
+        {
+            // 歷史值讀取：查無值 → 不完成本節點（下游不評估、Output 不寫入）
+            if (!TryGetHistoryValue(nd, out dPointVal)) return false;
+        }
+        else
+        {
+            if (!_latestCache.TryGetValue(nd.Sid, out var lv)) return false;
+            if (lv.nQuality != 1) return false;
+            dPointVal = lv.dValue;
+        }
 
-        bool isOnPt = nd.Type == "contact_no" ? (lv.dValue == 1) : (lv.dValue == 0);
+        bool isOnPt = nd.Type == "contact_no" ? (dPointVal == 1) : (dPointVal == 0);
 
         // 檢查是否有連線到 in port（區分「沒有注入」vs「上游未就緒」）
         var hasInEdge = ctx.Edges.Any(e => e.Target == nd.Id && e.TargetPort == "in");
@@ -1539,6 +1627,8 @@ public class LogicFlowExecutionService : BackgroundService
 
         if (nd.Type == "input" && !string.IsNullOrEmpty(nd.Sid))
         {
+            if (nd.HistEnabled)
+                return TryGetHistoryValue(nd, out var dHist) ? dHist : null;
             if (!_latestCache.TryGetValue(nd.Sid, out var lv)) return null;
             if (lv.nQuality != 1) return null; // Bad quality
             return lv.dValue;
@@ -1599,7 +1689,7 @@ public class LogicFlowExecutionService : BackgroundService
             if (srcNode == null) continue;
             if (srcNode.Type == "input" && !string.IsNullOrEmpty(srcNode.Sid))
             {
-                if (!_latestCache.TryGetValue(srcNode.Sid, out var lv) || lv.nQuality != 1)
+                if (IsInputSourceBad(srcNode))
                     return true;
             }
             // 演算法節點：per-port severity 判斷（依消費邊線的 sourcePort 查 perOutput）
@@ -1976,6 +2066,10 @@ public class LogicFlowExecutionService : BackgroundService
                         CuMinIntervalMs = n.TryGetProperty("cuMinIntervalMs", out var cmi) && cmi.ValueKind == JsonValueKind.Number
                             ? cmi.GetInt32()
                             : 60000,
+                        HistEnabled = n.TryGetProperty("histEnabled", out var he) && he.ValueKind == JsonValueKind.True,
+                        HistOffsetMinutes = n.TryGetProperty("histOffsetMinutes", out var hom) && hom.ValueKind == JsonValueKind.Number
+                            ? hom.GetInt32()
+                            : null,
                     });
                 }
             }
@@ -2056,6 +2150,10 @@ public class LogicFlowExecutionService : BackgroundService
         // counter（CTU）設定
         public int PresetValue { get; init; } = 10;
         public int CuMinIntervalMs { get; init; } = 60000;
+
+        // 歷史值讀取（input / contact 點位模式）：讀「N 分鐘前」HistoryData 值；不啟用時行為與即時值完全相同
+        public bool HistEnabled { get; init; }
+        public int? HistOffsetMinutes { get; init; }
 
         // 運行時狀態
         public double? Result { get; set; }

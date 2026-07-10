@@ -100,6 +100,25 @@ public class LogicFlowController : Controller
         return Ok(new { success = true });
     }
 
+    // ============ History Value API (前端預覽用) ============
+
+    /// <summary>取得某點位「N 分鐘前」的歷史值（同 Engine 規則：target−5min 窗、Quality=1）；
+    /// 前端依 (sid, offset, 分鐘) 快取查詢結果，不會每輪 eval 都打此 API</summary>
+    [HttpGet("api/history-value")]
+    public async Task<IActionResult> GetHistoryValueAt([FromQuery] string sid, [FromQuery] int offsetMinutes)
+    {
+        if (string.IsNullOrWhiteSpace(sid) || offsetMinutes < 1 || offsetMinutes > 43200)
+            return BadRequest(new { error = "invalid sid or offsetMinutes (1-43200)" });
+
+        var (isFound, dValue, dtTimestamp) = await _service.GetHistoryValueAtAsync(sid, offsetMinutes);
+        return Ok(new
+        {
+            found = isFound,
+            value = isFound ? dValue : (double?)null,
+            timestamp = isFound ? dtTimestamp.ToString("yyyy-MM-dd HH:mm") : null
+        });
+    }
+
     // ============ Timer State API ============
 
     /// <summary>取得指定邏輯的 TP 計時器狀態（由 Engine 透過 MQTT 同步）</summary>

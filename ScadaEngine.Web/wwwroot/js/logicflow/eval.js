@@ -3,6 +3,62 @@
 (function () {
     const S = window.__lfNS;
 
+    // 歷史值快取：key = 'sid|offsetMinutes'，依分鐘 bucket 快取查詢結果，避免每輪 eval 打 API
+    S._histCache = S._histCache || {};
+    S._histFetching = S._histFetching || {};
+
+    // =========== 歷史值讀取 ===========
+
+    // 取得啟用歷史讀取節點的顯示值；查無資料 → { value: null, quality: 'Bad' }
+    function getHistLv(nd) {
+        if (!nd.histEnabled || !nd.sid || nd.histOffsetMinutes == null) return null;
+        var entry = S._histCache[nd.sid + '|' + nd.histOffsetMinutes];
+        if (entry && entry.found) return { value: entry.value, quality: 'Good' };
+        return { value: null, quality: 'Bad' };
+    }
+
+    // 節點有效值：啟用歷史讀取 → 歷史快取；否則即時快取
+    function getEffectiveLv(nd) {
+        if (nd.histEnabled && nd.sid && nd.histOffsetMinutes != null) return getHistLv(nd);
+        return nd.sid ? S._realtimeCache[nd.sid] : null;
+    }
+
+    // 抓取所有啟用歷史讀取節點的歷史值（每 (sid, offset) 組合每分鐘最多查一次）
+    async function fetchHistoryValues() {
+        var histNodes = S.canvasNodes.filter(function (n) {
+            return n.histEnabled && n.sid && n.histOffsetMinutes != null
+                && (n.type === 'input' || n.type === 'contact_no' || n.type === 'contact_nc');
+        });
+        if (histNodes.length === 0) return;
+
+        var nMinute = Math.floor(Date.now() / 60000);
+        var keys = new Set();
+        histNodes.forEach(function (n) { keys.add(n.sid + '|' + n.histOffsetMinutes); });
+
+        var fetches = [];
+        keys.forEach(function (key) {
+            var entry = S._histCache[key];
+            if (entry && entry.minute === nMinute) return;   // 本分鐘已查過
+            if (S._histFetching[key]) return;                 // 查詢中
+            var parts = key.split('|');
+            S._histFetching[key] = true;
+            fetches.push(
+                fetch(S.API + '/history-value?sid=' + encodeURIComponent(parts[0]) + '&offsetMinutes=' + parts[1])
+                    .then(function (r) { return r.ok ? r.json() : null; })
+                    .then(function (data) {
+                        S._histCache[key] = {
+                            found: !!(data && data.found),
+                            value: (data && data.found) ? data.value : null,
+                            minute: nMinute
+                        };
+                    })
+                    .catch(function () { S._histCache[key] = { found: false, value: null, minute: nMinute }; })
+                    .then(function () { S._histFetching[key] = false; })
+            );
+        });
+        if (fetches.length > 0) await Promise.all(fetches);
+    }
+
     // =========== 即時值輪詢 ===========
     function startRealtimePolling() {
         stopRealtimePolling();
@@ -72,25 +128,30 @@
             }
         } catch (_) { /* 控制模式拉取失敗不影響即時值顯示 */ }
 
+        // ── 2.5 拉歷史值（啟用歷史讀取的節點；依分鐘 bucket 快取） ──
+        try {
+            await fetchHistoryValues();
+        } catch (_) { /* 歷史值拉取失敗 → 快取維持舊值或 Bad */ }
+
         // ── 3. 局部更新 DOM（用節點唯一 ID 定位，避免重複 SID 問題） ──
         const canvas = document.getElementById('diagramCanvas');
         if (canvas) {
             for (const nd of S.canvasNodes) {
                 if (!nd.sid) continue;
-                const lv = S._realtimeCache[nd.sid];
+                const lv = getEffectiveLv(nd);
                 if (!lv) continue;
                 const nodeEl = canvas.querySelector(`.flow-node[data-node-id="${nd.id}"]`);
                 if (!nodeEl) continue;
                 const valEl = nodeEl.querySelector('.node-live-value');
                 if (valEl) {
                     const unitText = nd.unit ? ` ${nd.unit}` : '';
-                    valEl.textContent = S.fmtNum(lv.value) + unitText;
+                    valEl.textContent = (lv.value != null ? S.fmtNum(lv.value) : '--') + unitText;
                     valEl.classList.toggle('quality-bad', lv.quality === 'Bad');
                 }
                 if (nd.type === 'contact_no' || nd.type === 'contact_nc') {
                     const stateEl = nodeEl.querySelector('.contact-state');
                     if (stateEl) {
-                        const pv = parseFloat(lv.value);
+                        const pv = lv.value != null ? parseFloat(lv.value) : NaN;
                         const isOn = !isNaN(pv) && (nd.type === 'contact_no' ? pv === 1 : pv === 0);
                         stateEl.textContent = isOn ? '● ON' : '○ OFF';
                         stateEl.classList.toggle('contact-on', isOn);
@@ -150,8 +211,14 @@
     function markBadInputs() {
         for (const nd of S.canvasNodes) {
             if ((nd.type === 'input' || nd.type === 'contact_no' || nd.type === 'contact_nc') && nd.sid) {
-                const lv = S._realtimeCache[nd.sid];
-                nd._isBad = lv ? lv.quality === 'Bad' : false;
+                if (nd.histEnabled && nd.histOffsetMinutes != null) {
+                    // 歷史值讀取：查無值即視為 Bad（規格：找不到 → 不進行下一步演算）
+                    const hv = getHistLv(nd);
+                    nd._isBad = !(hv && hv.value != null);
+                } else {
+                    const lv = S._realtimeCache[nd.sid];
+                    nd._isBad = lv ? lv.quality === 'Bad' : false;
+                }
             } else {
                 nd._isBad = false;
             }
@@ -180,8 +247,8 @@
         const port = sourcePort || 'out';
         if (nd.type === 'input' && nd.sid) {
             if (nd._isBad) return null;
-            const lv = S._realtimeCache[nd.sid];
-            return lv != null ? parseFloat(lv.value) : null;
+            const lv = getEffectiveLv(nd);
+            return (lv != null && lv.value != null) ? parseFloat(lv.value) : null;
         }
         if (nd.type === 'constant') {
             return nd.constValue != null ? parseFloat(nd.constValue) : 0;
@@ -647,8 +714,8 @@
             nd._contactResult = null;
             nd._contactOn = undefined;
             if (hasUpstreamBad(nd.id)) return false;
-            const lv = S._realtimeCache[nd.sid];
-            if (!lv) return false;
+            const lv = getEffectiveLv(nd);
+            if (!lv || lv.value == null) return false;
             const pointVal = parseFloat(lv.value);
             if (isNaN(pointVal)) return false;
             const isOn = nd.type === 'contact_no' ? (pointVal === 1) : (pointVal === 0);
@@ -993,6 +1060,7 @@
     S.fetchRealtimeValues = fetchRealtimeValues;
     S.markBadInputs = markBadInputs;
     S.hasUpstreamBad = hasUpstreamBad;
+    S.getEffectiveLv = getEffectiveLv;
     S.getNodeOutputValue = getNodeOutputValue;
     S.getInputValue = getInputValue;
     S.evalScheduleNow = evalScheduleNow;

@@ -243,4 +243,11 @@
   <data name="logicflow.toolbar.distribute_h_tooltip" xml:space="preserve"><value>水平等距分布（多選 ≥ 3，首尾不動）</value></data>
   <data name="logicflow.toolbar.distribute_v" xml:space="preserve"><value>垂直等距分布</value></data>
   <data name="logicflow.toolbar.distribute_v_tooltip" xml:space="preserve"><value>垂直等距分布（多選 ≥ 3，首尾不動）</value></data>
+  <!-- ============ 歷史值讀取 ============ -->
+  <data name="logicflow.pp.hist.checkbox" xml:space="preserve"><value>讀取歷史值</value></data>
+  <data name="logicflow.pp.hist.minutes_before" xml:space="preserve"><value>分鐘前</value></data>
+  <data name="logicflow.pp.hist.range_hint" xml:space="preserve"><value>（1–43200，最長 30 天）</value></data>
+  <data name="logicflow.pp.hist.invalid" xml:space="preserve"><value>歷史值分鐘數須為 1–43200 之間的整數（最長 30 天）</value></data>
+  <data name="logicflow.hist.badge" xml:space="preserve"><value>⏱ -{n}分</value></data>
+  <data name="logicflow.hist.badge_tip" xml:space="preserve"><value>讀取 {n} 分鐘前的歷史值；查無資料時視為 Bad</value></data>
 </root>

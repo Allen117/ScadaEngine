@@ -32,6 +32,10 @@ public class MqttRealtimeSubscriberService : BackgroundService, IDisposable
     // 來源：ManualControlValue 表，由 RefreshManualAutoMapAsync 同步
     private readonly ConcurrentDictionary<string, bool> _manualAutoMap = new();
 
+    // DB 來源刷新節流（by-sids 300ms 輪詢時擋住高頻直讀 DBLatestData）
+    private DateTime _dtLastDbSourceRefresh = DateTime.MinValue;
+    private static readonly TimeSpan DB_SOURCE_REFRESH_MIN_INTERVAL = TimeSpan.FromSeconds(1);
+
     // MQTT 即時資料主題 (格式: SCADA/Realtime/{coordinatorName}/{SID})
     private const string REALTIME_TOPIC = "SCADA/Realtime/+/+";
     private const string TIMER_STATE_TOPIC = "SCADA/LogicFlow/TimerState";
@@ -576,6 +580,18 @@ public class MqttRealtimeSubscriberService : BackgroundService, IDisposable
     {
         if (string.IsNullOrWhiteSpace(szSid)) return;
         _manualAutoMap[szSid] = isAuto;
+    }
+
+    /// <summary>
+    /// 節流版 DB 來源刷新：距上次刷新不足 1 秒直接跳過。
+    /// 供高頻輪詢的呼叫端（/api/realtime/by-sids，LogicFlow 畫布 300ms）使用 —
+    /// DB 來源點位不透過 MQTT 更新快取，不刷新的話 by-sids 只會回啟動時的預填快照。
+    /// </summary>
+    public async Task RefreshDbSourcesThrottledAsync()
+    {
+        if (DateTime.Now - _dtLastDbSourceRefresh < DB_SOURCE_REFRESH_MIN_INTERVAL) return;
+        _dtLastDbSourceRefresh = DateTime.Now;
+        await RefreshDbSourcesAsync();
     }
 
     /// <summary>

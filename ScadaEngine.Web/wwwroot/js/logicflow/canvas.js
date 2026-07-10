@@ -253,6 +253,12 @@
             delete node.unit;
         }
 
+        // 歷史值讀取僅 input / contact 支援：切到其他類型（含 output）一律移除
+        if (!['input', 'contact_no', 'contact_nc'].includes(newType)) {
+            delete node.histEnabled;
+            delete node.histOffsetMinutes;
+        }
+
         // 設定 operator
         if (newType === 'compare' && operator) {
             node.operator = operator;
@@ -503,6 +509,8 @@
             if (n.algoInputs) o.algoInputs = n.algoInputs;
             if (n.inputCount != null) o.inputCount = n.inputCount;
             if (n.height != null) o.height = n.height;
+            if (n.histEnabled) o.histEnabled = true;
+            if (n.histOffsetMinutes != null) o.histOffsetMinutes = n.histOffsetMinutes;
             return o;
         });
         const edges = S.canvasEdges.filter(e => S.selectedNodeIds.has(e.source) && S.selectedNodeIds.has(e.target));
@@ -583,6 +591,8 @@
                 if (n.height != null) o.height = n.height;
                 if (n.presetValue != null) o.presetValue = n.presetValue;
                 if (n.cuMinIntervalMs != null) o.cuMinIntervalMs = n.cuMinIntervalMs;
+                if (n.histEnabled) o.histEnabled = true;
+                if (n.histOffsetMinutes != null) o.histOffsetMinutes = n.histOffsetMinutes;
                 return o;
             });
             const json = JSON.stringify({ nodes: cleanNodes, edges: S.canvasEdges });
@@ -667,6 +677,8 @@
             delete nd.unit;
             delete nd.scheduleId;
             delete nd.scheduleName;
+            delete nd.histEnabled;
+            delete nd.histOffsetMinutes;
             S.renderCanvasNodes();
         });
     }

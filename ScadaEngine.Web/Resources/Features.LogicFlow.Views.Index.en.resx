@@ -227,4 +227,11 @@ Remove the point/schedule binding first.</value></data>
   <data name="logicflow.toolbar.distribute_h_tooltip" xml:space="preserve"><value>Distribute horizontally (select ≥ 3, endpoints fixed)</value></data>
   <data name="logicflow.toolbar.distribute_v" xml:space="preserve"><value>Distribute Vertically</value></data>
   <data name="logicflow.toolbar.distribute_v_tooltip" xml:space="preserve"><value>Distribute vertically (select ≥ 3, endpoints fixed)</value></data>
+  <!-- ============ Historical value read ============ -->
+  <data name="logicflow.pp.hist.checkbox" xml:space="preserve"><value>Read historical value</value></data>
+  <data name="logicflow.pp.hist.minutes_before" xml:space="preserve"><value>minutes ago</value></data>
+  <data name="logicflow.pp.hist.range_hint" xml:space="preserve"><value>(1–43200, up to 30 days)</value></data>
+  <data name="logicflow.pp.hist.invalid" xml:space="preserve"><value>Offset must be an integer between 1 and 43200 minutes (up to 30 days)</value></data>
+  <data name="logicflow.hist.badge" xml:space="preserve"><value>⏱ -{n}m</value></data>
+  <data name="logicflow.hist.badge_tip" xml:space="preserve"><value>Reads the historical value from {n} minutes ago; treated as Bad if no data is found</value></data>
 </root>

@@ -349,6 +349,9 @@
 | 工具列 | Toolbar | |
 | 屬性 / 設定 | Properties / Config | 節點 config |
 | 輸入埠 / 輸出埠 | Input Port / Output Port | |
+| 歷史值讀取 | Historical Value Read | input / contact 點位模式選項 |
+| 讀取歷史值 | Read historical value | 點位選擇器 checkbox |
+| N 分鐘前 | N minutes ago | 歷史值 offset 欄位 |
 
 ### 節點類型 (Node displayName)
 

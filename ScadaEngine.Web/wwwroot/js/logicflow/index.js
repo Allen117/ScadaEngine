@@ -28,6 +28,7 @@
         ppSelectCalcGroup: S.ppSelectCalcGroup,
         ppShowDbStep: S.ppShowDbStep,
         ppSelectDbCoordinator: S.ppSelectDbCoordinator,
+        ppHistToggle: S.ppHistToggle,
         alignLeft: S.alignLeft,
         alignRight: S.alignRight,
         alignTop: S.alignTop,

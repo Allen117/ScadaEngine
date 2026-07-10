@@ -190,4 +190,26 @@ public class LogicFlowService
             new { TreeId = nTreeId, Json = szDiagramJson, ExpectedVersion = nExpectedVersion });
         return nRows > 0;
     }
+
+    // ============ 歷史值查詢（前端預覽用） ============
+
+    /// <summary>取得某點位「N 分鐘前」的歷史值（與 Engine 同規則：目標時間往前 5 分鐘窗內
+    /// 最近一筆 Quality=1；查無 → found=false 視為 Bad）</summary>
+    public async Task<(bool isFound, double dValue, DateTime dtTimestamp)> GetHistoryValueAtAsync(string szSid, int nOffsetMinutes)
+    {
+        using var conn = await GetConnectionAsync();
+        var dtTarget = DateTime.Now.AddMinutes(-nOffsetMinutes);
+        var row = await conn.QuerySingleOrDefaultAsync<(double dValue, DateTime dtTimestamp)>(@"
+            SELECT TOP 1 CAST(Value AS float), Timestamp
+            FROM HistoryData
+            WHERE SID = @Sid AND Quality = 1
+              AND Timestamp BETWEEN @WindowStart AND @Target
+            ORDER BY Timestamp DESC",
+            new { Sid = szSid, WindowStart = dtTarget.AddMinutes(-5), Target = dtTarget });
+
+        // 無資料時 Dapper 回傳 default tuple（Timestamp = DateTime.MinValue）
+        return row.dtTimestamp == default
+            ? (false, 0, DateTime.MinValue)
+            : (true, row.dValue, row.dtTimestamp);
+    }
 }

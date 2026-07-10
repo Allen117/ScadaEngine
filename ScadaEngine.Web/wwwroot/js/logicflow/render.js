@@ -2,6 +2,12 @@
 (function () {
     const S = window.__lfNS;
 
+    // 歷史值讀取標記：「⏱ -N分」badge（僅啟用歷史讀取的 input / contact 節點）
+    function histBadgeHtml(n) {
+        if (!n.histEnabled || n.histOffsetMinutes == null) return '';
+        return `<span class="hist-badge" title="${S.escHtml(S.t('logicflow.hist.badge_tip', { n: n.histOffsetMinutes }))}">${S.escHtml(S.t('logicflow.hist.badge', { n: n.histOffsetMinutes }))}</span>`;
+    }
+
     function renderCanvasNodes() {
         const canvas = document.getElementById('diagramCanvas');
         if (!canvas) return;
@@ -119,14 +125,15 @@
                     + `<span class="contact-state ${stateClass}">${contactState}</span>`
                     + `<div class="node-live-value"><i class="fas fa-calendar-alt me-1"></i>${S.escHtml(S.t('logicflow.node.schedule'))}</div>`;
             } else if ((n.type === 'contact_no' || n.type === 'contact_nc') && n.sid) {
-                const lv = S._realtimeCache[n.sid];
-                const valText = lv ? S.fmtNum(lv.value) : '--';
+                const lv = S.getEffectiveLv(n);
+                const hasVal = !!(lv && lv.value != null);
+                const valText = hasVal ? S.fmtNum(lv.value) : '--';
                 const unitText = n.unit ? ` ${n.unit}` : '';
                 const badClass = (lv && lv.quality === 'Bad') ? ' quality-bad' : '';
-                const isOn = lv ? (n.type === 'contact_no' ? parseFloat(lv.value) === 1 : parseFloat(lv.value) === 0) : false;
-                const contactState = lv ? (isOn ? '● ON' : '○ OFF') : '--';
-                const stateClass = lv ? (isOn ? 'contact-on' : 'contact-off') : '';
-                el.innerHTML = `<i class="${meta.icon}"></i><span>${S.escHtml(label)}</span>`
+                const isOn = hasVal && (n.type === 'contact_no' ? parseFloat(lv.value) === 1 : parseFloat(lv.value) === 0);
+                const contactState = hasVal ? (isOn ? '● ON' : '○ OFF') : '--';
+                const stateClass = hasVal ? (isOn ? 'contact-on' : 'contact-off') : '';
+                el.innerHTML = `<i class="${meta.icon}"></i><span>${S.escHtml(label)}</span>` + histBadgeHtml(n)
                     + `<span class="contact-state ${stateClass}">${contactState}</span>`
                     + `<div class="node-live-value${badClass}" data-sid="${S.escHtml(n.sid)}">${S.escHtml(valText)}${S.escHtml(unitText)}</div>`;
             } else if ((n.type === 'contact_no' || n.type === 'contact_nc') && !n.sid && n.scheduleId == null) {
@@ -135,8 +142,8 @@
                     + `<span class="contact-state">--</span>`
                     + `<div class="node-live-value"><i class="fas fa-project-diagram me-1"></i>${S.escHtml(S.t('logicflow.node.logic_control'))}</div>`;
             } else if ((n.type === 'input' || n.type === 'output') && n.sid) {
-                const lv = S._realtimeCache[n.sid];
-                const valText = lv ? S.fmtNum(lv.value) : '--';
+                const lv = S.getEffectiveLv(n);
+                const valText = (lv && lv.value != null) ? S.fmtNum(lv.value) : '--';
                 const unitText = n.unit ? ` ${n.unit}` : '';
                 const badClass = (lv && lv.quality === 'Bad') ? ' quality-bad' : '';
                 let modeBadgeHtml = '';
@@ -148,7 +155,7 @@
                     modeBadgeHtml = `<span class="node-mode-badge ${modeClass}" data-sid="${S.escHtml(n.sid)}">${modeText}</span>`;
                     if (isManual) el.classList.add('output-manual');
                 }
-                el.innerHTML = `<i class="${meta.icon}"></i><span>${S.escHtml(label)}</span>`
+                el.innerHTML = `<i class="${meta.icon}"></i><span>${S.escHtml(label)}</span>` + histBadgeHtml(n)
                     + modeBadgeHtml
                     + `<div class="node-live-value${badClass}" data-sid="${S.escHtml(n.sid)}">${S.escHtml(valText)}${S.escHtml(unitText)}</div>`;
             } else {
@@ -448,7 +455,7 @@
                     if (srcNode.type === 'input' && srcNode._isBad) {
                         edgeColor = '#dc3545'; edgeMarker = 'ah-bad';
                     } else if (srcNode.type === 'input' && srcNode.sid) {
-                        const lv = S._realtimeCache[srcNode.sid];
+                        const lv = S.getEffectiveLv(srcNode);
                         if (lv != null && lv.value != null) {
                             edgeColor = '#198754'; edgeMarker = 'ah-ok';
                             edgeLabel = S.fmtNum(parseFloat(lv.value));

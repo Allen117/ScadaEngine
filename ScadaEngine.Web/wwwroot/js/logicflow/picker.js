@@ -59,6 +59,21 @@
         });
     }
 
+    // =========== 歷史值讀取欄位 ===========
+    function ppIsHistApplicable() {
+        return S.ppPendingType === 'input' || S.ppPendingType === 'contact_no' || S.ppPendingType === 'contact_nc';
+    }
+
+    function ppUpdateHistVisibility() {
+        var sec = document.getElementById('ppHistSection');
+        if (!sec) return;
+        sec.style.display = (ppIsHistApplicable() && S.ppSourceMode !== 'schedule') ? '' : 'none';
+    }
+
+    function ppHistToggle(isChecked) {
+        document.getElementById('ppHistOffsetWrap').style.display = isChecked ? '' : 'none';
+    }
+
     async function openPointPicker() {
         S.ppPickedSid = null;
         S.ppPickedDevId = -1;
@@ -79,6 +94,15 @@
         document.getElementById('ppBtnPoint').classList.add('active');
         document.getElementById('ppBtnSchedule').classList.remove('active');
         document.getElementById('ppStep3').style.display = 'none';
+
+        // 歷史值讀取欄位初始化（編輯模式帶回現值，預設不勾）
+        const editNodeHist = S.ppEditNodeId != null ? S.canvasNodes.find(n => n.id === S.ppEditNodeId) : null;
+        const isHistOn = !!(editNodeHist && editNodeHist.histEnabled);
+        document.getElementById('ppHistEnabled').checked = isHistOn;
+        document.getElementById('ppHistOffset').value =
+            (editNodeHist && editNodeHist.histOffsetMinutes != null) ? editNodeHist.histOffsetMinutes : 60;
+        ppHistToggle(isHistOn);
+        ppUpdateHistVisibility();
 
         // 編輯模式：檢查是排程還是點位
         if (S.ppEditNodeId != null) {
@@ -412,6 +436,7 @@
             S.ppPickedScheduleName = null;
             ppShowStep1();
         }
+        ppUpdateHistVisibility();
     }
 
     async function ppEnsureSchedules() {
@@ -546,6 +571,9 @@
                     delete existing.sid;
                     delete existing.pointName;
                     delete existing.unit;
+                    // 排程模式無點位可讀 → 一併移除歷史值讀取設定
+                    delete existing.histEnabled;
+                    delete existing.histOffsetMinutes;
                 }
                 S.ppEditNodeId = null;
             } else {
@@ -565,6 +593,19 @@
         if (!S.ppPickedSid || !S.ppAllPoints) return;
         const point = S.ppAllPoints.find(p => p.szSid === S.ppPickedSid);
         if (!point) return;
+
+        // 歷史值讀取設定：先驗證再關 Modal（不勾 = 不寫入新欄位，序列化 JSON 與現在完全相同）
+        let isHistEnabled = false, nHistOffset = null;
+        if (ppIsHistApplicable()) {
+            isHistEnabled = document.getElementById('ppHistEnabled').checked;
+            if (isHistEnabled) {
+                nHistOffset = parseInt(document.getElementById('ppHistOffset').value, 10);
+                if (isNaN(nHistOffset) || nHistOffset < 1 || nHistOffset > 43200) {
+                    alert(S.t('logicflow.pp.hist.invalid'));
+                    return;
+                }
+            }
+        }
         if (S.ppModal) S.ppModal.hide();
 
         const fullName = point._devLabel ? point._devLabel + ' / ' + point.szName : point.szName;
@@ -583,6 +624,13 @@
                     existing.fMin = point.fMin ?? 0;
                     existing.fMax = point.fMax ?? 100;
                 }
+                if (isHistEnabled) {
+                    existing.histEnabled = true;
+                    existing.histOffsetMinutes = nHistOffset;
+                } else {
+                    delete existing.histEnabled;
+                    delete existing.histOffsetMinutes;
+                }
             }
             S.ppEditNodeId = null;
         } else {
@@ -598,6 +646,10 @@
             if (S.ppPendingType === 'output') {
                 node.fMin = point.fMin ?? 0;
                 node.fMax = point.fMax ?? 100;
+            }
+            if (isHistEnabled) {
+                node.histEnabled = true;
+                node.histOffsetMinutes = nHistOffset;
             }
             S.canvasNodes.push(node);
         }
@@ -620,4 +672,5 @@
     S.ppFilter = ppFilter;
     S.ppSelectPoint = ppSelectPoint;
     S.ppConfirm = ppConfirm;
+    S.ppHistToggle = ppHistToggle;
 })();
