@@ -108,6 +108,15 @@
     <None Update="Setting\EmailSetting.example.json">
     <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
   </None>
+    <None Update="Setting\DbMaintenanceSetting.json">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </None>
+    <None Update="Setting\DbMaintenanceSetting.example.json">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </None>
+    <None Update="Setting\install-db.ps1">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </None>
     <None Update="Resources\notification.zh-TW.json">
     <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
   </None>

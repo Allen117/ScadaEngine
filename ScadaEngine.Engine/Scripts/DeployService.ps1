@@ -143,6 +143,24 @@ function Ensure-PythonRuntime {
 }
 
 # Function: Install service
+function Invoke-DbSetup {
+    # 資料庫維護前置（idempotent）：DB 缺才建、備份資料夾 + SQL 服務帳號 ACL、wsn login/db_owner
+    # 失敗不中斷部署 — Engine 啟動安全網會再兜底，log 會指引手動執行
+    $dbScript = Join-Path $TargetPath "Setting\install-db.ps1"
+    if (Test-Path $dbScript) {
+        Write-Host "Running database setup (install-db.ps1)..." -ForegroundColor Yellow
+        try {
+            & $dbScript
+            Write-Host "Database setup completed." -ForegroundColor Green
+        } catch {
+            Write-Host "Database setup FAILED: $($_.Exception.Message)" -ForegroundColor Red
+            Write-Host "Fix and re-run manually: powershell -ExecutionPolicy Bypass -File `"$dbScript`"" -ForegroundColor Yellow
+        }
+    } else {
+        Write-Host "install-db.ps1 not found at $dbScript - skipping database setup" -ForegroundColor Yellow
+    }
+}
+
 function Install-Service {
     Write-Host "Starting service installation..."
     try {
@@ -234,6 +252,9 @@ function Install-Service {
 
         $ExePath = Join-Path $TargetPath "ScadaEngine.Engine.exe"
         if (-not (Test-Path $ExePath)) { Write-Host "Executable not found: $ExePath"; return $false }
+
+        # 資料庫維護前置（建 DB / 備份資料夾 ACL / login）
+        Invoke-DbSetup
 
         # Install service safely
         Write-Host "Installing Windows Service..."
@@ -513,6 +534,9 @@ function Update-Service {
                 Write-Host "Config: $d\ (recursive)"
             }
         }
+
+        # 資料庫維護前置（idempotent — 補齊備份資料夾 ACL 等，服務重啟前執行）
+        Invoke-DbSetup
 
         if ($wasRunning) { Start-Service -Name $ServiceName; Start-Sleep 2 }
 

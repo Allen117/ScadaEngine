@@ -145,6 +145,8 @@ ScadaEngine.sln
 - **警報系統**：Alarm MQTT 推播 + 規則熱重載（Engine ↔ Web）
 - **通知系統**：Line / Email 推播（每群組可選 zh-TW / en，觸發 + 恢復皆通知；寄送結果寫 EventLog 摘要，EventType=3）。Engine 端訊息字典 `Resources/notification.{zh-TW,en}.json`，Web UI 在 `AlarmSetting` 第三個 tab 管理 Email 群組與規則路由。SMTP 走 **MailKit** PackageReference。
 - **用電報表**：On-demand 計算 + 葉子層 Hourly 預聚合 + Staleness Window
+- **電費計算**：Web 逐時計價（EnergyLeafHourly → ElectricityCostHourly，XX:05 觸發）+ EMS 電費狀態卡 + /HolidaySetting 假日（TOU 落 sun_offday）
+- **資料庫自動建立與備份**：DB 不存在時啟動安全網自建（無權限優雅降級）+ install-db.ps1 一次性安裝 + Engine 每週 BACKUP（A/B 輪替、結果寫 EventLog）
 - **演算法 status 協定**：LogicFlow 節點回傳結構 + per-output port 錯誤傳遞
 
 ---
@@ -159,6 +161,7 @@ ScadaEngine.sln
 | `ScadaEngine.Engine/DatabaseSchema/DatabaseSchema.json` | 建表 + 欄位自動同步的**唯一真相來源** — 加欄位只改此檔，Engine 與 Web 啟動時自動補缺欄位（只加不減不改，詳見 docs/架構.md §資料庫結構初始化與欄位同步） |
 | `ScadaEngine.Engine/DBPoint/*.json` | DB 來源 Coordinator 點位定義（由 `DB通訊檔案產生工具.xlsm` 巨集產生，Engine 啟動 + reload MQTT 訊號時載入）。Web「DB 來源」頁可編輯**點位名稱與單位**回寫此檔（只改 Name/Unit 不動陣列結構），寫檔路徑由 Web `appsettings.json` 的 `EngineDbPointConfig`（WatchedFolder + MirrorFolder）明定，同 `EngineModbusConfig` 慣例 |
 | `ScadaEngine.Engine/OpcUaPoint/*.json` | OPC UA 來源定義（一檔一 Server 含 Devices 分組；由 Web「OPC UA 來源」頁動態編輯回寫，Engine 啟動 + reload MQTT 訊號時載入，免重啟）。Web 寫檔路徑由 Web `appsettings.json` 的 `EngineOpcUaConfig`（WatchedFolder + MirrorFolder）明定，同 `EngineModbusConfig` 慣例 |
+| `ScadaEngine.Engine/Setting/DbMaintenanceSetting.json` | 自動建 DB 路徑 + 每週備份排程（預設週日 03:00，A/B 兩檔輪替，Express 相容不依賴 SQL Agent）。同資料夾 `install-db.ps1` 為安裝腳本（建 DB / login / 資料夾 ACL，idempotent），已綁入 Install.bat 與 DeployService.ps1 install/update 自動執行，詳見 docs/架構.md §資料庫自動建立與每週備份 |
 | `ScadaEngine.Engine/Setting/LineSetting.json` | Line Messaging API token + rate limit |
 | `ScadaEngine.Engine/Setting/EmailSetting.json` | SMTP host/port/帳密 + rate limit（MailKit）|
 | `ScadaEngine.Engine/Resources/notification.{zh-TW,en}.json` | Engine 通知訊息字典（Line + Email 共用，依群組 Language 切換）|
@@ -186,6 +189,8 @@ Web reads Engine's `dbSetting.json` via a relative path `../ScadaEngine.Engine/S
 | `EmailRecipients` | Id, GroupId, EmailAddress, DisplayName, IsEnabled | Email 收件人（多對一群組） |
 | `EmailGroupRuleMap` | (GroupId, AlarmRuleId) PK | 群組-規則路由（空表視為「全收」） |
 | `EventLog` | Id (PK), SID, EventType, ..., NotifyChannel, NotifyStatus, NotifyDetail, NotifyRelatedEventId | 警報與通知摘要共用表（通知摘要 EventType=3） |
+| `ElectricityCostHourly` | SID+HourStart+Period (PK), Kwh, UnitPrice, Cost, PlanId, PlanType, Season, Quality | 電費逐時計價結果（Web XX:05 背景計算；progressive 的 Cost=NULL 查詢時套級距） |
+| `Holidays` | HolidayDate (date PK) | 國定假日標註（/HolidaySetting 維護；TOU 計價落 sun_offday） |
 
 SID 格式：
 - Modbus：`{ModbusID}-S{N}` 例 `196865-S1`

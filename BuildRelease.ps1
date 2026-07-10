@@ -155,12 +155,12 @@ if exist "C:\SCADA\Web\App\Setting" (
     xcopy /E /I /Y "C:\SCADA\Web\App\MqttSetting"     "%_BACKUP%\Web\MqttSetting"     >nul
 )
 
-echo [1/5] Stopping existing services (if any)...
+echo [1/6] Stopping existing services (if any)...
 echo.
 net stop ScadaEngineService >nul 2>&1
 net stop ScadaWebService >nul 2>&1
 
-echo [2/5] Installing Engine...
+echo [2/6] Installing Engine...
 echo.
 xcopy /E /I /Y "%~dp0Engine\App" "C:\SCADA\Engine\App"
 sc create ScadaEngineService binPath= "\"C:\SCADA\Engine\App\ScadaEngine.Engine.exe\"" DisplayName= "\"SCADA Engine Service\"" start= auto
@@ -169,7 +169,7 @@ sc failure ScadaEngineService reset= 86400 actions= restart/5000/restart/10000/r
 echo Engine installed.
 echo.
 
-echo [3/5] Installing Web...
+echo [3/6] Installing Web...
 echo.
 xcopy /E /I /Y "%~dp0Web\App" "C:\SCADA\Web\App"
 sc create ScadaWebService binPath= "\"C:\SCADA\Web\App\ScadaEngine.Web.exe\"" DisplayName= "\"SCADA Web Service\"" start= auto
@@ -194,11 +194,22 @@ if "%_IS_UPGRADE%"=="1" (
     echo.
 )
 
-echo [4/5] Opening firewall port 5038...
+:: ── Database setup: create DB if missing + backup folder ACL + app login ──
+:: idempotent; runs AFTER config restore so it reads the site's dbSetting.json
+echo [4/6] Database setup...
+powershell -ExecutionPolicy Bypass -File "C:\SCADA\Engine\App\Setting\install-db.ps1"
+if %errorLevel% NEQ 0 (
+    echo [WARN] Database setup reported errors. Engine startup has a fallback,
+    echo        but weekly backup needs the folders. Re-run manually if needed:
+    echo        powershell -ExecutionPolicy Bypass -File C:\SCADA\Engine\App\Setting\install-db.ps1
+)
+echo.
+
+echo [5/6] Opening firewall port 5038...
 netsh advfirewall firewall add rule name="ScadaEngine Web" dir=in action=allow protocol=TCP localport=5038
 echo.
 
-echo [5/5] Starting services...
+echo [6/6] Starting services...
 net start ScadaEngineService
 net start ScadaWebService
 echo.
@@ -217,6 +228,7 @@ if "%_IS_UPGRADE%"=="1" (
     echo   C:\SCADA\Engine\App\Modbus\*.json                (Modbus devices)
     echo   C:\SCADA\Engine\App\MqttSetting\MqttSetting.json (MQTT broker)
     echo   C:\SCADA\Engine\App\DBPoint\*.json               (DB source points)
+    echo   C:\SCADA\Engine\App\Setting\DbMaintenanceSetting.json (weekly DB backup schedule)
 )
 echo.
 pause

@@ -1,0 +1,7 @@
+{
+  "DataFileFolder": "C:\\Scada\\Database",
+  "BackupFolder": "C:\\Scada\\Backup",
+  "BackupEnabled": true,
+  "BackupDayOfWeek": "Sunday",
+  "BackupTime": "03:00"
+}

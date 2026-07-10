@@ -116,6 +116,9 @@ try
     // 註冊需量計算服務（每分鐘計算各電表迴路 15min 滑動 TWA 功率）
     builder.Services.AddHostedService<DemandCalculatorService>();
 
+    // 註冊每週資料庫自動備份服務（DbMaintenanceSetting.json 排程，A/B 兩檔輪替，不依賴 SQL Agent）
+    builder.Services.AddHostedService<ScadaEngine.Engine.Data.Services.DatabaseBackupService>();
+
     var host = builder.Build();
 
     // 初始化資料庫服務

@@ -44,7 +44,14 @@ public class DatabaseInitializationService
         {
             // 取得連線字串
             _szConnectionString = await _configService.GetConnectionStringAsync();
-            
+
+            // 安全網：DB 本身不存在時嘗試自動建立；無權限則 log 指引後中止（不丟例外）
+            var isDatabaseReady = await EnsureDatabaseExistsAsync();
+            if (!isDatabaseReady)
+            {
+                return false;
+            }
+
             // 載入資料庫綱要
             var schema = await _schemaService.LoadSchemaAsync();
             if (schema.tableList.Count == 0)
@@ -112,6 +119,100 @@ public class DatabaseInitializationService
             _logger.LogError(ex, "初始化資料庫結構時發生錯誤");
             return false;
         }
+    }
+
+    /// <summary>
+    /// 確認目標資料庫存在，不存在時嘗試自動建立（安全網）。
+    /// 降級順序：指定路徑建立（DbMaintenanceSetting.DataFileFolder）→ SQL Server 預設路徑 → 無權限則 log 指引並回傳 false。
+    /// 新建 DB 一律明確設 RECOVERY SIMPLE，避免繼承 model 的 FULL 導致交易記錄檔無限成長。
+    /// 既有 DB 完全不動（含復原模式）。
+    /// </summary>
+    /// <returns>DB 存在（或已成功建立）回傳 true；不存在且無法建立回傳 false</returns>
+    public async Task<bool> EnsureDatabaseExistsAsync()
+    {
+        var config = await _configService.LoadConfigAsync();
+        var szDbName = config.szDataBaseName;
+
+        // 快速路徑：能直接開啟目標 DB 即代表存在且有權限，零額外負擔
+        try
+        {
+            using var probe = new SqlConnection(config.BuildConnectionString());
+            await probe.OpenAsync();
+            return true;
+        }
+        catch (SqlException ex)
+        {
+            _logger.LogWarning("無法開啟資料庫 {Db}（SqlError={Number}），改連 master 檢查是否需要自動建立", szDbName, ex.Number);
+        }
+
+        var masterConfig = new ScadaEngine.Common.Data.Models.DatabaseConfigModel
+        {
+            szDatabaseAddress = config.szDatabaseAddress,
+            szDataBaseName = "master",
+            szDataBaseAccount = config.szDataBaseAccount,
+            szDataBasePassword = config.szDataBasePassword
+        };
+
+        try
+        {
+            using var connection = new SqlConnection(masterConfig.BuildConnectionString());
+            await connection.OpenAsync();
+
+            var nDbId = await connection.ExecuteScalarAsync<int?>("SELECT DB_ID(@Name)", new { Name = szDbName });
+            if (nDbId.HasValue)
+            {
+                _logger.LogError(
+                    "資料庫 {Db} 已存在但帳號 {Account} 無法開啟 — 請檢查該帳號的資料庫使用者對應與權限（可執行 Setting/install-db.ps1 修復）",
+                    szDbName, config.szDataBaseAccount);
+                return false;
+            }
+
+            var maintenance = DbMaintenanceSettingModel.LoadFromDefaultPaths(_logger);
+            var szSafeName = szDbName.Replace("]", "]]");
+
+            try
+            {
+                var szMdf = Path.Combine(maintenance.DataFileFolder, $"{szDbName}.mdf").Replace("'", "''");
+                var szLdf = Path.Combine(maintenance.DataFileFolder, $"{szDbName}_log.ldf").Replace("'", "''");
+                var szCreateSql =
+                    $"CREATE DATABASE [{szSafeName}] " +
+                    $"ON (NAME = N'{szSafeName}', FILENAME = N'{szMdf}') " +
+                    $"LOG ON (NAME = N'{szSafeName}_log', FILENAME = N'{szLdf}')";
+                await connection.ExecuteAsync(szCreateSql, commandTimeout: 120);
+                _logger.LogInformation("已自動建立資料庫 {Db}（資料檔路徑: {Folder}）", szDbName, maintenance.DataFileFolder);
+            }
+            catch (SqlException exCreate) when (!IsCreateDatabasePermissionDenied(exCreate))
+            {
+                // 路徑不存在 / SQL 服務帳號無資料夾寫入權 → 退 SQL Server 預設路徑再試
+                _logger.LogWarning(exCreate,
+                    "以指定路徑 {Folder} 建立資料庫失敗，改用 SQL Server 預設路徑重試（建議以系統管理員執行 Setting/install-db.ps1 建立資料夾與權限）",
+                    maintenance.DataFileFolder);
+                await connection.ExecuteAsync($"CREATE DATABASE [{szSafeName}]", commandTimeout: 120);
+                _logger.LogInformation("已自動建立資料庫 {Db}（SQL Server 預設路徑）", szDbName);
+            }
+
+            await connection.ExecuteAsync($"ALTER DATABASE [{szSafeName}] SET RECOVERY SIMPLE");
+            return true;
+        }
+        catch (SqlException ex) when (IsCreateDatabasePermissionDenied(ex))
+        {
+            _logger.LogError(
+                "資料庫 {Db} 不存在，且帳號 {Account} 無 CREATE DATABASE 權限 — " +
+                "請以系統管理員執行 Setting/install-db.ps1，或請 DBA 建立資料庫（或暫時授予 dbcreator）後重新啟動",
+                szDbName, config.szDataBaseAccount);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "檢查/自動建立資料庫 {Db} 時發生錯誤", szDbName);
+            return false;
+        }
+    }
+
+    /// <summary>SqlException 262 = CREATE DATABASE permission denied in database 'master'</summary>
+    private static bool IsCreateDatabasePermissionDenied(SqlException ex)
+    {
+        return ex.Number == 262;
     }
 
     /// <summary>
