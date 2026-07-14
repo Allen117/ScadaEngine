@@ -95,6 +95,7 @@
         await _loadManualControlValues();
         await fetchAndUpdateGauges();
         setInterval(fetchAndUpdateGauges, 1000);
+        setInterval(fetchAndUpdateAccumulations, ACC_POLL_MS);
     });
 
     // ── 從 /Designer/Load 載入已發布設計 ──
@@ -261,6 +262,7 @@
         (page.arrWidgetState || []).forEach(function (ws) { renderScadaWidget(canvas, ws); });
 
         if (lastData.length > 0) updateScadaWidgets(lastData);
+        fetchAndUpdateAccumulations(); // 換頁立即載入累積值，不等 30 秒輪詢
         _applyCanvasScale();
     }
 
@@ -383,9 +385,27 @@
             el.dataset.szBgColor       = p.szBgColor        || 'transparent';
             el.dataset.szHighColor     = p.szHighColor      || '#dc3545';
             el.dataset.szLowColor      = p.szLowColor       || '#fd7e14';
-            el.classList.add('scada-rt-value');
+            var szValueMode = p.szValueMode || 'realtime';
+            if (szValueMode === 'day' || szValueMode === 'month') {
+                // 累積模式：掛 scada-rt-acc（不掛 scada-rt-value），
+                // 既有 1 秒即時迴圈自然跳過，由 30 秒累積輪詢負責更新
+                el.dataset.valueMode   = szValueMode;
+                el.dataset.accKind     = p.szAccKind || 'meter';
+                if (p.dMaxValue != null) el.dataset.maxValue = p.dMaxValue;
+                el.dataset.accUnit     = p.szAccUnit || '';
+                el.dataset.accDecimals = (p.nAccDecimals != null ? p.nAccDecimals : 1);
+                el.classList.add('scada-rt-acc');
+                el.innerHTML = buildRealtimeValueViewHtml({
+                    nFontSize: p.nFontSize || 28, szFontColor: p.szFontColor || '#212529',
+                    szUnit: p.szAccUnit || p.szUnit || '',
+                    szTitle: _accTooltipTitle(p.szTitle || '', szValueMode),
+                    szBgColor: p.szBgColor || 'transparent'
+                }, '--');
+            } else {
+                el.classList.add('scada-rt-value');
+                el.innerHTML = buildRealtimeValueViewHtml(p, '--');
+            }
             el.style.overflow = 'visible';
-            el.innerHTML = buildRealtimeValueViewHtml(p, '--');
             if (p.szSid) el.addEventListener('contextmenu', function (ev) { onTrendContextMenu(ev, el.dataset.sid); });
         } else if (ws.szType === 'diPoint') {
             var p = ws.props || {};
@@ -2049,6 +2069,69 @@
         } catch (err) {
             console.warn('\u5373\u6642\u8cc7\u6599\u53d6\u5f97\u5931\u6557\uff1a', err.message);
         }
+    }
+
+    // \u2500\u2500 \u7d2f\u7a4d\u91cf\u5143\u4ef6\uff08AI \u9ede\u4f4d\u986f\u793a\u6a21\u5f0f=\u7576\u65e5/\u7576\u6708\u7d2f\u7a4d\uff09\uff1a30 \u79d2\u6162\u8f2a\u8a62\uff0c\u8207 1 \u79d2\u5373\u6642\u8ff4\u5708\u5206\u96e2 \u2500\u2500
+    var ACC_POLL_MS = 30000;
+
+    async function fetchAndUpdateAccumulations() {
+        var els = document.querySelectorAll('.scada-rt-acc[data-sid]');
+        if (!els.length) return;
+
+        // \u4ee5 (sid, mode, kind, max) \u53bb\u91cd \u2014 \u540c\u9801\u591a\u5143\u4ef6\u7d81\u540c\u9ede\u53ea\u67e5\u4e00\u6b21
+        var seen = {}, items = [];
+        els.forEach(function (el) {
+            var szKey = el.dataset.sid + '|' + el.dataset.valueMode + '|' + (el.dataset.accKind || 'meter') + '|' + (el.dataset.maxValue || '');
+            if (seen[szKey]) return;
+            seen[szKey] = true;
+            items.push({
+                szSid: el.dataset.sid,
+                szAccMode: el.dataset.valueMode,
+                szAccKind: el.dataset.accKind || 'meter',
+                dMaxValue: el.dataset.maxValue ? parseFloat(el.dataset.maxValue) : null
+            });
+        });
+
+        try {
+            var resp = await fetch('/api/scadapage/accumulation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ items: items })
+            });
+            if (!resp.ok) return;
+            var result = await resp.json();
+            if (!result.success || !result.results) return;
+            var map = {};
+            result.results.forEach(function (r) { map[r.szSid + '|' + r.szAccMode] = r; });
+            els.forEach(function (el) { _renderAccWidget(el, map[el.dataset.sid + '|' + el.dataset.valueMode]); });
+        } catch (_) { /* \u7db2\u8def\u5931\u6557\u7dad\u6301\u73fe\u503c\uff0c\u4e0b\u4e00\u8f2a\u518d\u8a66 */ }
+    }
+
+    // 累積元件 tooltip：點位名稱 + 日累/月累（畫面上不顯示 badge，僅 hover 提示）
+    function _accTooltipTitle(szTitle, szValueMode) {
+        var szMode = t(szValueMode === 'month' ? 'scadapage.acc.month_badge' : 'scadapage.acc.day_badge');
+        return szTitle ? szTitle + ' ' + szMode : szMode;
+    }
+
+    function _renderAccWidget(el, r) {
+        var props = {
+            nFontSize:   parseInt(el.dataset.nFontSize) || 28,
+            szFontColor: el.dataset.szFontColor || '#212529',
+            szUnit:      el.dataset.accUnit || el.dataset.szUnit || '',
+            szTitle:     _accTooltipTitle(el.dataset.szTitle || '', el.dataset.valueMode),
+            szBgColor:   el.dataset.szBgColor || 'transparent'
+        };
+        if (!r || r.dValue == null) {
+            // no_data\uff08\u671f\u521d/\u671f\u5167\u7121\u8cc7\u6599\uff09\u6216 stale \u4e14\u7121\u53ef\u7b97\u503c \u2192 \u7070\u5b57 '--'
+            props.szFontColor = '#6c757d';
+            el.innerHTML = buildRealtimeValueViewHtml(props, '--');
+            return;
+        }
+        // stale\uff08\u9ede\u4f4d\u8cc7\u6599\u904e\u820a\uff0c\u503c\u70ba\u6700\u5f8c\u53ef\u7b97\u503c\uff09\u2192 \u7070\u8272\u5448\u73fe\u4ee5\u793a\u975e\u5373\u6642
+        if (r.szStatus === 'stale') props.szFontColor = '#6c757d';
+        var nDec = parseInt(el.dataset.accDecimals);
+        if (isNaN(nDec)) nDec = 1;
+        el.innerHTML = buildRealtimeValueViewHtml(props, Number(r.dValue).toFixed(nDec));
     }
 
     function updateScadaWidgets(data) {

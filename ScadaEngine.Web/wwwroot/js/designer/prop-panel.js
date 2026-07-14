@@ -260,6 +260,7 @@ function renderPropPanel(el) {
             <input type="text" value="${escHtml(props.szUnit || '')}"
                    oninput="setProp('szUnit', this.value)">
         </div>
+        ${buildRtValueModeHtml(props)}
         <div class="prop-group">
             <label>${escHtml(t('designer.prop.high_color'))}</label>
             <input type="color" value="${props.szHighColor || '#dc3545'}"
@@ -1715,6 +1716,81 @@ function onCtrlBtnBgTransparentChange(isChecked) {
         setProp('szBgColor', szColor);
         if (picker) picker.style.display = '';
     }
+}
+
+// ============================================================
+// AI 點位 — 顯示模式（即時值 / 當日累積 / 當月累積）
+// 向後相容關鍵：realtime（預設）不寫任何新鍵，切回時把累積鍵全 delete，
+// 讓既有頁面與新建元件的 szWidgetStateJson 完全不變。
+// ============================================================
+function buildRtValueModeHtml(props) {
+    const szMode = props.szValueMode || 'realtime';
+    const szSelStyle = `style="width:100%;background:#3c3c3c;border:1px solid #555;color:#d4d4d4;
+                               padding:4px 6px;font-size:12px;border-radius:3px;"`;
+    let szHtml = `
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.display_mode'))}</label>
+            <select onchange="onRtValueModeChange(this.value)" ${szSelStyle}>
+                <option value="realtime" ${szMode === 'realtime' ? 'selected' : ''}>${escHtml(t('designer.prop.value_mode.realtime'))}</option>
+                <option value="day"      ${szMode === 'day'      ? 'selected' : ''}>${escHtml(t('designer.prop.value_mode.acc_day'))}</option>
+                <option value="month"    ${szMode === 'month'    ? 'selected' : ''}>${escHtml(t('designer.prop.value_mode.acc_month'))}</option>
+            </select>
+        </div>`;
+    if (szMode === 'realtime') return szHtml;
+
+    const szKind = props.szAccKind || 'meter';
+    szHtml += `
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.acc_kind'))}</label>
+            <select onchange="onRtValueAccKindChange(this.value)" ${szSelStyle}>
+                <option value="meter"     ${szKind === 'meter'     ? 'selected' : ''}>${escHtml(t('designer.prop.acc_kind.meter'))}</option>
+                <option value="integrate" ${szKind === 'integrate' ? 'selected' : ''}>${escHtml(t('designer.prop.acc_kind.integrate'))}</option>
+            </select>
+        </div>
+        ${szKind === 'meter' ? `
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.acc_max_value'))}</label>
+            <input type="number" value="${props.dMaxValue != null ? props.dMaxValue : ''}" min="0" step="any"
+                   oninput="setProp('dMaxValue', this.value === '' ? null : +this.value)">
+        </div>` : ''}
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.acc_unit'))}</label>
+            <input type="text" value="${escHtml(props.szAccUnit || '')}" placeholder="${escHtml(props.szUnit || '')}"
+                   oninput="setProp('szAccUnit', this.value)">
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.acc_decimals'))}</label>
+            <input type="number" value="${props.nAccDecimals != null ? props.nAccDecimals : 1}" min="0" max="4" step="1"
+                   oninput="setProp('nAccDecimals', +this.value)">
+        </div>`;
+    return szHtml;
+}
+
+function onRtValueModeChange(szVal) {
+    if (!selectedEl) return;
+    const p = selectedEl.widgetProps;
+    if (szVal === 'realtime') {
+        delete p.szValueMode;
+        delete p.szAccKind;
+        delete p.dMaxValue;
+        delete p.szAccUnit;
+        delete p.nAccDecimals;
+    } else {
+        p.szValueMode = szVal;
+        if (!p.szAccKind) p.szAccKind = 'meter';
+        if (p.nAccDecimals == null) p.nAccDecimals = 1;
+    }
+    renderWidget(selectedEl);
+    renderPropPanel(selectedEl);
+}
+
+function onRtValueAccKindChange(szVal) {
+    if (!selectedEl) return;
+    const p = selectedEl.widgetProps;
+    p.szAccKind = szVal;
+    if (szVal !== 'meter') delete p.dMaxValue;
+    renderWidget(selectedEl);
+    renderPropPanel(selectedEl);
 }
 
 function onRtValBgTransparentChange(isChecked) {

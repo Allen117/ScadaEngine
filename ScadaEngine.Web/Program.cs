@@ -186,6 +186,9 @@ builder.Services.AddScoped<ScadaEngine.Web.Services.HolidayService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.ElectricityCostService>();
 // 電費逐時計價背景服務（每小時 XX:05 重算近 48h rolling window，啟動 catch-up 近 N 天）
 builder.Services.AddHostedService<ScadaEngine.Web.Services.ElectricityCostAggregationService>();
+// ScadaPage 累積量元件 — 任意 SID 當日/當月累積（meter 差值 / integrate 積分）+ 分層 bucket 快取
+builder.Services.AddSingleton<ScadaEngine.Web.Services.WidgetAccumulationCache>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.WidgetAccumulationService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.DbCoordinatorService>();
 // DB 來源點位名稱熱編輯 — 回寫 DBPoint/*.json + UPSERT DBPoints（Scoped：依賴 IDataRepository 與 IStringLocalizer）
 builder.Services.AddScoped<ScadaEngine.Web.Services.DbPointConfigFileService>();

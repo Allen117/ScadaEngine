@@ -68,4 +68,8 @@
   <!-- DI 點位排程綁定（plan 2026-05-26-di-point-bind-schedule） -->
   <data name="scadapage.di.schedule_not_found" xml:space="preserve"><value>排程不存在</value></data>
   <data name="scadapage.di.schedule_label" xml:space="preserve"><value>排程</value></data>
+
+  <!-- AI 點位累積模式 badge（plan 2026-07-14-scadapage-accumulation-widget） -->
+  <data name="scadapage.acc.day_badge" xml:space="preserve"><value>日累</value></data>
+  <data name="scadapage.acc.month_badge" xml:space="preserve"><value>月累</value></data>
 </root>

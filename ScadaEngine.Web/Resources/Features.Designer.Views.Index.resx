@@ -331,6 +331,17 @@
 
   <!-- Prop Panel - realtimeValue -->
   <data name="designer.prop.bound_sid" xml:space="preserve"><value>綁定 SID</value></data>
+  <data name="designer.prop.value_mode.realtime" xml:space="preserve"><value>即時值</value></data>
+  <data name="designer.prop.value_mode.acc_day" xml:space="preserve"><value>當日累積</value></data>
+  <data name="designer.prop.value_mode.acc_month" xml:space="preserve"><value>當月累積</value></data>
+  <data name="designer.prop.acc_kind" xml:space="preserve"><value>累積計算方式</value></data>
+  <data name="designer.prop.acc_kind.meter" xml:space="preserve"><value>累積讀值型（電錶）</value></data>
+  <data name="designer.prop.acc_kind.integrate" xml:space="preserve"><value>瞬時值積分型</value></data>
+  <data name="designer.prop.acc_max_value" xml:space="preserve"><value>溢位上限</value></data>
+  <data name="designer.prop.acc_unit" xml:space="preserve"><value>累積單位</value></data>
+  <data name="designer.prop.acc_decimals" xml:space="preserve"><value>小數位數</value></data>
+  <data name="designer.widget.acc_day_badge" xml:space="preserve"><value>日累</value></data>
+  <data name="designer.widget.acc_month_badge" xml:space="preserve"><value>月累</value></data>
 
   <!-- Prop Panel - diPoint -->
   <data name="designer.prop.display_mode" xml:space="preserve"><value>顯示模式</value></data>

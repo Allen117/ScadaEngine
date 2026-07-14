@@ -620,6 +620,13 @@
 | 標題列 / 資料列 | Header Row / Data Row | 表格 cell |
 | 點位屬性 | Point Type | 表格 cell |
 | 小數位數（整欄） | Decimal Places (whole column) | 表格 cell |
+| 即時值 / 當日累積 / 當月累積 | Realtime Value / Daily Total / Monthly Total | AI 點位顯示模式 |
+| 累積計算方式 | Accumulation Type | AI 點位累積 |
+| 累積讀值型（電錶） | Cumulative Reading (Meter) | AI 點位累積 |
+| 瞬時值積分型 | Instantaneous Integration | AI 點位累積 |
+| 溢位上限 | Rollover Max Value | AI 點位累積 meter |
+| 累積單位 | Accumulated Unit | AI 點位累積（如 kW 積分後 kWh） |
+| 日累 / 月累 | DAY / MON | 累積元件左上角 badge |
 | 不限 | Unlimited | placeholder |
 | 選擇點位來源 / 選擇設備 / 選擇點位 | Select Point Source / Select Device / Select Point | picker |
 | 選擇計算點位群組 / 選擇計算點位 | Select Calc Group / Select Calc Point | picker |

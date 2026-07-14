@@ -22,6 +22,7 @@
 
 .scada-gauge:hover .scada-hover-label,
 .scada-rt-value:hover .scada-hover-label,
+.scada-rt-acc:hover .scada-hover-label,
 .scada-ctrl-btn:hover .scada-hover-label,
 .scada-di-point:hover .scada-hover-label,
 .scada-di-schedule:hover .scada-hover-label,

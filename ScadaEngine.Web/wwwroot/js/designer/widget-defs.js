@@ -659,6 +659,16 @@ function buildRealtimeValueHtml(props) {
            </div>`
         : '';
 
+    // 累積模式 badge（左上角）：day=日累 / month=月累；即時值模式無 badge
+    const szValueMode = props.szValueMode || 'realtime';
+    const szModeBadge = (szValueMode === 'day' || szValueMode === 'month')
+        ? `<div style="position:absolute;top:2px;left:4px;font-size:9px;color:#0d6efd;opacity:.85;font-weight:600;">
+               ${escHtml(t(szValueMode === 'day' ? 'designer.widget.acc_day_badge' : 'designer.widget.acc_month_badge'))}
+           </div>`
+        : '';
+    // 累積模式單位：自訂累積單位優先（如 kW 積分後為 kWh），空則沿用即時單位
+    const szUnitShown = (szValueMode !== 'realtime' && props.szAccUnit) ? props.szAccUnit : (props.szUnit || '');
+
     let szBorder = '';
     if (szBg === 'transparent') {
         const szCanvasBg = document.getElementById('designCanvas')?.style.backgroundColor || '';
@@ -669,10 +679,11 @@ function buildRealtimeValueHtml(props) {
         <div style="width:100%;height:100%;display:flex;flex-direction:column;position:relative;
                     align-items:center;justify-content:center;background:${szBg};border-radius:4px;${szBorder}">
             ${szAlarmBadge}
+            ${szModeBadge}
             <div style="font-size:${props.nFontSize || 28}px;font-weight:700;color:${props.szFontColor || '#212529'};
                         font-family:'Segoe UI',sans-serif;line-height:1.2;">
                 --
-                <span style="font-size:${Math.max(12, (props.nFontSize || 28) * 0.45)}px;font-weight:400;color:#6c757d;margin-left:4px;">${escHtml(props.szUnit || '')}</span>
+                <span style="font-size:${Math.max(12, (props.nFontSize || 28) * 0.45)}px;font-weight:400;color:#6c757d;margin-left:4px;">${escHtml(szUnitShown)}</span>
             </div>
             ${szSidLabel}
         </div>`;
