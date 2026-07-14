@@ -36,3 +36,9 @@ ScadaEngine.Engine/skills-lock.json
 
 # Line Messaging API token (must NEVER be committed)
 ScadaEngine.Engine/Setting/LineSetting.json
+
+# HTTPS 憑證（CA 私鑰 / 伺服器憑證 / CA 公開憑證）各機自行以 certs/generate-https-cert.ps1 產生，不進 git
+# 僅保留 certs/*.ps1 腳本
+ScadaEngine.Web/certs/*.pfx
+ScadaEngine.Web/certs/*.crt
+ScadaEngine.Web/certs/*.cer

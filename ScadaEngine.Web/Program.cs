@@ -15,8 +15,26 @@ var builder = WebApplication.CreateBuilder(args);
 // 支援以 Windows Service 模式執行
 builder.Host.UseWindowsService();
 
-// 設定監聽 URL（部署時使用，launchSettings.json 只在開發時有效）
-builder.WebHost.UseUrls("http://0.0.0.0:5038");
+// 設定監聽埠（部署時使用，launchSettings.json 只在開發時有效）
+// HTTP 一律開；HTTPS 僅在 certs/scada-web.pfx 存在時啟用（自簽憑證，見 certs/generate-https-cert.ps1）
+var szPfxPath = Path.Combine(builder.Environment.ContentRootPath, "certs", "scada-web.pfx");
+var isHttpsEnabled = File.Exists(szPfxPath);
+
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(5038); // HTTP — 同網段 http://<本機IP>:5038
+    if (isHttpsEnabled)
+    {
+        // HTTPS — 同網段 https://<本機IP>:7189（自簽，client 首次連需按「繼續前往」）
+        options.ListenAnyIP(7189, listen => listen.UseHttps(szPfxPath, "ScadaWeb"));
+    }
+});
+
+// 有憑證才強制 HTTPS 轉址（無憑證的部署維持純 HTTP，不會被導去死掉的埠）
+if (isHttpsEnabled)
+{
+    builder.Services.AddHttpsRedirection(options => options.HttpsPort = 7189);
+}
 
 // 配置 Serilog 日誌
 builder.Host.UseSerilog((context, config) =>
@@ -266,7 +284,10 @@ try
     }
 
     Console.WriteLine("設置中介軟體...");
-    app.UseHttpsRedirection();
+    if (isHttpsEnabled)
+    {
+        app.UseHttpsRedirection();
+    }
     app.UseStaticFiles();
     app.UseRouting();
 
@@ -288,8 +309,15 @@ try
 
     Console.WriteLine("準備啟動 Web 伺服器...");
     Console.WriteLine("應用程式將在以下 URL 可用:");
-    Console.WriteLine("- HTTP: http://localhost:5038");
-    Console.WriteLine("- HTTPS: https://localhost:7189");
+    Console.WriteLine("- HTTP : http://<本機IP>:5038");
+    if (isHttpsEnabled)
+    {
+        Console.WriteLine("- HTTPS: https://<本機IP>:7189（自簽憑證，內網 client 首次連需按「繼續前往」）");
+    }
+    else
+    {
+        Console.WriteLine("- HTTPS: 未啟用（缺 certs/scada-web.pfx，執行 certs/generate-https-cert.ps1 產生）");
+    }
     Console.WriteLine("啟動 Web 伺服器...");
 
     app.Run();

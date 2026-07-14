@@ -113,6 +113,16 @@ if (Test-Path $algoSrc) {
 Copy-Item -Path (Join-Path $webProject "Scripts\DeployWebService.ps1") -Destination "$ReleasePath\Web\" -Force
 Copy-Item -Path (Join-Path $webProject "Scripts\QuickDeploy.bat") -Destination "$ReleasePath\Web\" -Force
 
+# 內網 HTTPS 憑證腳本 → Web\App\certs\（Program.cs 由 ContentRoot\certs 讀 pfx，故腳本須落在 App\certs）
+# 只帶「腳本」，不帶任何 pfx/crt（憑證由部署機現產；升級時 xcopy 不刪除既有憑證故保留）。詳見 docs/功能說明書_內網HTTPS部署.md
+$certScriptSrc = Join-Path $webProject "certs"
+$certScriptDst = "$ReleasePath\Web\App\certs"
+if (Test-Path $certScriptSrc) {
+    if (-not (Test-Path $certScriptDst)) { New-Item -ItemType Directory -Path $certScriptDst -Force | Out-Null }
+    Copy-Item -Path "$certScriptSrc\*.ps1" -Destination $certScriptDst -Force
+    Write-Host "  HTTPS cert scripts copied to Web\App\certs (no pfx/crt bundled)" -ForegroundColor Gray
+}
+
 Write-Host "  Web OK" -ForegroundColor Green
 
 # ──────────────────────────────────────
@@ -205,8 +215,9 @@ if %errorLevel% NEQ 0 (
 )
 echo.
 
-echo [5/6] Opening firewall port 5038...
+echo [5/6] Opening firewall ports 5038 (HTTP) and 7189 (HTTPS)...
 netsh advfirewall firewall add rule name="ScadaEngine Web" dir=in action=allow protocol=TCP localport=5038
+netsh advfirewall firewall add rule name="ScadaEngine Web HTTPS" dir=in action=allow protocol=TCP localport=7189
 echo.
 
 echo [6/6] Starting services...
@@ -230,6 +241,12 @@ if "%_IS_UPGRADE%"=="1" (
     echo   C:\SCADA\Engine\App\DBPoint\*.json               (DB source points)
     echo   C:\SCADA\Engine\App\Setting\DbMaintenanceSetting.json (weekly DB backup schedule)
 )
+echo.
+echo [OPTIONAL] Enable HTTPS for LAN access (https://server-ip:7189):
+echo   1. Run: powershell -ExecutionPolicy Bypass -File C:\SCADA\Web\App\certs\generate-https-cert.ps1
+echo   2. Restart Web service:  net stop ScadaWebService ^&^& net start ScadaWebService
+echo   3. Give C:\SCADA\Web\App\certs\ScadaEngine-CA.crt to each client, run install-ca-on-client.ps1 as Admin
+echo   (Skip to keep HTTP-only on port 5038. See docs: 功能說明書_內網HTTPS部署.md)
 echo.
 pause
 "@ | Set-Content -Path "$ReleasePath\Install.bat" -Encoding ASCII
