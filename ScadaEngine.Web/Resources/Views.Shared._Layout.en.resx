@@ -75,6 +75,7 @@
   <data name="layout.menu.electricity_cost_report" xml:space="preserve"><value>Electricity Cost Report</value></data>
   <data name="layout.menu.refrigeration_ton_report" xml:space="preserve"><value>Refrigeration Ton Report</value></data>
   <data name="layout.menu.energy_declaration" xml:space="preserve"><value>Energy Declaration</value></data>
+  <data name="layout.menu.energy_baseline" xml:space="preserve"><value>Energy Baseline</value></data>
   <data name="layout.menu.chilled_water" xml:space="preserve"><value>Chilled Water Circuit Settings</value></data>
   <data name="layout.menu.billing_period" xml:space="preserve"><value>Billing Cycle Settings</value></data>
   <data name="layout.menu.tariff_setting" xml:space="preserve"><value>Tariff Settings</value></data>

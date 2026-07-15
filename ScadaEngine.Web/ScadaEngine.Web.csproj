@@ -14,6 +14,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
     <PackageReference Include="ClosedXML" Version="0.102.2" />
+    <!-- 能源基線 OLS 複回歸（QR 分解 + t 分布 p-value），見 docs/功能說明書_能源基線.md -->
+    <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
     <PackageReference Include="NCalcSync" Version="6.3.1" />
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="8.0.1" />
     <PackageReference Include="Serilog.AspNetCore" Version="8.0.0" />

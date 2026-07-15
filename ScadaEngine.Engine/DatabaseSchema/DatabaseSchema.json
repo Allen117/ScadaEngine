@@ -620,6 +620,71 @@
           "_comment": "標註日期" },
         { "Name": "CreatedAt",   "Type": "datetime", "Nullable": false, "Default": "getdate()" }
       ]
+    },
+    {
+      "_comment": "ISO 50001 能源基線模型主檔 — 一列 = 一個基線回歸模型（Y = Intercept + Σ Coefficient·Xi，變數列見 EnergyBaselineVariable）。Status：draft 可重算 / frozen 係數凍結供 EnPI 報告使用。月粒度 = 曆月（非月結期別），日粒度 = 曆日。",
+      "TableName": "EnergyBaseline",
+      "Columns": [
+        { "Name": "Id",              "Type": "int",      "IsPrimaryKey": true, "IsIdentity": true, "Nullable": false },
+        { "Name": "Name",            "Type": "nvarchar", "Length": 100, "Nullable": false,
+          "_comment": "模型名稱（使用者命名）" },
+        { "Name": "TargetType",      "Type": "nvarchar", "Length": 20,  "Nullable": false,
+          "_comment": "Y 來源型別：circuit（EnergyCircuit）/ point（任意點位）" },
+        { "Name": "TargetSID",       "Type": "nvarchar", "Length": 100, "Nullable": true,
+          "_comment": "TargetType=point 時的點位 SID" },
+        { "Name": "TargetCircuitId", "Type": "int",      "Nullable": true,
+          "_comment": "TargetType=circuit 時的 EnergyCircuit.Id" },
+        { "Name": "TargetMode",      "Type": "nvarchar", "Length": 20,  "Nullable": false, "Default": "cumulative",
+          "_comment": "Y 取樣方式：cumulative（累計值期初期末相減，kWh 類）/ average（期間均值，溫度/kW 類瞬時量）。circuit 一律 cumulative" },
+        { "Name": "TargetLabel",     "Type": "nvarchar", "Length": 200, "Nullable": false, "Default": "",
+          "_comment": "Y 顯示名稱快照（點位/迴路改名後模型仍可讀）" },
+        { "Name": "TargetUnit",      "Type": "nvarchar", "Length": 50,  "Nullable": true,
+          "_comment": "Y 單位快照" },
+        { "Name": "Granularity",     "Type": "nvarchar", "Length": 10,  "Nullable": false, "Default": "day",
+          "_comment": "取樣粒度：day（曆日，預設）/ month（曆月）" },
+        { "Name": "BaselineStart",   "Type": "datetime", "Nullable": false,
+          "_comment": "基線期起（含，日 00:00 / 月 1 號 00:00）" },
+        { "Name": "BaselineEnd",     "Type": "datetime", "Nullable": false,
+          "_comment": "基線期訖（含當日/當月）" },
+        { "Name": "Status",          "Type": "nvarchar", "Length": 10,  "Nullable": false, "Default": "draft",
+          "_comment": "draft / frozen" },
+        { "Name": "Intercept",       "Type": "float",    "Nullable": true,
+          "_comment": "回歸截距 β0（未跑回歸前 NULL）" },
+        { "Name": "R2",              "Type": "float",    "Nullable": true },
+        { "Name": "AdjR2",           "Type": "float",    "Nullable": true },
+        { "Name": "CvRmse",          "Type": "float",    "Nullable": true,
+          "_comment": "CV(RMSE) = RMSE / mean(Y)，ISO 50006 / IPMVP 常用模型可靠度指標" },
+        { "Name": "SampleCount",     "Type": "int",      "Nullable": true,
+          "_comment": "回歸實際使用樣本數（已剔除缺值 bucket）" },
+        { "Name": "FrozenAt",        "Type": "datetime", "Nullable": true },
+        { "Name": "CreatedAt",       "Type": "datetime", "Nullable": false, "Default": "getdate()" },
+        { "Name": "UpdatedAt",       "Type": "datetime", "Nullable": true },
+        { "Name": "Description",     "Type": "nvarchar", "Length": 500, "Nullable": true }
+      ]
+    },
+    {
+      "_comment": "能源基線相關變數（X）子檔 — 一列 = 一個自變數，最多 5 列/模型（Web 端限制）。Coefficient/PValue 於回歸後回填，凍結後與主檔一起固定。",
+      "TableName": "EnergyBaselineVariable",
+      "Columns": [
+        { "Name": "Id",              "Type": "int",      "IsPrimaryKey": true, "IsIdentity": true, "Nullable": false },
+        { "Name": "BaselineId",      "Type": "int",      "Nullable": false,
+          "_comment": "FK → EnergyBaseline.Id" },
+        { "Name": "Sequence",        "Type": "int",      "Nullable": false,
+          "_comment": "變數順序 1..5（對應 β1..β5）" },
+        { "Name": "VarType",         "Type": "nvarchar", "Length": 20,  "Nullable": false,
+          "_comment": "X 來源型別：point（HistoryData 期間均值）/ circuit（EnergyCircuit bucket kWh）" },
+        { "Name": "SourceSID",       "Type": "nvarchar", "Length": 100, "Nullable": true,
+          "_comment": "VarType=point 時的點位 SID" },
+        { "Name": "SourceCircuitId", "Type": "int",      "Nullable": true,
+          "_comment": "VarType=circuit 時的 EnergyCircuit.Id" },
+        { "Name": "Label",           "Type": "nvarchar", "Length": 200, "Nullable": false, "Default": "",
+          "_comment": "X 顯示名稱快照" },
+        { "Name": "Unit",            "Type": "nvarchar", "Length": 50,  "Nullable": true },
+        { "Name": "Coefficient",     "Type": "float",    "Nullable": true,
+          "_comment": "回歸係數 βi（未跑回歸前 NULL）" },
+        { "Name": "PValue",          "Type": "float",    "Nullable": true,
+          "_comment": "係數顯著性 p-value（共線性/無效變數判讀用）" }
+      ]
     }
   ]
 }

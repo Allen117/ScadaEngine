@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="excel.sheet_name" xml:space="preserve"><value>EnPI Savings Report</value></data>
+  <data name="excel.title" xml:space="preserve"><value>EnPI / Savings Report (ISO 50001 Energy Baseline Method)</value></data>
+  <data name="excel.label.baseline" xml:space="preserve"><value>Baseline Model</value></data>
+  <data name="excel.label.target" xml:space="preserve"><value>Target Energy (Y)</value></data>
+  <data name="excel.label.granularity" xml:space="preserve"><value>Granularity</value></data>
+  <data name="excel.granularity.day" xml:space="preserve"><value>Daily</value></data>
+  <data name="excel.granularity.month" xml:space="preserve"><value>Monthly (calendar)</value></data>
+  <data name="excel.label.range" xml:space="preserve"><value>Report Period</value></data>
+  <data name="excel.label.query_time" xml:space="preserve"><value>Query Time</value></data>
+  <data name="excel.label.operator" xml:space="preserve"><value>Operator</value></data>
+  <data name="excel.label.total_actual" xml:space="preserve"><value>Total Actual</value></data>
+  <data name="excel.label.total_predicted" xml:space="preserve"><value>Total Baseline Predicted</value></data>
+  <data name="excel.label.total_savings" xml:space="preserve"><value>Cumulative Savings</value></data>
+  <data name="excel.label.overall_enpi" xml:space="preserve"><value>Overall EnPI (actual ÷ predicted)</value></data>
+  <data name="excel.warn.missing" xml:space="preserve"><value>{0} period(s) excluded from totals due to insufficient data</value></data>
+  <data name="excel.col.period" xml:space="preserve"><value>Period</value></data>
+  <data name="excel.col.actual" xml:space="preserve"><value>Actual</value></data>
+  <data name="excel.col.predicted" xml:space="preserve"><value>Baseline Predicted</value></data>
+  <data name="excel.col.savings" xml:space="preserve"><value>Savings</value></data>
+  <data name="excel.col.cum_savings" xml:space="preserve"><value>Cumulative Savings</value></data>
+  <data name="excel.col.enpi" xml:space="preserve"><value>EnPI</value></data>
+  <data name="excel.cell.missing" xml:space="preserve"><value>Insufficient data</value></data>
+  <data name="excel.row.total" xml:space="preserve"><value>Total</value></data>
+</root>

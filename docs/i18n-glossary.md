@@ -236,6 +236,30 @@
 | 查詢區間 | Query Range | Excel 標籤 |
 | 操作者 | Operator | Excel 標籤（不是「比較運算子」） |
 
+## 能源基準（ISO 50001）
+
+| zh-TW | en | 備註 |
+|---|---|---|
+| 能源基準 | Energy Baseline | 頁面/選單名（/EnergyBaseline） |
+| 能源基線 | Energy Baseline (EnB) | ISO 50001 EnB，與「能源基準」同物；選單用「能源基準」 |
+| 基線期 | Baseline Period | 建模用的歷史期間 |
+| 報告期 | Reporting Period | EnPI 比較期間 |
+| 相關變數 | Relevant Variable | ISO 50001 用語，回歸的 X |
+| 目標能耗 | Target Energy | 回歸的 Y |
+| 回歸 / 複線性回歸 | Regression / Multiple Linear Regression | |
+| 係數 | Coefficient | β |
+| 截距 | Intercept | β0 |
+| 調整後 R² | Adjusted R² | |
+| CV(RMSE) | CV(RMSE) | 不翻，IPMVP / ASHRAE 慣用 |
+| 凍結 / 已凍結 | Freeze / Frozen | 基線係數固定 |
+| 草稿 | Draft | 基線模型狀態 |
+| 能源績效指標 | Energy Performance Indicator (EnPI) | |
+| 節能量 | Savings | 基線預測 − 實際 |
+| 累計節能量 | Cumulative Savings | |
+| 重大能源使用 | Significant Energy Use (SEU) | ISO 50001 6.3 |
+| 累計占比 | Cumulative Share | 帕累托 |
+| 帕累托 | Pareto | |
+
 ## 趨勢圖
 
 | zh-TW | en | 備註 |

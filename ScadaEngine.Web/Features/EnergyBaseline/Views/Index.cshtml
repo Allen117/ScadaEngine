@@ -1,0 +1,317 @@
+@model ScadaEngine.Web.Features.EnergyBaseline.Models.EnergyBaselineViewModel
+@{
+    ViewData["Title"] = Localizer["enb.title"].Value;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="stylesheet" href="~/css/energy-baseline.css" />
+
+<div class="container-fluid px-4 py-3">
+    <div class="d-flex align-items-center mb-3">
+        <h4 class="mb-0"><i class="fas fa-chart-line me-2 text-primary"></i>@Localizer["enb.title"]</h4>
+        <span class="text-muted ms-3 small">@Localizer["enb.subtitle"]</span>
+    </div>
+
+    <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabModel" type="button">@Localizer["enb.tab.model"]</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabEnpi" type="button">@Localizer["enb.tab.enpi"]</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabSeu" type="button">@Localizer["enb.tab.seu"]</button></li>
+    </ul>
+
+    <div class="tab-content">
+        @* ============ Tab 1：基線建模 ============ *@
+        <div class="tab-pane fade show active" id="tabModel">
+            <div class="row g-3">
+                <div class="col-lg-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span>@Localizer["enb.model.list_title"]</span>
+                            <button class="btn btn-sm btn-primary" onclick="window._enb.newModel()">
+                                <i class="fas fa-plus me-1"></i>@Localizer["enb.model.add"]
+                            </button>
+                        </div>
+                        <div class="list-group list-group-flush" id="enbModelList">
+                            <div class="list-group-item text-muted small">@Localizer["enb.model.empty"]</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-8">
+                    <div class="card shadow-sm" id="enbEditorCard" style="display:none">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span id="enbEditorTitle">@Localizer["enb.edit.title"]</span>
+                            <span id="enbStatusBadge"></span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">@Localizer["enb.edit.name"] <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="enbName" maxlength="100" autocomplete="off" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">@Localizer["enb.edit.description"]</label>
+                                    <input type="text" class="form-control" id="enbDescription" maxlength="500" autocomplete="off" />
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">@Localizer["enb.edit.target"] <span class="text-danger">*</span></label>
+                                    <div class="d-flex gap-3 mb-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="enbTargetType" id="enbTargetTypeCircuit" value="circuit" checked onchange="window._enb.onTargetTypeChange()" />
+                                            <label class="form-check-label" for="enbTargetTypeCircuit">@Localizer["enb.edit.target_circuit"]</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="enbTargetType" id="enbTargetTypePoint" value="point" onchange="window._enb.onTargetTypeChange()" />
+                                            <label class="form-check-label" for="enbTargetTypePoint">@Localizer["enb.edit.target_point"]</label>
+                                        </div>
+                                    </div>
+                                    <select class="form-select" id="enbTargetCircuit"></select>
+                                    <div class="input-group" id="enbTargetPointGroup" style="display:none">
+                                        <input type="text" class="form-control" id="enbTargetPointDisplay" readonly placeholder="@Localizer["enb.edit.select_placeholder"]" />
+                                        <button class="btn btn-outline-secondary" type="button" onclick="window._enb.pickPoint('target')">@Localizer["enb.edit.pick"]</button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">@Localizer["enb.edit.target_mode"]</label>
+                                    <div class="d-flex gap-3 pt-2" id="enbTargetModeGroup">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="enbTargetMode" id="enbModeCumulative" value="cumulative" checked />
+                                            <label class="form-check-label" for="enbModeCumulative">@Localizer["enb.edit.mode_cumulative"]</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="enbTargetMode" id="enbModeAverage" value="average" />
+                                            <label class="form-check-label" for="enbModeAverage">@Localizer["enb.edit.mode_average"]</label>
+                                        </div>
+                                    </div>
+                                    <div class="form-text">@Localizer["enb.edit.mode_hint"]</div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label">@Localizer["enb.edit.granularity"]</label>
+                                    <select class="form-select" id="enbGranularity">
+                                        <option value="day">@Localizer["enb.model.granularity.day"]</option>
+                                        <option value="month">@Localizer["enb.model.granularity.month"]</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">@Localizer["enb.edit.baseline_start"] <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="enbStart" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">@Localizer["enb.edit.baseline_end"] <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="enbEnd" />
+                                </div>
+
+                                <div class="col-12">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <label class="form-label mb-0">@Localizer["enb.edit.variables"] <span class="text-danger">*</span> <span class="text-muted small">@Localizer["enb.edit.variables_hint"]</span></label>
+                                        <button class="btn btn-sm btn-outline-primary" id="enbVarAddBtn" onclick="window._enb.addVariable()">
+                                            <i class="fas fa-plus me-1"></i>@Localizer["enb.edit.var_add"]
+                                        </button>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm align-middle enb-var-table">
+                                            <thead>
+                                                <tr>
+                                                    <th style="width:40px">#</th>
+                                                    <th style="width:130px">@Localizer["enb.edit.var_type"]</th>
+                                                    <th>@Localizer["enb.edit.var_source"]</th>
+                                                    <th style="width:180px">@Localizer["enb.edit.var_label"]</th>
+                                                    <th style="width:90px">@Localizer["enb.edit.var_unit"]</th>
+                                                    <th style="width:50px"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="enbVarRows"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex gap-2 mt-3 flex-wrap" id="enbEditorButtons">
+                                <button class="btn btn-primary" id="enbSaveBtn" onclick="window._enb.saveModel(false)">
+                                    <i class="fas fa-save me-1"></i>@Localizer["enb.edit.save"]
+                                </button>
+                                <button class="btn btn-success" id="enbRunBtn" onclick="window._enb.saveModel(true)">
+                                    <i class="fas fa-calculator me-1"></i>@Localizer["enb.edit.run"]
+                                </button>
+                                <button class="btn btn-outline-primary" id="enbFreezeBtn" onclick="window._enb.freezeModel()" style="display:none">
+                                    <i class="fas fa-lock me-1"></i>@Localizer["enb.edit.freeze"]
+                                </button>
+                                <button class="btn btn-outline-warning" id="enbUnfreezeBtn" onclick="window._enb.unfreezeModel()" style="display:none">
+                                    <i class="fas fa-lock-open me-1"></i>@Localizer["enb.edit.unfreeze"]
+                                </button>
+                                <button class="btn btn-outline-danger ms-auto" id="enbDeleteBtn" onclick="window._enb.deleteModel()" style="display:none">
+                                    <i class="fas fa-trash me-1"></i>@Localizer["enb.edit.delete"]
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm mt-3" id="enbResultCard" style="display:none">
+                        <div class="card-header">@Localizer["enb.result.title"]</div>
+                        <div class="card-body">
+                            <div id="enbResultWarnings"></div>
+                            <div class="row g-2 mb-3" id="enbStatCards"></div>
+                            <div class="row g-3">
+                                <div class="col-lg-5">
+                                    <h6 class="text-muted">@Localizer["enb.result.coef_table"]</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th>@Localizer["enb.edit.var_label"]</th>
+                                                    <th class="text-end">@Localizer["enb.result.coefficient"]</th>
+                                                    <th class="text-end">@Localizer["enb.result.pvalue"]</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="enbCoefRows"></tbody>
+                                        </table>
+                                    </div>
+                                    <div class="text-muted small">@Localizer["enb.result.formula_label"]<div id="enbFormula" class="enb-formula"></div></div>
+                                </div>
+                                <div class="col-lg-7">
+                                    <h6 class="text-muted">@Localizer["enb.result.scatter_title"]</h6>
+                                    <div class="enb-chart-box"><canvas id="enbScatterChart"></canvas></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* ============ Tab 2：EnPI / 節能量報告 ============ *@
+        <div class="tab-pane fade" id="tabEnpi">
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label">@Localizer["enb.enpi.baseline"]</label>
+                            <select class="form-select" id="enpiBaseline"></select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">@Localizer["enb.enpi.start"]</label>
+                            <input type="date" class="form-control" id="enpiStart" />
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">@Localizer["enb.enpi.end"]</label>
+                            <input type="date" class="form-control" id="enpiEnd" />
+                        </div>
+                        <div class="col-md-4 d-flex gap-2">
+                            <button class="btn btn-primary" onclick="window._enb.queryEnpi()">
+                                <i class="fas fa-search me-1"></i>@Localizer["enb.enpi.query"]
+                            </button>
+                            <button class="btn btn-outline-success" onclick="window._enb.exportEnpi()">
+                                <i class="fas fa-file-excel me-1"></i>@Localizer["enb.enpi.export"]
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="enpiResultArea" style="display:none">
+                <div class="row g-2 mb-3" id="enpiSummaryCards"></div>
+                <div class="card shadow-sm mb-3">
+                    <div class="card-body">
+                        <div class="enb-chart-box-lg"><canvas id="enpiChart"></canvas></div>
+                    </div>
+                </div>
+                <div class="card shadow-sm">
+                    <div class="card-body table-responsive">
+                        <table class="table table-sm table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>@Localizer["enb.enpi.col.period"]</th>
+                                    <th class="text-end">@Localizer["enb.enpi.col.actual"]</th>
+                                    <th class="text-end">@Localizer["enb.enpi.col.predicted"]</th>
+                                    <th class="text-end">@Localizer["enb.enpi.col.savings"]</th>
+                                    <th class="text-end">@Localizer["enb.enpi.col.cum"]</th>
+                                    <th class="text-end">@Localizer["enb.enpi.col.enpi"]</th>
+                                </tr>
+                            </thead>
+                            <tbody id="enpiRows"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* ============ Tab 3：SEU 重大能源使用鑑別 ============ *@
+        <div class="tab-pane fade" id="tabSeu">
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-2">
+                            <label class="form-label">@Localizer["enb.seu.start"]</label>
+                            <input type="date" class="form-control" id="seuStart" />
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">@Localizer["enb.seu.end"]</label>
+                            <input type="date" class="form-control" id="seuEnd" />
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">@Localizer["enb.seu.threshold"]</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="seuThreshold" value="80" min="1" max="100" step="1" />
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-primary" onclick="window._enb.querySeu()">
+                                <i class="fas fa-ranking-star me-1"></i>@Localizer["enb.seu.analyze"]
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-text mt-1">@Localizer["enb.seu.hint"]</div>
+                </div>
+            </div>
+            <div id="seuResultArea" style="display:none">
+                <div class="card shadow-sm mb-3">
+                    <div class="card-header" id="seuChartTitle"></div>
+                    <div class="card-body">
+                        <div class="enb-chart-box-lg"><canvas id="seuChart"></canvas></div>
+                    </div>
+                </div>
+                <div class="card shadow-sm">
+                    <div class="card-body table-responsive">
+                        <table class="table table-sm table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th style="width:60px">@Localizer["enb.seu.col.rank"]</th>
+                                    <th>@Localizer["enb.seu.col.name"]</th>
+                                    <th class="text-end">@Localizer["enb.seu.col.kwh"]</th>
+                                    <th class="text-end">@Localizer["enb.seu.col.pct"]</th>
+                                    <th class="text-end">@Localizer["enb.seu.col.cum"]</th>
+                                    <th style="width:100px" class="text-center">SEU</th>
+                                </tr>
+                            </thead>
+                            <tbody id="seuRows"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* 點位選擇 Modal（Y 點位與 X 點位共用） *@
+<div class="modal fade" id="enbPointPickerModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@Localizer["enb.pk.title"]</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="text" class="form-control mb-2" id="enbPkSearch" placeholder="@Localizer["enb.pk.search"]" oninput="window._enb.pkFilter(this.value)" autocomplete="off" />
+                <div class="list-group" id="enbPkList"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/chartjs/chart.umd.min.js"></script>
+    <script src="~/js/energy-baseline.js"></script>
+    <script>
+        window._enbInit = { today: '@Model.dtToday.ToString("yyyy-MM-dd")' };
+    </script>
+}

@@ -174,6 +174,10 @@ builder.Services.AddScoped<ScadaEngine.Web.Services.WaterCircuitService>();
 // 月結週期（期別）— 全系統月粒度報表的唯一期界來源（內含 static 快取，寫入時失效）
 builder.Services.AddScoped<ScadaEngine.Web.Services.BillingPeriodService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyReportService>();
+// ISO 50001 能源基準 — OLS 回歸引擎（純數學無狀態 → Singleton）+ 基線模型/取樣/SEU + EnPI 報告
+builder.Services.AddSingleton<ScadaEngine.Web.Services.BaselineRegressionEngine>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyBaselineService>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.EnPIReportService>();
 // 虛擬主要電表 V/I/P/PF 聚合器（依 EnergyCircuitService + MqttRealtimeSubscriberService；Scoped 對齊 EnergyCircuitService）
 builder.Services.AddScoped<ScadaEngine.Web.Services.MainMeterAggregationService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.RefrigerationTonReportService>();
@@ -204,6 +208,7 @@ builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyReportExcelExporter>()
 builder.Services.AddScoped<ScadaEngine.Web.Services.RefrigerationTonReportExcelExporter>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyDeclarationExcelExporter>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.ElectricityCostReportExcelExporter>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.EnPIReportExcelExporter>();
 
 // Line 測試發送（內含 throttle 字典 → 必須 Singleton 才能跨請求保留狀態）
 builder.Services.AddHttpClient();

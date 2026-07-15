@@ -191,6 +191,8 @@ Web reads Engine's `dbSetting.json` via a relative path `../ScadaEngine.Engine/S
 | `EventLog` | Id (PK), SID, EventType, ..., NotifyChannel, NotifyStatus, NotifyDetail, NotifyRelatedEventId | 警報與通知摘要共用表（通知摘要 EventType=3） |
 | `ElectricityCostHourly` | SID+HourStart+Period (PK), Kwh, UnitPrice, Cost, PlanId, PlanType, Season, Quality | 電費逐時計價結果（Web XX:05 背景計算；progressive 的 Cost=NULL 查詢時套級距） |
 | `Holidays` | HolidayDate (date PK) | 國定假日標註（/HolidaySetting 維護；TOU 計價落 sun_offday） |
+| `EnergyBaseline` | Id, Name, TargetType, Granularity(day=曆日/month=曆月), Status(draft/frozen), Intercept, R2, AdjR2, CvRmse, ... | ISO 50001 能源基線模型主檔（/EnergyBaseline；OLS 回歸走 MathNet.Numerics，詳見 docs/功能說明書_能源基線.md） |
+| `EnergyBaselineVariable` | Id, BaselineId, Sequence(1..5), VarType(point/circuit), SourceSID/SourceCircuitId, Coefficient, PValue | 基線相關變數 X 子檔（一模型最多 5 變數；名稱/單位存快照） |
 
 SID 格式：
 - Modbus：`{ModbusID}-S{N}` 例 `196865-S1`
@@ -303,7 +305,7 @@ Defined in `ScadaEngine.Engine` but used by both Engine and Web. Web registers `
 
 僅以下頁面已導入 i18n，新增/修改其字串時：
 
-- **已 i18n 範圍**：ScadaPage、Realtime、EnergyReport、History/Trend、EventLog、AccountSetting、ScheduleSetting、ConditionCtrl、LogicFlow、ModbusCoordinator、DbCoordinator、CalcPoint、共用 `_Layout`
+- **已 i18n 範圍**：ScadaPage、Realtime、EnergyReport、EnergyBaseline、History/Trend、EventLog、AccountSetting、ScheduleSetting、ConditionCtrl、LogicFlow、ModbusCoordinator、DbCoordinator、CalcPoint、共用 `_Layout`
 - **.cshtml 字串**：`@Localizer["key"]`（key 命名 `feature.section.purpose` 全小寫底線分）
 - **JS 字串**：`window.i18n.t('key', {args})`，IIFE 內可宣告 `function t(key, args) { return window.i18n.t(key, args); }` 簡化
 - **Controller / Service / Excel exporter**：建構子注入 `IStringLocalizer<T>`，走 `_l["key"].Value`。Singleton 服務若依賴此須改 Scoped

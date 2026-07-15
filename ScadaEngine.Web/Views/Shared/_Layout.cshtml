@@ -169,6 +169,15 @@
                                     </ul>
                                 </li>
                             }
+                            @if (canAccess("/EnergyBaseline"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/EnergyBaseline">
+                                        <i class="fas fa-bullseye me-1"></i>
+                                        @Localizer["layout.menu.energy_baseline"]
+                                    </a>
+                                </li>
+                            }
                             @if (canAccess("/ChilledWaterSystem") || canAccess("/EnergyMeter") || canAccess("/BillingPeriodSetting") || canAccess("/TariffSetting") || canAccess("/HolidaySetting"))
                             {
                                 <li class="nav-item dropdown">

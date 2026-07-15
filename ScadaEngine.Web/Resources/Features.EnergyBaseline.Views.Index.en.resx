@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="enb.title" xml:space="preserve"><value>Energy Baseline (ISO 50001)</value></data>
+  <data name="enb.subtitle" xml:space="preserve"><value>Baseline Regression · EnPI Performance · SEU Identification</value></data>
+  <data name="enb.tab.model" xml:space="preserve"><value>Baseline Modeling</value></data>
+  <data name="enb.tab.enpi" xml:space="preserve"><value>EnPI / Savings Report</value></data>
+  <data name="enb.tab.seu" xml:space="preserve"><value>SEU Identification</value></data>
+
+  <data name="enb.model.list_title" xml:space="preserve"><value>Baseline Models</value></data>
+  <data name="enb.model.add" xml:space="preserve"><value>New Model</value></data>
+  <data name="enb.model.empty" xml:space="preserve"><value>No baseline model yet — click "New Model" to start</value></data>
+  <data name="enb.model.status.draft" xml:space="preserve"><value>Draft</value></data>
+  <data name="enb.model.status.frozen" xml:space="preserve"><value>Frozen</value></data>
+  <data name="enb.model.granularity.day" xml:space="preserve"><value>Daily</value></data>
+  <data name="enb.model.granularity.month" xml:space="preserve"><value>Monthly (calendar)</value></data>
+
+  <data name="enb.edit.title" xml:space="preserve"><value>Model Definition</value></data>
+  <data name="enb.edit.name" xml:space="preserve"><value>Model Name</value></data>
+  <data name="enb.edit.description" xml:space="preserve"><value>Description</value></data>
+  <data name="enb.edit.target" xml:space="preserve"><value>Target Energy (Y)</value></data>
+  <data name="enb.edit.target_circuit" xml:space="preserve"><value>Energy Circuit</value></data>
+  <data name="enb.edit.target_point" xml:space="preserve"><value>Any Point</value></data>
+  <data name="enb.edit.select_placeholder" xml:space="preserve"><value>Please select</value></data>
+  <data name="enb.edit.pick" xml:space="preserve"><value>Pick Point</value></data>
+  <data name="enb.edit.target_mode" xml:space="preserve"><value>Y Sampling Mode</value></data>
+  <data name="enb.edit.mode_cumulative" xml:space="preserve"><value>Cumulative (end − start)</value></data>
+  <data name="enb.edit.mode_average" xml:space="preserve"><value>Instantaneous (period average)</value></data>
+  <data name="enb.edit.mode_hint" xml:space="preserve"><value>Choose "Cumulative" for kWh-type meters; "Instantaneous" for temperature / kW readings. Auto-inferred from unit after picking a point; can be overridden.</value></data>
+  <data name="enb.edit.granularity" xml:space="preserve"><value>Granularity</value></data>
+  <data name="enb.edit.baseline_start" xml:space="preserve"><value>Baseline Start</value></data>
+  <data name="enb.edit.baseline_end" xml:space="preserve"><value>Baseline End</value></data>
+  <data name="enb.edit.variables" xml:space="preserve"><value>Relevant Variables (X)</value></data>
+  <data name="enb.edit.variables_hint" xml:space="preserve"><value>(outdoor temperature, humidity, refrigeration tons, production… up to 5)</value></data>
+  <data name="enb.edit.var_add" xml:space="preserve"><value>Add Variable</value></data>
+  <data name="enb.edit.var_type" xml:space="preserve"><value>Type</value></data>
+  <data name="enb.edit.var_source" xml:space="preserve"><value>Source</value></data>
+  <data name="enb.edit.var_label" xml:space="preserve"><value>Label</value></data>
+  <data name="enb.edit.var_unit" xml:space="preserve"><value>Unit</value></data>
+  <data name="enb.edit.var_type_point" xml:space="preserve"><value>Point (avg)</value></data>
+  <data name="enb.edit.var_type_circuit" xml:space="preserve"><value>Circuit (kWh)</value></data>
+  <data name="enb.edit.save" xml:space="preserve"><value>Save Model</value></data>
+  <data name="enb.edit.run" xml:space="preserve"><value>Build Baseline (Run Regression)</value></data>
+  <data name="enb.edit.freeze" xml:space="preserve"><value>Freeze Baseline</value></data>
+  <data name="enb.edit.unfreeze" xml:space="preserve"><value>Unfreeze</value></data>
+  <data name="enb.edit.delete" xml:space="preserve"><value>Delete</value></data>
+
+  <data name="enb.result.title" xml:space="preserve"><value>Regression Result</value></data>
+  <data name="enb.result.adj_r2" xml:space="preserve"><value>Adjusted R²</value></data>
+  <data name="enb.result.samples" xml:space="preserve"><value>Samples</value></data>
+  <data name="enb.result.intercept" xml:space="preserve"><value>Intercept β0</value></data>
+  <data name="enb.result.coef_table" xml:space="preserve"><value>Coefficients</value></data>
+  <data name="enb.result.coefficient" xml:space="preserve"><value>Coefficient β</value></data>
+  <data name="enb.result.pvalue" xml:space="preserve"><value>p-value</value></data>
+  <data name="enb.result.formula_label" xml:space="preserve"><value>Baseline formula:</value></data>
+  <data name="enb.result.scatter_title" xml:space="preserve"><value>Actual vs Predicted</value></data>
+  <data name="enb.result.scatter_series" xml:space="preserve"><value>Samples</value></data>
+  <data name="enb.result.scatter_actual" xml:space="preserve"><value>Actual</value></data>
+  <data name="enb.result.scatter_predicted" xml:space="preserve"><value>Predicted</value></data>
+  <data name="enb.result.warn_sample_low" xml:space="preserve"><value>Insufficient samples (fewer than 5 × variable count) — the model may be unreliable. Consider a longer baseline period or fewer variables.</value></data>
+  <data name="enb.result.warn_r2_low" xml:space="preserve"><value>Low R² (&lt; 0.5) — weak explanatory power. Check whether the variables truly drive energy use (also review Adjusted R² and p-values).</value></data>
+  <data name="enb.result.dropped" xml:space="preserve"><value>{n} sampling bucket(s) dropped due to missing Y or X values.</value></data>
+
+  <data name="enb.enpi.baseline" xml:space="preserve"><value>Baseline Model (frozen only)</value></data>
+  <data name="enb.enpi.start" xml:space="preserve"><value>Report Start</value></data>
+  <data name="enb.enpi.end" xml:space="preserve"><value>Report End</value></data>
+  <data name="enb.enpi.query" xml:space="preserve"><value>Query</value></data>
+  <data name="enb.enpi.export" xml:space="preserve"><value>Export Excel</value></data>
+  <data name="enb.enpi.no_frozen" xml:space="preserve"><value>(no frozen baseline yet)</value></data>
+  <data name="enb.enpi.total_actual" xml:space="preserve"><value>Total Actual</value></data>
+  <data name="enb.enpi.total_predicted" xml:space="preserve"><value>Total Baseline Predicted</value></data>
+  <data name="enb.enpi.total_savings" xml:space="preserve"><value>Cumulative Savings</value></data>
+  <data name="enb.enpi.overall" xml:space="preserve"><value>Overall EnPI (actual ÷ predicted)</value></data>
+  <data name="enb.enpi.chart_actual" xml:space="preserve"><value>Actual</value></data>
+  <data name="enb.enpi.chart_predicted" xml:space="preserve"><value>Baseline Predicted</value></data>
+  <data name="enb.enpi.chart_cum" xml:space="preserve"><value>Cumulative Savings</value></data>
+  <data name="enb.enpi.col.period" xml:space="preserve"><value>Period</value></data>
+  <data name="enb.enpi.col.actual" xml:space="preserve"><value>Actual</value></data>
+  <data name="enb.enpi.col.predicted" xml:space="preserve"><value>Baseline Predicted</value></data>
+  <data name="enb.enpi.col.savings" xml:space="preserve"><value>Savings</value></data>
+  <data name="enb.enpi.col.cum" xml:space="preserve"><value>Cumulative Savings</value></data>
+  <data name="enb.enpi.col.enpi" xml:space="preserve"><value>EnPI</value></data>
+  <data name="enb.enpi.missing" xml:space="preserve"><value>Insufficient data (excluded from totals)</value></data>
+
+  <data name="enb.seu.start" xml:space="preserve"><value>Period Start</value></data>
+  <data name="enb.seu.end" xml:space="preserve"><value>Period End</value></data>
+  <data name="enb.seu.threshold" xml:space="preserve"><value>Cumulative Share Threshold</value></data>
+  <data name="enb.seu.analyze" xml:space="preserve"><value>Analyze</value></data>
+  <data name="enb.seu.hint" xml:space="preserve"><value>Pareto ranking of the main meter's direct sub-circuits as energy uses; items before the cumulative-share threshold (including the crossing item) are identified as Significant Energy Uses (SEU).</value></data>
+  <data name="enb.seu.title" xml:space="preserve"><value>{name} energy structure — period total {total} kWh</value></data>
+  <data name="enb.seu.all_roots" xml:space="preserve"><value>All Root Circuits</value></data>
+  <data name="enb.seu.no_source" xml:space="preserve"><value>No circuits available — please build the circuit structure in "Energy Meter / Circuit" first</value></data>
+  <data name="enb.seu.chart_cum" xml:space="preserve"><value>Cumulative Share</value></data>
+  <data name="enb.seu.col.rank" xml:space="preserve"><value>Rank</value></data>
+  <data name="enb.seu.col.name" xml:space="preserve"><value>Energy Use</value></data>
+  <data name="enb.seu.col.kwh" xml:space="preserve"><value>Energy (kWh)</value></data>
+  <data name="enb.seu.col.pct" xml:space="preserve"><value>Share</value></data>
+  <data name="enb.seu.col.cum" xml:space="preserve"><value>Cumulative Share</value></data>
+
+  <data name="enb.pk.title" xml:space="preserve"><value>Select Point</value></data>
+  <data name="enb.pk.search" xml:space="preserve"><value>Search SID / name / unit…</value></data>
+  <data name="enb.pk.no_match" xml:space="preserve"><value>No matching points</value></data>
+
+  <data name="enb.msg.load_failed" xml:space="preserve"><value>Failed to load base data</value></data>
+  <data name="enb.msg.need_name" xml:space="preserve"><value>Please enter a model name</value></data>
+  <data name="enb.msg.need_period" xml:space="preserve"><value>Please select the baseline period</value></data>
+  <data name="enb.msg.var_limit" xml:space="preserve"><value>At most {n} relevant variables</value></data>
+  <data name="enb.msg.confirm_freeze" xml:space="preserve"><value>After freezing, coefficients become the fixed comparison basis used by EnPI reports. Freeze now?</value></data>
+  <data name="enb.msg.confirm_unfreeze" xml:space="preserve"><value>Unfreezing allows recalculation and changes the comparison basis of existing reports. Continue?</value></data>
+  <data name="enb.msg.confirm_delete" xml:space="preserve"><value>Delete this baseline model (variables and coefficients included)? This cannot be undone.</value></data>
+  <data name="enb.msg.select_baseline" xml:space="preserve"><value>Please select a frozen baseline model first</value></data>
+</root>

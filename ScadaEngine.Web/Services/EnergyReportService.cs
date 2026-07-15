@@ -195,6 +195,20 @@ public class EnergyReportService
     }
 
     /// <summary>
+    /// 對自訂 [起, 訖) bucket 邊界對計算迴路 kWh — 能源基線/SEU 取樣用
+    /// （曆日/曆月等切法由呼叫端決定，不走本服務的粒度/期別規則）。
+    /// 計算核心與 GetReportAsync 完全共用（staleness window / 溢位 / Sign 規則一致）。
+    /// 注意：回傳值未套用迴路自身對父層的 Sign，語意同 GetTotalKwhAsync。
+    /// </summary>
+    public async Task<(double[] bucketSums, bool[] staleFlags)> GetBucketKwhForRangesAsync(
+        int nCircuitId, List<(DateTime dtStart, DateTime dtEnd)> ranges)
+    {
+        using var conn = await GetConnectionAsync();
+        var (bucketSums, _, staleFlags) = await ComputeBucketSumsForCircuitAsync(nCircuitId, ranges, conn);
+        return (bucketSums, staleFlags);
+    }
+
+    /// <summary>
     /// 產生 N 個 bucket 的 [起, 訖) 邊界對與標籤。
     /// 月粒度 = 期別：dtStart/dtEnd 的年月視為期別編號，期界由 BillingPeriodService 解析
     /// （期別間可能空窗/重疊 → 不共用邊界點）；其餘粒度沿用連續邊界切法。

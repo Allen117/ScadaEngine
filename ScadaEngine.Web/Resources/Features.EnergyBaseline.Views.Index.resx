@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="enb.title" xml:space="preserve"><value>能源基準（ISO 50001）</value></data>
+  <data name="enb.subtitle" xml:space="preserve"><value>能源基線回歸 · EnPI 績效 · SEU 重大能源使用鑑別</value></data>
+  <data name="enb.tab.model" xml:space="preserve"><value>基線建模</value></data>
+  <data name="enb.tab.enpi" xml:space="preserve"><value>EnPI / 節能量報告</value></data>
+  <data name="enb.tab.seu" xml:space="preserve"><value>SEU 鑑別</value></data>
+
+  <data name="enb.model.list_title" xml:space="preserve"><value>基線模型</value></data>
+  <data name="enb.model.add" xml:space="preserve"><value>新增模型</value></data>
+  <data name="enb.model.empty" xml:space="preserve"><value>尚無基線模型，點「新增模型」開始</value></data>
+  <data name="enb.model.status.draft" xml:space="preserve"><value>草稿</value></data>
+  <data name="enb.model.status.frozen" xml:space="preserve"><value>已凍結</value></data>
+  <data name="enb.model.granularity.day" xml:space="preserve"><value>日粒度</value></data>
+  <data name="enb.model.granularity.month" xml:space="preserve"><value>月粒度（曆月）</value></data>
+
+  <data name="enb.edit.title" xml:space="preserve"><value>模型定義</value></data>
+  <data name="enb.edit.name" xml:space="preserve"><value>模型名稱</value></data>
+  <data name="enb.edit.description" xml:space="preserve"><value>說明</value></data>
+  <data name="enb.edit.target" xml:space="preserve"><value>目標能耗 Y</value></data>
+  <data name="enb.edit.target_circuit" xml:space="preserve"><value>能源迴路</value></data>
+  <data name="enb.edit.target_point" xml:space="preserve"><value>任意點位</value></data>
+  <data name="enb.edit.select_placeholder" xml:space="preserve"><value>請選擇</value></data>
+  <data name="enb.edit.pick" xml:space="preserve"><value>選點位</value></data>
+  <data name="enb.edit.target_mode" xml:space="preserve"><value>Y 取樣方式</value></data>
+  <data name="enb.edit.mode_cumulative" xml:space="preserve"><value>累計值（期初期末相減）</value></data>
+  <data name="enb.edit.mode_average" xml:space="preserve"><value>瞬時值（期間均值）</value></data>
+  <data name="enb.edit.mode_hint" xml:space="preserve"><value>kWh 類累計電表選「累計值」；溫度 / kW 等瞬時量選「瞬時值」。選點位後依單位自動判斷，可再修改。</value></data>
+  <data name="enb.edit.granularity" xml:space="preserve"><value>取樣粒度</value></data>
+  <data name="enb.edit.baseline_start" xml:space="preserve"><value>基線期起</value></data>
+  <data name="enb.edit.baseline_end" xml:space="preserve"><value>基線期訖</value></data>
+  <data name="enb.edit.variables" xml:space="preserve"><value>相關變數 X</value></data>
+  <data name="enb.edit.variables_hint" xml:space="preserve"><value>（外氣溫度、濕度、冷凍噸、產量…，最多 5 個）</value></data>
+  <data name="enb.edit.var_add" xml:space="preserve"><value>加變數</value></data>
+  <data name="enb.edit.var_type" xml:space="preserve"><value>型別</value></data>
+  <data name="enb.edit.var_source" xml:space="preserve"><value>來源</value></data>
+  <data name="enb.edit.var_label" xml:space="preserve"><value>名稱</value></data>
+  <data name="enb.edit.var_unit" xml:space="preserve"><value>單位</value></data>
+  <data name="enb.edit.var_type_point" xml:space="preserve"><value>點位（均值）</value></data>
+  <data name="enb.edit.var_type_circuit" xml:space="preserve"><value>迴路（kWh）</value></data>
+  <data name="enb.edit.save" xml:space="preserve"><value>儲存模型</value></data>
+  <data name="enb.edit.run" xml:space="preserve"><value>建立基線（跑回歸）</value></data>
+  <data name="enb.edit.freeze" xml:space="preserve"><value>凍結基線</value></data>
+  <data name="enb.edit.unfreeze" xml:space="preserve"><value>解除凍結</value></data>
+  <data name="enb.edit.delete" xml:space="preserve"><value>刪除</value></data>
+
+  <data name="enb.result.title" xml:space="preserve"><value>回歸結果</value></data>
+  <data name="enb.result.adj_r2" xml:space="preserve"><value>調整後 R²</value></data>
+  <data name="enb.result.samples" xml:space="preserve"><value>樣本數</value></data>
+  <data name="enb.result.intercept" xml:space="preserve"><value>截距 β0</value></data>
+  <data name="enb.result.coef_table" xml:space="preserve"><value>係數表</value></data>
+  <data name="enb.result.coefficient" xml:space="preserve"><value>係數 β</value></data>
+  <data name="enb.result.pvalue" xml:space="preserve"><value>p-value</value></data>
+  <data name="enb.result.formula_label" xml:space="preserve"><value>基線公式：</value></data>
+  <data name="enb.result.scatter_title" xml:space="preserve"><value>實際 vs 預測散布圖</value></data>
+  <data name="enb.result.scatter_series" xml:space="preserve"><value>樣本</value></data>
+  <data name="enb.result.scatter_actual" xml:space="preserve"><value>實際</value></data>
+  <data name="enb.result.scatter_predicted" xml:space="preserve"><value>預測</value></data>
+  <data name="enb.result.warn_sample_low" xml:space="preserve"><value>樣本數不足（少於變數數 × 5），模型可能不可靠 — 建議拉長基線期或減少變數。</value></data>
+  <data name="enb.result.warn_r2_low" xml:space="preserve"><value>R² 偏低（&lt; 0.5），基線解釋力弱 — 建議檢查變數是否與能耗真正相關（也可看調整後 R² 與 p-value）。</value></data>
+  <data name="enb.result.dropped" xml:space="preserve"><value>有 {n} 個取樣區間因 Y 或 X 缺值被剔除。</value></data>
+
+  <data name="enb.enpi.baseline" xml:space="preserve"><value>基線模型（限已凍結）</value></data>
+  <data name="enb.enpi.start" xml:space="preserve"><value>報告期起</value></data>
+  <data name="enb.enpi.end" xml:space="preserve"><value>報告期訖</value></data>
+  <data name="enb.enpi.query" xml:space="preserve"><value>查詢</value></data>
+  <data name="enb.enpi.export" xml:space="preserve"><value>匯出 Excel</value></data>
+  <data name="enb.enpi.no_frozen" xml:space="preserve"><value>（尚無已凍結的基線）</value></data>
+  <data name="enb.enpi.total_actual" xml:space="preserve"><value>實際能耗合計</value></data>
+  <data name="enb.enpi.total_predicted" xml:space="preserve"><value>基線預測合計</value></data>
+  <data name="enb.enpi.total_savings" xml:space="preserve"><value>累計節能量</value></data>
+  <data name="enb.enpi.overall" xml:space="preserve"><value>整體 EnPI（實際÷預測）</value></data>
+  <data name="enb.enpi.chart_actual" xml:space="preserve"><value>實際</value></data>
+  <data name="enb.enpi.chart_predicted" xml:space="preserve"><value>基線預測</value></data>
+  <data name="enb.enpi.chart_cum" xml:space="preserve"><value>累計節能量</value></data>
+  <data name="enb.enpi.col.period" xml:space="preserve"><value>期間</value></data>
+  <data name="enb.enpi.col.actual" xml:space="preserve"><value>實際</value></data>
+  <data name="enb.enpi.col.predicted" xml:space="preserve"><value>基線預測</value></data>
+  <data name="enb.enpi.col.savings" xml:space="preserve"><value>節能量</value></data>
+  <data name="enb.enpi.col.cum" xml:space="preserve"><value>累計節能量</value></data>
+  <data name="enb.enpi.col.enpi" xml:space="preserve"><value>EnPI</value></data>
+  <data name="enb.enpi.missing" xml:space="preserve"><value>資料不足（未列入統計）</value></data>
+
+  <data name="enb.seu.start" xml:space="preserve"><value>期間起</value></data>
+  <data name="enb.seu.end" xml:space="preserve"><value>期間訖</value></data>
+  <data name="enb.seu.threshold" xml:space="preserve"><value>累計占比門檻</value></data>
+  <data name="enb.seu.analyze" xml:space="preserve"><value>分析</value></data>
+  <data name="enb.seu.hint" xml:space="preserve"><value>以主要電表的直接子迴路為能源使用單位做帕累托排名，累計占比達門檻前的項目（含跨越門檻項）鑑別為重大能源使用（SEU）。</value></data>
+  <data name="enb.seu.title" xml:space="preserve"><value>{name} 用電結構 — 期間合計 {total} kWh</value></data>
+  <data name="enb.seu.all_roots" xml:space="preserve"><value>全部根迴路</value></data>
+  <data name="enb.seu.no_source" xml:space="preserve"><value>找不到可分析的迴路 — 請先在「電表/迴路設定」建立迴路結構</value></data>
+  <data name="enb.seu.chart_cum" xml:space="preserve"><value>累計占比</value></data>
+  <data name="enb.seu.col.rank" xml:space="preserve"><value>排名</value></data>
+  <data name="enb.seu.col.name" xml:space="preserve"><value>能源使用</value></data>
+  <data name="enb.seu.col.kwh" xml:space="preserve"><value>用電量 (kWh)</value></data>
+  <data name="enb.seu.col.pct" xml:space="preserve"><value>占比</value></data>
+  <data name="enb.seu.col.cum" xml:space="preserve"><value>累計占比</value></data>
+
+  <data name="enb.pk.title" xml:space="preserve"><value>選擇點位</value></data>
+  <data name="enb.pk.search" xml:space="preserve"><value>搜尋 SID / 名稱 / 單位…</value></data>
+  <data name="enb.pk.no_match" xml:space="preserve"><value>無符合點位</value></data>
+
+  <data name="enb.msg.load_failed" xml:space="preserve"><value>載入基礎資料失敗</value></data>
+  <data name="enb.msg.need_name" xml:space="preserve"><value>請輸入模型名稱</value></data>
+  <data name="enb.msg.need_period" xml:space="preserve"><value>請選擇基線期起訖</value></data>
+  <data name="enb.msg.var_limit" xml:space="preserve"><value>相關變數最多 {n} 個</value></data>
+  <data name="enb.msg.confirm_freeze" xml:space="preserve"><value>凍結後係數固定為比較基準，EnPI 報告將使用此組係數。確定凍結？</value></data>
+  <data name="enb.msg.confirm_unfreeze" xml:space="preserve"><value>解除凍結後可重算係數，既有報告的比較基準將改變。確定解除？</value></data>
+  <data name="enb.msg.confirm_delete" xml:space="preserve"><value>確定刪除此基線模型？（含變數與係數，不可復原）</value></data>
+  <data name="enb.msg.select_baseline" xml:space="preserve"><value>請先選擇已凍結的基線模型</value></data>
+</root>
