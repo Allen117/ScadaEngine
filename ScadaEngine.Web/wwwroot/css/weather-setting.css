@@ -1,0 +1,32 @@
+/* 氣象資料來源設定頁（/WeatherSetting） */
+
+.weather-setting-page {
+    max-width: 960px;
+}
+
+/* 浮動提示（右上角，3 秒淡出） */
+.weather-toast {
+    position: fixed;
+    top: 72px;
+    right: 24px;
+    z-index: 2000;
+    padding: 10px 18px;
+    border-radius: 6px;
+    background: #198754;
+    color: #fff;
+    font-size: 0.875rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+}
+
+.weather-toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.weather-toast-error {
+    background: #dc3545;
+}

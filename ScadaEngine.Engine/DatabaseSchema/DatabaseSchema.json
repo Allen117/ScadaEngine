@@ -685,6 +685,34 @@
         { "Name": "PValue",          "Type": "float",    "Nullable": true,
           "_comment": "係數顯著性 p-value（共線性/無效變數判讀用）" }
       ]
+    },
+    {
+      "_comment": "氣象資料來源設定 — 單列（Id=1）。Web /WeatherSetting 頁維護；WeatherFetchService 依此設定週期呼叫中央氣象署開放資料 API，寫入 DB 來源 Weather Coordinator 的 DBLatestData（S1=外氣溫度、S2=外氣相對濕度）。ApiKey 每客戶自備（氣象資料開放平臺免費申請）。",
+      "TableName": "WeatherSetting",
+      "Columns": [
+        { "Name": "Id",                  "Type": "int",      "IsPrimaryKey": true, "Nullable": false,
+          "_comment": "固定 1（單列設定）" },
+        { "Name": "ApiKey",              "Type": "nvarchar", "Length": 100, "Nullable": false, "Default": "",
+          "_comment": "CWA 開放資料授權碼（CWA-xxxx…）；空 = 功能停用" },
+        { "Name": "DatasetId",           "Type": "nvarchar", "Length": 20,  "Nullable": false, "Default": "",
+          "_comment": "所選測站所屬資料集：O-A0001-001（自動站）/ O-A0003-001（署屬有人站）" },
+        { "Name": "StationId",           "Type": "nvarchar", "Length": 20,  "Nullable": false, "Default": "",
+          "_comment": "CWA 測站代碼（如 C0TB40 / 466940）" },
+        { "Name": "StationName",         "Type": "nvarchar", "Length": 50,  "Nullable": false, "Default": "",
+          "_comment": "測站名稱快照（顯示用）" },
+        { "Name": "County",              "Type": "nvarchar", "Length": 20,  "Nullable": false, "Default": "",
+          "_comment": "測站所在縣市快照（顯示用）" },
+        { "Name": "PollIntervalMinutes", "Type": "int",      "Nullable": false, "Default": 10,
+          "_comment": "抓取間隔（分鐘，5–1440；CWA 觀測約 10 分鐘更新一次）" },
+        { "Name": "IsEnabled",           "Type": "bit",      "Nullable": false, "Default": 0 },
+        { "Name": "LastFetchTime",       "Type": "datetime", "Nullable": true,
+          "_comment": "最近一次抓取嘗試時間（成功失敗都記）" },
+        { "Name": "LastFetchOk",         "Type": "bit",      "Nullable": true },
+        { "Name": "LastFetchMessage",    "Type": "nvarchar", "Length": 200, "Nullable": true,
+          "_comment": "最近抓取結果摘要（成功含觀測值；失敗含錯誤原因）" },
+        { "Name": "UpdatedAt",           "Type": "datetime", "Nullable": true },
+        { "Name": "CreatedAt",           "Type": "datetime", "Nullable": false, "Default": "getdate()" }
+      ]
     }
   ]
 }

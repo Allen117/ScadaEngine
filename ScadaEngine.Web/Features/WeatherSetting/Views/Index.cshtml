@@ -1,0 +1,122 @@
+@model ScadaEngine.Web.Features.WeatherSetting.Models.WeatherSettingViewModel
+@{
+    ViewData["Title"] = Localizer["weathersetting.title"].Value;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="stylesheet" href="~/css/weather-setting.css" asp-append-version="true" />
+
+<div class="container mt-4 weather-setting-page">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0"><i class="fas fa-cloud-sun me-2"></i>@Localizer["weathersetting.title"]</h4>
+        <button class="btn btn-primary" id="btnSave" onclick="window._weatherSetting.save()">
+            <i class="fas fa-save me-1"></i>@Localizer["weathersetting.btn.save"]
+        </button>
+    </div>
+
+    <!-- API 授權碼 -->
+    <div class="card shadow-sm mb-3">
+        <div class="card-header bg-light py-2">
+            <h6 class="mb-0"><i class="fas fa-key me-1"></i> @Localizer["weathersetting.card.api_key"]</h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-8">
+                    <label class="form-label fw-bold text-muted small" for="txtApiKey">@Localizer["weathersetting.label.api_key"]</label>
+                    <input type="text" class="form-control form-control-sm font-monospace" id="txtApiKey"
+                           placeholder="CWA-XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" autocomplete="off" maxlength="100" />
+                </div>
+                <div class="col-md-4">
+                    <div class="form-text mb-1">
+                        @Localizer["weathersetting.hint.api_key_apply"]
+                        <a href="https://opendata.cwa.gov.tw" target="_blank" rel="noopener">opendata.cwa.gov.tw</a>
+                    </div>
+                </div>
+            </div>
+            <div class="form-text mt-2">@Localizer["weathersetting.hint.api_key_per_site"]</div>
+        </div>
+    </div>
+
+    <!-- 測站選擇 -->
+    <div class="card shadow-sm mb-3">
+        <div class="card-header bg-light py-2">
+            <h6 class="mb-0"><i class="fas fa-map-marker-alt me-1"></i> @Localizer["weathersetting.card.station"]</h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <button class="btn btn-outline-primary btn-sm w-100" id="btnLoadStations"
+                            onclick="window._weatherSetting.loadStations()">
+                        <i class="fas fa-download me-1"></i>@Localizer["weathersetting.btn.load_stations"]
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold text-muted small" for="selCounty">@Localizer["weathersetting.label.county"]</label>
+                    <select class="form-select form-select-sm" id="selCounty" disabled></select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold text-muted small" for="selStation">@Localizer["weathersetting.label.station"]</label>
+                    <select class="form-select form-select-sm" id="selStation" disabled></select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-secondary btn-sm w-100" id="btnTest"
+                            onclick="window._weatherSetting.test()">
+                        <i class="fas fa-plug me-1"></i>@Localizer["weathersetting.btn.test"]
+                    </button>
+                </div>
+            </div>
+            <div class="mt-2 small text-muted" id="currentStation"></div>
+            <div class="mt-2" id="testResult" style="display:none;"></div>
+        </div>
+    </div>
+
+    <!-- 抓取設定 -->
+    <div class="card shadow-sm mb-3">
+        <div class="card-header bg-light py-2">
+            <h6 class="mb-0"><i class="fas fa-sliders-h me-1"></i> @Localizer["weathersetting.card.fetch"]</h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold text-muted small" for="numInterval">@Localizer["weathersetting.label.interval"]</label>
+                    <input type="number" class="form-control form-control-sm" id="numInterval" min="5" max="1440" step="1" value="10" />
+                    <div class="form-text">@Localizer["weathersetting.hint.interval"]</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check form-switch mt-3">
+                        <input class="form-check-input" type="checkbox" id="chkEnabled" />
+                        <label class="form-check-label fw-bold" for="chkEnabled">@Localizer["weathersetting.label.enabled"]</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 執行狀態 -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light py-2">
+            <h6 class="mb-0"><i class="fas fa-heartbeat me-1"></i> @Localizer["weathersetting.card.status"]</h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold text-muted small">@Localizer["weathersetting.label.last_fetch_time"]</label>
+                    <div id="lastFetchTime" class="small">—</div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-bold text-muted small">@Localizer["weathersetting.label.last_fetch_result"]</label>
+                    <div id="lastFetchResult">—</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold text-muted small">@Localizer["weathersetting.label.last_fetch_message"]</label>
+                    <div id="lastFetchMessage" class="small">—</div>
+                </div>
+            </div>
+            <div class="form-text mt-2">@Localizer["weathersetting.hint.points"]</div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/weather-setting.js" asp-append-version="true"></script>
+}

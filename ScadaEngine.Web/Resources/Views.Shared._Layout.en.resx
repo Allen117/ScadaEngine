@@ -90,6 +90,7 @@
   <data name="layout.menu.dbcoordinator" xml:space="preserve"><value>DB Source</value></data>
   <data name="layout.menu.opcuacoordinator" xml:space="preserve"><value>OPC UA Source</value></data>
   <data name="layout.menu.calcpoint" xml:space="preserve"><value>Calculated Points</value></data>
+  <data name="layout.menu.weather" xml:space="preserve"><value>Weather Data</value></data>
   <data name="layout.menu.account" xml:space="preserve"><value>Account Management</value></data>
 
   <data name="layout.user.profile" xml:space="preserve"><value>Profile</value></data>

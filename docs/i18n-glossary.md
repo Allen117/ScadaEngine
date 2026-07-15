@@ -41,6 +41,7 @@
 | Modbus 來源 | Modbus Source | `/ModbusCoordinator` |
 | DB 來源 | DB Source | `/DbCoordinator` |
 | 計算點位 | Calculated Points | `/CalcPoint` |
+| 氣象資料 | Weather Data | `/WeatherSetting`（選單）；頁標題「氣象資料來源設定 / Weather Data Source」 |
 | 帳號管理 | Account Management | `/AccountSetting` |
 | 個人資料 | Profile | `/Account/Profile` |
 
@@ -259,6 +260,23 @@
 | 重大能源使用 | Significant Energy Use (SEU) | ISO 50001 6.3 |
 | 累計占比 | Cumulative Share | 帕累托 |
 | 帕累托 | Pareto | |
+
+## 氣象資料（/WeatherSetting）
+
+| zh-TW | en | 備註 |
+|---|---|---|
+| 氣象資料來源 | Weather Data Source | 頁標題 |
+| 中央氣象署 | Central Weather Administration (CWA) | 品牌名，縮寫 CWA 不翻 |
+| 授權碼 | Authorization Key | CWA 開放資料 API key |
+| 測站 | Weather Station | CWA 觀測站 |
+| 自動站 | Automatic (Station) | 資料集 O-A0001-001 |
+| 署屬站 | Staffed (Station) | 資料集 O-A0003-001（署屬有人站） |
+| 外氣溫度 | Outdoor Temperature | DB 來源 Weather S1 |
+| 外氣相對濕度 | Outdoor Relative Humidity | DB 來源 Weather S2 |
+| 觀測時間 | Observation Time | CWA ObsTime |
+| 缺測 | Missing (Observation) | CWA 哨兵值 -99 |
+| 抓取間隔 | Fetch Interval | 分鐘 |
+| 過舊 | Too Old / Stale | 觀測時間距今 > 60 分 |
 
 ## 趨勢圖
 

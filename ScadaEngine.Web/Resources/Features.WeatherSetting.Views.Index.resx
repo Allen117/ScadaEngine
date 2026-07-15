@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="weathersetting.title" xml:space="preserve"><value>氣象資料來源設定</value></data>
+  <data name="weathersetting.btn.save" xml:space="preserve"><value>儲存</value></data>
+
+  <data name="weathersetting.card.api_key" xml:space="preserve"><value>API 授權碼</value></data>
+  <data name="weathersetting.label.api_key" xml:space="preserve"><value>中央氣象署開放資料授權碼</value></data>
+  <data name="weathersetting.hint.api_key_apply" xml:space="preserve"><value>免費註冊申請：</value></data>
+  <data name="weathersetting.hint.api_key_per_site" xml:space="preserve"><value>每個部署現場請使用自己申請的授權碼，勿多現場共用同一把 — API 流量配額以授權碼計，且共用金鑰重新產生時所有現場會同時失效。</value></data>
+
+  <data name="weathersetting.card.station" xml:space="preserve"><value>測站選擇</value></data>
+  <data name="weathersetting.btn.load_stations" xml:space="preserve"><value>載入測站清單</value></data>
+  <data name="weathersetting.label.county" xml:space="preserve"><value>縣市</value></data>
+  <data name="weathersetting.label.station" xml:space="preserve"><value>測站</value></data>
+  <data name="weathersetting.btn.test" xml:space="preserve"><value>測試連線</value></data>
+  <data name="weathersetting.opt.select_county" xml:space="preserve"><value>選擇縣市…</value></data>
+  <data name="weathersetting.opt.select_station" xml:space="preserve"><value>選擇測站…</value></data>
+  <data name="weathersetting.dataset.auto" xml:space="preserve"><value>自動站</value></data>
+  <data name="weathersetting.dataset.staffed" xml:space="preserve"><value>署屬站</value></data>
+  <data name="weathersetting.current_station" xml:space="preserve"><value>目前選用：{county} {name}（{id}）</value></data>
+  <data name="weathersetting.current_station_none" xml:space="preserve"><value>尚未選擇測站</value></data>
+  <data name="weathersetting.testing" xml:space="preserve"><value>測試中…</value></data>
+  <data name="weathersetting.test_result" xml:space="preserve"><value>{name}：溫度 {temp} °C、相對濕度 {hum} %（觀測時間 {time}）</value></data>
+  <data name="weathersetting.toast.stations_loaded" xml:space="preserve"><value>已載入 {count} 個測站</value></data>
+  <data name="weathersetting.toast.saved" xml:space="preserve"><value>設定已儲存，背景服務最慢 30 秒內套用</value></data>
+
+  <data name="weathersetting.card.fetch" xml:space="preserve"><value>抓取設定</value></data>
+  <data name="weathersetting.label.interval" xml:space="preserve"><value>抓取間隔（分鐘）</value></data>
+  <data name="weathersetting.hint.interval" xml:space="preserve"><value>5–1440 分鐘；氣象署觀測約每 10 分鐘更新一次，預設 10。</value></data>
+  <data name="weathersetting.label.enabled" xml:space="preserve"><value>啟用自動抓取</value></data>
+
+  <data name="weathersetting.card.status" xml:space="preserve"><value>執行狀態</value></data>
+  <data name="weathersetting.label.last_fetch_time" xml:space="preserve"><value>最近抓取時間</value></data>
+  <data name="weathersetting.label.last_fetch_result" xml:space="preserve"><value>結果</value></data>
+  <data name="weathersetting.label.last_fetch_message" xml:space="preserve"><value>訊息</value></data>
+  <data name="weathersetting.hint.points" xml:space="preserve"><value>觀測值寫入 DB 來源「Weather」設備（S1＝外氣溫度、S2＝外氣相對濕度），可於即時數據、歷史趨勢、能源基線相關變數等處使用。API 失敗或觀測時間距今超過 60 分鐘時，點位品質標記為 Bad、保留最近成功值。</value></data>
+  <data name="weathersetting.status.ok" xml:space="preserve"><value>成功</value></data>
+  <data name="weathersetting.status.fail" xml:space="preserve"><value>失敗</value></data>
+
+  <data name="weathersetting.msg.ok" xml:space="preserve"><value>溫度 {temp} °C、相對濕度 {hum} %（觀測時間 {time}）</value></data>
+  <data name="weathersetting.msg.missing" xml:space="preserve"><value>部分欄位缺測：溫度 {temp} °C、相對濕度 {hum} %（觀測時間 {time}），缺測點位已標記 Bad</value></data>
+  <data name="weathersetting.msg.stale" xml:space="preserve"><value>觀測資料過舊（觀測時間 {time}），點位已標記 Bad</value></data>
+  <data name="weathersetting.msg.error" xml:space="preserve"><value>抓取失敗：{detail}</value></data>
+  <data name="weathersetting.msg.station_not_found" xml:space="preserve"><value>查無所選測站（測站可能已裁撤，請重新選站）</value></data>
+  <data name="weathersetting.msg.coordinator_not_loaded" xml:space="preserve"><value>Engine 尚未載入 Weather 點位設定（DBPoint/Weather.json），請確認部署並通知 Engine 重新載入</value></data>
+  <data name="weathersetting.msg.disabled" xml:space="preserve"><value>已停用</value></data>
+
+  <data name="weathersetting.err.load_failed" xml:space="preserve"><value>載入失敗</value></data>
+  <data name="weathersetting.err.save_failed" xml:space="preserve"><value>儲存失敗</value></data>
+  <data name="weathersetting.err.invalid_interval" xml:space="preserve"><value>抓取間隔須為 5–1440 分鐘</value></data>
+  <data name="weathersetting.err.invalid_api_key" xml:space="preserve"><value>授權碼長度超過上限</value></data>
+  <data name="weathersetting.err.enable_requires_key_and_station" xml:space="preserve"><value>啟用前請先填入授權碼並選擇測站</value></data>
+  <data name="weathersetting.err.invalid_dataset" xml:space="preserve"><value>資料集代碼不正確，請重新選擇測站</value></data>
+  <data name="weathersetting.err.api_key_required" xml:space="preserve"><value>請先輸入 API 授權碼</value></data>
+  <data name="weathersetting.err.cwa_auth_failed" xml:space="preserve"><value>氣象署 API 授權失敗，請檢查授權碼是否有效</value></data>
+  <data name="weathersetting.err.cwa_unreachable" xml:space="preserve"><value>無法連線氣象署 API，請確認本機可對外連線 opendata.cwa.gov.tw</value></data>
+  <data name="weathersetting.err.test_requires_key_and_station" xml:space="preserve"><value>請先填入授權碼並選擇測站</value></data>
+  <data name="weathersetting.err.station_not_found" xml:space="preserve"><value>查無所選測站</value></data>
+</root>

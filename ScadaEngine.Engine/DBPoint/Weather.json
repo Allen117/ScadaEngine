@@ -1,0 +1,20 @@
+{
+  "Name": "Weather",
+  "PollingInterval": 60000,
+  "ConnectTimeout": 5000,
+  "MonitorEnabled": true,
+  "Points": [
+    {
+      "Name": "外氣溫度",
+      "Unit": "°C",
+      "Min": -20,
+      "Max": 60
+    },
+    {
+      "Name": "外氣相對濕度",
+      "Unit": "%",
+      "Min": 0,
+      "Max": 100
+    }
+  ]
+}

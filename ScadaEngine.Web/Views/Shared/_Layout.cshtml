@@ -292,7 +292,7 @@
                                 </li>
                             }
                             bool showPointSettings = canAccess("/ModbusCoordinator") || canAccess("/DbCoordinator") || canAccess("/OpcUaCoordinator") || canAccess("/CalcPoint");
-                            bool showSettings = canAccess("/Designer") || canAccess("/AlarmSetting") || canAccess("/AccountSetting") || showPointSettings;
+                            bool showSettings = canAccess("/Designer") || canAccess("/AlarmSetting") || canAccess("/AccountSetting") || canAccess("/WeatherSetting") || showPointSettings;
                             @if (showSettings)
                             {
                                 <li class="nav-item dropdown">
@@ -334,6 +334,10 @@
                                                     }
                                                 </ul>
                                             </li>
+                                        }
+                                        @if (canAccess("/WeatherSetting"))
+                                        {
+                                            <li><a class="dropdown-item" href="/WeatherSetting"><i class="fas fa-cloud-sun me-2"></i>@Localizer["layout.menu.weather"]</a></li>
                                         }
                                         @if (canAccess("/AccountSetting"))
                                         {

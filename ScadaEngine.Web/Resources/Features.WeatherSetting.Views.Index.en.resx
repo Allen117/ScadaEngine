@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="weathersetting.title" xml:space="preserve"><value>Weather Data Source</value></data>
+  <data name="weathersetting.btn.save" xml:space="preserve"><value>Save</value></data>
+
+  <data name="weathersetting.card.api_key" xml:space="preserve"><value>API Authorization Key</value></data>
+  <data name="weathersetting.label.api_key" xml:space="preserve"><value>CWA Open Data authorization key</value></data>
+  <data name="weathersetting.hint.api_key_apply" xml:space="preserve"><value>Register for free at:</value></data>
+  <data name="weathersetting.hint.api_key_per_site" xml:space="preserve"><value>Each site should use its own authorization key. Do not share one key across sites — the API quota is counted per key, and regenerating a shared key breaks every site at once.</value></data>
+
+  <data name="weathersetting.card.station" xml:space="preserve"><value>Weather Station</value></data>
+  <data name="weathersetting.btn.load_stations" xml:space="preserve"><value>Load Stations</value></data>
+  <data name="weathersetting.label.county" xml:space="preserve"><value>County / City</value></data>
+  <data name="weathersetting.label.station" xml:space="preserve"><value>Station</value></data>
+  <data name="weathersetting.btn.test" xml:space="preserve"><value>Test</value></data>
+  <data name="weathersetting.opt.select_county" xml:space="preserve"><value>Select county…</value></data>
+  <data name="weathersetting.opt.select_station" xml:space="preserve"><value>Select station…</value></data>
+  <data name="weathersetting.dataset.auto" xml:space="preserve"><value>Automatic</value></data>
+  <data name="weathersetting.dataset.staffed" xml:space="preserve"><value>Staffed</value></data>
+  <data name="weathersetting.current_station" xml:space="preserve"><value>Current: {county} {name} ({id})</value></data>
+  <data name="weathersetting.current_station_none" xml:space="preserve"><value>No station selected</value></data>
+  <data name="weathersetting.testing" xml:space="preserve"><value>Testing…</value></data>
+  <data name="weathersetting.test_result" xml:space="preserve"><value>{name}: temperature {temp} °C, relative humidity {hum} % (observed at {time})</value></data>
+  <data name="weathersetting.toast.stations_loaded" xml:space="preserve"><value>{count} stations loaded</value></data>
+  <data name="weathersetting.toast.saved" xml:space="preserve"><value>Settings saved; the background service applies them within 30 seconds</value></data>
+
+  <data name="weathersetting.card.fetch" xml:space="preserve"><value>Fetch Settings</value></data>
+  <data name="weathersetting.label.interval" xml:space="preserve"><value>Fetch interval (minutes)</value></data>
+  <data name="weathersetting.hint.interval" xml:space="preserve"><value>5–1440 minutes. CWA observations update roughly every 10 minutes; default 10.</value></data>
+  <data name="weathersetting.label.enabled" xml:space="preserve"><value>Enable automatic fetching</value></data>
+
+  <data name="weathersetting.card.status" xml:space="preserve"><value>Status</value></data>
+  <data name="weathersetting.label.last_fetch_time" xml:space="preserve"><value>Last fetch time</value></data>
+  <data name="weathersetting.label.last_fetch_result" xml:space="preserve"><value>Result</value></data>
+  <data name="weathersetting.label.last_fetch_message" xml:space="preserve"><value>Message</value></data>
+  <data name="weathersetting.hint.points" xml:space="preserve"><value>Observations are written to the DB source device "Weather" (S1 = outdoor temperature, S2 = outdoor relative humidity) and can be used in realtime data, history trends, energy baseline variables, etc. When the API fails or the observation is older than 60 minutes, point quality is marked Bad and the last good value is kept.</value></data>
+  <data name="weathersetting.status.ok" xml:space="preserve"><value>OK</value></data>
+  <data name="weathersetting.status.fail" xml:space="preserve"><value>Failed</value></data>
+
+  <data name="weathersetting.msg.ok" xml:space="preserve"><value>Temperature {temp} °C, relative humidity {hum} % (observed at {time})</value></data>
+  <data name="weathersetting.msg.missing" xml:space="preserve"><value>Some fields missing: temperature {temp} °C, relative humidity {hum} % (observed at {time}); missing points marked Bad</value></data>
+  <data name="weathersetting.msg.stale" xml:space="preserve"><value>Observation too old (observed at {time}); points marked Bad</value></data>
+  <data name="weathersetting.msg.error" xml:space="preserve"><value>Fetch failed: {detail}</value></data>
+  <data name="weathersetting.msg.station_not_found" xml:space="preserve"><value>Selected station not found (it may have been decommissioned; please pick another)</value></data>
+  <data name="weathersetting.msg.coordinator_not_loaded" xml:space="preserve"><value>Engine has not loaded the Weather point definition (DBPoint/Weather.json); deploy it and signal Engine to reload</value></data>
+  <data name="weathersetting.msg.disabled" xml:space="preserve"><value>Disabled</value></data>
+
+  <data name="weathersetting.err.load_failed" xml:space="preserve"><value>Failed to load</value></data>
+  <data name="weathersetting.err.save_failed" xml:space="preserve"><value>Failed to save</value></data>
+  <data name="weathersetting.err.invalid_interval" xml:space="preserve"><value>Fetch interval must be 5–1440 minutes</value></data>
+  <data name="weathersetting.err.invalid_api_key" xml:space="preserve"><value>Authorization key exceeds the length limit</value></data>
+  <data name="weathersetting.err.enable_requires_key_and_station" xml:space="preserve"><value>Enter an authorization key and select a station before enabling</value></data>
+  <data name="weathersetting.err.invalid_dataset" xml:space="preserve"><value>Invalid dataset id; please reselect the station</value></data>
+  <data name="weathersetting.err.api_key_required" xml:space="preserve"><value>Enter the API authorization key first</value></data>
+  <data name="weathersetting.err.cwa_auth_failed" xml:space="preserve"><value>CWA API authorization failed; please check the key</value></data>
+  <data name="weathersetting.err.cwa_unreachable" xml:space="preserve"><value>Cannot reach the CWA API; make sure this host can access opendata.cwa.gov.tw</value></data>
+  <data name="weathersetting.err.test_requires_key_and_station" xml:space="preserve"><value>Enter an authorization key and select a station first</value></data>
+  <data name="weathersetting.err.station_not_found" xml:space="preserve"><value>Selected station not found</value></data>
+</root>

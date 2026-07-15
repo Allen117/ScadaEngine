@@ -90,6 +90,7 @@
   <data name="layout.menu.dbcoordinator" xml:space="preserve"><value>DB 來源</value></data>
   <data name="layout.menu.opcuacoordinator" xml:space="preserve"><value>OPC UA 來源</value></data>
   <data name="layout.menu.calcpoint" xml:space="preserve"><value>計算點位</value></data>
+  <data name="layout.menu.weather" xml:space="preserve"><value>氣象資料</value></data>
   <data name="layout.menu.account" xml:space="preserve"><value>帳號管理</value></data>
 
   <data name="layout.user.profile" xml:space="preserve"><value>個人資料</value></data>
