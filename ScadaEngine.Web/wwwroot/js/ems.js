@@ -18,16 +18,21 @@
     var MM_DEFAULT_UNITS = { Voltage: 'V', Current: 'A', Power: 'kW', PowerFactor: '' };
 
     // ── 初始化 ───────────────────────────────────────────────
+    // 卡片可由 /EmsCardSetting 關閉（DOM 不渲染），主表卡與需量卡各自以根元素存在與否防呆
     function init() {
+        loadMainMeterInfo(); // 內部以 mainMeterCardWrap 防呆
+
+        var sel = document.getElementById('demandCircuitSelect');
+        if (!sel) return; // 需量卡未啟用 → 跳過綁定與輪詢
+
         var dot = document.getElementById('demandStatusDot');
         if (dot && window.bootstrap) {
             _dotTooltip = new bootstrap.Tooltip(dot, { trigger: 'hover', placement: 'right' });
         }
 
-        loadMainMeterInfo();
         loadCircuits();
 
-        document.getElementById('demandCircuitSelect').addEventListener('change', function () {
+        sel.addEventListener('change', function () {
             _circuitId = this.value;
             clearTimeout(_refreshTimer);
             if (_circuitId) refresh();

@@ -190,6 +190,8 @@ builder.Services.AddScoped<ScadaEngine.Web.Services.HolidayService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.ElectricityCostService>();
 // 電費逐時計價背景服務（每小時 XX:05 重算近 48h rolling window，啟動 catch-up 近 N 天）
 builder.Services.AddHostedService<ScadaEngine.Web.Services.ElectricityCostAggregationService>();
+// EMS 首頁卡片顯示設定 — EmsCardRegistry merge DB 覆寫（/EmsCardSetting 維護、/EMS 渲染共用）
+builder.Services.AddScoped<ScadaEngine.Web.Services.EmsCardSettingService>();
 // 氣象資料來源 — CWA API client（Singleton：測站清單快取）+ 設定表讀寫（Scoped）+ 背景抓取（寫 Weather DBLatestData）
 builder.Services.AddSingleton<ScadaEngine.Web.Services.WeatherCwaClient>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.WeatherSettingService>();

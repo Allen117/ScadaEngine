@@ -194,6 +194,7 @@ Web reads Engine's `dbSetting.json` via a relative path `../ScadaEngine.Engine/S
 | `EnergyBaseline` | Id, Name, TargetType, Granularity(day=曆日/month=曆月), Status(draft/frozen), Intercept, R2, AdjR2, CvRmse, ... | ISO 50001 能源基線模型主檔（/EnergyBaseline；OLS 回歸走 MathNet.Numerics，詳見 docs/功能說明書_能源基線.md） |
 | `EnergyBaselineVariable` | Id, BaselineId, Sequence(1..5), VarType(point/circuit), SourceSID/SourceCircuitId, Coefficient, PValue | 基線相關變數 X 子檔（一模型最多 5 變數；名稱/單位存快照） |
 | `WeatherSetting` | Id(=1), ApiKey, DatasetId, StationId, PollIntervalMinutes, IsEnabled, LastFetch* | 氣象資料來源設定（單列；/WeatherSetting 維護，Web WeatherFetchService 依此抓 CWA 觀測寫 Weather DB 來源點位，詳見 docs/功能說明書_氣象資料來源.md） |
+| `EmsCardSetting` | CardKey (PK), IsVisible, SortOrder | EMS 首頁卡片顯示覆寫（每卡一列只存覆寫；卡片定義唯一真相來源為 Web `EmsCardRegistry`，/EmsCardSetting 維護。新增 EMS 首頁卡片走 SOP：docs/功能說明書_EMS頁面.md §9.4） |
 
 SID 格式：
 - Modbus：`{ModbusID}-S{N}` 例 `196865-S1`
@@ -306,7 +307,7 @@ Defined in `ScadaEngine.Engine` but used by both Engine and Web. Web registers `
 
 僅以下頁面已導入 i18n，新增/修改其字串時：
 
-- **已 i18n 範圍**：ScadaPage、Realtime、EnergyReport、EnergyBaseline、History/Trend、EventLog、AccountSetting、ScheduleSetting、ConditionCtrl、LogicFlow、ModbusCoordinator、DbCoordinator、CalcPoint、WeatherSetting、共用 `_Layout`
+- **已 i18n 範圍**：ScadaPage、Realtime、EnergyReport、EnergyBaseline、History/Trend、EventLog、AccountSetting、ScheduleSetting、ConditionCtrl、LogicFlow、ModbusCoordinator、DbCoordinator、CalcPoint、WeatherSetting、EmsCardSetting、共用 `_Layout`
 - **.cshtml 字串**：`@Localizer["key"]`（key 命名 `feature.section.purpose` 全小寫底線分）
 - **JS 字串**：`window.i18n.t('key', {args})`，IIFE 內可宣告 `function t(key, args) { return window.i18n.t(key, args); }` 簡化
 - **Controller / Service / Excel exporter**：建構子注入 `IStringLocalizer<T>`，走 `_l["key"].Value`。Singleton 服務若依賴此須改 Scoped

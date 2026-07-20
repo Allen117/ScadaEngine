@@ -32,9 +32,11 @@
     }
 
     function init() {
+        var sel = document.getElementById('costCircuitSelect');
+        if (!sel) return; // 電費卡由 /EmsCardSetting 關閉（DOM 不渲染）→ 跳過 init 與輪詢
         load();
         _timer = setInterval(load, REFRESH_MS);
-        document.getElementById('costCircuitSelect').addEventListener('change', function () {
+        sel.addEventListener('change', function () {
             _circuitId = this.value ? parseInt(this.value, 10) : null;
             load();
         });

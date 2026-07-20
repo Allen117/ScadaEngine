@@ -80,6 +80,7 @@
   <data name="layout.menu.billing_period" xml:space="preserve"><value>Billing Cycle Settings</value></data>
   <data name="layout.menu.tariff_setting" xml:space="preserve"><value>Tariff Settings</value></data>
   <data name="layout.menu.holiday_setting" xml:space="preserve"><value>National Holidays</value></data>
+  <data name="layout.menu.ems_card_setting" xml:space="preserve"><value>Card Display Settings</value></data>
   <data name="layout.menu.circuit_info" xml:space="preserve"><value>Circuit Info</value></data>
 
   <data name="layout.menu.system" xml:space="preserve"><value>System Settings</value></data>

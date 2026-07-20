@@ -1,214 +1,49 @@
+@model ScadaEngine.Web.Features.Ems.Models.EmsIndexViewModel
 @{
     ViewData["Title"] = Localizer["ems.title"].Value;
     Layout = "~/Views/Shared/_Layout.cshtml";
+    // 各驅動 JS 依「其相關卡片是否至少一張可見」條件載入（卡片不渲染 → 輪詢自然不發生）
+    bool hasEmsJs    = Model.HasCard("MainMeter") || Model.HasCard("Demand");
+    bool hasEnergyJs = Model.HasCard("EnergyBar") || Model.HasCard("EnergyPie") || Model.HasCard("Yoy");
+    bool hasCostJs   = Model.HasCard("Cost");
 }
 
 <div class="ems-hub">
     <div class="container-fluid mt-3">
-        <div class="row g-3">
-
-            <!-- 主要電表資訊寬幅卡片（無主要電表時整卡隱藏） -->
-            <div class="col-12" id="mainMeterCardWrap" style="display:none;"
-                 data-notbound="@Localizer["ems.mainmeter.not_bound"]">
-                <div class="card shadow-sm">
-                    <div class="card-header py-2 d-flex justify-content-between align-items-center"
-                         style="background:#43a047;color:#fff;">
-                        <span><i class="fas fa-star me-1"></i>@Localizer["ems.mainmeter.title"]</span>
-                        <span id="mainMeterName" class="small"></span>
-                    </div>
-                    <div class="card-body py-3">
-                        <div class="row g-3 text-center">
-                            <div class="col-6 col-md-3">
-                                <div class="small text-muted mb-1">
-                                    <i class="fas fa-bolt me-1"></i>@Localizer["ems.mainmeter.voltage"]
-                                    <span id="mmVoltageName" class="d-block text-truncate"></span>
-                                </div>
-                                <span id="mmVoltageValue" class="fw-bold" style="font-size:1.6rem;line-height:1;color:#2e7d32;">--</span>
-                                <span id="mmVoltageUnit" class="small text-muted"></span>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <div class="small text-muted mb-1">
-                                    <i class="fas fa-wave-square me-1"></i>@Localizer["ems.mainmeter.current"]
-                                    <span id="mmCurrentName" class="d-block text-truncate"></span>
-                                </div>
-                                <span id="mmCurrentValue" class="fw-bold" style="font-size:1.6rem;line-height:1;color:#2e7d32;">--</span>
-                                <span id="mmCurrentUnit" class="small text-muted"></span>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <div class="small text-muted mb-1">
-                                    <i class="fas fa-plug me-1"></i>@Localizer["ems.mainmeter.power"]
-                                    <span id="mmPowerName" class="d-block text-truncate"></span>
-                                </div>
-                                <span id="mmPowerValue" class="fw-bold" style="font-size:1.6rem;line-height:1;color:#2e7d32;">--</span>
-                                <span id="mmPowerUnit" class="small text-muted"></span>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <div class="small text-muted mb-1">
-                                    <i class="fas fa-percentage me-1"></i>@Localizer["ems.mainmeter.pf"]
-                                    <span id="mmPowerFactorName" class="d-block text-truncate"></span>
-                                </div>
-                                <span id="mmPowerFactorValue" class="fw-bold" style="font-size:1.6rem;line-height:1;color:#2e7d32;">--</span>
-                                <span id="mmPowerFactorUnit" class="small text-muted"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        @if (Model.aVisibleCards.Count == 0)
+        {
+            <div class="text-center text-muted py-5">
+                <i class="fas fa-th-large fa-2x mb-3 d-block opacity-50"></i>
+                @Localizer["ems.no_cards"]
             </div>
-
-            <!-- 今日即時需量卡片 -->
-            <div class="col-md-6 col-lg-5 col-xl-4">
-                <div class="card shadow-sm">
-                    <div class="card-header py-2"
-                         style="background:#43a047;color:#fff;">
-                        <i class="fas fa-tachometer-alt me-1"></i>今日即時需量
-                    </div>
-                    <div class="card-body pb-2">
-
-                        <select id="demandCircuitSelect" class="form-select form-select-sm mb-2">
-                            <option value="">載入中...</option>
-                        </select>
-
-                        <!-- 即時數值 + 狀態點 -->
-                        <div class="d-flex align-items-center justify-content-center gap-2 py-1">
-                            <span id="demandCurrentKW"
-                                  class="fw-bold"
-                                  style="font-size:1.8rem;line-height:1;color:#2e7d32;">--</span>
-                            <span class="small text-muted">kW</span>
-                            <span id="demandStatusDot"
-                                  data-bs-toggle="tooltip"
-                                  data-bs-original-title=""
-                                  style="width:9px;height:9px;border-radius:50%;background:#bdbdbd;flex-shrink:0;cursor:default;"></span>
-                        </div>
-
-                        <!-- 今日最高需量 -->
-                        <div class="d-flex justify-content-between align-items-baseline px-1 mt-1 mb-2">
-                            <span class="small text-muted">今日最高需量</span>
-                            <span>
-                                <span id="demandMaxKW" class="small fw-semibold text-danger">--</span>
-                                <span id="demandMaxAt" class="small text-muted"></span>
-                            </span>
-                        </div>
-
-                        <!-- 趨勢折線圖 -->
-                        <div style="height:90px;position:relative;">
-                            <canvas id="demandTrendChart"></canvas>
-                        </div>
-
-                    </div>
-                </div>
+        }
+        else
+        {
+            <div class="row g-3">
+                @foreach (var card in Model.aVisibleCards)
+                {
+                    <partial name="@card.szPartialViewName" />
+                }
             </div>
-
-            <!-- 主要電表用電長條圖卡片（日/月/年切換，日模式看今天時 60s 自動刷新） -->
-            <div class="col-md-6 col-lg-7 col-xl-8">
-                <div class="card shadow-sm h-100 d-flex flex-column">
-                    <div class="card-header py-2 d-flex justify-content-between align-items-center flex-wrap gap-2"
-                         style="background:#43a047;color:#fff;">
-                        <span>
-                            <i class="fas fa-chart-bar me-1"></i>主要電表用電
-                            <span id="barMeterName" class="small ms-1 opacity-75"></span>
-                        </span>
-                        <span class="d-flex align-items-center gap-2">
-                            <span class="btn-group btn-group-sm ems-gran-group" role="group" aria-label="長條圖粒度切換" id="barGranGroup">
-                                <button type="button" class="btn ems-gran-btn active" data-gran="hour">日</button>
-                                <button type="button" class="btn ems-gran-btn" data-gran="day">月</button>
-                                <button type="button" class="btn ems-gran-btn" data-gran="month">年</button>
-                            </span>
-                            <input type="date" id="barPivotDate" class="form-control form-control-sm ems-hub-picker" />
-                            <input type="month" id="barPivotMonth" class="form-control form-control-sm ems-hub-picker" style="display:none;" />
-                            <input type="number" id="barPivotYear" min="2000" max="2100" class="form-control form-control-sm ems-hub-picker" style="display:none;" />
-                        </span>
-                    </div>
-                    <div class="card-body p-2 flex-grow-1">
-                        <div id="barEmpty" class="ems-hub-empty" style="display:none;"></div>
-                        <div id="barChartWrap" class="ems-hub-chart-wrap">
-                            <canvas id="mainMeterBarChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 子迴路用電圓餅圖卡片（與比較表共用同一組日/月/年切換） -->
-            <div class="col-md-6 col-lg-5 col-xl-4">
-                <div class="card shadow-sm h-100 d-flex flex-column">
-                    <div class="card-header py-2 d-flex justify-content-between align-items-center flex-wrap gap-2"
-                         style="background:#43a047;color:#fff;">
-                        <span><i class="fas fa-chart-pie me-1"></i>子迴路用電占比</span>
-                        <span class="d-flex align-items-center gap-2">
-                            <span class="btn-group btn-group-sm ems-gran-group" role="group" aria-label="占比/比較粒度切換" id="pdGranGroup">
-                                <button type="button" class="btn ems-gran-btn active" data-gran="hour">日</button>
-                                <button type="button" class="btn ems-gran-btn" data-gran="day">月</button>
-                                <button type="button" class="btn ems-gran-btn" data-gran="month">年</button>
-                            </span>
-                            <input type="date" id="pdPivotDate" class="form-control form-control-sm ems-hub-picker" />
-                            <input type="month" id="pdPivotMonth" class="form-control form-control-sm ems-hub-picker" style="display:none;" />
-                            <input type="number" id="pdPivotYear" min="2000" max="2100" class="form-control form-control-sm ems-hub-picker" style="display:none;" />
-                        </span>
-                    </div>
-                    <div class="card-body p-2 flex-grow-1">
-                        <div id="pieEmpty" class="ems-hub-empty" style="display:none;"></div>
-                        <div id="pieChartWrap" class="ems-hub-chart-wrap">
-                            <canvas id="mainMeterPieChart"></canvas>
-                        </div>
-                        <div id="pieNegNote" class="small text-muted mt-1"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 去年同期比較表卡片（期間與圓餅圖同步） -->
-            <div class="col-md-6 col-lg-7 col-xl-8">
-                <div class="card shadow-sm h-100 d-flex flex-column">
-                    <div class="card-header py-2 d-flex justify-content-between align-items-center flex-wrap gap-2"
-                         style="background:#43a047;color:#fff;">
-                        <span><i class="fas fa-balance-scale me-1"></i>去年同期比較</span>
-                        <span id="yoyPeriodText" class="small opacity-75"></span>
-                    </div>
-                    <div class="card-body p-2 flex-grow-1">
-                        <div id="yoyEmpty" class="ems-hub-empty" style="display:none;"></div>
-                        <div id="yoyTableWrap" class="table-responsive">
-                            <table class="table table-sm table-hover align-middle mb-0 ems-yoy-table">
-                                <thead>
-                                    <tr>
-                                        <th>迴路</th>
-                                        <th class="text-end" id="yoyThCurrent">本期 kWh</th>
-                                        <th class="text-end" id="yoyThLastYear">去年同期 kWh</th>
-                                        <th class="text-end">差異 kWh</th>
-                                        <th class="text-end">增減 %</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="yoyTableBody">
-                                    <tr><td colspan="5" class="text-center text-muted py-3">載入中...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 電費狀態卡（依採用方案型態自適應：tou 時段明細 / progressive 級距 / flat 當季單價） -->
-            <div class="col-md-6 col-lg-5 col-xl-4">
-                <div class="card shadow-sm h-100 d-flex flex-column">
-                    <div class="card-header py-2 d-flex justify-content-between align-items-center flex-wrap gap-2"
-                         style="background:#43a047;color:#fff;">
-                        <span><i class="fas fa-file-invoice-dollar me-1"></i>@Localizer["ems.cost.title"]</span>
-                        <span id="costPeriodText" class="small opacity-75"></span>
-                    </div>
-                    <div class="card-body p-2 flex-grow-1 d-flex flex-column">
-                        <select id="costCircuitSelect" class="form-select form-select-sm mb-2" style="display:none;"></select>
-                        <div id="costCardBody" class="flex-grow-1">
-                            <div class="text-center text-muted py-4">@Localizer["ems.cost.loading"]</div>
-                        </div>
-                        <div id="costCardFoot" class="small text-muted mt-1"></div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
+        }
     </div>
 </div>
 
 @section Scripts {
-    <script src="~/lib/chartjs/chart.umd.min.js"></script>
-    <script src="~/js/ems.js" asp-append-version="true"></script>
-    <script src="~/js/ems-hub-energy.js"></script>
-    <script src="~/js/ems-hub-cost.js" asp-append-version="true"></script>
+    @if (hasEmsJs || hasEnergyJs)
+    {
+        <script src="~/lib/chartjs/chart.umd.min.js"></script>
+    }
+    @if (hasEmsJs)
+    {
+        <script src="~/js/ems.js" asp-append-version="true"></script>
+    }
+    @if (hasEnergyJs)
+    {
+        <script src="~/js/ems-hub-energy.js"></script>
+    }
+    @if (hasCostJs)
+    {
+        <script src="~/js/ems-hub-cost.js" asp-append-version="true"></script>
+    }
 }

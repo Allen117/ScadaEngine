@@ -48,15 +48,8 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
   <data name="ems.title" xml:space="preserve"><value>Energy Management</value></data>
-  <data name="ems.mainmeter.title" xml:space="preserve"><value>Main Meter Info</value></data>
-  <data name="ems.mainmeter.voltage" xml:space="preserve"><value>Voltage</value></data>
-  <data name="ems.mainmeter.current" xml:space="preserve"><value>Current</value></data>
-  <data name="ems.mainmeter.power" xml:space="preserve"><value>Power</value></data>
-  <data name="ems.mainmeter.pf" xml:space="preserve"><value>Power Factor</value></data>
-  <data name="ems.mainmeter.not_bound" xml:space="preserve"><value>Not set</value></data>
+  <data name="ems.no_cards" xml:space="preserve"><value>No cards enabled. Turn cards on in "Settings → Card Display Settings".</value></data>
 
-  <data name="ems.cost.title" xml:space="preserve"><value>Electricity Cost</value></data>
-  <data name="ems.cost.loading" xml:space="preserve"><value>Loading…</value></data>
   <data name="ems.cost.period" xml:space="preserve"><value>Period {0}</value></data>
   <data name="ems.cost.no_plan" xml:space="preserve"><value>No tariff plan selected</value></data>
   <data name="ems.cost.goto_tariff" xml:space="preserve"><value>Go to Tariff Settings</value></data>

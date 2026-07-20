@@ -19,6 +19,7 @@ public class EmsController : Controller
     private readonly BillingPeriodService _billingPeriodService;
     private readonly MainMeterAggregationService _aggregation;
     private readonly ElectricityCostService _costService;
+    private readonly EmsCardSettingService _cardSettingService;
 
     public EmsController(
         IDataRepository repo,
@@ -26,7 +27,8 @@ public class EmsController : Controller
         EnergyReportService reportService,
         BillingPeriodService billingPeriodService,
         MainMeterAggregationService aggregation,
-        ElectricityCostService costService)
+        ElectricityCostService costService,
+        EmsCardSettingService cardSettingService)
     {
         _repo                 = repo;
         _circuitService       = circuitService;
@@ -34,10 +36,11 @@ public class EmsController : Controller
         _billingPeriodService = billingPeriodService;
         _aggregation          = aggregation;
         _costService          = costService;
+        _cardSettingService   = cardSettingService;
     }
 
     [HttpGet("/EMS")]
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
         if (!PermissionService.IsAdmin(User))
         {
@@ -48,7 +51,11 @@ public class EmsController : Controller
                 return Redirect("/ScadaPage");
         }
 
-        return View();
+        var aCards = await _cardSettingService.GetEffectiveCardsAsync();
+        return View(new EmsIndexViewModel
+        {
+            aVisibleCards = aCards.Where(c => c.isVisible).Select(c => c.Definition).ToList()
+        });
     }
 
     /// <summary>取得所有可作為 EMS 需量選單的迴路（葉子＋含有啟用後裔的虛擬迴路）</summary>

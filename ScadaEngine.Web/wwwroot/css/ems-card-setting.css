@@ -1,0 +1,109 @@
+/* EMS 首頁卡片顯示設定頁（/EmsCardSetting）— 版面預覽互動 */
+
+.ems-card-setting-page {
+    max-width: 1100px;
+}
+
+/* ── 預覽卡片 ── */
+.ems-prev-col {
+    cursor: grab;
+}
+
+.ems-prev-col:active {
+    cursor: grabbing;
+}
+
+.ems-prev-card {
+    border: 1px solid #c8e6c9;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.ems-prev-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    background: #43a047; /* 與 /EMS 卡片 header 同色（EMS 專屬頁面 CSS，僅此頁載入） */
+    color: #fff;
+    padding: 6px 10px;
+    font-size: 0.875rem;
+}
+
+.ems-prev-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ems-prev-remove {
+    border: 0;
+    background: transparent;
+    color: #fff;
+    font-size: 1.15rem;
+    line-height: 1;
+    padding: 0 2px;
+    cursor: pointer;
+    opacity: 0.85;
+    flex-shrink: 0;
+}
+
+.ems-prev-remove:hover {
+    opacity: 1;
+}
+
+.ems-prev-body {
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #c8e6c9;
+    font-size: 1.2rem;
+    background: repeating-linear-gradient(45deg, #f8fbf8, #f8fbf8 8px, #f1f8f4 8px, #f1f8f4 16px);
+}
+
+.ems-prev-dragging {
+    opacity: 0.4;
+}
+
+/* ── 已隱藏的卡片 ── */
+.ems-tray-item {
+    display: inline-flex;
+    align-items: center;
+    border: 1px dashed #bdbdbd;
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin: 0 8px 8px 0;
+    font-size: 0.875rem;
+    color: #616161;
+    background: #fafafa;
+}
+
+/* ── 浮動提示（同 weather-setting 慣例） ── */
+.ems-card-toast {
+    position: fixed;
+    top: 72px;
+    right: 24px;
+    z-index: 2000;
+    padding: 10px 18px;
+    border-radius: 6px;
+    background: #198754;
+    color: #fff;
+    font-size: 0.875rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+}
+
+.ems-card-toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.ems-card-toast-error {
+    background: #dc3545;
+}

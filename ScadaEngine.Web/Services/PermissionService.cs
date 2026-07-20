@@ -31,6 +31,7 @@ public static class PermissionService
         ("/BillingPeriodSetting", "月結週期設定"),
         ("/TariffSetting",  "電費設定"),
         ("/HolidaySetting", "國定假日設定"),
+        ("/EmsCardSetting", "EMS卡片顯示設定"),
         ("/EnergyBaseline", "能源基準"),
         ("/Designer",       "畫面設計"),
         ("/Config",         "系統參數"),
@@ -67,6 +68,7 @@ public static class PermissionService
         "/BillingPeriodSetting",
         "/TariffSetting",
         "/HolidaySetting",
+        "/EmsCardSetting",
         "/EnergyBaseline",
     ];
 

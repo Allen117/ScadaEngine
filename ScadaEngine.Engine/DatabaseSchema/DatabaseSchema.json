@@ -713,6 +713,18 @@
         { "Name": "UpdatedAt",           "Type": "datetime", "Nullable": true },
         { "Name": "CreatedAt",           "Type": "datetime", "Nullable": false, "Default": "getdate()" }
       ]
+    },
+    {
+      "_comment": "EMS 首頁卡片顯示設定 — 每卡一列，只存覆寫（隱藏/順序）。卡片定義的唯一真相來源是 Web 的 EmsCardRegistry；DB 無列的新卡片預設顯示、排在所有 DB 列之後；DB 有但註冊表沒有的列會被忽略。表空 = 全開、預設順序。/EmsCardSetting 頁維護。",
+      "TableName": "EmsCardSetting",
+      "Columns": [
+        { "Name": "CardKey",   "Type": "nvarchar", "Length": 50, "IsPrimaryKey": true, "Nullable": false,
+          "_comment": "對應 EmsCardRegistry 的卡片鍵（如 MainMeter、Demand、Cost）" },
+        { "Name": "IsVisible", "Type": "bit",      "Nullable": false, "Default": 1 },
+        { "Name": "SortOrder", "Type": "int",      "Nullable": false, "Default": 0,
+          "_comment": "顯示順序（1..N，儲存時由 Web 正規化）" },
+        { "Name": "UpdatedAt", "Type": "datetime", "Nullable": false, "Default": "getdate()" }
+      ]
     }
   ]
 }

@@ -1,0 +1,29 @@
+<!-- 去年同期比較表卡片（期間與圓餅圖同步） -->
+<div class="col-md-6 col-lg-7 col-xl-8">
+    <div class="card shadow-sm h-100 d-flex flex-column">
+        <div class="card-header py-2 d-flex justify-content-between align-items-center flex-wrap gap-2"
+             style="background:#43a047;color:#fff;">
+            <span><i class="fas fa-balance-scale me-1"></i>去年同期比較</span>
+            <span id="yoyPeriodText" class="small opacity-75"></span>
+        </div>
+        <div class="card-body p-2 flex-grow-1">
+            <div id="yoyEmpty" class="ems-hub-empty" style="display:none;"></div>
+            <div id="yoyTableWrap" class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0 ems-yoy-table">
+                    <thead>
+                        <tr>
+                            <th>迴路</th>
+                            <th class="text-end" id="yoyThCurrent">本期 kWh</th>
+                            <th class="text-end" id="yoyThLastYear">去年同期 kWh</th>
+                            <th class="text-end">差異 kWh</th>
+                            <th class="text-end">增減 %</th>
+                        </tr>
+                    </thead>
+                    <tbody id="yoyTableBody">
+                        <tr><td colspan="5" class="text-center text-muted py-3">載入中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

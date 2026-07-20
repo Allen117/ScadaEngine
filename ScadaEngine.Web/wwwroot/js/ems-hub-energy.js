@@ -55,8 +55,10 @@
     }
 
     // ── 粒度切換元件（一組按鈕 + 三個 pivot 輸入框） ────────
+    // 所在卡片被 /EmsCardSetting 關閉時元素不存在 → 回傳 null（pivotOf 對 null 回預設）
     function setupGranGroup(groupId, ids, onChange) {
         var group = document.getElementById(groupId);
+        if (!group) return null;
         var inputs = {
             hour:  document.getElementById(ids.date),
             day:   document.getElementById(ids.month),
@@ -88,13 +90,21 @@
     var _barInputs, _pdInputs;
 
     function pivotOf(inputs, gran) {
-        var v = inputs[gran].value;
+        // inputs=null（粒度控制所在卡片被關閉）→ 回今日/當月/今年預設
+        var v = inputs && inputs[gran] ? inputs[gran].value : '';
         if (v) return v;
         return gran === 'hour' ? todayStr() : gran === 'day' ? thisMonthStr() : thisYearStr();
     }
 
     // ── 初始化 ───────────────────────────────────────────────
+    // 三張卡（長條/圓餅/比較）可由 /EmsCardSetting 個別關閉（DOM 不渲染），各自以根元素存在與否防呆；
+    // 三卡全關時整支不動作、不打 /EMS/api/main-meter
     function init() {
+        var hasBar = !!document.getElementById('barChartWrap');
+        var hasPie = !!document.getElementById('pieChartWrap');
+        var hasYoy = !!document.getElementById('yoyTableWrap');
+        if (!hasBar && !hasPie && !hasYoy) return;
+
         _barInputs = setupGranGroup('barGranGroup', { date: 'barPivotDate', month: 'barPivotMonth', year: 'barPivotYear' },
             function (gran) { _barGran = gran; loadBar(); });
         _pdInputs = setupGranGroup('pdGranGroup', { date: 'pdPivotDate', month: 'pdPivotMonth', year: 'pdPivotYear' },
@@ -108,7 +118,8 @@
                     return;
                 }
                 _meter = m;
-                document.getElementById('barMeterName').textContent = m.name;
+                var elBarName = document.getElementById('barMeterName');
+                if (elBarName) elBarName.textContent = m.name;
                 loadBar();
                 loadPie();
                 loadYoy();
@@ -117,26 +128,32 @@
             .catch(function (e) { console.error('[ems-hub-energy] 載入主要電表失敗', e); });
     }
 
-    // ── 未設定主要電表：三卡片統一提示 ──────────────────────
+    // ── 未設定主要電表：三卡片統一提示（被關閉的卡片元素不存在 → 逐一防呆跳過）──
     function showNoMainMeter() {
         [['barEmpty', 'barChartWrap'], ['pieEmpty', 'pieChartWrap'], ['yoyEmpty', 'yoyTableWrap']]
             .forEach(function (pair) {
                 var empty = document.getElementById(pair[0]);
                 var body  = document.getElementById(pair[1]);
+                if (!empty || !body) return;
                 empty.textContent = NO_MAIN_METER_MSG;
                 empty.style.display = '';
                 body.style.display = 'none';
             });
         ['barGranGroup', 'pdGranGroup'].forEach(function (id) {
-            document.getElementById(id).querySelectorAll('.ems-gran-btn').forEach(function (b) { b.disabled = true; });
+            var group = document.getElementById(id);
+            if (!group) return;
+            group.querySelectorAll('.ems-gran-btn').forEach(function (b) { b.disabled = true; });
         });
         ['barPivotDate', 'barPivotMonth', 'barPivotYear', 'pdPivotDate', 'pdPivotMonth', 'pdPivotYear']
-            .forEach(function (id) { document.getElementById(id).disabled = true; });
+            .forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el) el.disabled = true;
+            });
     }
 
     // ── 長條圖 ───────────────────────────────────────────────
     function loadBar() {
-        if (!_meter) return;
+        if (!_meter || !document.getElementById('barChartWrap')) return;
         var pivot = pivotOf(_barInputs, _barGran);
         var url = '/EMS/api/circuit-energy?circuitId=' + encodeURIComponent(_meter.id) +
                   '&granularity=' + encodeURIComponent(_barGran) +
@@ -213,7 +230,7 @@
 
     // ── 子迴路圓餅圖 ─────────────────────────────────────────
     function loadPie() {
-        if (!_meter) return;
+        if (!_meter || !document.getElementById('pieChartWrap')) return;
         var pivot = pivotOf(_pdInputs, _pdGran);
         var url = '/EMS/api/main-meter-breakdown?granularity=' + encodeURIComponent(_pdGran) +
                   '&pivot=' + encodeURIComponent(pivot);
@@ -292,7 +309,7 @@
 
     // ── 去年同期比較表 ───────────────────────────────────────
     function loadYoy() {
-        if (!_meter) return;
+        if (!_meter || !document.getElementById('yoyTableWrap')) return;
         var pivot = pivotOf(_pdInputs, _pdGran);
         var url = '/EMS/api/main-meter-yoy?granularity=' + encodeURIComponent(_pdGran) +
                   '&pivot=' + encodeURIComponent(pivot);
@@ -339,11 +356,11 @@
         }).join('');
     }
 
-    // ── 自動刷新（僅長條圖：日模式且選的是今天）──────────────
+    // ── 自動刷新（僅長條圖：日模式且選的是今天；長條卡關閉時 _barInputs=null 不刷）──
     function startAutoRefresh() {
         clearTimeout(_refreshTimer);
         _refreshTimer = setTimeout(function tick() {
-            if (_barGran === 'hour' && _barInputs.hour.value === todayStr()) {
+            if (_barGran === 'hour' && _barInputs && _barInputs.hour.value === todayStr()) {
                 loadBar();
             }
             _refreshTimer = setTimeout(tick, REFRESH_MS);

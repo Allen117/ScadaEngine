@@ -47,27 +47,24 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
-  <data name="ems.title" xml:space="preserve"><value>能源管理</value></data>
-  <data name="ems.no_cards" xml:space="preserve"><value>尚未啟用任何卡片，請至「設定 → 卡片顯示設定」開啟</value></data>
+  <data name="emscardsetting.title" xml:space="preserve"><value>卡片顯示設定</value></data>
+  <data name="emscardsetting.btn.save" xml:space="preserve"><value>儲存</value></data>
+  <data name="emscardsetting.preview" xml:space="preserve"><value>版面預覽</value></data>
+  <data name="emscardsetting.hidden" xml:space="preserve"><value>已隱藏的卡片</value></data>
+  <data name="emscardsetting.loading" xml:space="preserve"><value>載入中…</value></data>
+  <data name="emscardsetting.hint" xml:space="preserve"><value>拖曳卡片調整顯示順序；按 × 隱藏卡片，可由下方「已隱藏的卡片」加回。儲存後重新整理 EMS 首頁即生效。</value></data>
+  <data name="emscardsetting.saved" xml:space="preserve"><value>已儲存，重新整理 EMS 首頁即生效</value></data>
+  <data name="emscardsetting.remove" xml:space="preserve"><value>隱藏此卡片</value></data>
+  <data name="emscardsetting.add_back" xml:space="preserve"><value>加回</value></data>
+  <data name="emscardsetting.none_hidden" xml:space="preserve"><value>無 — 所有卡片皆顯示中</value></data>
+  <data name="emscardsetting.none_visible" xml:space="preserve"><value>所有卡片皆已隱藏</value></data>
+  <data name="emscardsetting.err.load_failed" xml:space="preserve"><value>載入失敗</value></data>
+  <data name="emscardsetting.err.save_failed" xml:space="preserve"><value>儲存失敗</value></data>
 
-  <data name="ems.cost.period" xml:space="preserve"><value>本期 {0}</value></data>
-  <data name="ems.cost.no_plan" xml:space="preserve"><value>尚未選擇電費方案</value></data>
-  <data name="ems.cost.goto_tariff" xml:space="preserve"><value>前往電費設定</value></data>
-  <data name="ems.cost.no_circuit" xml:space="preserve"><value>尚未建立電表/迴路，請先至「電表/迴路設定」建立</value></data>
-  <data name="ems.cost.unit_ntd" xml:space="preserve"><value>元</value></data>
-  <data name="ems.cost.total_kwh" xml:space="preserve"><value>本期累計 {0} kWh</value></data>
-  <data name="ems.cost.today" xml:space="preserve"><value>今日小計</value></data>
-  <data name="ems.cost.col_period" xml:space="preserve"><value>時段</value></data>
-  <data name="ems.cost.col_cost" xml:space="preserve"><value>電費（元）</value></data>
-  <data name="ems.cost.surcharge" xml:space="preserve"><value>超額加價（&gt;{0} 度）</value></data>
-  <data name="ems.cost.current_tier" xml:space="preserve"><value>目前級距</value></data>
-  <data name="ems.cost.tier_n" xml:space="preserve"><value>第 {0} 級</value></data>
-  <data name="ems.cost.tier_range" xml:space="preserve"><value>{0}~{1} 度</value></data>
-  <data name="ems.cost.tier_above" xml:space="preserve"><value>{0} 度以上</value></data>
-  <data name="ems.cost.flat_price" xml:space="preserve"><value>當季單價</value></data>
-  <data name="ems.cost.per_kwh" xml:space="preserve"><value>元/度</value></data>
-  <data name="ems.cost.estimated" xml:space="preserve"><value>估算</value></data>
-  <data name="ems.cost.estimated_note" xml:space="preserve"><value>級距/加價類金額為依 kWh 占比分攤之估算值</value></data>
-  <data name="ems.cost.exclude_base" xml:space="preserve"><value>不含基本電費</value></data>
-  <data name="ems.cost.data_until" xml:space="preserve"><value>資料計算至 {0}</value></data>
+  <data name="emscard.name.mainmeter" xml:space="preserve"><value>主要電表資訊</value></data>
+  <data name="emscard.name.demand" xml:space="preserve"><value>今日即時需量</value></data>
+  <data name="emscard.name.energybar" xml:space="preserve"><value>主要電表用電長條圖</value></data>
+  <data name="emscard.name.energypie" xml:space="preserve"><value>子迴路用電占比圓餅圖</value></data>
+  <data name="emscard.name.yoy" xml:space="preserve"><value>去年同期比較</value></data>
+  <data name="emscard.name.cost" xml:space="preserve"><value>電費狀態</value></data>
 </root>

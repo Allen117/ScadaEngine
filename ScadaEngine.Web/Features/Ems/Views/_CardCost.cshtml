@@ -1,0 +1,17 @@
+<!-- 電費狀態卡（依採用方案型態自適應：tou 時段明細 / progressive 級距 / flat 當季單價） -->
+<div class="col-md-6 col-lg-5 col-xl-4">
+    <div class="card shadow-sm h-100 d-flex flex-column">
+        <div class="card-header py-2 d-flex justify-content-between align-items-center flex-wrap gap-2"
+             style="background:#43a047;color:#fff;">
+            <span><i class="fas fa-file-invoice-dollar me-1"></i>@Localizer["ems.cost.title"]</span>
+            <span id="costPeriodText" class="small opacity-75"></span>
+        </div>
+        <div class="card-body p-2 flex-grow-1 d-flex flex-column">
+            <select id="costCircuitSelect" class="form-select form-select-sm mb-2" style="display:none;"></select>
+            <div id="costCardBody" class="flex-grow-1">
+                <div class="text-center text-muted py-4">@Localizer["ems.cost.loading"]</div>
+            </div>
+            <div id="costCardFoot" class="small text-muted mt-1"></div>
+        </div>
+    </div>
+</div>

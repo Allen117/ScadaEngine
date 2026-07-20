@@ -80,6 +80,7 @@
   <data name="layout.menu.billing_period" xml:space="preserve"><value>月結週期設定</value></data>
   <data name="layout.menu.tariff_setting" xml:space="preserve"><value>電費設定</value></data>
   <data name="layout.menu.holiday_setting" xml:space="preserve"><value>國定假日設定</value></data>
+  <data name="layout.menu.ems_card_setting" xml:space="preserve"><value>卡片顯示設定</value></data>
   <data name="layout.menu.circuit_info" xml:space="preserve"><value>迴路資訊</value></data>
 
   <data name="layout.menu.system" xml:space="preserve"><value>系統設定</value></data>

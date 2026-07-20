@@ -1,0 +1,47 @@
+<!-- 主要電表資訊寬幅卡片（無主要電表時整卡隱藏） -->
+<div class="col-12" id="mainMeterCardWrap" style="display:none;"
+     data-notbound="@Localizer["ems.mainmeter.not_bound"]">
+    <div class="card shadow-sm">
+        <div class="card-header py-2 d-flex justify-content-between align-items-center"
+             style="background:#43a047;color:#fff;">
+            <span><i class="fas fa-star me-1"></i>@Localizer["ems.mainmeter.title"]</span>
+            <span id="mainMeterName" class="small"></span>
+        </div>
+        <div class="card-body py-3">
+            <div class="row g-3 text-center">
+                <div class="col-6 col-md-3">
+                    <div class="small text-muted mb-1">
+                        <i class="fas fa-bolt me-1"></i>@Localizer["ems.mainmeter.voltage"]
+                        <span id="mmVoltageName" class="d-block text-truncate"></span>
+                    </div>
+                    <span id="mmVoltageValue" class="fw-bold" style="font-size:1.6rem;line-height:1;color:#2e7d32;">--</span>
+                    <span id="mmVoltageUnit" class="small text-muted"></span>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="small text-muted mb-1">
+                        <i class="fas fa-wave-square me-1"></i>@Localizer["ems.mainmeter.current"]
+                        <span id="mmCurrentName" class="d-block text-truncate"></span>
+                    </div>
+                    <span id="mmCurrentValue" class="fw-bold" style="font-size:1.6rem;line-height:1;color:#2e7d32;">--</span>
+                    <span id="mmCurrentUnit" class="small text-muted"></span>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="small text-muted mb-1">
+                        <i class="fas fa-plug me-1"></i>@Localizer["ems.mainmeter.power"]
+                        <span id="mmPowerName" class="d-block text-truncate"></span>
+                    </div>
+                    <span id="mmPowerValue" class="fw-bold" style="font-size:1.6rem;line-height:1;color:#2e7d32;">--</span>
+                    <span id="mmPowerUnit" class="small text-muted"></span>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="small text-muted mb-1">
+                        <i class="fas fa-percentage me-1"></i>@Localizer["ems.mainmeter.pf"]
+                        <span id="mmPowerFactorName" class="d-block text-truncate"></span>
+                    </div>
+                    <span id="mmPowerFactorValue" class="fw-bold" style="font-size:1.6rem;line-height:1;color:#2e7d32;">--</span>
+                    <span id="mmPowerFactorUnit" class="small text-muted"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

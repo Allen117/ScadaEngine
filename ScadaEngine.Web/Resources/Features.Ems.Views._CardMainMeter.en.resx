@@ -47,27 +47,10 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
-  <data name="ems.title" xml:space="preserve"><value>能源管理</value></data>
-  <data name="ems.no_cards" xml:space="preserve"><value>尚未啟用任何卡片，請至「設定 → 卡片顯示設定」開啟</value></data>
-
-  <data name="ems.cost.period" xml:space="preserve"><value>本期 {0}</value></data>
-  <data name="ems.cost.no_plan" xml:space="preserve"><value>尚未選擇電費方案</value></data>
-  <data name="ems.cost.goto_tariff" xml:space="preserve"><value>前往電費設定</value></data>
-  <data name="ems.cost.no_circuit" xml:space="preserve"><value>尚未建立電表/迴路，請先至「電表/迴路設定」建立</value></data>
-  <data name="ems.cost.unit_ntd" xml:space="preserve"><value>元</value></data>
-  <data name="ems.cost.total_kwh" xml:space="preserve"><value>本期累計 {0} kWh</value></data>
-  <data name="ems.cost.today" xml:space="preserve"><value>今日小計</value></data>
-  <data name="ems.cost.col_period" xml:space="preserve"><value>時段</value></data>
-  <data name="ems.cost.col_cost" xml:space="preserve"><value>電費（元）</value></data>
-  <data name="ems.cost.surcharge" xml:space="preserve"><value>超額加價（&gt;{0} 度）</value></data>
-  <data name="ems.cost.current_tier" xml:space="preserve"><value>目前級距</value></data>
-  <data name="ems.cost.tier_n" xml:space="preserve"><value>第 {0} 級</value></data>
-  <data name="ems.cost.tier_range" xml:space="preserve"><value>{0}~{1} 度</value></data>
-  <data name="ems.cost.tier_above" xml:space="preserve"><value>{0} 度以上</value></data>
-  <data name="ems.cost.flat_price" xml:space="preserve"><value>當季單價</value></data>
-  <data name="ems.cost.per_kwh" xml:space="preserve"><value>元/度</value></data>
-  <data name="ems.cost.estimated" xml:space="preserve"><value>估算</value></data>
-  <data name="ems.cost.estimated_note" xml:space="preserve"><value>級距/加價類金額為依 kWh 占比分攤之估算值</value></data>
-  <data name="ems.cost.exclude_base" xml:space="preserve"><value>不含基本電費</value></data>
-  <data name="ems.cost.data_until" xml:space="preserve"><value>資料計算至 {0}</value></data>
+  <data name="ems.mainmeter.title" xml:space="preserve"><value>Main Meter Info</value></data>
+  <data name="ems.mainmeter.voltage" xml:space="preserve"><value>Voltage</value></data>
+  <data name="ems.mainmeter.current" xml:space="preserve"><value>Current</value></data>
+  <data name="ems.mainmeter.power" xml:space="preserve"><value>Power</value></data>
+  <data name="ems.mainmeter.pf" xml:space="preserve"><value>Power Factor</value></data>
+  <data name="ems.mainmeter.not_bound" xml:space="preserve"><value>Not set</value></data>
 </root>

@@ -682,6 +682,26 @@
 | 網路錯誤：{error} | Network error: {error} | toast |
 | 未知錯誤 | Unknown error | toast |
 
+## EMS 卡片顯示設定 (EmsCardSetting)
+
+| zh-TW | en | 備註 |
+|-------|----|------|
+| 卡片顯示設定 | Card Display Settings | 頁面標題 / 選單 |
+| 版面預覽 | Layout Preview | 預覽區卡標題 |
+| 已隱藏的卡片 | Hidden Cards | 隱藏區卡標題 |
+| 隱藏此卡片 | Hide this card | ✕ 按鈕 title |
+| 加回 | Add back | 隱藏區按鈕 |
+| 無 — 所有卡片皆顯示中 | None — all cards are visible | 隱藏區空狀態 |
+| 所有卡片皆已隱藏 | All cards are hidden | 預覽區空狀態 |
+| 已儲存，重新整理 EMS 首頁即生效 | Saved. Reload the EMS home page to apply. | toast |
+| 尚未啟用任何卡片 | No cards enabled | /EMS 全關提示（ems.no_cards） |
+| 主要電表資訊 | Main Meter Info | 卡名 |
+| 今日即時需量 | Today's Real-time Demand | 卡名 |
+| 主要電表用電長條圖 | Main Meter Energy Bar Chart | 卡名 |
+| 子迴路用電占比圓餅圖 | Sub-circuit Energy Share Pie | 卡名 |
+| 去年同期比較 | Year-over-Year Comparison | 卡名 |
+| 電費狀態 | Electricity Cost Status | 卡名 |
+
 ## 翻譯原則
 
 1. **動詞用祈使句**（Save / Cancel / Delete），不要 ing 形式

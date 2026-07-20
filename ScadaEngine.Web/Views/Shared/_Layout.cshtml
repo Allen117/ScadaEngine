@@ -178,7 +178,7 @@
                                     </a>
                                 </li>
                             }
-                            @if (canAccess("/ChilledWaterSystem") || canAccess("/EnergyMeter") || canAccess("/BillingPeriodSetting") || canAccess("/TariffSetting") || canAccess("/HolidaySetting"))
+                            @if (canAccess("/ChilledWaterSystem") || canAccess("/EnergyMeter") || canAccess("/BillingPeriodSetting") || canAccess("/TariffSetting") || canAccess("/HolidaySetting") || canAccess("/EmsCardSetting"))
                             {
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
@@ -205,6 +205,10 @@
                                         @if (canAccess("/HolidaySetting"))
                                         {
                                             <li><a class="dropdown-item" href="/HolidaySetting"><i class="fas fa-calendar-day me-2"></i>@Localizer["layout.menu.holiday_setting"]</a></li>
+                                        }
+                                        @if (canAccess("/EmsCardSetting"))
+                                        {
+                                            <li><a class="dropdown-item" href="/EmsCardSetting"><i class="fas fa-th-large me-2"></i>@Localizer["layout.menu.ems_card_setting"]</a></li>
                                         }
                                     </ul>
                                 </li>
