@@ -394,6 +394,8 @@
   <data name="designer.prop.motor.chw_out" xml:space="preserve"><value>Chilled Water Outlet Temp</value></data>
   <data name="designer.prop.motor.water_temp" xml:space="preserve"><value>Outlet Water Temp</value></data>
   <data name="designer.prop.motor.set_temp" xml:space="preserve"><value>Chilled Water Setpoint</value></data>
+  <data name="designer.prop.motor.remote_local" xml:space="preserve"><value>Remote/Local</value></data>
+  <data name="designer.prop.motor.local_color" xml:space="preserve"><value>Local Panel Color</value></data>
   <data name="designer.motor.set_temp_prefix" xml:space="preserve"><value>Set</value></data>
 
   <!-- Prop Panel - pipe -->

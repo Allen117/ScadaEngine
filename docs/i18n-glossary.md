@@ -658,6 +658,8 @@
 | 留空則不顯示 | Leave blank to hide | placeholder |
 | 出水口方向 | Outlet Direction | pump |
 | 運轉狀態 / 故障狀態 / 手自動狀態 / 頻率 | Run Status / Fault Status / Manual/Auto Status / Frequency | pump SID |
+| 遠端/現場 | Remote/Local | 冰機 szSidMode 語意（1=遠端、0=現場→控制箱面板深黃） |
+| 現場面板顏色 | Local Panel Color | 冰機外觀（szManualColor，預設 #c79100） |
 | 啟動停止 / 頻率設定 | Start/Stop / Frequency Set | pump CID |
 | 重選 / 綁定 / 清除 | Reselect / Bind / Clear | binding action |
 | 未綁定 | (not bound) | UI status |

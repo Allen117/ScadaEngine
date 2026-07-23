@@ -458,19 +458,21 @@ AI 點位除綁單一 SID 外，也可在 picker 的「**迴路**」來源分頁
 |------|----------|----------|----------|------|
 | 冷卻水塔 `coolingTower` | 運轉 / 故障 / 手自動 / **風扇頻率** / **出水溫**(僅 tooltip) | 啟停 / 頻率設定 / 自動 | 頻率（VFD，可拖曳） | 頂部風扇 |
 | 空調箱風扇 `ahuFan` | 運轉 / 故障 / 手自動 / **頻率** | 啟停 / 頻率設定 / 自動 | 頻率（VFD，可拖曳） | 中央風扇 |
-| 冰機 `chiller` | 運轉 / 故障 / 手自動 / **負載%** / **冰水出水溫**(僅 tooltip) | 啟停 / **冰水設定溫度** / 自動 | 負載%（唯讀，不可拖曳） | 無（狀態以核心面板色表示） |
+| 冰機 `chiller` | 運轉 / 故障 / **遠端/現場**(=szSidMode) / **負載%** / **冰水出水溫**(僅 tooltip) | 啟停 / **冰水設定溫度** / 自動 | 負載%（唯讀，**底部水平橫條**） | 無（狀態以機身雙筒顏色表示） |
 
-props 命名沿用 pump 慣例（`szSidXxx` + `szXxxName` 成對）：共同 `szSidRun/szSidFault/szSidMode/szCidStartStop`；VFD 型另有 `szSidFreq/szCidFreqSet/nFreqSetMin/Max/nFreqMax`，冷卻水塔加 `szSidWaterTemp`；冰機為 `szSidLoad/szSidChwOut/szCidSetTemp/nLoadMax`。外觀色與 pump 相同（`szRunColor/szStopColor/szFaultColor/szManualColor/szAutoColor/szBgColor`），三者**不提供出口方向**。
+props 命名沿用 pump 慣例（`szSidXxx` + `szXxxName` 成對）：共同 `szSidRun/szSidFault/szSidMode/szCidStartStop`；VFD 型另有 `szSidFreq/szCidFreqSet/nFreqSetMin/Max/nFreqMax`，冷卻水塔加 `szSidWaterTemp`；冰機為 `szSidLoad/szSidChwOut/szCidSetTemp/nLoadMax`。外觀色與 pump 相同（`szRunColor/szStopColor/szFaultColor/szManualColor/szAutoColor/szBgColor`），三者**不提供出口方向**。屬性面板每條綁定列已綁時有「重選」＋「✕ 取消綁定」（清空 SID＋名稱）。
 
 > **冷卻水塔圖形**為**等軸測方箱塔體**（2026-07 依使用者參考圖重繪）：左面浪板紋、右面 X 型斜撐面板、頂部黃色雙層安全欄杆＋小馬達、上置圓形風扇（6 葉）。葉輪畫在壓扁前座標、外層再套 `scale(1,0.5)` 等軸壓扁，旋轉沿用 `pump-spin`（transform-origin 落在內層群組，旋轉在局部座標系進行故呈橢圓轉動）。葉輪盤面＝狀態色、箱體＝手自動模式色，語意與其他馬達型設備一致；Designer 元件庫縮圖（Index.cshtml inline SVG）為同構簡化版。
 
+> **冰機圖形**為**水冷式雙筒身前視圖**（2026-07 依現場照片重繪，Artifact 預覽 v4 定稿）：上筒＝冷凝器、下筒＝蒸發器；**不畫接管**（2026-07-23 拿掉原本左右四支法蘭接管——管路 pipe 元件由使用者自由決定對接位置）；後方帶螺旋壓縮機輪廓與殼間連通管，左前控制箱含固定深色 HMI 螢幕（不變色）、指示燈、壓力錶。**顏色職責**與其他馬達型設備不同：**機身雙筒＝狀態色**（運轉綠/停機灰/故障紅，頂部小警示燈同色）；`szSidMode` 對冰機語意為**遠端/現場**（1=遠端→控制箱面板灰、0=現場→面板深黃 `szManualColor`，預設 `#c79100`，屬性面板標籤「現場面板顏色」，自動色不適用）。負載% 為**底部水平橫條**（軌道 x10 寬66、% 文字置中條內，`viewBox 0 0 120 124`；無條時 `0 0 120 110`），右下角為設定溫度覆蓋層——**設定溫度切手動時值前顯示小 M**（吃 `szCidSetTemp` 的 isAuto，掛 `scada-mode-badge` class 由既有 `_toggleModeBadge` 輪詢驅動），與右上角「開關手動 M」（`szCidStartStop`）各自獨立。Designer 元件庫縮圖為同構簡化版。
+
 **執行期行為**（`scadapage.js`，class = `.scada-motor`，`dataset.motorType` 區分）：
 - 狀態判定同 pump：故障 > 運轉 > 停止，運轉時風扇 `pump-spin` 旋轉（冰機不轉）
-- 手動模式顯示 M 角標（`szCidStartStop`；VFD 型另有 `szCidFreqSet`）
+- 手動模式顯示 M 角標（`szCidStartStop`＝開關手動，右上；VFD 型另有 `szCidFreqSet`；冰機另有**設定溫度手動 M**顯示於右下設定值旁，吃 `szCidSetTemp` 的 isAuto）
 - **右鍵選單**：啟動停止（子選單）+ VFD 頻率設定（子選單）/ 冰機設定溫度（項目）+ 監控點位趨勢圖
 - **VFD 頻率條拖曳**：與 pump 共用同一 mousedown 處理（選擇器擴充為 `.scada-pump, .scada-motor`，重用 `pump-gauge-*` class）
 - **冰機設定溫度**：**無上下限**，於元件**右下角常駐顯示**目前設定值，**雙擊即可編輯**（prompt 輸入 → 寫入 `szCidSetTemp`，`actionType='ao_manual'`）；顯示值取自 AO 手動值快取
-- 斷線（Bad quality）顯示「斷線」；hover 顯示「標題 — 狀態 — 模式 — 主數值 — 額外溫度」
+- 斷線（Bad quality）**圖形照畫**（停止灰）並於元件上方置中顯示紅字「斷線」，hover 仍浮出「標題 — 斷線」（2026-07-23 改版，原本整塊換成純文字）；hover 平時顯示「標題 — 狀態 — 模式 — 主數值 — 額外溫度」
 
 > **控制 EventLog**：啟停 / 頻率 / 自動沿用 pump 的 `pump_start_stop` / `pump_freq` / `pump_auto` actionType，訊息帶設備名稱（`displayName`）以資區別（例「啟動泵浦「1F 冷卻水塔」」）；冰機設定溫度走 `ao_manual`。此為刻意選擇的零後端改動方案。
 

@@ -297,22 +297,22 @@ const WIDGET_DEFS = {
     chiller: {
         szLabel: '冰機',
         szIcon: 'fas fa-snowflake',
-        nDefaultW: 150,
-        nDefaultH: 120,
+        nDefaultW: 130,
+        nDefaultH: 135,
         nMinW: 70, nMinH: 60,
         defaultProps: {
             szTitle:          '__i18n__:designer.default.chiller_title',
             // SID 點位（唯讀監控）
             szSidRun:         '',   szRunName:       '',
             szSidFault:       '',   szFaultName:     '',
-            szSidMode:        '',   szModeName:      '',
-            szSidLoad:        '',   szLoadName:      '',   // 負載%（主數值條）
+            szSidMode:        '',   szModeName:      '',   // 冰機語意=遠端/現場（0=現場→控制箱面板深黃）
+            szSidLoad:        '',   szLoadName:      '',   // 負載%（底部橫條）
             szSidChwOut:      '',   szChwOutName:    '',   // 冰水出水溫（僅 tooltip）
             // CID 點位（控制寫入）
             szCidStartStop:   '',   szStartStopName: '',
             szCidSetTemp:     '',   szSetTempName:   '',   // 冰水設定溫度（右下角雙擊編輯，無上下限）
             nLoadMax:         100,
-            szManualColor:    '#ffc107',
+            szManualColor:    '#c79100',   // 現場面板色（深黃）
             szAutoColor:      '#0d6efd',
             szRunColor:       '#28a745',
             szStopColor:      '#6c757d',

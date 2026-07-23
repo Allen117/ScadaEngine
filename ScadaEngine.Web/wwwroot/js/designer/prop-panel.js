@@ -731,6 +731,14 @@ function renderPropPanel(el) {
             const szDisp = szName
                 ? `<span style="font-size:12px;color:#c8c8c8;">${escHtml(szName)}</span>`
                 : szUnboundLabel;
+            // 已綁定 → 加「取消綁定」✕ 鈕（清空 SID+名稱，重繪元件與面板）
+            const szClearBtn = szName
+                ? `<button class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size:11px;"
+                        title="${escHtml(t('designer.ctx.clear_binding'))}"
+                        onclick="clearMotorBinding('${szSidKey}','${szNameKey}')">
+                    <i class="fas fa-times"></i>
+                </button>`
+                : '';
             return `<div class="prop-group">
                 <label>${escHtml(szLabel)}</label>
                 <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
@@ -739,16 +747,20 @@ function renderPropPanel(el) {
                             onclick="rerouteMotorBinding('${szSidKey}','${szNameKey}')">
                         <i class="fas fa-exchange-alt me-1"></i>${escHtml(t('designer.prop.reselect'))}
                     </button>
+                    ${szClearBtn}
                 </div>
             </div>`;
         }
 
-        // ── SID 監控段（共同：運轉/故障/手自動）──
+        // ── SID 監控段（共同：運轉/故障/手自動；冰機的手自動語意=遠端/現場）──
+        const szModeLabel = szType === 'chiller'
+            ? t('designer.prop.motor.remote_local')
+            : t('designer.prop.pump.mode_status');
         szHtml += `
         <div style="font-size:11px;color:#aaa;margin-bottom:4px;letter-spacing:1px;">${escHtml(t('designer.prop.pump.sid_monitor'))}</div>
         ${motorBindRow(t('designer.prop.pump.run_status'),   'szSidRun',   'szRunName',   'btn-outline-info')}
         ${motorBindRow(t('designer.prop.pump.fault_status'), 'szSidFault', 'szFaultName', 'btn-outline-danger')}
-        ${motorBindRow(t('designer.prop.pump.mode_status'),  'szSidMode',  'szModeName',  'btn-outline-warning')}`;
+        ${motorBindRow(szModeLabel,                          'szSidMode',  'szModeName',  'btn-outline-warning')}`;
 
         // ── 依設備差異的監控/控制點 ──
         if (szType === 'chiller') {
@@ -793,6 +805,17 @@ function renderPropPanel(el) {
             <input type="color" value="${props.szFaultColor || '#dc3545'}"
                    oninput="setProp('szFaultColor', this.value)">
         </div>
+        `;
+        if (szType === 'chiller') {
+            // 冰機：模式色只剩「現場面板色」（機身專職狀態色，遠端面板固定灰，不用自動色）
+            szHtml += `
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.motor.local_color'))}</label>
+            <input type="color" value="${props.szManualColor || '#c79100'}"
+                   oninput="setProp('szManualColor', this.value)">
+        </div>`;
+        } else {
+            szHtml += `
         <div class="prop-group">
             <label>${escHtml(t('designer.prop.pump.manual_color'))}</label>
             <input type="color" value="${props.szManualColor || '#ffc107'}"
@@ -802,7 +825,9 @@ function renderPropPanel(el) {
             <label>${escHtml(t('designer.prop.pump.auto_color'))}</label>
             <input type="color" value="${props.szAutoColor || '#0d6efd'}"
                    oninput="setProp('szAutoColor', this.value)">
-        </div>
+        </div>`;
+        }
+        szHtml += `
         <div class="prop-group">
             <label>${escHtml(t('designer.prop.background_color'))}</label>
             <label style="display:inline-flex;align-items:center;gap:3px;font-size:11px;color:#9d9d9d;
@@ -1972,6 +1997,17 @@ function onPipeBgTransparentChange(isChecked) {
         setProp('szBgColor', szColor);
         if (picker) picker.style.display = '';
     }
+}
+
+// 馬達型設備（冷卻水塔 / 空調箱風扇 / 冰機）— 取消單一綁定列（清 SID + 名稱）
+function clearMotorBinding(szSidKey, szNameKey) {
+    if (!selectedEl) return;
+    const szType = selectedEl.dataset.type;
+    if (szType !== 'coolingTower' && szType !== 'ahuFan' && szType !== 'chiller') return;
+    selectedEl.widgetProps[szSidKey]  = '';
+    selectedEl.widgetProps[szNameKey] = '';
+    renderWidget(selectedEl);
+    renderPropPanel(selectedEl);
 }
 
 // 馬達型設備（冷卻水塔 / 空調箱風扇 / 冰機）共用 — picker id 由呼叫端傳入

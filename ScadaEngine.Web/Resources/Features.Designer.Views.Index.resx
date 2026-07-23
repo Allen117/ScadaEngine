@@ -393,6 +393,8 @@
   <data name="designer.prop.motor.chw_out" xml:space="preserve"><value>冰水出水溫</value></data>
   <data name="designer.prop.motor.water_temp" xml:space="preserve"><value>出水溫</value></data>
   <data name="designer.prop.motor.set_temp" xml:space="preserve"><value>冰水設定溫度</value></data>
+  <data name="designer.prop.motor.remote_local" xml:space="preserve"><value>遠端/現場</value></data>
+  <data name="designer.prop.motor.local_color" xml:space="preserve"><value>現場面板顏色</value></data>
   <data name="designer.motor.set_temp_prefix" xml:space="preserve"><value>設定</value></data>
 
   <!-- Prop Panel - pipe（管路流動元件）-->
