@@ -3,8 +3,9 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<link rel="stylesheet" href="~/css/scadapage.css" />
-<link rel="stylesheet" href="~/css/active-alarm-panel.css" />
+@* asp-append-version：檔案內容 hash 進 query string，改版後瀏覽器不會吃到舊快取 CSS *@
+<link rel="stylesheet" href="~/css/scadapage.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/active-alarm-panel.css" asp-append-version="true" />
 
 <div class="container-fluid mt-4">
 
@@ -74,6 +75,7 @@
     @* asp-append-version：檔案內容 hash 進 query string，改版後瀏覽器不會吃到舊快取 JS *@
     <script src="~/js/common/schedule-eval.js" asp-append-version="true"></script>
     <script src="~/js/common/motor-equip-svg.js" asp-append-version="true"></script>
+    <script src="~/js/common/pipe-svg.js" asp-append-version="true"></script>
     <script src="~/js/scadapage.js" asp-append-version="true"></script>
     <script src="~/js/active-alarm-panel.js" asp-append-version="true"></script>
 }

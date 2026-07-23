@@ -231,7 +231,8 @@ const WIDGET_DEFS = {
             fThreshold:   0,           // 僅 analog 模式：越過此值才流動
             szCompare:    'gt',        // 'gt'（>）| 'gte'（>=）
             // 外觀
-            szOrient:     'h',         // 'h' 水平 | 'v' 垂直
+            szOrient:     'h',         // 相容欄位（舊直管 'h'|'v'）；折線化後不再寫入
+            arrPoints:    null,        // 正交折線節點 [{x,y},...]（相對 widget 左上角 px；null=舊格式待推導）
             nThickness:   8,           // 管線粗細 px
             szFlowColor:  '#0d6efd',   // 流動色
             szStopColor:  '#adb5bd',   // 停止色（管身底色）
@@ -938,32 +939,12 @@ function buildChillerHtml(props, szState) {
 }
 
 // ============================================================
-// 管路流動元件（直管段：水平/垂直 + dash marching 流動動畫）
+// 管路流動元件（正交折線：SVG path，圖形共用 common/pipe-svg.js）
 // ============================================================
-// 流速檔 1..5 → CSS 動畫時長（值越大越快）
-const PIPE_SPEED_DUR = { 1: '1.2s', 2: '0.9s', 3: '0.6s', 4: '0.4s', 5: '0.25s' };
-
 // szState: 'flow'（流動）| 'stop'（靜止）| 'bad'（斷線）。Designer 預覽固定 'flow'。
-function buildPipeHtml(props, szState) {
-    const szOrient = props.szOrient === 'v' ? 'v' : 'h';
-    const nThk     = Math.max(2, props.nThickness || 8);
-    const szFlow   = props.szFlowColor || '#0d6efd';
-    const szStop   = props.szStopColor || '#adb5bd';
-    const szBad    = props.szBadColor  || '#6c757d';
-    const nSpeed   = Math.min(5, Math.max(1, props.nSpeed || 3));
-    const szDur    = PIPE_SPEED_DUR[nSpeed] || '0.6s';
-    const bRev     = props.szDir === 'rev';
-    const szBg     = (props.szBgColor && props.szBgColor !== 'transparent') ? props.szBgColor : 'transparent';
-
-    // 管身底色：斷線→斷線色，其餘→停止色（流動時上面再疊 dash 動畫）
-    const szTrackColor = szState === 'bad' ? szBad : szStop;
-    const bFlowing     = szState === 'flow';
-    const szFlowDiv = bFlowing
-        ? `<div class="pipe-flow${bRev ? ' rev' : ''}" style="--flow-color:${szFlow};--flow-dur:${szDur};"></div>`
-        : '';
-
-    return `<div class="pipe-widget pipe-${szOrient}" style="--pipe-thickness:${nThk}px;background:${szBg};">
-        <div class="pipe-track" style="background:${szTrackColor};"></div>
-        ${szFlowDiv}
-    </div>`;
+// el 供讀取 widget 目前寬高（舊格式 h/v 直管推導 2 節點用）。
+function buildPipeHtml(props, szState, el) {
+    const nW = el ? (parseInt(el.style.width)  || el.offsetWidth  || 160) : 160;
+    const nH = el ? (parseInt(el.style.height) || el.offsetHeight || 24)  : 24;
+    return PipeSvg.build({ props: props, szState: szState, nW: nW, nH: nH, szHoverHtml: '' });
 }

@@ -786,7 +786,43 @@ main { padding: 0 !important; min-height: 0 !important; }
 }
 .canvas-widget.widget-pipe .widget-header { display: none; }
 .canvas-widget.widget-pipe .widget-body { cursor: move; overflow: visible; padding: 0; }
+/* 折線管路：命中只認管身加寬透明 stroke（避免 bbox 空白區擋到底下元件）；
+   大小由節點決定 → 隱藏 resize 鈕（搭配 startResize/setSize 短路雙保險） */
+.canvas-widget.widget-pipe { pointer-events: none; }
+.canvas-widget.widget-pipe .pipe-svg-hit { cursor: move; }
+.canvas-widget.widget-pipe .resize-knob { display: none; }
 
+/* 折線管路節點手把（選取時顯示；端點實心、中間節點空心） */
+.pipe-node {
+    position: absolute;
+    width: 7px; height: 7px;
+    margin-left: -5px; margin-top: -5px;
+    background: #fff;
+    border: 2px solid #0d6efd;
+    border-radius: 2px;
+    cursor: move;
+    z-index: 6;
+    display: none;
+    pointer-events: auto;
+    box-sizing: content-box;
+}
+.canvas-widget.widget-pipe.selected .pipe-node,
+.canvas-widget.widget-pipe.widget-multi-selected .pipe-node { display: block; }
+.pipe-node.pipe-node-end { background: #0d6efd; }
+
+/* 折線管路本體：SVG path + stroke-dashoffset 流動（轉角 round join 連續過彎） */
+.pipe-svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.pipe-svg path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.pipe-svg-track, .pipe-svg-flow { pointer-events: none; }
+.pipe-svg-flow {
+    stroke-dasharray: 12 10;
+    animation: pipe-dash var(--flow-dur, .6s) linear infinite;
+}
+.pipe-svg-flow.rev { animation-direction: reverse; }
+.pipe-svg-hit { stroke: transparent; pointer-events: stroke; }
+@keyframes pipe-dash { to { stroke-dashoffset: -22; } }
+
+/* 舊版直管 CSS（pipe-h / pipe-v）保留一版不刪 — 防未升級快取頁面 */
 /* 管路本體：直管段 + dash marching 流動動畫（水平/垂直） */
 .pipe-widget { position: relative; width: 100%; height: 100%; border-radius: 4px; }
 .pipe-track, .pipe-flow { position: absolute; pointer-events: none; }

@@ -3,7 +3,8 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<link rel="stylesheet" href="~/css/designer.css" />
+@* asp-append-version：檔案內容 hash 進 query string，改版後瀏覽器不會吃到舊快取 CSS *@
+<link rel="stylesheet" href="~/css/designer.css" asp-append-version="true" />
 
 <!-- Designer 主容器 -->
 <div class="designer-outer" id="designerOuter">
@@ -580,6 +581,7 @@
 @section Scripts {
 <script src="~/js/common/schedule-eval.js" asp-append-version="true"></script>
 <script src="~/js/common/motor-equip-svg.js" asp-append-version="true"></script>
+<script src="~/js/common/pipe-svg.js" asp-append-version="true"></script>
 <script src="~/js/designer/state.js" asp-append-version="true"></script>
 <script src="~/js/designer/widget-defs.js" asp-append-version="true"></script>
 <script src="~/js/designer/widget-core.js" asp-append-version="true"></script>

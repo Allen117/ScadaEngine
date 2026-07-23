@@ -478,11 +478,24 @@ props 命名沿用 pump 慣例（`szSidXxx` + `szXxxName` 成對）：共同 `sz
 
 > **設計決策**：採「抽共用核心」策略——三設備共用一份 `MotorEquip` 圖形模組與一套執行期邏輯（右鍵 / 拖曳 / 輪詢），並重用 pump 既有 helper（`_buildModeBadgeHtml` / `_pumpStartStop` 等）。水泵本身未遷移以避免生產回歸風險。詳見 `docs/plans/_archive/2026-07-07-designer-冰機冷卻水塔空調箱風扇元件.md`。
 
-#### (11) pipe — 管路流動元件
+#### (11) pipe — 管路流動元件（正交折線）
 
-直管段（水平 / 垂直）+ dash marching 流動動畫，用於在設備之間表現介質流動（冰水 / 冷卻水 / 風管）。採 **方案 A：直管段** — 一個矩形定位框內含一條沿方向的流動線，多段轉折以多個 pipe 框拼接（完全套用既有 bounding-box widget 模型，不需自由折線編輯器）。
+**正交折線（orthogonal polyline）管路**（2026-07 改版）：一條管由一串節點（`arrPoints`）組成，每段仍為水平或垂直（不變量：任兩相鄰節點共 x 或共 y），可自由拉出 L 型／ㄇ 型／多轉角走線 — **一條折線管＝一個元件＝一份綁定**，取代舊「多段直管拼接」做法（轉角流動不連續、綁定分散）。
 
-**流動動畫技術**：以 CSS `repeating-linear-gradient` + `background-position` 動畫（marching-ants）呈現，**非** SVG `stroke-dashoffset`。原因：widget 可縮放，SVG viewBox 非等比縮放會扭曲 dash；CSS 固定 px dash pattern + 百分比定位，縮放不變形。keyframes `pipe-flow-h` / `pipe-flow-v`，流向以 `animation-direction:reverse` 切換，流速檔 1-5 映射動畫時長（`PIPE_SPEED_DUR`）。
+**資料模型**：`props.arrPoints = [{x,y}, ...]`（≥2 點，座標相對 widget 左上角 px）。widget 外框（left/top/width/height）＝節點 bounding box ＋ 線寬留白（`PipeSvg.padOf` = ⌈粗細/2⌉+2），節點編輯後自動重算。`szOrient` 保留為相容欄位不再寫入。
+
+**舊存檔相容**：載入時無 `arrPoints` → 由 `szOrient` ＋ widget 寬高推導 2 節點直管（h：左中→右中；v：上中→下中，端點內縮粗細/2 使 round cap 與舊版圓角端等視覺）。ScadaPage 執行期推導**不回寫**；Designer 端 `preparePipeWidget` 於渲染時轉為新格式，重存即落 `arrPoints`。
+
+**流動動畫技術**：SVG 同一條 `<path>` 疊三層 — 底層 track（停止/斷線色實線）、上層 flow（流動色 `stroke-dasharray: 12 10` ＋ `stroke-dashoffset` keyframes `pipe-dash`）、頂層 hit（加寬透明 stroke，唯一 `pointer-events` 命中區）。`stroke-linejoin/linecap: round` 使轉角自然圓滑、dash 沿整條路徑**連續過彎**（瀏覽器原生處理，任意段數零額外成本）。流向以 `animation-direction:reverse` 切換，流速檔 1-5 映射動畫時長（`PipeSvg.SPEED_DUR`）。viewBox 與 widget 尺寸 1:1（大小由節點決定、無非等比縮放，舊版「CSS gradient 防縮放扭曲」的顧慮不復存在）。
+
+**Designer 節點編輯**（widget-core.js）：
+
+- 選取管路 → 顯示節點手把（`.pipe-node`；端點實心、中間節點空心）
+- **拖曳節點**：自由拖（貼齊 10px 格），即時正交修正 — 只動直接鄰點：鄰點是端點→沿共用段原方向跟隨（原水平繼承 y、原垂直繼承 x）；鄰點是中間節點→修正在不破壞其外側線段的軸上（外側原水平→改鄰點 x、原垂直→改鄰點 y），任何案例（含連續共線節點）修正後全鏈仍正交、無需連鎖擴散。放開時去除拖到重合的重複節點
+- **雙擊管身**：於最近線段中點插入節點（插入當下共線，拖開即折彎）
+- **右鍵節點**：刪除；刪後前後兩點不共軸→自動補一個轉角點維持正交；少於 2 點禁刪
+- 右下角 **resize 鈕停用**（隱藏＋`startResize`/`setSize` 短路），大小完全由節點決定，屬性面板寬高欄唯讀；整體拖移（管身 mousedown）照舊
+- 命中只認管身加寬透明 stroke（容器 `pointer-events:none`）— bounding box 空白區不會擋到底下元件
 
 **綁定（二擇一互斥）** — `szBindMode` 為單一真相（`''` 未綁 / `'di'` / `'analog'`），DI 與「類比量＋閾值」共用同一 `szSid` 欄，任一時刻僅一種生效：
 
@@ -493,13 +506,13 @@ props 命名沿用 pump 慣例（`szSidXxx` + `szXxxName` 成對）：共同 `sz
 
 於屬性面板點另一種綁定並完成選點時，若已綁另一模式且有值 → **跳 confirm**：確認則清除原綁定改綁新的、取消則完全不動（互斥收斂在 `picker.js` 的 `confirmPointPick` pipe 分支）。首次進入類比模式以點位中間值作為預設閾值。
 
-props：`szBindMode / szSid / szPointName / fThreshold / szCompare('gt'|'gte') / szOrient('h'|'v') / nThickness / szFlowColor / szStopColor / szBadColor / nSpeed(1-5) / szDir('fwd'|'rev') / szBgColor`。
+props：`szBindMode / szSid / szPointName / fThreshold / szCompare('gt'|'gte') / arrPoints([{x,y}...]) / szOrient('h'|'v'，相容欄位) / nThickness / szFlowColor / szStopColor / szBadColor / nSpeed(1-5) / szDir('fwd'|'rev') / szBgColor`。
 
-- 拖入畫布**直接建立**（不先開 picker），綁定於屬性面板完成
+- 拖入畫布**直接建立**（不先開 picker，預設 2 節點水平直管），綁定於屬性面板完成
 - 斷線（Bad quality）→ 以 `szBadColor` 靜止顯示、不流動，tooltip 顯示「斷線」
 - 未綁定 → 純裝飾，固定流動
-- hover 顯示「標題 — 狀態（流動 / 靜止 / 斷線）— 數值(類比)」tooltip
-- Designer `buildPipeHtml`（widget-defs.js）與 ScadaPage `buildPipeViewHtml`（scadapage.js 本地）各一份，樣式共用 `.pipe-widget / .pipe-track / .pipe-flow`
+- hover 管身顯示「標題 — 狀態（流動 / 靜止 / 斷線）— 數值(類比)」tooltip；右鍵管身開趨勢圖照舊
+- 圖形共用 `wwwroot/js/common/pipe-svg.js`（`window.PipeSvg.build`）：Designer `buildPipeHtml`（widget-defs.js）與 ScadaPage `buildPipeViewHtml`（scadapage.js）皆為薄包裝，同 `motor-equip-svg.js` 單一真相模式；樣式 `.pipe-svg / .pipe-svg-track / .pipe-svg-flow / .pipe-svg-hit`（舊 `.pipe-h / .pipe-v` CSS 保留一版防未升級快取頁面）
 
 > **元件庫分類（Designer）**：元件庫改為三類 — 顯示元件（表格 / 儀錶板 / 文字）、點位與控制（控制按鈕 / AI / DI / AO / DO）、設備與動畫（水泵 / 管路 / 冷卻水塔 / 空調箱風扇 / 冰機）。各類獨立捲動（`.widget-cat-items` overflow-y:auto），`.designer-outer` 釘視窗高使面板本身不捲，避免 100% 時多餘的整體捲軸。
 

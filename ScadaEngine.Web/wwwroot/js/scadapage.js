@@ -531,10 +531,12 @@
             el.dataset.szDir       = p.szDir       || 'fwd';
             el.dataset.szBgColor   = p.szBgColor   || 'transparent';
             el.dataset.szTitle     = p.szTitle     || '';
+            // 折線節點（新格式）；舊存檔無 arrPoints → builder 依 szOrient + 寬高推導直管
+            if (p.arrPoints && p.arrPoints.length >= 2) el.dataset.arrPoints = JSON.stringify(p.arrPoints);
             el.classList.add('scada-pipe');
             el.style.overflow = 'visible';
             // 未綁定 → 純裝飾固定流動；已綁定 → 初始靜止，待 polling 更新
-            el.innerHTML = buildPipeViewHtml(p, p.szBindMode ? 'stop' : 'flow', '');
+            el.innerHTML = buildPipeViewHtml(p, p.szBindMode ? 'stop' : 'flow', '', ws.nW, ws.nH);
             if (p.szSid) el.addEventListener('contextmenu', function (ev) { onTrendContextMenu(ev, el.dataset.sid); });
         } else if (ws.szType === 'coolingTower' || ws.szType === 'ahuFan' || ws.szType === 'chiller') {
             // 馬達型設備（冷卻水塔 / 空調箱風扇 / 冰機）— 仿水泵，共用 MotorEquip 圖形
@@ -1294,27 +1296,11 @@
             '</div>';
     }
 
-    // ── 管路流動元件 HTML（純顯示，無控制）──
-    var PIPE_SPEED_DUR = { 1: '1.2s', 2: '0.9s', 3: '0.6s', 4: '0.4s', 5: '0.25s' };
+    // ── 管路流動元件 HTML（純顯示，無控制；圖形共用 common/pipe-svg.js）──
     // szState: 'flow' 流動 | 'stop' 靜止 | 'bad' 斷線；szValueText 選填（類比值顯示於 tooltip）
-    function buildPipeViewHtml(props, szState, szValueText) {
-        var szOrient = props.szOrient === 'v' ? 'v' : 'h';
-        var nThk     = Math.max(2, parseFloat(props.nThickness) || 8);
-        var szFlow   = props.szFlowColor || '#0d6efd';
-        var szStop   = props.szStopColor || '#adb5bd';
-        var szBad    = props.szBadColor  || '#6c757d';
-        var nSpeed   = Math.min(5, Math.max(1, parseInt(props.nSpeed) || 3));
-        var szDur    = PIPE_SPEED_DUR[nSpeed] || '0.6s';
-        var bRev     = props.szDir === 'rev';
-        var szBg     = (props.szBgColor && props.szBgColor !== 'transparent') ? props.szBgColor : 'transparent';
-        var szTitle  = props.szTitle || '';
-
-        var szTrackColor = szState === 'bad' ? szBad : szStop;
-        var bFlowing     = szState === 'flow';
-        var szFlowDiv = bFlowing
-            ? '<div class="pipe-flow' + (bRev ? ' rev' : '') + '" style="--flow-color:' + szFlow + ';--flow-dur:' + szDur + ';"></div>'
-            : '';
-
+    // nW/nH：widget 外框尺寸（SVG viewBox 與舊格式直管推導用）
+    function buildPipeViewHtml(props, szState, szValueText, nW, nH) {
+        var szTitle = props.szTitle || '';
         var szStateText = szState === 'bad' ? '斷線' : szState === 'flow' ? '流動' : '靜止';
         var arrTip = [];
         if (szTitle) arrTip.push(escViewHtml(szTitle));
@@ -1325,10 +1311,7 @@
             'background:rgba(33,37,41,.85);color:#fff;font-size:11px;padding:3px 10px;border-radius:4px;' +
             'pointer-events:none;z-index:10;">' + arrTip.join(' — ') + '</div>';
 
-        return '<div class="pipe-widget pipe-' + szOrient + '" style="--pipe-thickness:' + nThk + 'px;background:' + szBg + ';">' +
-            '<div class="pipe-track" style="background:' + szTrackColor + ';"></div>' +
-            szFlowDiv + szTooltip +
-            '</div>';
+        return PipeSvg.build({ props: props, szState: szState, nW: nW, nH: nH, szHoverHtml: szTooltip });
     }
 
     // ── 水泵 Linear Gauge 拖拽控制 ──
@@ -2639,13 +2622,15 @@
             var szKey = szState + '|' + szValueText;
             if (el.dataset._pipeKey === szKey) return;
             el.dataset._pipeKey = szKey;
+            var arrPipePts = null;
+            try { arrPipePts = el.dataset.arrPoints ? JSON.parse(el.dataset.arrPoints) : null; } catch (_) { }
             el.innerHTML = buildPipeViewHtml({
                 szOrient: el.dataset.szOrient, nThickness: el.dataset.nThickness,
                 szFlowColor: el.dataset.szFlowColor, szStopColor: el.dataset.szStopColor,
                 szBadColor: el.dataset.szBadColor, nSpeed: el.dataset.nSpeed,
                 szDir: el.dataset.szDir, szBgColor: el.dataset.szBgColor,
-                szTitle: el.dataset.szTitle
-            }, szState, szValueText);
+                szTitle: el.dataset.szTitle, arrPoints: arrPipePts
+            }, szState, szValueText, parseInt(el.style.width), parseInt(el.style.height));
         });
 
         // 更新表格 SID 儲存格

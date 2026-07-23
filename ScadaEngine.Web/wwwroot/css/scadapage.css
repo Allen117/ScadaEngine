@@ -51,6 +51,22 @@
     to   { transform: rotate(360deg); }
 }
 
+/* ── 管路流動元件（正交折線：SVG path + stroke-dashoffset 流動） ── */
+/* 命中只認管身加寬透明 stroke：hover tooltip / 右鍵趨勢只在管身觸發，
+   bbox 空白區不擋底下元件（:hover 由子元素命中往上傳遞） */
+.scada-pipe { pointer-events: none; }
+.pipe-svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.pipe-svg path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.pipe-svg-track, .pipe-svg-flow { pointer-events: none; }
+.pipe-svg-flow {
+    stroke-dasharray: 12 10;
+    animation: pipe-dash var(--flow-dur, .6s) linear infinite;
+}
+.pipe-svg-flow.rev { animation-direction: reverse; }
+.pipe-svg-hit { stroke: transparent; pointer-events: stroke; }
+@keyframes pipe-dash { to { stroke-dashoffset: -22; } }
+
+/* 舊版直管 CSS（pipe-h / pipe-v）保留一版不刪 — 防未升級快取頁面 */
 /* ── 管路流動元件（直管段 + dash marching 流動動畫） ── */
 .pipe-widget { position: relative; width: 100%; height: 100%; border-radius: 4px; }
 .pipe-track, .pipe-flow { position: absolute; pointer-events: none; }

@@ -419,6 +419,9 @@
   <data name="designer.prop.pipe.bad_color" xml:space="preserve"><value>斷線色</value></data>
   <data name="designer.pipe.confirm_switch_to_analog" xml:space="preserve"><value>目前為 DI 綁定，改為類比綁定會清除原本的 DI 綁定，確定？</value></data>
   <data name="designer.pipe.confirm_switch_to_di" xml:space="preserve"><value>目前為類比綁定，改為 DI 綁定會清除原本的類比綁定，確定？</value></data>
+  <data name="designer.prop.pipe.size_hint" xml:space="preserve"><value>大小由節點自動決定（拖曳節點調整走向）</value></data>
+  <data name="designer.prop.pipe.nodes_hint" xml:space="preserve"><value>選取後拖曳節點折彎／延長；雙擊管身插入節點；節點上按右鍵刪除</value></data>
+  <data name="designer.pipe.node_tooltip" xml:space="preserve"><value>拖曳折彎／延長；右鍵刪除節點</value></data>
 
   <!-- Prop Panel - text -->
   <data name="designer.prop.text.bold" xml:space="preserve"><value>粗體</value></data>

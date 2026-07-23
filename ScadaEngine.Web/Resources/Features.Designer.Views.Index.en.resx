@@ -420,6 +420,9 @@
   <data name="designer.prop.pipe.bad_color" xml:space="preserve"><value>Offline Color</value></data>
   <data name="designer.pipe.confirm_switch_to_analog" xml:space="preserve"><value>Currently bound to DI. Switching to analog binding will clear the DI binding. Continue?</value></data>
   <data name="designer.pipe.confirm_switch_to_di" xml:space="preserve"><value>Currently bound to analog. Switching to DI binding will clear the analog binding. Continue?</value></data>
+  <data name="designer.prop.pipe.size_hint" xml:space="preserve"><value>Size follows the pipe nodes automatically (drag nodes to reshape)</value></data>
+  <data name="designer.prop.pipe.nodes_hint" xml:space="preserve"><value>Select the pipe, then drag a node to bend/extend; double-click the pipe body to insert a node; right-click a node to delete it</value></data>
+  <data name="designer.pipe.node_tooltip" xml:space="preserve"><value>Drag to bend/extend; right-click to delete this node</value></data>
 
   <!-- Prop Panel - text -->
   <data name="designer.prop.text.bold" xml:space="preserve"><value>Bold</value></data>

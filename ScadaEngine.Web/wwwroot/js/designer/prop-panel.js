@@ -27,12 +27,13 @@ function renderPropPanel(el) {
     // 共用欄位
     const szUnboundLabel = `<span style="color:#888;font-size:11px;">${escHtml(t('designer.widget.unbound'))}</span>`;
     // table 鎖定尺寸時，寬高改為 readonly 並顯示說明（plan 決策 4）
-    const bSizeLocked   = (szType === 'table' && props.bTableSizeLocked === true);
+    // 折線管路大小由節點 bounding box 決定，寬高一律 readonly（plan 2026-07-23 決策 4）
+    const bSizeLocked   = (szType === 'table' && props.bTableSizeLocked === true) || szType === 'pipe';
     const szSizeRO      = bSizeLocked ? 'readonly style="background:#f1f3f5;color:#888;"' : '';
     const szSizeOninput = bSizeLocked ? '' : `oninput="setSize('width', +this.value)"`;
     const szSizeOninputH= bSizeLocked ? '' : `oninput="setSize('height', +this.value)"`;
     const szSizeLockedHint = bSizeLocked
-        ? `<div style="font-size:10px;color:#888;margin-top:-4px;margin-bottom:6px;">${escHtml(t('designer.prop.table_size_locked'))}</div>`
+        ? `<div style="font-size:10px;color:#888;margin-top:-4px;margin-bottom:6px;">${escHtml(t(szType === 'pipe' ? 'designer.prop.pipe.size_hint' : 'designer.prop.table_size_locked'))}</div>`
         : '';
     let szHtml = `
         <div class="prop-group">
@@ -666,14 +667,7 @@ function renderPropPanel(el) {
         }
         szHtml += `
         <hr class="prop-divider">
-        <div class="prop-group">
-            <label>${escHtml(t('designer.prop.pipe.orient'))}</label>
-            <select onchange="setProp('szOrient', this.value)"
-                    style="width:100%;background:#3c3c3c;border:1px solid #555;color:#d4d4d4;padding:4px 6px;font-size:12px;border-radius:3px;">
-                <option value="h" ${(props.szOrient || 'h') === 'h' ? 'selected' : ''}>${escHtml(t('designer.prop.pipe.orient_h'))}</option>
-                <option value="v" ${props.szOrient === 'v' ? 'selected' : ''}>${escHtml(t('designer.prop.pipe.orient_v'))}</option>
-            </select>
-        </div>
+        <div style="font-size:10px;color:#888;margin-bottom:6px;line-height:1.6;">${escHtml(t('designer.prop.pipe.nodes_hint'))}</div>
         <div class="prop-group">
             <label>${escHtml(t('designer.prop.pipe.direction'))}</label>
             <select onchange="setProp('szDir', this.value)"
@@ -1237,6 +1231,8 @@ function setSize(szSide, nVal) {
     if (!selectedEl) return;
     // table 鎖定尺寸時禁止外部 setSize（plan 決策 4）
     if (selectedEl.dataset.type === 'table' && selectedEl.widgetProps?.bTableSizeLocked) return;
+    // 折線管路大小由節點決定，禁止外部 setSize（plan 2026-07-23 決策 4）
+    if (selectedEl.dataset.type === 'pipe') return;
     const def = WIDGET_DEFS[selectedEl.dataset.type];
     const nMin = szSide === 'width' ? (def?.nMinW || 40) : (def?.nMinH || 30);
     selectedEl.style[szSide] = Math.max(nMin, nVal) + 'px';

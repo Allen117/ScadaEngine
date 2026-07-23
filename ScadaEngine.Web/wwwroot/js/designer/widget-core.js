@@ -98,6 +98,9 @@ function renderWidget(el) {
     const def    = WIDGET_DEFS[szType];
     const props  = el.widgetProps;
 
+    // 折線管路：先確保 arrPoints（舊格式 h/v 轉新格式）並同步外框 = bbox + 留白
+    if (szType === 'pipe') preparePipeWidget(el);
+
     const szContent = szType === 'table'          ? buildTableHtml(props)
                     : szType === 'controlBtn'     ? buildControlBtnHtml(props)
                     : szType === 'realtimeValue'  ? buildRealtimeValueHtml(props)
@@ -105,7 +108,7 @@ function renderWidget(el) {
                     : szType === 'aoPoint'        ? buildAoPointHtml(props)
                     : szType === 'doPoint'        ? buildDoPointHtml(props)
                     : szType === 'pump'           ? buildPumpHtml(props, 'stop')
-                    : szType === 'pipe'           ? buildPipeHtml(props, 'flow')
+                    : szType === 'pipe'           ? buildPipeHtml(props, 'flow', el)
                     : szType === 'coolingTower'   ? buildCoolingTowerHtml(props, 'stop')
                     : szType === 'ahuFan'         ? buildAhuFanHtml(props, 'stop')
                     : szType === 'chiller'        ? buildChillerHtml(props, 'stop')
@@ -185,6 +188,13 @@ function renderWidget(el) {
 
     // 點選選取（支援 Ctrl 多選）
     el.addEventListener('mousedown', (ev) => onWidgetMouseDown(ev, el));
+
+    // 折線管路：雙擊管身插入節點 + 節點手把（拖曳折彎 / 右鍵刪除）
+    if (szType === 'pipe') {
+        const hit = el.querySelector('.pipe-svg-hit');
+        if (hit) hit.addEventListener('dblclick', e => onPipeBodyDblClick(e, el));
+        renderPipeHandles(el);
+    }
 
     // 表格儲存格事件（點擊/右鍵）
     if (szType === 'table') {
@@ -341,6 +351,8 @@ function startMove(e, el) {
 function startResize(e, el) {
     // table widget 大小由結構決定，禁止手動 resize（plan 決策 3）
     if (el && el.dataset.type === 'table' && el.widgetProps && el.widgetProps.bTableSizeLocked) return;
+    // 折線管路大小由節點 bounding box 決定，禁止手動 resize（plan 2026-07-23 決策 4）
+    if (el && el.dataset.type === 'pipe') return;
     isResizing  = true;
     resizingEl  = el;
     document.querySelector('.property-panel')?.classList.add('collapsed');
@@ -426,3 +438,213 @@ document.addEventListener('keydown', e => {
         if (e.key === 'v') { e.preventDefault(); pasteWidgets(); }
     }
 });
+
+// ============================================================
+// 折線管路節點編輯（plan 2026-07-23）
+// ============================================================
+// 資料模型：props.arrPoints = [{x,y},...]（相對 widget 左上角 px），
+// 不變量：任兩相鄰節點共 x 或共 y（正交）。widget 外框 = 節點 bbox + pad。
+// 編輯以「畫布絕對座標」計算（widget 外框隨 bbox 平移，相對座標會變基準）。
+
+// 舊格式（無 arrPoints）→ 依 szOrient + 目前寬高推導 2 節點，並同步外框。
+// 於 renderWidget 進入時呼叫；Designer 重存即落新格式（執行期推導不回寫）。
+function preparePipeWidget(el) {
+    const props = el.widgetProps;
+    if (!props.arrPoints || props.arrPoints.length < 2) {
+        props.arrPoints = PipeSvg.normPoints(props,
+            parseInt(el.style.width)  || el.offsetWidth,
+            parseInt(el.style.height) || el.offsetHeight);
+    }
+    const nLeft = parseInt(el.style.left) || 0;
+    const nTop  = parseInt(el.style.top)  || 0;
+    _setPipeFrame(el, props.arrPoints.map(p => ({ x: nLeft + p.x, y: nTop + p.y })));
+}
+
+// 以畫布絕對座標節點重算外框（left/top/width/height = bbox + pad），
+// 並把節點寫回相對座標。不觸發 renderWidget（由呼叫端決定）。
+function _setPipeFrame(el, arrAbs) {
+    const props = el.widgetProps;
+    const pad = PipeSvg.padOf(props);
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const p of arrAbs) {
+        if (p.x < minX) minX = p.x;
+        if (p.y < minY) minY = p.y;
+        if (p.x > maxX) maxX = p.x;
+        if (p.y > maxY) maxY = p.y;
+    }
+    const nLeft = Math.round(minX - pad);
+    const nTop  = Math.round(minY - pad);
+    el.style.left   = nLeft + 'px';
+    el.style.top    = nTop  + 'px';
+    el.style.width  = Math.round(maxX - minX + pad * 2) + 'px';
+    el.style.height = Math.round(maxY - minY + pad * 2) + 'px';
+    props.arrPoints = arrAbs.map(p => ({ x: Math.round(p.x - nLeft), y: Math.round(p.y - nTop) }));
+}
+
+// 節點手把（選取時由 CSS 顯示；端點實心、中間節點空心）
+function renderPipeHandles(el) {
+    const arrPts = el.widgetProps.arrPoints || [];
+    arrPts.forEach((p, i) => {
+        const h = document.createElement('div');
+        h.className   = 'pipe-node' + ((i === 0 || i === arrPts.length - 1) ? ' pipe-node-end' : '');
+        h.style.left  = p.x + 'px';
+        h.style.top   = p.y + 'px';
+        h.title       = t('designer.pipe.node_tooltip');
+        h.addEventListener('mousedown',   e => startPipeNodeDrag(e, el, i));
+        h.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); deletePipeNode(el, i); });
+        h.addEventListener('dblclick',    e => e.stopPropagation());
+        el.appendChild(h);
+    });
+}
+
+// 線段方向分類（'h' 水平 / 'v' 垂直；零長度或異常資料以較大位移軸判定）
+function _pipeSegOrient(p1, p2) {
+    return Math.abs(p2.x - p1.x) >= Math.abs(p2.y - p1.y) ? 'h' : 'v';
+}
+
+// ── 拖曳節點（正交修正：只動直接鄰點）──
+// 鄰點修正規則：
+//   鄰點是端點 → 沿共用線段原方向跟隨（原水平→繼承 y、原垂直→繼承 x）
+//   鄰點是中間節點 → 修正在「不破壞其外側線段」的軸上：
+//     外側線段原水平（鄰點與更外點共 y）→ 改鄰點 x（共用段轉垂直）
+//     外側線段原垂直（共 x）→ 改鄰點 y（共用段轉水平）
+// 如此任何案例（含連續共線節點）修正後全鏈仍正交，無需連鎖擴散。
+let pipeDrag = null;
+
+function startPipeNodeDrag(e, el, nIdx) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!selectedWidgetIds.has(el.id)) {
+        clearWidgetSelection();
+        selectedWidgetIds.add(el.id);
+        updateWidgetSelectionVisual();
+    }
+    selectWidget(el);
+    const nLeft = parseInt(el.style.left) || 0;
+    const nTop  = parseInt(el.style.top)  || 0;
+    const arrAbs = el.widgetProps.arrPoints.map(p => ({ x: nLeft + p.x, y: nTop + p.y }));
+    const arrOrient = [];
+    for (let i = 0; i < arrAbs.length - 1; i++) arrOrient.push(_pipeSegOrient(arrAbs[i], arrAbs[i + 1]));
+    pipeDrag = { el, nIdx, arrAbs, arrOrient };
+    document.querySelector('.property-panel')?.classList.add('collapsed');
+    document.addEventListener('mousemove', onPipeNodeMove);
+    document.addEventListener('mouseup', endPipeNodeDrag);
+}
+
+function onPipeNodeMove(e) {
+    if (!pipeDrag) return;
+    const rect = canvas.getBoundingClientRect();
+    let ax = snapGrid(e.clientX - rect.left);
+    let ay = snapGrid(e.clientY - rect.top);
+    ax = Math.max(0, Math.min(canvas.offsetWidth,  ax));
+    ay = Math.max(0, Math.min(canvas.offsetHeight, ay));
+
+    const { el, nIdx, arrAbs, arrOrient } = pipeDrag;
+    const arrPts = arrAbs.map(p => ({ x: p.x, y: p.y }));
+    arrPts[nIdx] = { x: ax, y: ay };
+
+    // 前鄰點（共用線段 = arrOrient[nIdx-1]，其外側線段 = arrOrient[nIdx-2]）
+    if (nIdx > 0) {
+        const bEnd = (nIdx - 1 === 0);
+        if (bEnd) {
+            if (arrOrient[nIdx - 1] === 'h') arrPts[nIdx - 1].y = ay;
+            else                             arrPts[nIdx - 1].x = ax;
+        } else {
+            if (arrOrient[nIdx - 2] === 'h') arrPts[nIdx - 1].x = ax;
+            else                             arrPts[nIdx - 1].y = ay;
+        }
+    }
+    // 後鄰點（共用線段 = arrOrient[nIdx]，其外側線段 = arrOrient[nIdx+1]）
+    if (nIdx < arrPts.length - 1) {
+        const bEnd = (nIdx + 1 === arrPts.length - 1);
+        if (bEnd) {
+            if (arrOrient[nIdx] === 'h') arrPts[nIdx + 1].y = ay;
+            else                         arrPts[nIdx + 1].x = ax;
+        } else {
+            if (arrOrient[nIdx + 1] === 'h') arrPts[nIdx + 1].x = ax;
+            else                             arrPts[nIdx + 1].y = ay;
+        }
+    }
+
+    _setPipeFrame(el, arrPts);
+    renderWidget(el);
+    syncPosInputs(parseInt(el.style.left), parseInt(el.style.top));
+}
+
+function endPipeNodeDrag() {
+    if (!pipeDrag) return;
+    const el = pipeDrag.el;
+    pipeDrag = null;
+    document.removeEventListener('mousemove', onPipeNodeMove);
+    document.removeEventListener('mouseup', endPipeNodeDrag);
+
+    // 去除拖到重合的連續重複節點（至少保留 2 點）
+    const props = el.widgetProps;
+    const arrPts = props.arrPoints;
+    const out = [arrPts[0]];
+    for (let i = 1; i < arrPts.length; i++) {
+        const prev = out[out.length - 1];
+        if (arrPts[i].x !== prev.x || arrPts[i].y !== prev.y) out.push(arrPts[i]);
+    }
+    if (out.length >= 2) props.arrPoints = out;
+    preparePipeWidget(el);
+    renderWidget(el);
+    if (selectedEl === el) {
+        document.querySelector('.property-panel')?.classList.remove('collapsed');
+        renderPropPanel(el);
+    }
+}
+
+// ── 雙擊管身：於最近線段中點插入節點（插入當下共線，拖開即折彎）──
+function onPipeBodyDblClick(e, el) {
+    e.preventDefault();
+    e.stopPropagation();
+    const arrPts = el.widgetProps.arrPoints;
+    if (!arrPts || arrPts.length < 2) return;
+    const rect  = canvas.getBoundingClientRect();
+    const nLeft = parseInt(el.style.left) || 0;
+    const nTop  = parseInt(el.style.top)  || 0;
+    const px = e.clientX - rect.left - nLeft;
+    const py = e.clientY - rect.top  - nTop;
+    let nBest = 0, fBest = Infinity;
+    for (let i = 0; i < arrPts.length - 1; i++) {
+        const f = _distToSegment(px, py, arrPts[i], arrPts[i + 1]);
+        if (f < fBest) { fBest = f; nBest = i; }
+    }
+    arrPts.splice(nBest + 1, 0, {
+        x: Math.round((arrPts[nBest].x + arrPts[nBest + 1].x) / 2),
+        y: Math.round((arrPts[nBest].y + arrPts[nBest + 1].y) / 2)
+    });
+    renderWidget(el);
+}
+
+function _distToSegment(px, py, p1, p2) {
+    const dx = p2.x - p1.x, dy = p2.y - p1.y;
+    const fLen2 = dx * dx + dy * dy;
+    let ft = fLen2 === 0 ? 0 : ((px - p1.x) * dx + (py - p1.y) * dy) / fLen2;
+    ft = Math.max(0, Math.min(1, ft));
+    const cx = p1.x + ft * dx, cy = p1.y + ft * dy;
+    return Math.hypot(px - cx, py - cy);
+}
+
+// ── 右鍵節點：刪除（前後不共軸自動補轉角點；少於 2 點禁刪）──
+function deletePipeNode(el, nIdx) {
+    const arrPts = el.widgetProps.arrPoints;
+    if (!arrPts || arrPts.length <= 2) return;
+    const bInterior = nIdx > 0 && nIdx < arrPts.length - 1;
+    let prev = null, next = null, szPrevOrient = null;
+    if (bInterior) {
+        prev = arrPts[nIdx - 1];
+        next = arrPts[nIdx + 1];
+        szPrevOrient = _pipeSegOrient(prev, arrPts[nIdx]);
+    }
+    arrPts.splice(nIdx, 1);
+    if (bInterior && prev.x !== next.x && prev.y !== next.y) {
+        // 沿刪除前的前段方向轉彎補一個轉角點，維持正交
+        const corner = szPrevOrient === 'h' ? { x: next.x, y: prev.y } : { x: prev.x, y: next.y };
+        arrPts.splice(nIdx, 0, corner);
+    }
+    preparePipeWidget(el);
+    renderWidget(el);
+    if (selectedEl === el) renderPropPanel(el);
+}
