@@ -72,4 +72,12 @@
   <!-- AI 點位累積模式 badge（plan 2026-07-14-scadapage-accumulation-widget） -->
   <data name="scadapage.acc.day_badge" xml:space="preserve"><value>日累</value></data>
   <data name="scadapage.acc.month_badge" xml:space="preserve"><value>月累</value></data>
+
+  <!-- 迴路指標元件（plan 2026-07-23-designer-table-ems-accumulation-autofill） -->
+  <data name="scadapage.cmetric.day_kwh" xml:space="preserve"><value>本日度數</value></data>
+  <data name="scadapage.cmetric.month_kwh" xml:space="preserve"><value>本月度數</value></data>
+  <data name="scadapage.cmetric.period_kwh" xml:space="preserve"><value>本月電度</value></data>
+  <data name="scadapage.cmetric.period_cost" xml:space="preserve"><value>本月電費</value></data>
+  <data name="scadapage.cmetric.unit_cost" xml:space="preserve"><value>元</value></data>
+  <data name="scadapage.cmetric.estimated" xml:space="preserve"><value>（估算）</value></data>
 </root>

@@ -229,14 +229,17 @@ function renderPropPanel(el) {
                    oninput="setProp('szBtnColor', this.value)">
         </div>`;
     } else if (szType === 'realtimeValue') {
-        const szSidLabel = props.szPointName
-            ? `<span style="font-size:12px;color:#c8c8c8;">${escHtml(props.szPointName)}</span>`
-            : szUnboundLabel;
+        const bCircuitBound = props.nCircuitId != null;
+        const szSidLabel = bCircuitBound
+            ? `<span style="font-size:12px;color:#69db7c;"><i class="fas fa-sitemap me-1"></i>${escHtml(props.szCircuitName || ('#' + props.nCircuitId))}</span>`
+            : (props.szPointName
+                ? `<span style="font-size:12px;color:#c8c8c8;">${escHtml(props.szPointName)}</span>`
+                : szUnboundLabel);
         const isBgTransparent = !props.szBgColor || props.szBgColor === 'transparent';
         const szBgColorVal    = isBgTransparent ? '#ffffff' : props.szBgColor;
         szHtml += `
         <div class="prop-group">
-            <label>${escHtml(t('designer.prop.bound_sid'))}</label>
+            <label>${escHtml(t(bCircuitBound ? 'designer.prop.bound_circuit' : 'designer.prop.bound_sid'))}</label>
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
                 ${szSidLabel}
                 <button class="btn btn-outline-danger btn-sm py-0 px-2" style="font-size:11px;"
@@ -255,6 +258,7 @@ function renderPropPanel(el) {
             <input type="color" value="${props.szFontColor || '#212529'}"
                    oninput="setProp('szFontColor', this.value)">
         </div>
+        ${bCircuitBound ? buildRtCircuitMetricHtml(props) : `
         <div class="prop-group">
             <label>${escHtml(t('designer.prop.unit'))}</label>
             <input type="text" value="${escHtml(props.szUnit || '')}"
@@ -270,7 +274,7 @@ function renderPropPanel(el) {
             <label>${escHtml(t('designer.prop.low_color'))}</label>
             <input type="color" value="${props.szLowColor || '#fd7e14'}"
                    oninput="setProp('szLowColor', this.value)">
-        </div>
+        </div>`}
         <div class="prop-group">
             <label>${escHtml(t('designer.prop.background_color'))}</label>
             <label style="display:inline-flex;align-items:center;gap:3px;font-size:11px;color:#9d9d9d;
@@ -1281,7 +1285,39 @@ function renderTableCellPropPanel(el, nRow, nCol) {
             </select>
         </div>`;
 
-    if (!isHeader) {
+    if (!isHeader && cell.nCircuitId != null) {
+        // ─ 迴路指標 cell（plan 2026-07-23）：迴路名 + 指標下拉 + 解除綁定 ─
+        const szMetric = cell.szMetric || 'day_kwh';
+        const szMetricOptions = ['day_kwh', 'month_kwh', 'period_kwh', 'period_cost'].map(m =>
+            `<option value="${m}" ${szMetric === m ? 'selected' : ''}>${escHtml(t('designer.metric.' + m))}</option>`
+        ).join('');
+        szHtml += `
+        <hr class="prop-divider">
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.bound_circuit'))}</label>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                <span style="font-size:11px;color:#69db7c;"><i class="fas fa-sitemap me-1"></i>${escHtml(cell.szCircuitName || ('#' + cell.nCircuitId))}</span>
+                <button class="btn btn-outline-warning btn-sm py-0 px-2" style="font-size:11px;"
+                        onclick="openCellPointPicker(${nRow}, ${nCol})">
+                    <i class="fas fa-exchange-alt me-1"></i>${escHtml(t('designer.prop.reselect'))}
+                </button>
+                <button class="btn btn-outline-danger btn-sm py-0 px-2" style="font-size:11px;"
+                        onclick="clearCellCircuit(${nRow}, ${nCol})">
+                    <i class="fas fa-unlink me-1"></i>${escHtml(t('designer.prop.clear'))}
+                </button>
+            </div>
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.circuit_metric'))}</label>
+            <select onchange="setCellProp('szMetric', this.value)">${szMetricOptions}</select>
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.col_decimals'))}</label>
+            <input type="number" value="${props.arrColDecimals[nCol] ?? ''}" min="0" max="6"
+                   placeholder="${escHtml(t('designer.prop.col_decimals_placeholder'))}"
+                   oninput="setColDecimals(${nCol}, this.value)">
+        </div>`;
+    } else if (!isHeader) {
         // 綁定點位
         const szSidLabel = cell.szSid
             ? `<span style="font-size:11px;color:#c8c8c8;">${escHtml(cell.szPointName || cell.szSid)}</span>`
@@ -1492,6 +1528,17 @@ function clearCellSid(nRow, nCol) {
     renderTableCellPropPanel(selectedEl, nRow, nCol);
 }
 
+// 解除表格 cell 的迴路指標綁定（新鍵全 delete，JSON 無殘留；plan 2026-07-23）
+function clearCellCircuit(nRow, nCol) {
+    if (!selectedEl) return;
+    const cell = selectedEl.widgetProps.arrCells[nRow][nCol];
+    _clearCellCircuitKeys(cell);   // picker.js
+    renderWidget(selectedEl);
+    const sel = selectedEl.querySelector(`.w-table [data-row="${nRow}"][data-col="${nCol}"]`);
+    if (sel) sel.classList.add('selected-cell');
+    renderTableCellPropPanel(selectedEl, nRow, nCol);
+}
+
 // ============================================================
 // 依點位建立 widget（picker 確認後呼叫）
 // ============================================================
@@ -1571,6 +1618,27 @@ function createRealtimeValueWithPoint(point, x, y) {
         szTitle:     szFullName,
         szUnit:      point.szUnit || ''
     };
+
+    renderWidget(el);
+    canvas.appendChild(el);
+    selectWidget(el);
+}
+
+// 以迴路指標建立 AI 點位 widget（picker「迴路」分頁確認後呼叫；plan 2026-07-23）
+function createRealtimeValueWithCircuit(circuit, x, y) {
+    const def  = WIDGET_DEFS['realtimeValue'];
+    const szId = 'w' + (++nWidgetCounter);
+
+    const el = document.createElement('div');
+    el.id           = szId;
+    el.className    = 'canvas-widget';
+    el.dataset.type = 'realtimeValue';
+    el.style.left   = x + 'px';
+    el.style.top    = y + 'px';
+    el.style.width  = def.nDefaultW + 'px';
+    el.style.height = def.nDefaultH + 'px';
+    el.widgetProps  = { ...getWidgetDefaultProps(el.dataset.type) };
+    _bindRtValueToCircuitMetric(el.widgetProps, circuit);   // picker.js
 
     renderWidget(el);
     canvas.appendChild(el);
@@ -1779,7 +1847,42 @@ function onRtValueModeChange(szVal) {
         p.szValueMode = szVal;
         if (!p.szAccKind) p.szAccKind = 'meter';
         if (p.nAccDecimals == null) p.nAccDecimals = 1;
+        // 綁定 SID 為迴路 kWh 讀值且溢位上限空白 → 非同步帶入 MaxKwh（picker.js）
+        const el = selectedEl;
+        tryFillCircuitMaxKwhAsync(p, () => {
+            if (selectedEl === el) { renderWidget(el); renderPropPanel(el); }
+        });
     }
+    renderWidget(selectedEl);
+    renderPropPanel(selectedEl);
+}
+
+// ============================================================
+// AI 點位 — 迴路指標模式（plan 2026-07-23：綁 EnergyCircuit 的四指標）
+// 取代 SID 型的單位/顯示模式/上下限色區塊；小數位沿用 nAccDecimals 鍵
+// ============================================================
+function buildRtCircuitMetricHtml(props) {
+    const szMetric = props.szMetric || 'day_kwh';
+    const szSelStyle = `style="width:100%;background:#3c3c3c;border:1px solid #555;color:#d4d4d4;
+                               padding:4px 6px;font-size:12px;border-radius:3px;"`;
+    const szOptions = ['day_kwh', 'month_kwh', 'period_kwh', 'period_cost'].map(m =>
+        `<option value="${m}" ${szMetric === m ? 'selected' : ''}>${escHtml(t('designer.metric.' + m))}</option>`
+    ).join('');
+    return `
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.circuit_metric'))}</label>
+            <select onchange="onRtCircuitMetricChange(this.value)" ${szSelStyle}>${szOptions}</select>
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.acc_decimals'))}</label>
+            <input type="number" value="${props.nAccDecimals != null ? props.nAccDecimals : 1}" min="0" max="4" step="1"
+                   oninput="setProp('nAccDecimals', +this.value)">
+        </div>`;
+}
+
+function onRtCircuitMetricChange(szVal) {
+    if (!selectedEl) return;
+    selectedEl.widgetProps.szMetric = szVal;
     renderWidget(selectedEl);
     renderPropPanel(selectedEl);
 }

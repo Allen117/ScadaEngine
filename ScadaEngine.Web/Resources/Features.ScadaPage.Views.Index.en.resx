@@ -72,4 +72,12 @@
   <!-- AI point accumulation mode badge (plan 2026-07-14-scadapage-accumulation-widget) -->
   <data name="scadapage.acc.day_badge" xml:space="preserve"><value>DAY</value></data>
   <data name="scadapage.acc.month_badge" xml:space="preserve"><value>MON</value></data>
+
+  <!-- Circuit metric widgets (plan 2026-07-23-designer-table-ems-accumulation-autofill) -->
+  <data name="scadapage.cmetric.day_kwh" xml:space="preserve"><value>Today kWh</value></data>
+  <data name="scadapage.cmetric.month_kwh" xml:space="preserve"><value>Month kWh</value></data>
+  <data name="scadapage.cmetric.period_kwh" xml:space="preserve"><value>Period kWh</value></data>
+  <data name="scadapage.cmetric.period_cost" xml:space="preserve"><value>Period Cost</value></data>
+  <data name="scadapage.cmetric.unit_cost" xml:space="preserve"><value>NT$</value></data>
+  <data name="scadapage.cmetric.estimated" xml:space="preserve"><value> (estimated)</value></data>
 </root>

@@ -144,42 +144,97 @@
         return out;
     }
 
-    // ── 把 assignments 依「列內由左至右掃描空格」規則寫入 arrCells ──
-    // 回傳 { nFilled, nMissingPoint }
+    // ── 表頭 → 角色比對（正規化沿用 picker.js 的 _normalizeHeaderText：
+    //    trim / 全形→半形 / 去尾端括號單位 / 小寫；別名走 _roleAliases）──
+    function _matchHeaderRole(szHeaderText) {
+        if (!szHeaderText) return null;
+        const szNorm = (typeof _normalizeHeaderText === 'function')
+            ? _normalizeHeaderText(szHeaderText)
+            : String(szHeaderText).trim().toLowerCase();
+        if (!szNorm) return null;
+        return _findRoleByAlias(szNorm);
+    }
+
+    // ── 計算每個 assignment 的目標欄（表頭優先，v6 依使用者回饋）──
+    // pass 1：第一列表頭命中該角色且 cell 空白 → 對號入座（依表頭位置，不論左右順序）
+    // pass 2：其餘沿用舊制 — 自「點選欄位」右鄰起循序找空欄；
+    //         但不搶「表頭命中其他角色」的欄（避免張冠李戴），未找到點位的角色仍預留空欄
+    // 回傳 arrTargets（與 assignments 同 index；值 = colIdx 或 null = 無欄可放）
+    function _computePlacement(props, nRowIdx, nPickedCol, assignments) {
+        const headers = props.arrCells[0] || [];
+        const row     = props.arrCells[nRowIdx] || [];
+        const targets  = new Array(assignments.length).fill(null);
+        const consumed = new Set();
+
+        // 各欄表頭命中的角色（跳過使用者剛綁的欄）
+        const headerRoleByCol = {};
+        for (let ci = 1; ci < row.length; ci++) {
+            if (ci === nPickedCol) continue;
+            const role = _matchHeaderRole(headers[ci] ? headers[ci].szText : '');
+            if (role) headerRoleByCol[ci] = role;
+        }
+        const bAnyHeader = Object.keys(headerRoleByCol).length > 0;
+
+        function isCellFree(ci) {
+            const cell = row[ci];
+            return !!cell && !cell.szSid && cell.nCircuitId == null;
+        }
+
+        // pass 1：表頭對號入座（含未找到點位的角色 — 該欄保留給它，維持表頭語意）
+        if (bAnyHeader) {
+            assignments.forEach((a, i) => {
+                for (const szCi of Object.keys(headerRoleByCol)) {
+                    const ci = +szCi;
+                    if (consumed.has(ci) || headerRoleByCol[ci] !== a.szRole || !isCellFree(ci)) continue;
+                    targets[i] = ci;
+                    consumed.add(ci);
+                    break;
+                }
+            });
+        }
+
+        // pass 2：循序遞補（舊行為）
+        let ci = nPickedCol + 1;
+        assignments.forEach((a, i) => {
+            if (targets[i] != null) return;
+            while (ci < row.length && (consumed.has(ci) || !isCellFree(ci)
+                   || (bAnyHeader && headerRoleByCol[ci] && headerRoleByCol[ci] !== a.szRole))) ci++;
+            if (ci >= row.length) return;               // 欄位用盡
+            targets[i] = ci;
+            consumed.add(ci);
+            ci++;
+        });
+        return targets;
+    }
+
+    // ── 把 assignments 依目標欄寫入 arrCells ── 回傳 { nFilled, nMissingPoint }
     function _applyAssignments(widgetEl, nRowIdx, nPickedCol, assignments) {
         const props = widgetEl.widgetProps;
         if (typeof initArrCells === 'function') initArrCells(props);
         const row = props.arrCells[nRowIdx];
         if (!row) return { nFilled: 0, nMissingPoint: 0 };
 
+        const targets = _computePlacement(props, nRowIdx, nPickedCol, assignments);
         let nFilled = 0;
         let nMissingPoint = 0;
-        // 自「點選欄位」右鄰起，逐一為每個角色（含未找到者）配一個欄位：
-        // 找到 → 寫入；未找到 → 預留空欄（不覆蓋、不讓後續角色前移補位）
-        let ci = nPickedCol + 1;
-        for (const a of assignments) {
-            // 找下一個可用欄位：存在且未綁定（已綁定的不消耗角色配額）
-            while (ci < row.length && (!row[ci] || row[ci].szSid)) ci++;
-            if (ci >= row.length) break;                // 欄位用盡，其餘角色不再處理
-            if (a.point) {
-                const cell = row[ci];
-                const p = a.point;
-                cell.szSid       = p.szSid;
-                cell.szPointName = p.szDeviceLabel ? (p.szDeviceLabel + ' / ' + p.szName) : p.szName;
-                // 表格 DI Cell 綁定 SID 時，繼承同 SID 已存在的 ON/OFF 標籤
-                if (cell.szPointType === 'DI' && typeof _findDiLabelsForSid === 'function') {
-                    const diLabels = _findDiLabelsForSid(p.szSid);
-                    if (diLabels) {
-                        cell.szOnLabel  = diLabels.szOnLabel;
-                        cell.szOffLabel = diLabels.szOffLabel;
-                    }
+        assignments.forEach((a, i) => {
+            const ci = targets[i];
+            if (ci == null) return;                     // 無欄可放
+            if (!a.point) { nMissingPoint++; return; }  // 預留空欄，不寫入
+            const cell = row[ci];
+            const p = a.point;
+            cell.szSid       = p.szSid;
+            cell.szPointName = p.szDeviceLabel ? (p.szDeviceLabel + ' / ' + p.szName) : p.szName;
+            // 表格 DI Cell 綁定 SID 時，繼承同 SID 已存在的 ON/OFF 標籤
+            if (cell.szPointType === 'DI' && typeof _findDiLabelsForSid === 'function') {
+                const diLabels = _findDiLabelsForSid(p.szSid);
+                if (diLabels) {
+                    cell.szOnLabel  = diLabels.szOnLabel;
+                    cell.szOffLabel = diLabels.szOffLabel;
                 }
-                nFilled++;
-            } else {
-                nMissingPoint++;                        // 預留此空欄，不寫入
             }
-            ci++;                                        // 無論找到與否，前進一欄
-        }
+            nFilled++;
+        });
         return { nFilled, nMissingPoint };
     }
 
@@ -214,7 +269,11 @@
         if (assignments.length === 0) {
             return '<div class="rt-empty">' + _esc(t('designer.row_template.preview_missing')) + '</div>';
         }
-        return assignments.map(a => {
+        // 目標欄（表頭優先落格）— 讓使用者確認每個角色會帶進哪一欄
+        const props = _ctx.widgetEl ? _ctx.widgetEl.widgetProps : null;
+        const targets = props ? _computePlacement(props, _ctx.nRowIdx, _ctx.nPickedCol, assignments) : [];
+        const headers = props ? (props.arrCells[0] || []) : [];
+        return assignments.map((a, i) => {
             const bFound = !!a.point;
             const szTag  = bFound
                 ? '<span class="rt-tag rt-found">' + _esc(t('designer.row_template.preview_found')) + '</span>'
@@ -224,10 +283,22 @@
                     ? '<span class="rt-prefix">' + _esc(a.point.szDeviceLabel) + '</span> / ' + _esc(a.point.szName)
                     : _esc(a.point.szName))
                 : '<span class="rt-na">—</span>';
+            // 目標欄標示：有表頭字用表頭字，否則用欄序（#n）；無欄可放顯示「欄位不足」
+            let szColNote;
+            const nTargetCol = targets[i];
+            if (nTargetCol != null) {
+                const szHeaderText = (headers[nTargetCol] && headers[nTargetCol].szText || '').trim();
+                szColNote = '<span class="rt-prefix" style="flex-shrink:0;">' +
+                    _esc(t('designer.row_template.preview_target_col', { col: szHeaderText || ('#' + nTargetCol) })) + '</span>';
+            } else {
+                szColNote = '<span class="rt-na" style="flex-shrink:0;font-size:11px;">' +
+                    _esc(t('designer.row_template.preview_no_col')) + '</span>';
+            }
             return '<div class="rt-preview-row' + (bFound ? '' : ' rt-row-missing') + '">' +
                 '<span class="rt-role">' + _esc(a.szRole) + '</span>' +
                 '<span class="rt-arrow">&#x2192;</span>' +
                 '<span class="rt-point">' + szPointName + '</span>' +
+                szColNote +
                 szTag +
                 '</div>';
         }).join('');
@@ -439,6 +510,7 @@
     window._rowTemplate = {
         tryAutoFill: tryAutoFill,
         matchRole:   matchRole,           // 純函式，便於日後升級為模糊比對
+        computePlacement: _computePlacement,   // 純函式（表頭優先落格），供測試
         ROLE_ALIASES: ROLE_ALIASES
     };
 

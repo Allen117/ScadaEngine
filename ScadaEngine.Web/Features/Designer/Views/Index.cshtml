@@ -436,6 +436,15 @@
                             </div>
                             <i class="fas fa-chevron-right" style="color:#555;font-size:12px;"></i>
                         </div>
+                        <!-- 迴路來源（僅 AI 點位 / 表格資料 cell 顯示；plan 2026-07-23 迴路指標） -->
+                        <div class="point-list-item" id="ppSrcCircuit" onclick="showCircuitStep()" style="cursor:pointer;padding:14px 16px;display:none;">
+                            <i class="fas fa-sitemap" style="font-size:18px;color:#69db7c;flex-shrink:0;"></i>
+                            <div style="flex:1;min-width:0;">
+                                <div class="point-name" style="font-size:14px;">@Localizer["designer.picker.source.circuit"]</div>
+                                <div class="point-sid">@Localizer["designer.picker.source.circuit_desc"]</div>
+                            </div>
+                            <i class="fas fa-chevron-right" style="color:#555;font-size:12px;"></i>
+                        </div>
                     </div>
                 </div>
 
@@ -505,6 +514,27 @@
     </div>
 </div>
 
+<!-- ===== 迴路自動帶入確認 Modal（plan 2026-07-23 表頭驅動整列帶入；body 複用 row-template-body 樣式） ===== -->
+<div class="modal fade" id="cmetricFillModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:480px;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title" style="font-size:13px;display:flex;align-items:center;gap:4px;">
+                    <i class="fas fa-sitemap" style="color:#69db7c;"></i>
+                    <span>@Localizer["designer.cmetric.fill_modal_title"]</span>
+                </h6>
+                <button type="button" class="btn-close btn-close-white btn-sm" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body row-template-body" id="cmetricFillBody" style="padding:12px 16px;">
+                <!-- 由 JS 動態渲染：欄名 → 帶入內容 勾選清單 -->
+            </div>
+            <div class="modal-footer" id="cmetricFillFooter" style="gap:8px;">
+                <!-- 由 JS 動態渲染按鈕 -->
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- ===== 頁面編輯 Modal ===== -->
 <div class="modal fade" id="pageEditModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
@@ -536,20 +566,21 @@
     </div>
 </div>
 
+@* asp-append-version：檔案內容 hash 進 query string，改版後瀏覽器不會吃到舊快取 JS *@
 @section Scripts {
-<script src="~/js/common/schedule-eval.js"></script>
-<script src="~/js/common/motor-equip-svg.js"></script>
-<script src="~/js/designer/state.js"></script>
-<script src="~/js/designer/widget-defs.js"></script>
-<script src="~/js/designer/widget-core.js"></script>
-<script src="~/js/designer/align.js"></script>
-<script src="~/js/designer/prop-panel.js"></script>
-<script src="~/js/designer/picker.js"></script>
-<script src="~/js/role-aliases.js"></script>
-<script src="~/js/designer/row-template.js"></script>
-<script src="~/js/designer/canvas.js"></script>
-<script src="~/js/designer/page-tree.js"></script>
-<script src="~/js/designer/ctx-menu.js"></script>
-<script src="~/js/designer/io.js"></script>
-<script src="~/js/designer/index.js"></script>
+<script src="~/js/common/schedule-eval.js" asp-append-version="true"></script>
+<script src="~/js/common/motor-equip-svg.js" asp-append-version="true"></script>
+<script src="~/js/designer/state.js" asp-append-version="true"></script>
+<script src="~/js/designer/widget-defs.js" asp-append-version="true"></script>
+<script src="~/js/designer/widget-core.js" asp-append-version="true"></script>
+<script src="~/js/designer/align.js" asp-append-version="true"></script>
+<script src="~/js/designer/prop-panel.js" asp-append-version="true"></script>
+<script src="~/js/designer/picker.js" asp-append-version="true"></script>
+<script src="~/js/role-aliases.js" asp-append-version="true"></script>
+<script src="~/js/designer/row-template.js" asp-append-version="true"></script>
+<script src="~/js/designer/canvas.js" asp-append-version="true"></script>
+<script src="~/js/designer/page-tree.js" asp-append-version="true"></script>
+<script src="~/js/designer/ctx-menu.js" asp-append-version="true"></script>
+<script src="~/js/designer/io.js" asp-append-version="true"></script>
+<script src="~/js/designer/index.js" asp-append-version="true"></script>
 }

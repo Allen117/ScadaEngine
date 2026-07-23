@@ -461,4 +461,36 @@
   <data name="designer.row_template.move_down" xml:space="preserve"><value>Move Down</value></data>
   <data name="designer.row_template.remove_role" xml:space="preserve"><value>Remove</value></data>
   <data name="designer.row_template.add_role" xml:space="preserve"><value>Add</value></data>
+  <data name="designer.row_template.preview_target_col" xml:space="preserve"><value>into "{col}"</value></data>
+  <data name="designer.row_template.preview_no_col" xml:space="preserve"><value>no column left</value></data>
+
+  <!-- Circuit data source + circuit metrics (plan 2026-07-23-designer-table-ems-accumulation-autofill) -->
+  <data name="designer.picker.source.circuit" xml:space="preserve"><value>Circuit</value></data>
+  <data name="designer.picker.source.circuit_desc" xml:space="preserve"><value>Energy circuit metrics (daily/monthly kWh, cost)</value></data>
+  <data name="designer.picker.title.circuit" xml:space="preserve"><value>Select Circuit</value></data>
+  <data name="designer.picker.no_circuits" xml:space="preserve"><value>No circuits yet. Create the circuit hierarchy in Energy Management first.</value></data>
+  <data name="designer.picker.circuit_virtual" xml:space="preserve"><value>Virtual</value></data>
+  <data name="designer.prop.bound_circuit" xml:space="preserve"><value>Bound Circuit</value></data>
+  <data name="designer.prop.circuit_metric" xml:space="preserve"><value>Metric</value></data>
+  <data name="designer.metric.day_kwh" xml:space="preserve"><value>Today kWh</value></data>
+  <data name="designer.metric.month_kwh" xml:space="preserve"><value>Month kWh (calendar)</value></data>
+  <data name="designer.metric.period_kwh" xml:space="preserve"><value>Period kWh (billing)</value></data>
+  <data name="designer.metric.period_cost" xml:space="preserve"><value>Period Cost (billing)</value></data>
+  <data name="designer.metric.badge.day_kwh" xml:space="preserve"><value>D-kWh</value></data>
+  <data name="designer.metric.badge.month_kwh" xml:space="preserve"><value>M-kWh</value></data>
+  <data name="designer.metric.badge.period_kwh" xml:space="preserve"><value>P-kWh</value></data>
+  <data name="designer.metric.badge.period_cost" xml:space="preserve"><value>P-Cost</value></data>
+  <data name="designer.metric.unit_cost" xml:space="preserve"><value>NT$</value></data>
+  <data name="designer.cmetric.autofill_toast" xml:space="preserve"><value>Filled {count} realtime points by column headers</value></data>
+  <data name="designer.cmetric.autofill_toast_metrics" xml:space="preserve"><value>Bound {count} circuit metric cells</value></data>
+  <data name="designer.cmetric.fill_modal_title" xml:space="preserve"><value>Circuit Auto-fill</value></data>
+  <data name="designer.cmetric.fill_detected" xml:space="preserve"><value>Circuit "{name}" — the following columns were detected by headers. Check the items to fill, then confirm:</value></data>
+  <data name="designer.cmetric.fill_preview_title" xml:space="preserve"><value>Column &#x2192; Content to fill</value></data>
+  <data name="designer.cmetric.fill_tag_realtime" xml:space="preserve"><value>Realtime</value></data>
+  <data name="designer.cmetric.fill_tag_metric" xml:space="preserve"><value>Metric</value></data>
+  <data name="designer.cmetric.fill_tag_missing" xml:space="preserve"><value>No matching point</value></data>
+  <data name="designer.cmetric.fill_tag_bound" xml:space="preserve"><value>Already bound</value></data>
+  <data name="designer.cmetric.fill_row_mismatch" xml:space="preserve"><value>Note: row label "{row}" differs from circuit name "{name}" — please verify the content to fill</value></data>
+  <data name="designer.cmetric.fill_btn_skip" xml:space="preserve"><value>Skip</value></data>
+  <data name="designer.cmetric.fill_btn_apply" xml:space="preserve"><value>Fill Selected</value></data>
 </root>

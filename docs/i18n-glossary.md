@@ -273,6 +273,10 @@
 | 署屬站 | Staffed (Station) | 資料集 O-A0003-001（署屬有人站） |
 | 外氣溫度 | Outdoor Temperature | DB 來源 Weather S1 |
 | 外氣相對濕度 | Outdoor Relative Humidity | DB 來源 Weather S2 |
+| 外氣濕球溫度 | Outdoor Wet-Bulb Temperature | DB 來源 Weather S3（由 S1/S2 推導） |
+| 濕球溫度 | Wet-Bulb Temperature | Stull (2011) 經驗式；CalcPoint 內建函數 WetBulb(T,RH) |
+| 乾球溫度 | Dry-Bulb Temperature | 一般氣溫 |
+| 公式範本 | Formula Template | CalcPoint 建立 modal 下拉 |
 | 觀測時間 | Observation Time | CWA ObsTime |
 | 缺測 | Missing (Observation) | CWA 哨兵值 -99 |
 | 抓取間隔 | Fetch Interval | 分鐘 |
@@ -681,6 +685,17 @@
 | 儲存失敗：{error} | Save failed: {error} | toast |
 | 網路錯誤：{error} | Network error: {error} | toast |
 | 未知錯誤 | Unknown error | toast |
+| 迴路 | Circuit | picker 來源分頁（能源迴路） |
+| 選擇迴路 | Select Circuit | picker |
+| 虛擬 | Virtual | 迴路樹未綁 SID 節點標記 |
+| 綁定迴路 | Bound Circuit | 屬性面板 |
+| 顯示指標 | Metric | 迴路指標下拉 |
+| 本日度數 | Today kWh | 迴路指標（曆日，今日 00:00 起） |
+| 本月度數 | Month kWh (calendar) | 迴路指標（曆月，1 號 00:00 起） |
+| 本月電度 | Period kWh (billing) | 迴路指標（月結期別制，同 EMS EnergyBar 月視圖） |
+| 本月電費 | Period Cost | 迴路指標（月結期別制，同 EMS 電費狀態卡） |
+| 日度 / 月度 / 期度 / 期費 | D-kWh / M-kWh / P-kWh / P-Cost | 迴路指標 badge 縮寫 |
+| （估算） | (estimated) | 子迴路電費占比分攤 tooltip 註記 |
 
 ## EMS 卡片顯示設定 (EmsCardSetting)
 

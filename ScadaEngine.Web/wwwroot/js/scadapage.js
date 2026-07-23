@@ -96,6 +96,7 @@
         await fetchAndUpdateGauges();
         setInterval(fetchAndUpdateGauges, 1000);
         setInterval(fetchAndUpdateAccumulations, ACC_POLL_MS);
+        setInterval(fetchAndUpdateCircuitMetrics, ACC_POLL_MS);
     });
 
     // ── 從 /Designer/Load 載入已發布設計 ──
@@ -262,7 +263,8 @@
         (page.arrWidgetState || []).forEach(function (ws) { renderScadaWidget(canvas, ws); });
 
         if (lastData.length > 0) updateScadaWidgets(lastData);
-        fetchAndUpdateAccumulations(); // 換頁立即載入累積值，不等 30 秒輪詢
+        fetchAndUpdateAccumulations();   // 換頁立即載入累積值，不等 30 秒輪詢
+        fetchAndUpdateCircuitMetrics();  // 換頁立即載入迴路指標，不等 30 秒輪詢
         _applyCanvasScale();
     }
 
@@ -386,7 +388,22 @@
             el.dataset.szHighColor     = p.szHighColor      || '#dc3545';
             el.dataset.szLowColor      = p.szLowColor       || '#fd7e14';
             var szValueMode = p.szValueMode || 'realtime';
-            if (szValueMode === 'day' || szValueMode === 'month') {
+            if (p.nCircuitId != null) {
+                // 迴路指標模式（plan 2026-07-23）：掛 scada-rt-cmetric（不掛 scada-rt-value / scada-rt-acc），
+                // 1 秒即時迴圈與 30 秒累積輪詢都不觸碰，由 30 秒迴路指標輪詢負責更新
+                var szMetric = p.szMetric || 'day_kwh';
+                el.dataset.circuitId   = p.nCircuitId;
+                el.dataset.metric      = szMetric;
+                el.dataset.circuitName = p.szCircuitName || '';
+                el.dataset.accDecimals = (p.nAccDecimals != null ? p.nAccDecimals : 1);
+                el.classList.add('scada-rt-cmetric');
+                el.innerHTML = buildRealtimeValueViewHtml({
+                    nFontSize: p.nFontSize || 28, szFontColor: p.szFontColor || '#212529',
+                    szUnit: _cmetricUnit(szMetric),
+                    szTitle: _cmetricTooltipTitle(p.szCircuitName || '', szMetric, false),
+                    szBgColor: p.szBgColor || 'transparent'
+                }, '--');
+            } else if (szValueMode === 'day' || szValueMode === 'month') {
                 // 累積模式：掛 scada-rt-acc（不掛 scada-rt-value），
                 // 既有 1 秒即時迴圈自然跳過，由 30 秒累積輪詢負責更新
                 el.dataset.valueMode   = szValueMode;
@@ -2017,8 +2034,17 @@
                             szSidAttr += ' data-sz-high-color="' + escViewHtml(cell.szHighColor || '#dc3545') + '"';
                             szSidAttr += ' data-sz-low-color="' + escViewHtml(cell.szLowColor || '#fd7e14') + '"';
                         }
+                    } else if (cell.nCircuitId != null) {
+                        // 迴路指標 cell（plan 2026-07-23）：不帶 data-sid → 1 秒 td[data-sid] 路徑不觸碰，
+                        // 由 30 秒迴路指標輪詢依 class scada-cmetric-cell 更新；title = 迴路名＋指標名 hover 提示
+                        var szCellMetric = cell.szMetric || 'day_kwh';
+                        szSidAttr = 'class="scada-cmetric-cell" data-circuit-id="' + cell.nCircuitId + '"' +
+                            ' data-metric="' + escViewHtml(szCellMetric) + '"' +
+                            ' data-decimals="' + (nDec !== undefined && nDec !== null ? nDec : '') + '"' +
+                            ' data-orig-color="' + (cell.szFontColor || '#444') + '"' +
+                            ' title="' + escViewHtml(_cmetricTooltipTitle(cell.szCircuitName || '', szCellMetric, false)) + '"';
                     }
-                    var szDisplay = cell.szSid ? '--' : escViewHtml(cell.szText || '');
+                    var szDisplay = (cell.szSid || cell.nCircuitId != null) ? '--' : escViewHtml(cell.szText || '');
                     return '<td ' + szSidAttr + ' style="padding:3px 6px;' +
                         'font-size:' + (cell.nFontSize || 12) + 'px;' +
                         'color:' + (cell.szFontColor || '#444') + ';' +
@@ -2111,6 +2137,99 @@
     function _accTooltipTitle(szTitle, szValueMode) {
         var szMode = t(szValueMode === 'month' ? 'scadapage.acc.month_badge' : 'scadapage.acc.day_badge');
         return szTitle ? szTitle + ' ' + szMode : szMode;
+    }
+
+    // ── 迴路指標元件（AI 點位 / 表格 cell 綁 EnergyCircuit 四指標）：30 秒慢輪詢，
+    //    與 1 秒即時迴圈、30 秒 SID 累積輪詢皆分離（plan 2026-07-23）──
+    var CMETRIC_MAX_BATCH = 50;
+
+    function _cmetricUnit(szMetric) {
+        return szMetric === 'period_cost' ? t('scadapage.cmetric.unit_cost') : 'kWh';
+    }
+
+    // tooltip：迴路名＋指標名（＋估算註記）
+    function _cmetricTooltipTitle(szCircuitName, szMetric, bEstimated) {
+        var szLabel = t('scadapage.cmetric.' + szMetric);
+        var s = szCircuitName ? szCircuitName + ' ' + szLabel : szLabel;
+        if (bEstimated) s += t('scadapage.cmetric.estimated');
+        return s;
+    }
+
+    async function fetchAndUpdateCircuitMetrics() {
+        var els = document.querySelectorAll('.scada-rt-cmetric[data-circuit-id], .scada-cmetric-cell[data-circuit-id]');
+        if (!els.length) return;
+
+        // 以 (circuitId, metric) 去重 — 同頁多元件綁同迴路同指標只查一次
+        var seen = {}, items = [];
+        els.forEach(function (el) {
+            var szKey = el.dataset.circuitId + '|' + (el.dataset.metric || 'day_kwh');
+            if (seen[szKey]) return;
+            seen[szKey] = true;
+            items.push({ nCircuitId: parseInt(el.dataset.circuitId), szMetric: el.dataset.metric || 'day_kwh' });
+        });
+
+        // 超過 50 筆分批送出，合併結果
+        var map = {};
+        for (var i = 0; i < items.length; i += CMETRIC_MAX_BATCH) {
+            var batch = items.slice(i, i + CMETRIC_MAX_BATCH);
+            try {
+                var resp = await fetch('/api/scadapage/circuit-metric', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ items: batch })
+                });
+                if (!resp.ok) continue;
+                var result = await resp.json();
+                if (!result.success || !result.results) continue;
+                result.results.forEach(function (r) { map[r.nCircuitId + '|' + r.szMetric] = r; });
+            } catch (_) { /* 網路失敗維持現值，下一輪再試 */ }
+        }
+
+        els.forEach(function (el) {
+            var r = map[el.dataset.circuitId + '|' + (el.dataset.metric || 'day_kwh')];
+            if (el.classList.contains('scada-rt-cmetric')) _renderCmetricWidget(el, r);
+            else _renderCmetricCell(el, r);
+        });
+    }
+
+    function _renderCmetricWidget(el, r) {
+        var szMetric = el.dataset.metric || 'day_kwh';
+        var bOk = !!(r && r.szStatus === 'ok' && r.dValue != null);
+        var bStale = !!(r && r.szStatus === 'stale' && r.dValue != null);
+        var props = {
+            nFontSize:   parseInt(el.dataset.nFontSize) || 28,
+            szFontColor: (bOk ? (el.dataset.szFontColor || '#212529') : '#6c757d'),
+            szUnit:      _cmetricUnit(szMetric),
+            szTitle:     _cmetricTooltipTitle(el.dataset.circuitName || '', szMetric, !!(r && r.isEstimated)),
+            szBgColor:   el.dataset.szBgColor || 'transparent'
+        };
+        if (!bOk && !bStale) {
+            // no_data（迴路刪除/無葉子）、no_plan（無電價方案）→ 灰字 '--'
+            el.innerHTML = buildRealtimeValueViewHtml(props, '--');
+            return;
+        }
+        var nDec = parseInt(el.dataset.accDecimals);
+        if (isNaN(nDec)) nDec = 1;
+        el.innerHTML = buildRealtimeValueViewHtml(props, Number(r.dValue).toFixed(nDec));
+    }
+
+    function _renderCmetricCell(td, r) {
+        var szOrigColor = td.dataset.origColor || '#444';
+        var bHasValue = !!(r && r.dValue != null && (r.szStatus === 'ok' || r.szStatus === 'stale'));
+        if (!bHasValue) {
+            td.textContent = '--';
+            td.style.color = '#6c757d';
+            return;
+        }
+        var nDec = parseInt(td.dataset.decimals);
+        if (isNaN(nDec)) nDec = 1;
+        td.textContent = Number(r.dValue).toFixed(nDec);
+        td.style.color = (r.szStatus === 'stale') ? '#6c757d' : szOrigColor;
+        // 子迴路占比分攤估算 → title 追加估算註記（一次即可）
+        if (r.isEstimated && td.dataset.estFlag !== '1') {
+            td.title = (td.title || '') + t('scadapage.cmetric.estimated');
+            td.dataset.estFlag = '1';
+        }
     }
 
     function _renderAccWidget(el, r) {

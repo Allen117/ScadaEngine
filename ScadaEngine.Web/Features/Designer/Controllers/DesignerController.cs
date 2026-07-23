@@ -14,17 +14,20 @@ public class DesignerController : Controller
     private readonly ILogger<DesignerController> _logger;
     private readonly IStringLocalizer<DesignerController> _l;
     private readonly DesignerTemplateService _templateService;
+    private readonly EnergyCircuitService _circuitService;
 
     public DesignerController(
         IDataRepository repository,
         ILogger<DesignerController> logger,
         IStringLocalizer<DesignerController> localizer,
-        DesignerTemplateService templateService)
+        DesignerTemplateService templateService,
+        EnergyCircuitService circuitService)
     {
         _repository      = repository;
         _logger          = logger;
         _l               = localizer;
         _templateService = templateService;
+        _circuitService  = circuitService;
     }
 
     [HttpGet("/Designer")]
@@ -100,6 +103,29 @@ public class DesignerController : Controller
             szName         = d.szName,
             szModbusID     = d.szModbusID,
             szDeviceName   = d.szDeviceName
+        }));
+    }
+
+    /// <summary>
+    /// 取得所有能源迴路（含虛擬節點），供 picker「迴路」分頁組樹 + SID 反查迴路對照表共用。
+    /// 五個 SID 欄（kWh/V/A/kW/PF）全部帶回，前端據此做表頭驅動整列自動帶入。
+    /// </summary>
+    [HttpGet("/Designer/api/circuits")]
+    public async Task<IActionResult> GetCircuits()
+    {
+        var circuits = await _circuitService.GetAllAsync();
+        return Json(circuits.Select(c => new
+        {
+            id             = c.nId,
+            name           = c.szName,
+            parentId       = c.nParentId,
+            sortOrder      = c.nSortOrder,
+            sid            = c.szSID,
+            maxKwh         = c.dMaxKwh,
+            voltageSid     = c.szVoltageSID,
+            currentSid     = c.szCurrentSID,
+            powerSid       = c.szPowerSID,
+            powerFactorSid = c.szPowerFactorSID
         }));
     }
 

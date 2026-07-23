@@ -460,4 +460,36 @@
   <data name="designer.row_template.move_down" xml:space="preserve"><value>下移</value></data>
   <data name="designer.row_template.remove_role" xml:space="preserve"><value>移除</value></data>
   <data name="designer.row_template.add_role" xml:space="preserve"><value>加入</value></data>
+  <data name="designer.row_template.preview_target_col" xml:space="preserve"><value>帶入欄「{col}」</value></data>
+  <data name="designer.row_template.preview_no_col" xml:space="preserve"><value>欄位不足</value></data>
+
+  <!-- 迴路資料源 + 迴路指標（plan 2026-07-23-designer-table-ems-accumulation-autofill） -->
+  <data name="designer.picker.source.circuit" xml:space="preserve"><value>迴路</value></data>
+  <data name="designer.picker.source.circuit_desc" xml:space="preserve"><value>能源迴路指標（本日/本月用電、電費）</value></data>
+  <data name="designer.picker.title.circuit" xml:space="preserve"><value>選擇迴路</value></data>
+  <data name="designer.picker.no_circuits" xml:space="preserve"><value>尚無迴路，請先於能源管理建立迴路階層</value></data>
+  <data name="designer.picker.circuit_virtual" xml:space="preserve"><value>虛擬</value></data>
+  <data name="designer.prop.bound_circuit" xml:space="preserve"><value>綁定迴路</value></data>
+  <data name="designer.prop.circuit_metric" xml:space="preserve"><value>顯示指標</value></data>
+  <data name="designer.metric.day_kwh" xml:space="preserve"><value>本日度數</value></data>
+  <data name="designer.metric.month_kwh" xml:space="preserve"><value>本月度數（曆月）</value></data>
+  <data name="designer.metric.period_kwh" xml:space="preserve"><value>本月電度（期別）</value></data>
+  <data name="designer.metric.period_cost" xml:space="preserve"><value>本月電費（期別）</value></data>
+  <data name="designer.metric.badge.day_kwh" xml:space="preserve"><value>日度</value></data>
+  <data name="designer.metric.badge.month_kwh" xml:space="preserve"><value>月度</value></data>
+  <data name="designer.metric.badge.period_kwh" xml:space="preserve"><value>期度</value></data>
+  <data name="designer.metric.badge.period_cost" xml:space="preserve"><value>期費</value></data>
+  <data name="designer.metric.unit_cost" xml:space="preserve"><value>元</value></data>
+  <data name="designer.cmetric.autofill_toast" xml:space="preserve"><value>已依表頭帶入 {count} 個即時點位</value></data>
+  <data name="designer.cmetric.autofill_toast_metrics" xml:space="preserve"><value>已帶入 {count} 個迴路指標欄</value></data>
+  <data name="designer.cmetric.fill_modal_title" xml:space="preserve"><value>迴路自動帶入</value></data>
+  <data name="designer.cmetric.fill_detected" xml:space="preserve"><value>依表頭偵測到迴路「{name}」可帶入以下欄位，請勾選後確認：</value></data>
+  <data name="designer.cmetric.fill_preview_title" xml:space="preserve"><value>欄名 → 帶入內容</value></data>
+  <data name="designer.cmetric.fill_tag_realtime" xml:space="preserve"><value>即時值</value></data>
+  <data name="designer.cmetric.fill_tag_metric" xml:space="preserve"><value>指標</value></data>
+  <data name="designer.cmetric.fill_tag_missing" xml:space="preserve"><value>未找到對應點位</value></data>
+  <data name="designer.cmetric.fill_tag_bound" xml:space="preserve"><value>已綁定不覆蓋</value></data>
+  <data name="designer.cmetric.fill_row_mismatch" xml:space="preserve"><value>注意：此列列名「{row}」與迴路名「{name}」不同，請確認帶入內容是否正確</value></data>
+  <data name="designer.cmetric.fill_btn_skip" xml:space="preserve"><value>不帶入</value></data>
+  <data name="designer.cmetric.fill_btn_apply" xml:space="preserve"><value>帶入勾選項目</value></data>
 </root>

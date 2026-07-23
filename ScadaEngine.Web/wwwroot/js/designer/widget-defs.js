@@ -548,8 +548,13 @@ function buildTableHtml(props) {
         const szBorderStyle = (szBorderC && ri < nR - 1) ? `border-bottom:1px solid ${szBorderC};` : '';
         const szCells = row.slice(0, nC).map((cell, ci) => {
             const szSidAttr = cell.szSid ? `data-sid="${escHtml(cell.szSid)}"` : '';
-            const szSidLabel = cell.szSid
-                ? `<span style="font-size:9px;color:#0d6efd;opacity:.7;margin-left:4px;white-space:nowrap;"><i class="fas fa-link" style="font-size:8px;margin-right:2px;"></i>${escHtml(cell.szPointName || cell.szSid)}</span>` : '';
+            let szSidLabel = '';
+            if (cell.szSid) {
+                szSidLabel = `<span style="font-size:9px;color:#0d6efd;opacity:.7;margin-left:4px;white-space:nowrap;"><i class="fas fa-link" style="font-size:8px;margin-right:2px;"></i>${escHtml(cell.szPointName || cell.szSid)}</span>`;
+            } else if (cell.nCircuitId != null) {
+                // 迴路指標 cell（plan 2026-07-23）：綠色 sitemap + 迴路名·指標縮寫
+                szSidLabel = `<span style="font-size:9px;color:#2e7d32;opacity:.85;margin-left:4px;white-space:nowrap;"><i class="fas fa-sitemap" style="font-size:8px;margin-right:2px;"></i>${escHtml((cell.szCircuitName || ('#' + cell.nCircuitId)) + '·' + t('designer.metric.badge.' + (cell.szMetric || 'day_kwh')))}</span>`;
+            }
             return `<td data-row="${rowIdx}" data-col="${ci}" ${szSidAttr}
                 style="color:${cell.szFontColor || '#444'};font-weight:${cell.szFontWeight || 'normal'};
                        font-size:${cell.nFontSize || 12}px;text-align:${cell.szAlign || 'left'};
@@ -647,7 +652,8 @@ function buildControlBtnHtml(props) {
 // AI 點位 HTML（Designer 預覽）
 // ============================================================
 function buildRealtimeValueHtml(props) {
-    const szSidLabel = props.szPointName
+    const bCircuitBound = props.nCircuitId != null;
+    const szSidLabel = (props.szPointName || bCircuitBound)
         ? ''
         : `<div style="font-size:10px;color:#dc3545;margin-top:2px;"><i class="fas fa-unlink me-1"></i>${escHtml(t('designer.widget.unbound_sid'))}</div>`;
     const szBg = (props.szBgColor && props.szBgColor !== 'transparent') ? props.szBgColor : 'transparent';
@@ -659,15 +665,23 @@ function buildRealtimeValueHtml(props) {
            </div>`
         : '';
 
-    // 累積模式 badge（左上角）：day=日累 / month=月累；即時值模式無 badge
+    // badge（左上角）：迴路指標模式=指標縮寫（綠）；SID 累積模式=日累/月累（藍）；即時值無 badge
     const szValueMode = props.szValueMode || 'realtime';
-    const szModeBadge = (szValueMode === 'day' || szValueMode === 'month')
-        ? `<div style="position:absolute;top:2px;left:4px;font-size:9px;color:#0d6efd;opacity:.85;font-weight:600;">
+    let szModeBadge = '';
+    if (bCircuitBound) {
+        const szMetric = props.szMetric || 'day_kwh';
+        szModeBadge = `<div style="position:absolute;top:2px;left:4px;font-size:9px;color:#2e7d32;opacity:.9;font-weight:600;">
+               ${escHtml(t('designer.metric.badge.' + szMetric))}
+           </div>`;
+    } else if (szValueMode === 'day' || szValueMode === 'month') {
+        szModeBadge = `<div style="position:absolute;top:2px;left:4px;font-size:9px;color:#0d6efd;opacity:.85;font-weight:600;">
                ${escHtml(t(szValueMode === 'day' ? 'designer.widget.acc_day_badge' : 'designer.widget.acc_month_badge'))}
-           </div>`
-        : '';
-    // 累積模式單位：自訂累積單位優先（如 kW 積分後為 kWh），空則沿用即時單位
-    const szUnitShown = (szValueMode !== 'realtime' && props.szAccUnit) ? props.szAccUnit : (props.szUnit || '');
+           </div>`;
+    }
+    // 單位：迴路指標依指標決定（電費=元、其餘 kWh）；SID 累積模式自訂累積單位優先，空則沿用即時單位
+    const szUnitShown = bCircuitBound
+        ? ((props.szMetric || 'day_kwh') === 'period_cost' ? t('designer.metric.unit_cost') : 'kWh')
+        : ((szValueMode !== 'realtime' && props.szAccUnit) ? props.szAccUnit : (props.szUnit || ''));
 
     let szBorder = '';
     if (szBg === 'transparent') {

@@ -199,6 +199,9 @@ builder.Services.AddHostedService<ScadaEngine.Web.Services.WeatherFetchService>(
 // ScadaPage 累積量元件 — 任意 SID 當日/當月累積（meter 差值 / integrate 積分）+ 分層 bucket 快取
 builder.Services.AddSingleton<ScadaEngine.Web.Services.WidgetAccumulationCache>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.WidgetAccumulationService>();
+// ScadaPage 迴路指標元件 — 本日/本月度數（EnergyReport 同核心）+ 本期電度/電費（EMS 電費卡同源）+ 60s 結果快取
+builder.Services.AddSingleton<ScadaEngine.Web.Services.WidgetCircuitMetricCache>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.WidgetCircuitMetricService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.DbCoordinatorService>();
 // DB 來源點位名稱熱編輯 — 回寫 DBPoint/*.json + UPSERT DBPoints（Scoped：依賴 IDataRepository 與 IStringLocalizer）
 builder.Services.AddScoped<ScadaEngine.Web.Services.DbPointConfigFileService>();

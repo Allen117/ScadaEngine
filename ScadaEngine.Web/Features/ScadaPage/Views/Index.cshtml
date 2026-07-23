@@ -71,8 +71,9 @@
         window._isAdmin = @Html.Raw(ViewData["IsAdmin"]?.ToString().ToLower() ?? "false");
         window._scadaPagePerms = @Html.Raw(ViewData["ScadaPagePermissions"] ?? "{}");
     </script>
-    <script src="~/js/common/schedule-eval.js"></script>
-    <script src="~/js/common/motor-equip-svg.js"></script>
-    <script src="~/js/scadapage.js"></script>
-    <script src="~/js/active-alarm-panel.js"></script>
+    @* asp-append-version：檔案內容 hash 進 query string，改版後瀏覽器不會吃到舊快取 JS *@
+    <script src="~/js/common/schedule-eval.js" asp-append-version="true"></script>
+    <script src="~/js/common/motor-equip-svg.js" asp-append-version="true"></script>
+    <script src="~/js/scadapage.js" asp-append-version="true"></script>
+    <script src="~/js/active-alarm-panel.js" asp-append-version="true"></script>
 }
