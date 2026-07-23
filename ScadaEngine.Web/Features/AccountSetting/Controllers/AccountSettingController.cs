@@ -5,7 +5,7 @@ using ScadaEngine.Web.Services;
 
 namespace ScadaEngine.Web.Features.AccountSetting.Controllers;
 
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "Admin,Engineer")]
 public class AccountSettingController : Controller
 {
     private readonly AccountSettingService _service;
@@ -15,14 +15,23 @@ public class AccountSettingController : Controller
         _service = service;
     }
 
+    /// <summary>操作者是否為 Engineer — Engineer 帳號僅 Engineer 可見可管</summary>
+    private bool IsEngineerOperator => PermissionService.IsEngineer(User);
+
     [HttpGet("/AccountSetting")]
     public async Task<IActionResult> Index()
     {
         ViewData["Title"] = "帳號管理";
         ViewData["ScadaDesignPages"] = await _service.GetScadaDesignPagesJsonAsync();
         ViewData["ConfigurablePages"] = _service.GetConfigurablePagesJson();
+        ViewData["IsEngineerOperator"] = IsEngineerOperator;
 
         var users = await _service.GetAllUsersAsync();
+
+        // Admin 看不到 Engineer 帳號（看不到＝不能動，配合 Service 端後防）
+        if (!IsEngineerOperator)
+            users = users.Where(u => u.szRole != "Engineer").ToList();
+
         return View(users);
     }
 
@@ -34,7 +43,7 @@ public class AccountSettingController : Controller
 
         var (isSuccess, szMessage) = await _service.CreateUserAsync(
             request.Username, request.RealName, request.Password,
-            request.Role, request.Department, request.IsActive);
+            request.Role, request.Department, request.IsActive, IsEngineerOperator);
 
         return isSuccess
             ? Ok(new { success = true })
@@ -49,7 +58,7 @@ public class AccountSettingController : Controller
 
         var (isSuccess, szMessage) = await _service.UpdateUserAsync(
             request.UserID, request.RealName, request.Role,
-            request.Department, request.IsActive, request.PermissionJson);
+            request.Department, request.IsActive, request.PermissionJson, IsEngineerOperator);
 
         if (!isSuccess)
             return StatusCode(500, new { success = false, message = szMessage });
@@ -67,7 +76,7 @@ public class AccountSettingController : Controller
         if (request == null)
             return BadRequest(new { success = false, message = "無效的請求" });
 
-        var (isSuccess, szMessage) = await _service.DeleteUserAsync(request.UserID);
+        var (isSuccess, szMessage) = await _service.DeleteUserAsync(request.UserID, IsEngineerOperator);
 
         return isSuccess
             ? Ok(new { success = true })

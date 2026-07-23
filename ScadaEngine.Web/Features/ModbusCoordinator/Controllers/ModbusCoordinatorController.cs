@@ -7,7 +7,7 @@ using ScadaEngine.Web.Services;
 
 namespace ScadaEngine.Web.Features.ModbusCoordinator.Controllers;
 
-[Authorize]
+[Authorize(Roles = "Engineer")]
 public class ModbusCoordinatorController : Controller
 {
     private readonly IDataRepository _repository;
@@ -47,8 +47,7 @@ public class ModbusCoordinatorController : Controller
         return StatusCode(500, new { success = false, message = _l["modbuscoordinator.api.update_failed"].Value });
     }
 
-    /// <summary>讀取指定設備（JSON 檔）的點位清單 — 點位熱編輯用，限 Admin</summary>
-    [Authorize(Roles = "Admin")]
+    /// <summary>讀取指定設備（JSON 檔）的點位清單 — 點位熱編輯用，限 Engineer</summary>
     [HttpGet("/ModbusCoordinator/Points/{name}")]
     public async Task<IActionResult> Points(string name)
     {
@@ -71,8 +70,7 @@ public class ModbusCoordinatorController : Controller
         });
     }
 
-    /// <summary>原地更新點位欄位（數量/順序/DataType 鎖死）— 限 Admin，成功後每個變更點位寫一筆 EventLog 稽核</summary>
-    [Authorize(Roles = "Admin")]
+    /// <summary>原地更新點位欄位（數量/順序/DataType 鎖死）— 限 Engineer，成功後每個變更點位寫一筆 EventLog 稽核</summary>
     [HttpPost("/ModbusCoordinator/UpdatePoints")]
     public async Task<IActionResult> UpdatePoints([FromBody] UpdateModbusPointsRequest request)
     {

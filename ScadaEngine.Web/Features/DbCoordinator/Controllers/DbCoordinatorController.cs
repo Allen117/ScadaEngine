@@ -6,7 +6,7 @@ using ScadaEngine.Web.Services;
 
 namespace ScadaEngine.Web.Features.DbCoordinator.Controllers;
 
-[Authorize]
+[Authorize(Roles = "Engineer")]
 public class DbCoordinatorController : Controller
 {
     private readonly DbCoordinatorService _service;

@@ -178,7 +178,7 @@ Web reads Engine's `dbSetting.json` via a relative path `../ScadaEngine.Engine/S
 | `ModbusPoints` | SID (PK), Name, Address, DataType, Ratio, Unit | Point configuration |
 | `HistoryData` | SID+Timestamp (PK), Value, Quality | Time-series history |
 | `LatestData` | SID (PK), Value, Timestamp, Quality | Last known value per point |
-| `Users` | UserID, Username, PasswordHash, Role, IsActive | Web login (SHA256 hex password) |
+| `Users` | UserID, Username, PasswordHash, Role, IsActive | Web login (SHA256 hex password)。Role：`Engineer`（工程師模式六頁獨佔：Designer/Modbus/DB/OpcUa/CalcPoint/LogicFlow，Admin 也不可見；bootstrap 帳號 `engineer` 由 install-db.ps1 seed）/ `Admin` / `User` |
 | `DBCoordinator` | Id, Name (UNIQUE), PollingInterval, ConnectTimeout, MonitorEnabled | DB 來源設備（由 `DBPoint/*.json` UPSERT by Name） |
 | `DBPoints` | SID (PK), CoordinatorId, Sequence, Name, Unit, Min, Max | DB 來源點位定義（每 Coordinator 上限 100 點；Sequence 由載入器以陣列順序自動產生） |
 | `DBLatestData` | SID (PK), Value, Timestamp, Quality | DB 來源統一入口表 — 外部系統 INSERT/UPDATE 此表（Value 寫工程值），Engine polling |

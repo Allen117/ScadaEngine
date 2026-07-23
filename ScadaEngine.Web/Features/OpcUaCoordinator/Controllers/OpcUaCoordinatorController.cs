@@ -10,7 +10,7 @@ namespace ScadaEngine.Web.Features.OpcUaCoordinator.Controllers;
 /// OPC UA 來源設定頁 — Server / Device / 點位全欄位動態編輯（免重啟 Engine）。
 /// 存檔流程：驗證 → 回寫 OpcUaPoint/*.json → UPSERT DB → 發 MQTT reload → 同步 Web 快取。
 /// </summary>
-[Authorize]
+[Authorize(Roles = "Engineer")]
 public class OpcUaCoordinatorController : Controller
 {
     private readonly OpcUaCoordinatorService _service;

@@ -125,6 +125,13 @@ if (Test-Path $certScriptSrc) {
 
 Write-Host "  Web OK" -ForegroundColor Green
 
+# 工程師工具不落地客戶伺服器：reset-engineer-password.ps1 移到包根目錄（隨工程師 USB 攜帶使用），
+# 並自兩個 App\Setting 移除 — 留在伺服器上等於任何能碰檔案系統的人一鍵重設 engineer 密碼
+$resetTool = "$ReleasePath\Engine\App\Setting\reset-engineer-password.ps1"
+if (Test-Path $resetTool) { Copy-Item $resetTool -Destination "$ReleasePath\reset-engineer-password.ps1" -Force }
+Remove-Item "$ReleasePath\Engine\App\Setting\reset-engineer-password.ps1", "$ReleasePath\Web\App\Setting\reset-engineer-password.ps1" -Force -ErrorAction SilentlyContinue
+Write-Host "  reset-engineer-password.ps1 moved to package root (engineer tool, not installed on server)" -ForegroundColor Gray
+
 # ──────────────────────────────────────
 # 3. Create install script for on-site
 # ──────────────────────────────────────
@@ -199,7 +206,14 @@ if "%_IS_UPGRADE%"=="1" (
         xcopy /E /I /Y "%_BACKUP%\Web\Setting"     "C:\SCADA\Web\App\Setting"         >nul
         xcopy /E /I /Y "%_BACKUP%\Web\MqttSetting" "C:\SCADA\Web\App\MqttSetting"     >nul
     )
+    :: Setting restore is for site JSON configs only; *.ps1 scripts are part of the app,
+    :: always take the package version (otherwise old scripts get restored over new ones)
+    copy /Y "%~dp0Engine\App\Setting\*.ps1" "C:\SCADA\Engine\App\Setting\" >nul
+    if exist "C:\SCADA\Web\App\Setting" copy /Y "%~dp0Web\App\Setting\*.ps1" "C:\SCADA\Web\App\Setting\" >nul
     rmdir /S /Q "%_BACKUP%"
+    :: Engineer tool must never live on the server (anyone with file access could reset the engineer password)
+    del /Q "C:\SCADA\Engine\App\Setting\reset-engineer-password.ps1" 2>nul
+    del /Q "C:\SCADA\Web\App\Setting\reset-engineer-password.ps1" 2>nul
     echo [INFO] Site config restored successfully.
     echo.
 )

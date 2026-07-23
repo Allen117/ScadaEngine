@@ -7,6 +7,10 @@ using ScadaEngine.Web.Services;
 
 namespace ScadaEngine.Web.Features.Designer.Controllers;
 
+/// <summary>
+/// 畫面設計 — 設計頁與寫入 API 為工程師模式專屬（action-level Roles="Engineer"）；
+/// Points / Devices / Load 三個唯讀 API 為執行期共用（ScadaPage 載入設計、EventLog/CalcPoint/LogicFlow 點位選擇器），維持一般 [Authorize]
+/// </summary>
 [Authorize]
 public class DesignerController : Controller
 {
@@ -31,6 +35,7 @@ public class DesignerController : Controller
     }
 
     [HttpGet("/Designer")]
+    [Authorize(Roles = "Engineer")]
     public IActionResult Index()
     {
         return View();
@@ -111,6 +116,7 @@ public class DesignerController : Controller
     /// 五個 SID 欄（kWh/V/A/kW/PF）全部帶回，前端據此做表頭驅動整列自動帶入。
     /// </summary>
     [HttpGet("/Designer/api/circuits")]
+    [Authorize(Roles = "Engineer")]
     public async Task<IActionResult> GetCircuits()
     {
         var circuits = await _circuitService.GetAllAsync();
@@ -144,6 +150,7 @@ public class DesignerController : Controller
     /// 儲存畫面設計至資料庫
     /// </summary>
     [HttpPost("/Designer/Save")]
+    [Authorize(Roles = "Engineer")]
     public async Task<IActionResult> Save([FromBody] SaveDesignDto dto)
     {
         try
@@ -165,6 +172,7 @@ public class DesignerController : Controller
     /// 取得列範本（分隔符 + 角色順序）
     /// </summary>
     [HttpGet("/Designer/Templates")]
+    [Authorize(Roles = "Engineer")]
     public async Task<IActionResult> GetTemplates()
     {
         var dto = await _templateService.ReadAsync();
@@ -175,6 +183,7 @@ public class DesignerController : Controller
     /// 整批覆寫列範本（用於「套用並存為預設」）
     /// </summary>
     [HttpPost("/Designer/Templates")]
+    [Authorize(Roles = "Engineer")]
     public async Task<IActionResult> SaveTemplates([FromBody] DesignerTemplateFileDto dto)
     {
         if (dto == null || dto.arrRoles == null || dto.arrRoles.Count == 0)

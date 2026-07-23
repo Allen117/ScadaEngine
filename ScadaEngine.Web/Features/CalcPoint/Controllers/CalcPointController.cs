@@ -7,7 +7,7 @@ using System.Text.Json;
 
 namespace ScadaEngine.Web.Features.CalcPoint.Controllers;
 
-[Authorize]
+[Authorize(Roles = "Engineer")]
 public class CalcPointController : Controller
 {
     private readonly CalcPointService _service;

@@ -84,6 +84,7 @@
   <data name="layout.menu.circuit_info" xml:space="preserve"><value>Circuit Info</value></data>
 
   <data name="layout.menu.system" xml:space="preserve"><value>System Settings</value></data>
+  <data name="layout.menu.engineer_mode" xml:space="preserve"><value>Engineer Mode</value></data>
   <data name="layout.menu.designer" xml:space="preserve"><value>Designer</value></data>
   <data name="layout.menu.alarm" xml:space="preserve"><value>Alarm Settings</value></data>
   <data name="layout.menu.points" xml:space="preserve"><value>Point Settings</value></data>

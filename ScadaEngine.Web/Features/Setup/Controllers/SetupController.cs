@@ -85,7 +85,7 @@ public class SetupController : Controller
         }
 
         var (isSuccess, szMessage) = await _accountService.CreateUserAsync(
-            szUsername, model.szRealName, szPassword, "Admin", null, isActive: true);
+            szUsername, model.szRealName, szPassword, "Admin", null, isActive: true, isOperatorEngineer: false);
 
         if (!isSuccess)
         {

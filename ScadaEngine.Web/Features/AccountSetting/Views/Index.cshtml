@@ -46,7 +46,9 @@
                                     <td>@(string.IsNullOrEmpty(user.szRealName) ? "-" : user.szRealName)</td>
                                     <td>
                                         @{
-                                            var badgeClass = user.szRole == "Admin" ? "bg-danger" : "bg-primary";
+                                            var badgeClass = user.szRole == "Admin" ? "bg-danger"
+                                                : user.szRole == "Engineer" ? "bg-warning text-dark"
+                                                : "bg-primary";
                                         }
                                         <span class="badge @badgeClass">@user.szRole</span>
                                     </td>
@@ -140,6 +142,10 @@
                         <select class="form-select" id="inputRole">
                             <option value="Admin">Admin</option>
                             <option value="User" selected>User</option>
+                            @if (ViewData["IsEngineerOperator"] as bool? == true)
+                            {
+                                <option value="Engineer">Engineer</option>
+                            }
                         </select>
                     </div>
                     <div class="col-md-6">
@@ -191,6 +197,10 @@
                         <select class="form-select" id="editRole">
                             <option value="Admin">Admin</option>
                             <option value="User">User</option>
+                            @if (ViewData["IsEngineerOperator"] as bool? == true)
+                            {
+                                <option value="Engineer">Engineer</option>
+                            }
                         </select>
                     </div>
                     <div class="col-md-6">

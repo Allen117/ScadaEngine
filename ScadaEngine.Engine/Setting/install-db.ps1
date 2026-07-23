@@ -11,6 +11,10 @@
       2. 資料庫不存在 → 建立於指定路徑 + 設 RECOVERY SIMPLE
          資料庫已存在 → 跳過建立；若復原模式為 FULL 印出警告（不自動更改既有 DB 狀態）
       3. 建立應用程式 SQL login（讀 dbSetting.json 的帳密）並授予目標 DB 的 db_owner
+      4. 建立工程師模式 bootstrap 帳號 engineer（無任何 Engineer 角色帳號時）：
+         密碼由 -EngineerPassword 參數或 console 互動輸入（遮罩、兩次核對、至少 12 碼），
+         非互動且未帶參數時跳過並警告。忘記密碼用 Release 包根目錄的 reset-engineer-password.ps1
+         重設（工程師隨身工具，不落地伺服器）。
 
     既有環境（DB 已手動建立）也應執行一次本腳本，以補齊備份資料夾與服務帳號權限。
 
@@ -25,7 +29,8 @@ param(
     [string]$AppLogin,         # 預設讀 dbSetting.json 的 DataBaseAccount
     [string]$AppPassword,      # 預設讀 dbSetting.json 的 DataBasePassword
     [string]$DataFolder,       # 預設讀 DbMaintenanceSetting.json 的 DataFileFolder
-    [string]$BackupFolder      # 預設讀 DbMaintenanceSetting.json 的 BackupFolder
+    [string]$BackupFolder,     # 預設讀 DbMaintenanceSetting.json 的 BackupFolder
+    [string]$EngineerPassword  # 工程師模式 bootstrap 帳號 engineer 的密碼（至少 12 碼）；不給則 console 互動輸入
 )
 
 $ErrorActionPreference = 'Stop'
@@ -161,6 +166,90 @@ IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'$quotedLogin
 ALTER ROLE db_owner ADD MEMBER [$safeLogin];
 "@
         Write-Host "已確認 $AppLogin 為 $DatabaseName 的 db_owner" -ForegroundColor Green
+    }
+
+    # ─── 6. 工程師模式 bootstrap 帳號 engineer ──────────────────────────
+    # Users 表通常由 Engine 首次啟動依 DatabaseSchema.json 建立；裝機時尚未存在則先以
+    # 相同欄位定義預建（Engine 欄位同步只補缺不重建，預建表相容）。
+    # 只要 DB 內已有任何 Engineer 角色帳號（含已停用）即跳過 — 支援「建好個人帳號後停用/刪除
+    # bootstrap」的 SOP，重跑 install 不會重新長出 bootstrap 帳號。
+    $usersTableId = Get-SqlScalar "SELECT OBJECT_ID(N'[$quotedDb].[dbo].[Users]')"
+    if ($usersTableId -is [System.DBNull]) {
+        Invoke-Sql @"
+USE [$safeDb];
+CREATE TABLE [Users] (
+    [UserID] int IDENTITY(1,1) NOT NULL,
+    [Username] nvarchar(50) NOT NULL,
+    [RealName] nvarchar(100) NULL,
+    [PasswordHash] nvarchar(MAX) NOT NULL,
+    [Role] nvarchar(20) NOT NULL,
+    [Department] nvarchar(50) NULL,
+    [IsActive] bit NULL DEFAULT 1,
+    [LastLoginAt] datetime NULL,
+    [CreatedAt] datetime NULL DEFAULT GETDATE(),
+    [UpdatedAt] datetime NULL DEFAULT GETDATE()
+    ,CONSTRAINT [PK_Users] PRIMARY KEY NONCLUSTERED ([UserID])
+);
+"@
+        Write-Host "Users 資料表尚未存在，已依 DatabaseSchema.json 定義預建" -ForegroundColor Green
+    }
+
+    $engineerCount = Get-SqlScalar "SELECT COUNT(*) FROM [$safeDb].[dbo].[Users] WHERE [Role] = N'Engineer'"
+    if ([int]$engineerCount -gt 0) {
+        Write-Host "已存在 Engineer 角色帳號，跳過 engineer bootstrap 帳號建立"
+    } else {
+        $szPlainPwd = $null
+        if ($EngineerPassword) {
+            if ($EngineerPassword.Length -lt 12) {
+                Write-Host "警告: -EngineerPassword 少於 12 碼，拒絕使用 — 跳過 engineer 帳號建立" -ForegroundColor Yellow
+            } else {
+                $szPlainPwd = $EngineerPassword
+            }
+        } else {
+            $isInteractive = [Environment]::UserInteractive -and -not [Console]::IsInputRedirected
+            if (-not $isInteractive) {
+                Write-Host "警告: 非互動環境且未帶 -EngineerPassword — 跳過 engineer 帳號建立，之後可執行 reset-engineer-password.ps1 建立" -ForegroundColor Yellow
+            } else {
+                Write-Host ""
+                Write-Host "── 設定工程師模式 bootstrap 帳號（帳號名固定: engineer）──" -ForegroundColor Cyan
+                for ($nTry = 1; $nTry -le 3 -and -not $szPlainPwd; $nTry++) {
+                    try {
+                        $sec1 = Read-Host "請自訂 engineer 密碼（至少 12 碼）" -AsSecureString
+                    } catch {
+                        Write-Host "警告: 無法互動輸入 — 跳過 engineer 帳號建立，之後可執行 reset-engineer-password.ps1 建立" -ForegroundColor Yellow
+                        break
+                    }
+                    $p1 = [Runtime.InteropServices.Marshal]::PtrToStringBSTR([Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec1))
+                    # 長度不足立即提醒重輸，不浪費一次「確認密碼」輸入
+                    if ($p1.Length -lt 12)  { Write-Host "密碼少於 12 碼，請重新輸入" -ForegroundColor Yellow; continue }
+                    try {
+                        $sec2 = Read-Host "再輸入一次確認" -AsSecureString
+                    } catch {
+                        Write-Host "警告: 無法互動輸入 — 跳過 engineer 帳號建立，之後可執行 reset-engineer-password.ps1 建立" -ForegroundColor Yellow
+                        break
+                    }
+                    $p2 = [Runtime.InteropServices.Marshal]::PtrToStringBSTR([Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec2))
+                    if ($p1 -cne $p2)       { Write-Host "兩次輸入不一致，請重新輸入" -ForegroundColor Yellow; continue }
+                    $szPlainPwd = $p1
+                }
+                if (-not $szPlainPwd) {
+                    Write-Host "警告: 密碼設定未完成 — 跳過 engineer 帳號建立，之後可執行 reset-engineer-password.ps1 建立" -ForegroundColor Yellow
+                }
+            }
+        }
+
+        if ($szPlainPwd) {
+            # 與 Web 登入驗證一致：SHA256(UTF8) 小寫 hex（ValidateUserAsync）
+            $sha = [System.Security.Cryptography.SHA256]::Create()
+            $szHash = ([System.BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($szPlainPwd)))).Replace('-', '').ToLower()
+            $sha.Dispose()
+
+            $cmdIns = $conn.CreateCommand()
+            $cmdIns.CommandText = "INSERT INTO [$safeDb].[dbo].[Users] (Username, RealName, PasswordHash, Role, Department, IsActive, CreatedAt, UpdatedAt) VALUES (N'engineer', N'工程師', @hash, N'Engineer', N'', 1, GETDATE(), GETDATE())"
+            [void]$cmdIns.Parameters.AddWithValue('@hash', $szHash)
+            [void]$cmdIns.ExecuteNonQuery()
+            Write-Host "已建立工程師模式 bootstrap 帳號 engineer（建議首次登入後建立個人具名 Engineer 帳號並停用 bootstrap）" -ForegroundColor Green
+        }
     }
 
     Write-Host ""

@@ -117,6 +117,9 @@
     <None Update="Setting\install-db.ps1">
     <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
   </None>
+    <None Update="Setting\reset-engineer-password.ps1">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </None>
     <None Update="Resources\notification.zh-TW.json">
     <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
   </None>

@@ -21,9 +21,16 @@ public class AccountSettingService
         return users.ToList();
     }
 
+    /// <summary>Engineer 帳號的建立/指派/修改/刪除，僅限操作者本身為 Engineer（Admin 不可見亦不可管）</summary>
+    private static bool IsRoleAllowed(string szRole, bool isOperatorEngineer)
+    {
+        if (szRole == "Admin" || szRole == "User") return true;
+        return szRole == "Engineer" && isOperatorEngineer;
+    }
+
     public async Task<(bool isSuccess, string szMessage)> CreateUserAsync(
         string szUsername, string? szRealName, string szPassword, string szRole,
-        string? szDepartment, bool isActive)
+        string? szDepartment, bool isActive, bool isOperatorEngineer)
     {
         if (string.IsNullOrWhiteSpace(szUsername) ||
             string.IsNullOrWhiteSpace(szPassword) ||
@@ -32,8 +39,9 @@ public class AccountSettingService
             return (false, "帳號、密碼、角色為必填欄位");
         }
 
-        if (szRole != "Admin" && szRole != "User")
-            return (false, "角色只能是 Admin 或 User");
+        szRole = szRole.Trim();
+        if (!IsRoleAllowed(szRole, isOperatorEngineer))
+            return (false, "無效的角色");
 
         var user = new UserModel
         {
@@ -53,13 +61,18 @@ public class AccountSettingService
 
     public async Task<(bool isSuccess, string szMessage)> UpdateUserAsync(
         int nUserID, string? szRealName, string szRole, string? szDepartment,
-        bool isActive, string? szPermissionJson)
+        bool isActive, string? szPermissionJson, bool isOperatorEngineer)
     {
         if (nUserID <= 0)
             return (false, "無效的使用者 ID");
 
-        if (szRole != "Admin" && szRole != "User")
-            return (false, "角色只能是 Admin 或 User");
+        szRole = szRole?.Trim() ?? "";
+        if (!IsRoleAllowed(szRole, isOperatorEngineer))
+            return (false, "無效的角色");
+
+        // 非 Engineer 操作者不得動到 Engineer 帳號（列表雖已過濾，仍防直打 API）
+        if (!isOperatorEngineer && await IsEngineerAccountAsync(nUserID))
+            return (false, "無效的使用者 ID");
 
         var user = new UserModel
         {
@@ -122,15 +135,25 @@ public class AccountSettingService
             authProperties);
     }
 
-    public async Task<(bool isSuccess, string szMessage)> DeleteUserAsync(int nUserID)
+    public async Task<(bool isSuccess, string szMessage)> DeleteUserAsync(int nUserID, bool isOperatorEngineer)
     {
         if (nUserID <= 0)
+            return (false, "無效的使用者 ID");
+
+        if (!isOperatorEngineer && await IsEngineerAccountAsync(nUserID))
             return (false, "無效的使用者 ID");
 
         var isSuccess = await _repository.DeleteUserAsync(nUserID);
         return isSuccess
             ? (true, "")
             : (false, "刪除失敗");
+    }
+
+    /// <summary>指定 UserID 是否為 Engineer 角色帳號</summary>
+    private async Task<bool> IsEngineerAccountAsync(int nUserID)
+    {
+        var users = await _repository.GetAllUsersAsync();
+        return users.Any(u => u.nUserID == nUserID && u.szRole == "Engineer");
     }
 
     public async Task<string> GetPermissionJsonAsync(int nUserID)

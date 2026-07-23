@@ -2,7 +2,6 @@
 @using System.Globalization
 @{
     bool canAccess(string route) => PermissionService.CanAccessPage(User, route);
-    bool isAdmin = PermissionService.IsAdmin(User);
     var szCurrentCulture = CultureInfo.CurrentUICulture.Name;
     var szCurrentLangLabel = szCurrentCulture.StartsWith("en") ? "EN" : "台灣";
     var szReturnUrl = Context.Request.Path + Context.Request.QueryString;
@@ -253,7 +252,7 @@
                                     </a>
                                 </li>
                             }
-                            @if (canAccess("/ConditionCtrl") || canAccess("/LogicFlow") || canAccess("/ScheduleSetting"))
+                            @if (canAccess("/ConditionCtrl") || canAccess("/ScheduleSetting"))
                             {
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
@@ -264,10 +263,6 @@
                                         @if (canAccess("/ConditionCtrl"))
                                         {
                                             <li><a class="dropdown-item" href="/ConditionCtrl"><i class="fas fa-code-branch me-2"></i>@Localizer["layout.menu.condition"]</a></li>
-                                        }
-                                        @if (canAccess("/LogicFlow"))
-                                        {
-                                            <li><a class="dropdown-item" href="/LogicFlow"><i class="fas fa-project-diagram me-2"></i>@Localizer["layout.menu.logicflow"]</a></li>
                                         }
                                         @if (canAccess("/ScheduleSetting"))
                                         {
@@ -295,8 +290,7 @@
                                     </ul>
                                 </li>
                             }
-                            bool showPointSettings = canAccess("/ModbusCoordinator") || canAccess("/DbCoordinator") || canAccess("/OpcUaCoordinator") || canAccess("/CalcPoint");
-                            bool showSettings = canAccess("/Designer") || canAccess("/AlarmSetting") || canAccess("/AccountSetting") || canAccess("/WeatherSetting") || showPointSettings;
+                            bool showSettings = canAccess("/AlarmSetting") || canAccess("/AccountSetting") || canAccess("/WeatherSetting");
                             @if (showSettings)
                             {
                                 <li class="nav-item dropdown">
@@ -305,39 +299,9 @@
                                         @Localizer["layout.menu.system"]
                                     </a>
                                     <ul class="dropdown-menu">
-                                        @if (canAccess("/Designer"))
-                                        {
-                                            <li><a class="dropdown-item" href="/Designer"><i class="fas fa-paint-brush me-2"></i>@Localizer["layout.menu.designer"]</a></li>
-                                        }
                                         @if (canAccess("/AlarmSetting"))
                                         {
                                             <li><a class="dropdown-item" href="/AlarmSetting"><i class="fas fa-bell me-2"></i>@Localizer["layout.menu.alarm"]</a></li>
-                                        }
-                                        @if (showPointSettings)
-                                        {
-                                            <li class="dropdown-submenu">
-                                                <a class="dropdown-item dropdown-toggle" href="#" role="button">
-                                                    <i class="fas fa-map-marker-alt me-2"></i>@Localizer["layout.menu.points"]
-                                                </a>
-                                                <ul class="dropdown-menu">
-                                                    @if (canAccess("/ModbusCoordinator"))
-                                                    {
-                                                        <li><a class="dropdown-item" href="/ModbusCoordinator"><i class="fas fa-network-wired me-2"></i>@Localizer["layout.menu.modbuscoordinator"]</a></li>
-                                                    }
-                                                    @if (canAccess("/DbCoordinator"))
-                                                    {
-                                                        <li><a class="dropdown-item" href="/DbCoordinator"><i class="fas fa-database me-2"></i>@Localizer["layout.menu.dbcoordinator"]</a></li>
-                                                    }
-                                                    @if (canAccess("/OpcUaCoordinator"))
-                                                    {
-                                                        <li><a class="dropdown-item" href="/OpcUaCoordinator"><i class="fas fa-plug me-2"></i>@Localizer["layout.menu.opcuacoordinator"]</a></li>
-                                                    }
-                                                    @if (canAccess("/CalcPoint"))
-                                                    {
-                                                        <li><a class="dropdown-item" href="/CalcPoint"><i class="fas fa-calculator me-2"></i>@Localizer["layout.menu.calcpoint"]</a></li>
-                                                    }
-                                                </ul>
-                                            </li>
                                         }
                                         @if (canAccess("/WeatherSetting"))
                                         {
@@ -347,6 +311,30 @@
                                         {
                                             <li><a class="dropdown-item" href="/AccountSetting"><i class="fas fa-users-cog me-2"></i>@Localizer["layout.menu.account"]</a></li>
                                         }
+                                    </ul>
+                                </li>
+                            }
+                            @if (PermissionService.IsEngineer(User))
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-hard-hat me-1"></i>
+                                        @Localizer["layout.menu.engineer_mode"]
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="/Designer"><i class="fas fa-paint-brush me-2"></i>@Localizer["layout.menu.designer"]</a></li>
+                                        <li class="dropdown-submenu">
+                                            <a class="dropdown-item dropdown-toggle" href="#" role="button">
+                                                <i class="fas fa-map-marker-alt me-2"></i>@Localizer["layout.menu.points"]
+                                            </a>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="/ModbusCoordinator"><i class="fas fa-network-wired me-2"></i>@Localizer["layout.menu.modbuscoordinator"]</a></li>
+                                                <li><a class="dropdown-item" href="/DbCoordinator"><i class="fas fa-database me-2"></i>@Localizer["layout.menu.dbcoordinator"]</a></li>
+                                                <li><a class="dropdown-item" href="/OpcUaCoordinator"><i class="fas fa-plug me-2"></i>@Localizer["layout.menu.opcuacoordinator"]</a></li>
+                                                <li><a class="dropdown-item" href="/CalcPoint"><i class="fas fa-calculator me-2"></i>@Localizer["layout.menu.calcpoint"]</a></li>
+                                            </ul>
+                                        </li>
+                                        <li><a class="dropdown-item" href="/LogicFlow"><i class="fas fa-project-diagram me-2"></i>@Localizer["layout.menu.logicflow"]</a></li>
                                     </ul>
                                 </li>
                             }

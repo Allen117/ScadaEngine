@@ -146,6 +146,12 @@ function Ensure-PythonRuntime {
 function Invoke-DbSetup {
     # 資料庫維護前置（idempotent）：DB 缺才建、備份資料夾 + SQL 服務帳號 ACL、wsn login/db_owner
     # 失敗不中斷部署 — Engine 啟動安全網會再兜底，log 會指引手動執行
+
+    # 工程師工具不落地伺服器：publish/Setting 複製會夾帶 reset-engineer-password.ps1，這裡移除
+    # （該工具由工程師隨 Release 包攜帶使用，留在伺服器等於任何能碰檔案系統的人可一鍵重設 engineer 密碼）
+    $resetTool = Join-Path $TargetPath "Setting\reset-engineer-password.ps1"
+    if (Test-Path $resetTool) { Remove-Item $resetTool -Force; Write-Host "Removed engineer tool from server: reset-engineer-password.ps1" }
+
     $dbScript = Join-Path $TargetPath "Setting\install-db.ps1"
     if (Test-Path $dbScript) {
         Write-Host "Running database setup (install-db.ps1)..." -ForegroundColor Yellow

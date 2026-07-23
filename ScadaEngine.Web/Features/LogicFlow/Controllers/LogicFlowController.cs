@@ -7,7 +7,7 @@ using ScadaEngine.Web.Services;
 
 namespace ScadaEngine.Web.Features.LogicFlow.Controllers;
 
-[Authorize]
+[Authorize(Roles = "Engineer")]
 [Route("[controller]")]
 public class LogicFlowController : Controller
 {

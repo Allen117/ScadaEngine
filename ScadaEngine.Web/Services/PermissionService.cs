@@ -10,14 +10,13 @@ namespace ScadaEngine.Web.Services;
 public static class PermissionService
 {
     /// <summary>
-    /// 系統中可配置的主頁面路由清單
+    /// 系統中可配置的主頁面路由清單（Admin 可授權給 User 的範圍 — 不含工程師專屬頁）
     /// </summary>
     public static readonly (string Route, string Name)[] ConfigurablePages =
     [
         ("/ScadaPage",      "即時監控"),
         ("/RealTime",       "即時數據"),
         ("/ConditionCtrl",  "條件控制"),
-        ("/LogicFlow",      "流程圖控制"),
         ("/HistoryData",    "歷史資料"),
         ("/EventLog",       "事件記錄"),
         ("/EMS",            "能源管理首頁"),
@@ -33,13 +32,23 @@ public static class PermissionService
         ("/HolidaySetting", "國定假日設定"),
         ("/EmsCardSetting", "EMS卡片顯示設定"),
         ("/EnergyBaseline", "能源基準"),
+        ("/WeatherSetting", "氣象資料"),
+        ("/AccountSetting", "帳號管理"),
+    ];
+
+    /// <summary>
+    /// 工程師模式專屬頁面 — 僅 Engineer 角色可存取，Admin / User 一律擋（含選單與直連）。
+    /// 對應 Controller 另掛 [Authorize(Roles = "Engineer")] 擋子 API；
+    /// 唯 Designer 的 Points / Devices / Load 三個唯讀 API 為執行期共用（ScadaPage / EventLog），維持一般 [Authorize]。
+    /// </summary>
+    public static readonly (string Route, string Name)[] EngineerPages =
+    [
         ("/Designer",       "畫面設計"),
-        ("/Config",         "系統參數"),
         ("/ModbusCoordinator", "Modbus來源"),
         ("/DbCoordinator",  "DB 來源"),
         ("/OpcUaCoordinator", "OPC UA 來源"),
-        ("/WeatherSetting", "氣象資料"),
-        ("/AccountSetting", "帳號管理"),
+        ("/CalcPoint",      "計算點位"),
+        ("/LogicFlow",      "流程圖控制"),
     ];
 
     /// <summary>
@@ -48,6 +57,27 @@ public static class PermissionService
     public static bool IsAdmin(ClaimsPrincipal user)
     {
         return user.IsInRole("Admin");
+    }
+
+    /// <summary>
+    /// 判斷是否為 Engineer 角色（工程師模式）
+    /// </summary>
+    public static bool IsEngineer(ClaimsPrincipal user)
+    {
+        return user.IsInRole("Engineer");
+    }
+
+    /// <summary>
+    /// 路徑是否為工程師模式專屬頁面
+    /// </summary>
+    public static bool IsEngineerRoute(string? szPath)
+    {
+        if (string.IsNullOrEmpty(szPath)) return false;
+        foreach (var (route, _) in EngineerPages)
+        {
+            if (string.Equals(route, szPath, StringComparison.OrdinalIgnoreCase)) return true;
+        }
+        return false;
     }
 
     /// <summary>
@@ -89,7 +119,12 @@ public static class PermissionService
         if (!user.Identity?.IsAuthenticated ?? true)
             return false;
 
-        if (IsAdmin(user))
+        // 工程師專屬頁短路判斷：只認 Engineer 角色，Admin 與 User 權限 JSON 殘值皆無效
+        if (IsEngineerRoute(szRoute))
+            return IsEngineer(user);
+
+        // Engineer 對一般頁面比照 Admin 全放行（工程師建置時需要驗證監控成果）
+        if (IsAdmin(user) || IsEngineer(user))
             return true;
 
         var permData = GetPermissionData(user);
@@ -134,7 +169,7 @@ public static class PermissionService
     /// </summary>
     public static bool CanViewScadaPage(ClaimsPrincipal user, string szPageSid)
     {
-        if (IsAdmin(user))
+        if (IsAdmin(user) || IsEngineer(user))
             return true;
 
         var permData = GetPermissionData(user);
@@ -146,7 +181,7 @@ public static class PermissionService
     /// </summary>
     public static bool CanControlScadaPage(ClaimsPrincipal user, string szPageSid)
     {
-        if (IsAdmin(user))
+        if (IsAdmin(user) || IsEngineer(user))
             return true;
 
         var permData = GetPermissionData(user);

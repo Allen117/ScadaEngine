@@ -35,6 +35,7 @@
 | 電費設定 | Tariff Settings | `/TariffSetting` |
 | 國定假日設定 | National Holidays / National Holiday Settings | `/HolidaySetting`（選單用短形） |
 | 系統設定 | System Settings | top-level menu |
+| 工程師模式 | Engineer Mode | top-level menu，僅 Engineer 角色可見（含畫面設計/點位設定/流程圖控制） |
 | 畫面設計 | Designer | `/Designer` |
 | 警報設定 | Alarm Settings | `/AlarmSetting` |
 | 點位設定 | Point Settings | submenu |

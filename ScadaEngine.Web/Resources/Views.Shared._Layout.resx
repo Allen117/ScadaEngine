@@ -84,6 +84,7 @@
   <data name="layout.menu.circuit_info" xml:space="preserve"><value>迴路資訊</value></data>
 
   <data name="layout.menu.system" xml:space="preserve"><value>系統設定</value></data>
+  <data name="layout.menu.engineer_mode" xml:space="preserve"><value>工程師模式</value></data>
   <data name="layout.menu.designer" xml:space="preserve"><value>畫面設計</value></data>
   <data name="layout.menu.alarm" xml:space="preserve"><value>警報設定</value></data>
   <data name="layout.menu.points" xml:space="preserve"><value>點位設定</value></data>

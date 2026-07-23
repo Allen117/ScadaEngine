@@ -13,7 +13,7 @@ public class ScadaPageController : Controller
     {
         ViewData["Title"] = "即時監控";
 
-        var isAdmin = PermissionService.IsAdmin(User);
+        var isAdmin = PermissionService.IsAdmin(User) || PermissionService.IsEngineer(User);
         var permData = PermissionService.GetPermissionData(User);
 
         // 傳遞權限資料給前端 JS
