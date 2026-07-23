@@ -459,6 +459,23 @@ InitializeAsync()
 | 功率 | `V * I / 1000` | `{"V":"196865-S1", "I":"196865-S2"}` | 電壓×電流÷1000 |
 | 平均溫度 | `(T1 + T2) / 2` | `{"T1":"196865-S3", "T2":"196865-S4"}` | 兩點平均 |
 | COP | `Qc / P` | `{"Qc":"CALC-S1", "P":"196865-S5"}` | 冷凍能力÷耗電 |
+| 濕球溫度 | `WetBulb(T, RH)` | `{"T":"DB1-S1", "RH":"DB1-S2"}` | 自訂函數，見 8.2.1 |
+
+#### 8.2.1 NCalc 自訂函數（NCalcCustomFunctions）
+
+除 NCalc 內建數學函數外，`ScadaEngine.Engine/Services/NCalcCustomFunctions.cs` 為集中註冊點，
+Engine 實際計算（`CalculatedPointService.EvaluateFormula`）與 Web 公式預覽（`CalcPointService.PreviewAsync`）
+兩處共用，函數名不分大小寫：
+
+| 函數 | 說明 |
+|------|------|
+| `WetBulb(T, RH)` | 濕球溫度 — Stull (2011) 經驗式（實作在 `ScadaEngine.Common/Algorithms/Psychrometrics`，含獨立驗證）。適用 T 0~50°C、RH 5~100%，範圍外回 NaN → 既有 NaN→Bad 機制接手 |
+
+- **保留字**：與自訂函數同名的**變數名稱**會被 `WrapFormulaVariables` 包成 `[變數]` 而破壞公式，
+  Web 端 Create/Update 已擋（`NCalcCustomFunctions.ReservedNames`）。
+- **新增自訂函數時**：改 `NCalcCustomFunctions.Register`＋`ReservedNames`、CalcPoint 頁公式 tooltip
+  （`calcpoint.tooltip.formula` zh/en）、本表。CalcPoint 建立 modal 的「公式範本」下拉
+  （`calcpoint.js` `TEMPLATES`）可一鍵帶入常用函數公式。
 
 ### 8.3 執行流程
 

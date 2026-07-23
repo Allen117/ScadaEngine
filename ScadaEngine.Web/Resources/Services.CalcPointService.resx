@@ -61,4 +61,5 @@
   <data name="calcpoint.svc.calc_success" xml:space="preserve"><value>計算成功</value></data>
   <data name="calcpoint.svc.calc_invalid" xml:space="preserve"><value>計算結果無效 (NaN/Infinity)</value></data>
   <data name="calcpoint.svc.calc_failed_with" xml:space="preserve"><value>公式計算失敗: {0}</value></data>
+  <data name="calcpoint.svc.reserved_var" xml:space="preserve"><value>變數名稱「{0}」為內建函數保留字，請改用其他名稱</value></data>
 </root>

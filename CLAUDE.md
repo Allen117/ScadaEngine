@@ -193,7 +193,7 @@ Web reads Engine's `dbSetting.json` via a relative path `../ScadaEngine.Engine/S
 | `Holidays` | HolidayDate (date PK) | 國定假日標註（/HolidaySetting 維護；TOU 計價落 sun_offday） |
 | `EnergyBaseline` | Id, Name, TargetType, Granularity(day=曆日/month=曆月), Status(draft/frozen), Intercept, R2, AdjR2, CvRmse, ... | ISO 50001 能源基線模型主檔（/EnergyBaseline；OLS 回歸走 MathNet.Numerics，詳見 docs/功能說明書_能源基線.md） |
 | `EnergyBaselineVariable` | Id, BaselineId, Sequence(1..5), VarType(point/circuit), SourceSID/SourceCircuitId, Coefficient, PValue | 基線相關變數 X 子檔（一模型最多 5 變數；名稱/單位存快照） |
-| `WeatherSetting` | Id(=1), ApiKey, DatasetId, StationId, PollIntervalMinutes, IsEnabled, LastFetch* | 氣象資料來源設定（單列；/WeatherSetting 維護，Web WeatherFetchService 依此抓 CWA 觀測寫 Weather DB 來源點位，詳見 docs/功能說明書_氣象資料來源.md） |
+| `WeatherSetting` | Id(=1), ApiKey, DatasetId, StationId, PollIntervalMinutes, IsEnabled, LastFetch* | 氣象資料來源設定（單列；/WeatherSetting 維護，Web WeatherFetchService 依此抓 CWA 觀測寫 Weather DB 來源點位 S1 溫度/S2 濕度/S3 濕球溫度〔由 S1/S2 以 Stull 式推導，NCalc 亦有 WetBulb 自訂函數〕，詳見 docs/功能說明書_氣象資料來源.md） |
 | `EmsCardSetting` | CardKey (PK), IsVisible, SortOrder | EMS 首頁卡片顯示覆寫（每卡一列只存覆寫；卡片定義唯一真相來源為 Web `EmsCardRegistry`，/EmsCardSetting 維護。新增 EMS 首頁卡片走 SOP：docs/功能說明書_EMS頁面.md §9.4） |
 
 SID 格式：

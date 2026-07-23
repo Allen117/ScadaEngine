@@ -5,7 +5,8 @@ namespace ScadaEngine.Web.Services;
 /// <summary>
 /// 氣象資料抓取背景服務（Web 端）。
 /// 每 30 秒讀 WeatherSetting 判斷是否到期（設定變更即刻生效），到期就呼叫 CWA API
-/// 抓所選測站觀測，寫入 DB 來源 Weather Coordinator 的 DBLatestData（S1 溫度 / S2 濕度），
+/// 抓所選測站觀測，寫入 DB 來源 Weather Coordinator 的 DBLatestData
+///（S1 溫度 / S2 濕度 / S3 濕球溫度＝由 S1/S2 推導），
 /// 再由 Engine DbCommunicationService polling 進 SCADA pipeline。
 ///
 /// Quality 規則（防「舊溫度當好值餵基線」）：

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Localization;
 using NCalc;
 using ScadaEngine.Common.Data.Models;
 using ScadaEngine.Engine.Data.Interfaces;
+using ScadaEngine.Engine.Services;
 
 namespace ScadaEngine.Web.Services;
 
@@ -51,6 +52,10 @@ public class CalcPointService
             var mappings = JsonSerializer.Deserialize<Dictionary<string, string>>(szInputMappings);
             if (mappings == null || mappings.Count == 0)
                 return (false, _l["calcpoint.svc.no_variables"].Value, null);
+
+            var szReserved = FindReservedVarName(mappings);
+            if (szReserved != null)
+                return (false, _l["calcpoint.svc.reserved_var", szReserved].Value, null);
         }
         catch (JsonException)
         {
@@ -91,6 +96,21 @@ public class CalcPointService
             return (false, _l["calcpoint.svc.name_empty"].Value);
         if (string.IsNullOrWhiteSpace(szFormula))
             return (false, _l["calcpoint.svc.formula_empty"].Value);
+
+        try
+        {
+            var mappings = JsonSerializer.Deserialize<Dictionary<string, string>>(szInputMappings);
+            if (mappings != null)
+            {
+                var szReserved = FindReservedVarName(mappings);
+                if (szReserved != null)
+                    return (false, _l["calcpoint.svc.reserved_var", szReserved].Value);
+            }
+        }
+        catch (JsonException)
+        {
+            return (false, _l["calcpoint.svc.input_format_error"].Value);
+        }
 
         var model = new CalculatedPointModel
         {
@@ -140,6 +160,7 @@ public class CalcPointService
 
             var szSafeFormula = WrapFormulaVariables(szFormula, mappings.Keys);
             var expression = new Expression(szSafeFormula);
+            NCalcCustomFunctions.Register(expression);
             foreach (var kvp in mappings)
             {
                 if (latestDict.TryGetValue(kvp.Value, out var fValue))
@@ -166,6 +187,13 @@ public class CalcPointService
             return (false, _l["calcpoint.svc.calc_failed_with", ex.Message].Value, null);
         }
     }
+
+    /// <summary>
+    /// 找出與 NCalc 自訂函數同名的變數（會被 WrapFormulaVariables 包成 [變數] 而破壞公式），
+    /// 無違規回傳 null
+    /// </summary>
+    private static string? FindReservedVarName(Dictionary<string, string> mappings)
+        => mappings.Keys.FirstOrDefault(NCalcCustomFunctions.IsReservedName);
 
     /// <summary>
     /// 將公式中的變數名稱包裹為 NCalc bracket 語法 [varName]，

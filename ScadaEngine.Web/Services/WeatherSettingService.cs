@@ -1,5 +1,6 @@
 using Dapper;
 using Microsoft.Data.SqlClient;
+using ScadaEngine.Common.Algorithms;
 using ScadaEngine.Common.Data.Services;
 using ScadaEngine.Web.Features.WeatherSetting.Models;
 
@@ -9,7 +10,8 @@ namespace ScadaEngine.Web.Services;
 /// 氣象資料來源設定 — WeatherSetting 單列表（Id=1）讀寫 + 觀測值寫入 DBLatestData。
 /// 寫值以 DBCoordinator.Name='Weather' + DBPoints.Sequence JOIN 定位 SID
 /// （同 UpdateTimeSim.sql 慣例 — CoordinatorId 由 IDENTITY 配發，換環境會變，不可寫死 DB{n}-S{m}）。
-/// S1 = 外氣溫度、S2 = 外氣相對濕度（Sequence 由 Weather.json 陣列順序決定，永不插隊）。
+/// S1 = 外氣溫度、S2 = 外氣相對濕度、S3 = 外氣濕球溫度（由 S1/S2 以 Stull 式推導，非 CWA 欄位；
+/// Sequence 由 Weather.json 陣列順序決定，永不插隊）。
 /// </summary>
 public class WeatherSettingService
 {
@@ -18,6 +20,7 @@ public class WeatherSettingService
 
     public const int SeqTemperature = 1;
     public const int SeqHumidity = 2;
+    public const int SeqWetBulb = 3;
 
     private readonly ILogger<WeatherSettingService> _logger;
     private readonly DatabaseConfigService _configService;
@@ -96,17 +99,26 @@ public class WeatherSettingService
     }
 
     /// <summary>
-    /// 觀測值寫入 DBLatestData（Weather S1/S2）。
+    /// 觀測值寫入 DBLatestData（Weather S1/S2/S3）。
+    /// S3 濕球溫度由溫濕度以 Stull 式推導 — 任一輸入缺測或超出適用範圍（NaN）即走壞值路徑。
     /// 好值：寫 Value + Timestamp（觀測時間，DB 來源語意＝外部真實時間）+ Quality=1；
     /// 壞值（缺測/過舊/抓取失敗）：只降 Quality=0，保留最近成功值與時間。
     /// 回傳實際更新列數 — 0 表示 Engine 尚未載入 Weather.json（DBLatestData 無 seed 列）。
     /// </summary>
     public async Task<int> WriteObservationAsync(double? fTemperature, double? fHumidity, DateTime? dtObsTime, bool isFresh)
     {
+        double? fWetBulb = null;
+        if (fTemperature != null && fHumidity != null)
+        {
+            var dTw = Psychrometrics.WetBulbStull(fTemperature.Value, fHumidity.Value);
+            if (!double.IsNaN(dTw)) fWetBulb = Math.Round(dTw, 2);
+        }
+
         using var conn = await GetConnectionAsync();
         var nUpdated = 0;
         nUpdated += await WritePointAsync(conn, SeqTemperature, fTemperature, dtObsTime, isFresh);
         nUpdated += await WritePointAsync(conn, SeqHumidity, fHumidity, dtObsTime, isFresh);
+        nUpdated += await WritePointAsync(conn, SeqWetBulb, fWetBulb, dtObsTime, isFresh);
         return nUpdated;
     }
 

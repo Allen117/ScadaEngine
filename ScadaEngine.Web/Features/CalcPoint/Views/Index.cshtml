@@ -57,6 +57,15 @@
             </div>
             <div class="modal-body">
                 <input type="hidden" id="editSID" />
+                <div class="mb-3">
+                    <label class="form-label fw-semibold"><i class="fas fa-magic me-1"></i>@Localizer["calcpoint.label.template"]</label>
+                    <select id="selTemplate" class="form-select form-select-sm" onchange="window._calcPoint.applyTemplate(this.value)">
+                        <option value="">@Localizer["calcpoint.tpl.custom"]</option>
+                        <option value="wetbulb">@Localizer["calcpoint.tpl.wetbulb"]</option>
+                    </select>
+                    <div class="form-text" id="templateHint" style="display:none;">@Localizer["calcpoint.tpl.wetbulb.hint"]</div>
+                </div>
+
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label fw-semibold"><i class="fas fa-tag me-1"></i>@Localizer["calcpoint.label.name"]</label>
@@ -172,6 +181,22 @@
                             <div style="flex:1;min-width:0;">
                                 <div class="cpPk-item-name" style="font-size:14px;">@Localizer["calcpoint.pk.source.calc"]</div>
                                 <div class="cpPk-item-sub">@Localizer["calcpoint.pk.source.calc_sub"]</div>
+                            </div>
+                            <i class="fas fa-chevron-right" style="color:#999;font-size:12px;"></i>
+                        </div>
+                        <div class="cpPk-list-item cpPk-source-item" onclick="window._calcPoint.pkShowExtStep('db')">
+                            <i class="fas fa-database" style="font-size:18px;color:#198754;flex-shrink:0;"></i>
+                            <div style="flex:1;min-width:0;">
+                                <div class="cpPk-item-name" style="font-size:14px;">@Localizer["calcpoint.pk.source.db"]</div>
+                                <div class="cpPk-item-sub">@Localizer["calcpoint.pk.source.db_sub"]</div>
+                            </div>
+                            <i class="fas fa-chevron-right" style="color:#999;font-size:12px;"></i>
+                        </div>
+                        <div class="cpPk-list-item cpPk-source-item" onclick="window._calcPoint.pkShowExtStep('opc')">
+                            <i class="fas fa-network-wired" style="font-size:18px;color:#6f42c1;flex-shrink:0;"></i>
+                            <div style="flex:1;min-width:0;">
+                                <div class="cpPk-item-name" style="font-size:14px;">@Localizer["calcpoint.pk.source.opcua"]</div>
+                                <div class="cpPk-item-sub">@Localizer["calcpoint.pk.source.opcua_sub"]</div>
                             </div>
                             <i class="fas fa-chevron-right" style="color:#999;font-size:12px;"></i>
                         </div>

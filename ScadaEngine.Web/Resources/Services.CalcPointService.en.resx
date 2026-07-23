@@ -61,4 +61,5 @@
   <data name="calcpoint.svc.calc_success" xml:space="preserve"><value>Calculation succeeded</value></data>
   <data name="calcpoint.svc.calc_invalid" xml:space="preserve"><value>Invalid result (NaN/Infinity)</value></data>
   <data name="calcpoint.svc.calc_failed_with" xml:space="preserve"><value>Formula evaluation failed: {0}</value></data>
+  <data name="calcpoint.svc.reserved_var" xml:space="preserve"><value>Variable name "{0}" is a reserved built-in function name; please use another name</value></data>
 </root>

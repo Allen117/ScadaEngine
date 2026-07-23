@@ -176,6 +176,7 @@ public class CalculatedPointService
         // 建立 NCalc 表達式（包裹變數名稱為 bracket 語法，支援數字開頭的變數）
         var szSafeFormula = WrapFormulaVariables(config.szFormula, config.InputMappings.Keys);
         var expression = new Expression(szSafeFormula);
+        NCalcCustomFunctions.Register(expression);
 
         // 綁定變數參數
         foreach (var kvp in config.InputMappings)

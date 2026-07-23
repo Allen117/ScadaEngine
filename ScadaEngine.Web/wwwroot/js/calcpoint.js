@@ -17,8 +17,20 @@
     var _pickerDevId = -1;
     var _pickerModbusId = null;
     var _pickerCalcGroup = null;
+    var _pickerSourceType = null;  // 'modbus' | 'calc' | 'db' | 'opc'
+    var _pickerExtGroup = null;    // DB/OPC 來源的 Coordinator 群組
     var _pickerSelectedSid = null;
     var CALC_DEV_ID = -999;
+
+    // ── 公式範本 ──
+    var TEMPLATES = {
+        wetbulb: {
+            nameKey: 'calcpoint.tpl.wetbulb.point_name',
+            unit: '\u00b0C',
+            formula: 'WetBulb(T, RH)',
+            vars: ['T', 'RH']
+        }
+    };
 
     function init() {
         _calcPointModal = new bootstrap.Modal(document.getElementById('calcPointModal'));
@@ -151,8 +163,36 @@
     //  新增 / 編輯 Modal
     // ══════════════════════════════════════
 
+    function applyTemplate(key) {
+        var hint = document.getElementById('templateHint');
+        if (!key) {
+            if (hint) hint.style.display = 'none';
+            return;
+        }
+        var tpl = TEMPLATES[key];
+        if (!tpl) return;
+
+        document.getElementById('inputName').value = t(tpl.nameKey);
+        document.getElementById('inputUnit').value = tpl.unit;
+        document.getElementById('inputFormula').value = tpl.formula;
+        document.getElementById('previewResult').textContent = '';
+        document.getElementById('variableTableBody').innerHTML = '';
+        for (var i = 0; i < tpl.vars.length; i++) {
+            addVariableRow(tpl.vars[i], '');
+        }
+        if (hint) hint.style.display = '';
+    }
+
+    function _resetTemplateSelect() {
+        var sel = document.getElementById('selTemplate');
+        if (sel) sel.value = '';
+        var hint = document.getElementById('templateHint');
+        if (hint) hint.style.display = 'none';
+    }
+
     function openCreateModal() {
         _editMode = false;
+        _resetTemplateSelect();
         document.getElementById('calcPointModalTitle').textContent = t('calcpoint.modal.add_title');
         document.getElementById('editSID').value = '';
         document.getElementById('inputName').value = '';
@@ -179,6 +219,7 @@
 
     function _fillEditModal(point) {
         _editMode = true;
+        _resetTemplateSelect();
         document.getElementById('calcPointModalTitle').textContent = t('calcpoint.modal.edit_title') + ' - ' + point.szSID;
         document.getElementById('editSID').value = point.szSID;
         document.getElementById('inputName').value = point.szName;
@@ -331,6 +372,8 @@
         _pickerDevId = -1;
         _pickerModbusId = null;
         _pickerCalcGroup = null;
+        _pickerSourceType = null;
+        _pickerExtGroup = null;
         _ensurePickerData(function () {
             _pkShowStep0();
         });
@@ -359,6 +402,10 @@
                 p._deviceLabel = p.szGroupName || szCalcDefaultLabel;
                 return;
             }
+            if (_isDbPoint(p.szSid) || _isOpcPoint(p.szSid)) {
+                p._deviceLabel = p.szGroupName || '';
+                return;
+            }
             var nPfx = _getSidPrefix(p.szSid);
             var szLabel = '';
             for (var i = 0; i < _pickerDevices.length; i++) {
@@ -385,6 +432,8 @@
     }
 
     function _isCalcPoint(sid) { return sid && sid.indexOf('CALC-') === 0; }
+    function _isDbPoint(sid) { return sid && /^DB\d+-S\d+$/.test(sid); }
+    function _isOpcPoint(sid) { return sid && /^OPC\d+-S\d+$/.test(sid); }
     function _getSidPrefix(sid) {
         var m = sid.match(/^(\d+)-S\d+$/);
         return m ? parseInt(m[1], 10) : -1;
@@ -412,6 +461,7 @@
     }
 
     function _pkShowDeviceStep() {
+        _pickerSourceType = 'modbus';
         document.getElementById('cpPkStep0').style.display = 'none';
         document.getElementById('cpPkStep1').style.display = '';
         document.getElementById('cpPkStep2').style.display = 'none';
@@ -419,7 +469,66 @@
         _pkRenderDeviceList();
     }
 
+    // ── DB / OPC UA 來源（依 Coordinator 群組兩層瀏覽）──
+
+    function _pkIsExtMatch(sid) {
+        return _pickerSourceType === 'db' ? _isDbPoint(sid) : _isOpcPoint(sid);
+    }
+
+    function pkShowExtStep(type) {
+        _pickerSourceType = type;
+        _pickerDevId = -1;
+        _pickerModbusId = null;
+        _pickerCalcGroup = null;
+        _pickerExtGroup = null;
+        _pickerSelectedSid = null;
+
+        var groups = {};
+        (_pickerPoints || []).forEach(function (p) {
+            if (!_pkIsExtMatch(p.szSid)) return;
+            var g = p.szGroupName || '';
+            if (!groups[g]) groups[g] = 0;
+            groups[g]++;
+        });
+        var keys = Object.keys(groups).sort();
+
+        document.getElementById('cpPkStep0').style.display = 'none';
+        document.getElementById('cpPkStep1').style.display = '';
+        document.getElementById('cpPkStep2').style.display = 'none';
+        document.getElementById('cpPkTitle').textContent = t('calcpoint.pk.title_select_device');
+
+        var szIcon = type === 'db' ? 'fa-database' : 'fa-network-wired';
+        var szColor = type === 'db' ? '#198754' : '#6f42c1';
+        var container = document.getElementById('cpPkDeviceList');
+        if (keys.length === 0) {
+            container.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x d-block mb-2"></i>' + escapeHtml(t('calcpoint.pk.no_points')) + '</div>';
+            return;
+        }
+        var html = '';
+        for (var i = 0; i < keys.length; i++) {
+            var g = keys[i];
+            html += '<div class="cpPk-list-item" onclick="window._calcPoint.pkSelectExtGroup(\'' + escapeHtml(g) + '\')">' +
+                '<i class="fas ' + szIcon + '" style="color:' + szColor + ';flex-shrink:0;"></i>' +
+                '<div style="flex:1;min-width:0;">' +
+                '<div class="cpPk-item-name">' + escapeHtml(g || t('calcpoint.pk.ungrouped')) + '</div>' +
+                '<div class="cpPk-item-sub">' + escapeHtml(t('calcpoint.pk.points_count', { n: groups[g] })) + '</div>' +
+                '</div>' +
+                '<i class="fas fa-chevron-right" style="color:#999;font-size:11px;"></i></div>';
+        }
+        container.innerHTML = html;
+    }
+
+    function pkSelectExtGroup(g) {
+        _pickerExtGroup = g;
+        _pickerSelectedSid = null;
+        document.getElementById('cpPkDevName').textContent = g || t('calcpoint.pk.ungrouped');
+        document.getElementById('cpPkDevIcon').className =
+            'fas ' + (_pickerSourceType === 'db' ? 'fa-database' : 'fa-network-wired') + ' me-1';
+        _pkShowPointList(t('calcpoint.pk.title_select_point'));
+    }
+
     function _pkShowCalcStep() {
+        _pickerSourceType = 'calc';
         _pickerDevId = CALC_DEV_ID;
         _pickerModbusId = null;
         _pickerSelectedSid = null;
@@ -577,7 +686,10 @@
     function _pkRenderPoints(keyword) {
         var szQ = keyword.trim().toLowerCase();
         var filtered = (_pickerPoints || []).filter(function (p) {
-            if (_pickerDevId === CALC_DEV_ID) {
+            if (_pickerSourceType === 'db' || _pickerSourceType === 'opc') {
+                if (!_pkIsExtMatch(p.szSid)) return false;
+                if (_pickerExtGroup != null && (p.szGroupName || '') !== _pickerExtGroup) return false;
+            } else if (_pickerDevId === CALC_DEV_ID) {
                 if (!_isCalcPoint(p.szSid)) return false;
                 if (_pickerCalcGroup != null) {
                     if ((p.szGroupName || '') !== _pickerCalcGroup) return false;
@@ -650,6 +762,10 @@
     }
 
     function pkGoBack() {
+        if (_pickerSourceType === 'db' || _pickerSourceType === 'opc') {
+            pkShowExtStep(_pickerSourceType);
+            return;
+        }
         if (_pickerDevId === CALC_DEV_ID) {
             if (_pickerCalcGroup != null) {
                 _pickerCalcGroup = null;
@@ -683,9 +799,12 @@
         saveCalcPoint: saveCalcPoint,
         addVariableRow: function () { addVariableRow('', ''); },
         previewFormula: previewFormula,
+        applyTemplate: applyTemplate,
         openVarPicker: openVarPicker,
         pkShowDeviceStep: _pkShowDeviceStep,
         pkShowCalcStep: _pkShowCalcStep,
+        pkShowExtStep: pkShowExtStep,
+        pkSelectExtGroup: pkSelectExtGroup,
         pkSelectDevice: pkSelectDevice,
         pkSelectCalcGroup: pkSelectCalcGroup,
         pkSelectPoint: pkSelectPoint,
