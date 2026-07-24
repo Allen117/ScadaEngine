@@ -34,6 +34,7 @@ public static class EmsCardRegistry
         new("EnergyPie", "_CardEnergyPie", "emscard.name.energypie", "col-md-6 col-lg-5 col-xl-4", "fa-chart-pie",           4),
         new("Yoy",       "_CardYoy",       "emscard.name.yoy",       "col-md-6 col-lg-7 col-xl-8", "fa-balance-scale",       5),
         new("Cost",      "_CardCost",      "emscard.name.cost",      "col-md-6 col-lg-5 col-xl-4", "fa-file-invoice-dollar", 6),
+        new("CostYoy",   "_CardCostYoy",   "emscard.name.costyoy",   "col-md-6 col-lg-7 col-xl-8", "fa-scale-balanced",      7),
     ];
 
     /// <summary>卡片鍵是否存在於註冊表（Save 白名單檢查用）</summary>

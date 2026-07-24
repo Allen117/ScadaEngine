@@ -6,6 +6,7 @@
     bool hasEmsJs    = Model.HasCard("MainMeter") || Model.HasCard("Demand");
     bool hasEnergyJs = Model.HasCard("EnergyBar") || Model.HasCard("EnergyPie") || Model.HasCard("Yoy");
     bool hasCostJs   = Model.HasCard("Cost");
+    bool hasCostYoyJs = Model.HasCard("CostYoy");
 }
 
 <div class="ems-hub">
@@ -45,5 +46,9 @@
     @if (hasCostJs)
     {
         <script src="~/js/ems-hub-cost.js" asp-append-version="true"></script>
+    }
+    @if (hasCostYoyJs)
+    {
+        <script src="~/js/ems-hub-cost-yoy.js" asp-append-version="true"></script>
     }
 }

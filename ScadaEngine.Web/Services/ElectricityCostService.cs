@@ -622,6 +622,18 @@ public class ElectricityCostService
         return result;
     }
 
+    /// <summary>
+    /// 單一迴路在區間內的流動電費總額（薄包 GetCostReportAsync 取 totalCost）— EMS 電費去年同期比較卡用。
+    /// 語意同 EnergyReportService.GetTotalKwhAsync：回傳值未套用迴路自身對父層的 Sign（由呼叫端補乘 nChildSign）。
+    /// progressive 子迴路為 kWh 占比分攤估算（isEstimated=true）。
+    /// </summary>
+    public async Task<(double dTotalCost, bool isEstimated)> GetTotalCostAsync(
+        int nCircuitId, string szGranularity, DateTime dtStart, DateTime dtEnd)
+    {
+        var report = await GetCostReportAsync(nCircuitId, szGranularity, dtStart, dtEnd);
+        return (report.totalCost, report.isEstimated);
+    }
+
     /// <summary>同 GetCostReportAsync，再展開直接子迴路每欄電費 series — Excel 匯出用（本身是葉子則不展開）</summary>
     public async Task<CostReportResult> GetCostReportWithChildrenAsync(
         int nCircuitId, string szGranularity, DateTime dtStart, DateTime dtEnd)

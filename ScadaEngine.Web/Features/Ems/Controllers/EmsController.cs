@@ -374,6 +374,68 @@ public class EmsController : Controller
         };
     }
 
+    /// <summary>主要電表 + 各直接子迴路的本期 vs 去年同期「流動電費」比較（電費比較表用）；首列為主要電表</summary>
+    /// <param name="granularity">month / day / hour（同 circuit-energy）</param>
+    /// <param name="pivot">month=年份(2026)；day=年月(2026-06)；hour=日期(2026-06-29)</param>
+    [HttpGet("/EMS/api/main-meter-cost-yoy")]
+    public async Task<IActionResult> GetMainMeterCostYoy(
+        [FromQuery] string? granularity,
+        [FromQuery] string? pivot)
+    {
+        if (string.IsNullOrWhiteSpace(granularity) || string.IsNullOrWhiteSpace(pivot))
+            return BadRequest(new { error = "granularity, pivot 皆為必填" });
+
+        DateTime dtStart, dtEnd;
+        try { (dtStart, dtEnd) = await ParsePivotAsync(granularity, pivot); }
+        catch { return BadRequest(new { error = "pivot 格式不正確" }); }
+
+        var meter = await _circuitService.GetMainMeterAsync();
+        if (meter == null)
+            return Ok(new EmsMainMeterCostYoyDto { hasMainMeter = false });
+
+        // 去年同期：重建去年 pivot 再走同一解析（月/日粒度會取去年期別設定，2/29 → 2/28）
+        DateTime dtLastStart, dtLastEnd;
+        try { (dtLastStart, dtLastEnd) = await ParsePivotAsync(granularity, LastYearPivot(granularity, pivot)); }
+        catch { return BadRequest(new { error = "pivot 格式不正確" }); }
+
+        var dto = new EmsMainMeterCostYoyDto { hasMainMeter = true };
+        dto.rows.Add(await BuildCostYoyRowAsync(meter.nId, meter.szName, true, 1,
+            granularity, dtStart, dtEnd, dtLastStart, dtLastEnd, dto));
+
+        foreach (var child in await _circuitService.GetDirectChildrenAsync(meter.nId))
+        {
+            var nChildSign = child.nSign == -1 ? -1 : 1;
+            dto.rows.Add(await BuildCostYoyRowAsync(child.nId, child.szName, false, nChildSign,
+                granularity, dtStart, dtEnd, dtLastStart, dtLastEnd, dto));
+        }
+        return Ok(dto);
+    }
+
+    private async Task<EmsCostYoyRowDto> BuildCostYoyRowAsync(
+        int nCircuitId, string szName, bool isMainMeter, int nSign,
+        string granularity, DateTime dtStart, DateTime dtEnd, DateTime dtLastStart, DateTime dtLastEnd,
+        EmsMainMeterCostYoyDto dto)
+    {
+        var (dCurRaw, isEstCur)   = await _costService.GetTotalCostAsync(nCircuitId, granularity, dtStart, dtEnd);
+        var (dLastRaw, isEstLast) = await _costService.GetTotalCostAsync(nCircuitId, granularity, dtLastStart, dtLastEnd);
+        if (isEstCur || isEstLast) dto.isEstimated = true;
+
+        var dCurrent  = Math.Round(dCurRaw * nSign, 1);
+        var dLastYear = Math.Round(dLastRaw * nSign, 1);
+        var dDiff     = Math.Round(dCurrent - dLastYear, 1);
+        return new EmsCostYoyRowDto
+        {
+            id           = nCircuitId,
+            name         = szName,
+            isMainMeter  = isMainMeter,
+            currentCost  = dCurrent,
+            lastYearCost = dLastYear,
+            diffCost     = dDiff,
+            // 去年為 0（含無資料）時無法算增減比，回 null 由前端顯示 --；負底取絕對值保留增減方向語意
+            pctChange    = dLastYear == 0 ? null : Math.Round(dDiff / Math.Abs(dLastYear) * 100, 1)
+        };
+    }
+
     /// <summary>
     /// pivot → 報表服務的 (dtStart, dtEnd)。
     /// month（年檢視）：pivot=年份 → 期別 1~12 月（報表月粒度語意 = 含頭尾期別）；

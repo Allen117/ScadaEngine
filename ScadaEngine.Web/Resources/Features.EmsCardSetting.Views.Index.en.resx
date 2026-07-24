@@ -67,4 +67,5 @@
   <data name="emscard.name.energypie" xml:space="preserve"><value>Sub-circuit Energy Share Pie</value></data>
   <data name="emscard.name.yoy" xml:space="preserve"><value>Year-over-Year Comparison</value></data>
   <data name="emscard.name.cost" xml:space="preserve"><value>Electricity Cost Status</value></data>
+  <data name="emscard.name.costyoy" xml:space="preserve"><value>Electricity Cost Year-over-Year</value></data>
 </root>

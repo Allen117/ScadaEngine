@@ -46,6 +46,32 @@ public class EmsYoyRowDto
     public double? pctChange { get; set; }
 }
 
+/// <summary>GET /EMS/api/main-meter-cost-yoy 回應 — 流動電費本期 vs 去年同期比較表</summary>
+public class EmsMainMeterCostYoyDto
+{
+    public bool hasMainMeter { get; set; }
+    /// <summary>首列為主要電表，其後為各直接子迴路</summary>
+    public List<EmsCostYoyRowDto> rows { get; set; } = new();
+    /// <summary>任一列為 progressive 占比分攤估算值（前端可標註「估算」）</summary>
+    public bool isEstimated { get; set; }
+}
+
+public class EmsCostYoyRowDto
+{
+    public int id { get; set; }
+    public string name { get; set; } = string.Empty;
+    /// <summary>是否為主要電表列（前端首列標示用）</summary>
+    public bool isMainMeter { get; set; }
+    /// <summary>本期流動電費（元）</summary>
+    public double currentCost { get; set; }
+    /// <summary>去年同期流動電費（元）</summary>
+    public double lastYearCost { get; set; }
+    /// <summary>差異（元，本期 − 去年同期）</summary>
+    public double diffCost { get; set; }
+    /// <summary>增減 %（相對去年同期）；去年為 0 或無資料時為 null，前端顯示 --</summary>
+    public double? pctChange { get; set; }
+}
+
 /// <summary>GET /EMS/api/main-meter-values 回應 — 虛擬主要電表的 V/I/P/PF 聚合值（實體主表不走此 API）</summary>
 public class EmsMainMeterValuesDto
 {

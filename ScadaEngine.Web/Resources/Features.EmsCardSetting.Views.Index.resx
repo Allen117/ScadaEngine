@@ -67,4 +67,5 @@
   <data name="emscard.name.energypie" xml:space="preserve"><value>子迴路用電占比圓餅圖</value></data>
   <data name="emscard.name.yoy" xml:space="preserve"><value>去年同期比較</value></data>
   <data name="emscard.name.cost" xml:space="preserve"><value>電費狀態</value></data>
+  <data name="emscard.name.costyoy" xml:space="preserve"><value>電費去年同期比較</value></data>
 </root>

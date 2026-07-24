@@ -1,0 +1,41 @@
+<!-- 電費去年同期比較表卡片（自帶日/月/年切換，預設月；月依帳單期別切界，與電費報表一致） -->
+<div class="col-md-6 col-lg-7 col-xl-8">
+    <div class="card shadow-sm h-100 d-flex flex-column">
+        <div class="card-header py-2 d-flex justify-content-between align-items-center flex-wrap gap-2"
+             style="background:#43a047;color:#fff;">
+            <span><i class="fas fa-scale-balanced me-1"></i>電費去年同期比較</span>
+            <span class="d-flex align-items-center gap-2">
+                <span class="btn-group btn-group-sm ems-gran-group" role="group" aria-label="電費比較粒度切換" id="costYoyGranGroup">
+                    <button type="button" class="btn ems-gran-btn" data-gran="hour">日</button>
+                    <button type="button" class="btn ems-gran-btn active" data-gran="day">月</button>
+                    <button type="button" class="btn ems-gran-btn" data-gran="month">年</button>
+                </span>
+                <input type="date" id="costYoyPivotDate" class="form-control form-control-sm ems-hub-picker" style="display:none;" />
+                <input type="month" id="costYoyPivotMonth" class="form-control form-control-sm ems-hub-picker" />
+                <input type="number" id="costYoyPivotYear" min="2000" max="2100" class="form-control form-control-sm ems-hub-picker" style="display:none;" />
+            </span>
+        </div>
+        <div class="card-body p-2 flex-grow-1">
+            <div id="costYoyEmpty" class="ems-hub-empty" style="display:none;"></div>
+            <div id="costYoyTableWrap" class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0 ems-yoy-table">
+                    <thead>
+                        <tr>
+                            <th>迴路</th>
+                            <th class="text-end" id="costYoyThCurrent">本期電費 (元)</th>
+                            <th class="text-end" id="costYoyThLastYear">去年同期 (元)</th>
+                            <th class="text-end">差異 (元)</th>
+                            <th class="text-end">增減 %</th>
+                        </tr>
+                    </thead>
+                    <tbody id="costYoyTableBody">
+                        <tr><td colspan="5" class="text-center text-muted py-3">載入中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="costYoyFoot" class="small text-muted mt-1" style="display:none;">
+                <i class="fas fa-info-circle me-1"></i>金額只含流動電費（不含基本電費）；累進方案子迴路為估算值。
+            </div>
+        </div>
+    </div>
+</div>
