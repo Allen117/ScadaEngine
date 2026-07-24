@@ -48,17 +48,27 @@
 
 `Install.bat` 部署到 `C:\SCADA\Web\App`，並自動放行防火牆 5038 + 7189。因為 Program.cs 由 `ContentRoot\certs` 讀 pfx，部署後憑證路徑即 `C:\SCADA\Web\App\certs\`，與腳本落點一致。
 
+**Install.bat 自動產憑證（步驟 [5/7]）**：安裝流程會在 DB 設定後、開防火牆前**自動執行 `generate-https-cert.ps1`**，所以 install 一跑完 HTTPS 即就緒，不再需要手動跑：
+
+- **首裝**（`certs\scada-web.pfx` 不存在）→ 自動產生 CA + 伺服器憑證（用**目標機當下偵測到的 LAN IP** 簽 SAN）
+- **升級**（`scada-web.pfx` 已存在）→ **略過不動**，沿用既有憑證（IP 若變過，手動重跑 `generate-https-cert.ps1`）
+- 產生後自動把 client 安裝包（`ScadaEngine-CA.crt` + `install-ca-on-client.ps1`）複製到 **`C:\SCADA\ClientCA_Installer\`**，整夾拷給每台 client 即可
+- 憑證產生失敗（無 PowerShell 權限等）→ 印 WARN，Web 優雅退回純 HTTP，不中斷安裝
+- ⚠️ 因憑證存在會觸發 Program.cs 強制轉址：**client 裝好 CA 前連線會跳憑證警告**（可按繼續前往），裝 CA 後零警告
+
 **重裝 / 升級行為**（回答「腳本會不會跟著更新、憑證會不會被蓋掉」）：
 
 - Install.bat 以 `xcopy /Y` 覆蓋 `Web\App`，**只新增/覆蓋、不刪除**目標多出的檔案
 - → 每次重裝：`certs\*.ps1` **會更新**成新版；`certs\*.pfx` / `*.crt`（部署機現產、release 不帶）**原地保留**
-- → **升級不必重產憑證、client 不必重裝 CA**
+- → **升級不必重產憑證、client 不必重裝 CA**（[5/7] 偵測到既有 pfx 會略過）
 
 ## 部署步驟
 
 ### 一、伺服器端（一次）
 
-Install.bat 跑完後，於部署機執行憑證產生腳本（首裝才需要；HTTPS 為選用）：
+**用 Install.bat 安裝者無需手動動作** —— 步驟 [5/7] 已自動產生憑證並組好 client 安裝包，Web 啟動即載入。
+
+僅**手動部署**（非 Install.bat）或**首裝後想改 IP 重簽**時，才自行執行：
 
 ```powershell
 # 部署路徑
@@ -79,7 +89,7 @@ New-NetFirewallRule -DisplayName "ScadaEngine Web 7189" -Direction Inbound -Prot
 
 ### 二、每台 client（一次）
 
-把 `ScadaEngine-CA.crt` 與 `install-ca-on-client.ps1` 複製到該機同一資料夾，以**系統管理員**執行：
+把伺服器 `C:\SCADA\ClientCA_Installer\` 整個資料夾（內含 `ScadaEngine-CA.crt` + `install-ca-on-client.ps1`）複製到該 client，以**系統管理員**執行：
 
 ```powershell
 ./install-ca-on-client.ps1       # 裝入「受信任的根憑證授權單位」

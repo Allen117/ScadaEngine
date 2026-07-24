@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find . -type f*)",
+      "Bash(grep -i*)",
+      "Bash(grep -E*)",
+      "Bash(grep -rn*)",
+      "Bash(cd * && powershell -Command *Add-Type*)",
+      "Bash(powershell -Command *Add-Type*)",
+      "Bash(netstat -ano)",
+      "Bash(dotnet sln *)",
+      "Bash(sc.exe stop *)",
+      "Bash(powershell -Command \"Start-Sleep 2; Remove-Item 'C:\\\\SCADA\\\\LicenseBridge\\\\*' -Recurse -Force -ErrorAction SilentlyContinue; Write-Host 'Cleaned'\")",
+      "Bash(sc.exe start *)",
+      "Bash(powershell -Command \"Start-Sleep 3; \\(Get-Service ScadaEngineLicense\\).Status\")",
+      "Bash(sc.exe query *)",
+      "Bash(powershell -NoProfile -ExecutionPolicy Bypass -File \"./BuildRelease.ps1\")",
+      "Bash(git -C \"c:/Users/A50388.ITRI/Desktop/ScadaEngine\" diff -- ScadaEngine.LicenseBridge/Services/HaspVerificationService.cs)",
+      "Bash(git restore *)",
+      "Bash(git fetch *)",
+      "Bash(git ls-tree *)",
+      "Bash(git -C c:/Users/A50388.ITRI/Desktop/ScadaEngine status)",
+      "Bash(git -C c:/Users/A50388.ITRI/Desktop/ScadaEngine log --oneline -5)",
+      "Bash(git -C c:/Users/A50388.ITRI/Desktop/ScadaEngine diff --stat ScadaEngine.Web/wwwroot/js/ems-circuit.js)",
+      "Bash(git -C c:/Users/A50388.ITRI/Desktop/ScadaEngine diff ScadaEngine.Web/wwwroot/js/ems-circuit.js)",
+      "Bash(git -C c:/Users/A50388.ITRI/Desktop/ScadaEngine add ScadaEngine.Common/Data/Models/EnergyCircuitModel.cs ScadaEngine.Web/Features/Ems/Controllers/EmsController.cs ScadaEngine.Web/Features/Ems/Models/EmsMainMeterDtos.cs ScadaEngine.Web/Features/EnergyMeter/Controllers/EnergyMeterController.cs ScadaEngine.Web/Features/EnergyMeter/Models/EnergyCircuitRequestDtos.cs ScadaEngine.Web/Features/EnergyMeter/Views/Index.cshtml ScadaEngine.Web/Program.cs ScadaEngine.Web/Services/EnergyCircuitService.cs ScadaEngine.Web/Services/MainMeterAggregationService.cs ScadaEngine.Web/wwwroot/css/energymeter.css ScadaEngine.Web/wwwroot/js/ems.js ScadaEngine.Web/wwwroot/js/energymeter.js docs/功能說明書_EMS頁面.md docs/功能說明書_能源管理.md)",
+      "Bash(git --no-pager diff --stat ScadaEngine.Common/Data/Models/EnergyCircuitModel.cs ScadaEngine.Web/Features/Ems/Models/EmsMainMeterDtos.cs ScadaEngine.Web/Program.cs)",
+      "PowerShell(git add ScadaEngine.Web/Features/Ems/Controllers/EmsController.cs)",
+      "PowerShell(dotnet build ScadaEngine.Web/ScadaEngine.Web.csproj -clp:ErrorsOnly 2>&1)",
+      "PowerShell(Get-Process -Name 'ScadaEngine.Web' -ErrorAction SilentlyContinue)",
+      "PowerShell(dotnet build \"c:\\\\Users\\\\A50388.ITRI\\\\Desktop\\\\ScadaEngine\\\\ScadaEngine.Web\\\\ScadaEngine.Web.csproj\" -clp:ErrorsOnly 2>&1)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\A50388.ITRI\\Desktop\\ScadaEngine\\ScadaEngine.Engine\\HaspDiag\\bin\\Debug\\net8.0",
+      "c:\\Users\\A50388.ITRI\\Desktop\\ScadaEngine\\ScadaEngine.LicenseBridge",
+      "c:\\Users\\A50388.ITRI\\Desktop\\ScadaEngine\\ScadaEngine.Web\\Features\\CircuitInfo"
+    ]
+  }
+}

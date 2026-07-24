@@ -172,12 +172,12 @@ if exist "C:\SCADA\Web\App\Setting" (
     xcopy /E /I /Y "C:\SCADA\Web\App\MqttSetting"     "%_BACKUP%\Web\MqttSetting"     >nul
 )
 
-echo [1/6] Stopping existing services (if any)...
+echo [1/7] Stopping existing services (if any)...
 echo.
 net stop ScadaEngineService >nul 2>&1
 net stop ScadaWebService >nul 2>&1
 
-echo [2/6] Installing Engine...
+echo [2/7] Installing Engine...
 echo.
 xcopy /E /I /Y "%~dp0Engine\App" "C:\SCADA\Engine\App"
 sc create ScadaEngineService binPath= "\"C:\SCADA\Engine\App\ScadaEngine.Engine.exe\"" DisplayName= "\"SCADA Engine Service\"" start= auto
@@ -186,7 +186,7 @@ sc failure ScadaEngineService reset= 86400 actions= restart/5000/restart/10000/r
 echo Engine installed.
 echo.
 
-echo [3/6] Installing Web...
+echo [3/7] Installing Web...
 echo.
 xcopy /E /I /Y "%~dp0Web\App" "C:\SCADA\Web\App"
 sc create ScadaWebService binPath= "\"C:\SCADA\Web\App\ScadaEngine.Web.exe\"" DisplayName= "\"SCADA Web Service\"" start= auto
@@ -220,7 +220,7 @@ if "%_IS_UPGRADE%"=="1" (
 
 :: ── Database setup: create DB if missing + backup folder ACL + app login ──
 :: idempotent; runs AFTER config restore so it reads the site's dbSetting.json
-echo [4/6] Database setup...
+echo [4/7] Database setup...
 powershell -ExecutionPolicy Bypass -File "C:\SCADA\Engine\App\Setting\install-db.ps1"
 if %errorLevel% NEQ 0 (
     echo [WARN] Database setup reported errors. Engine startup has a fallback,
@@ -229,12 +229,34 @@ if %errorLevel% NEQ 0 (
 )
 echo.
 
-echo [5/6] Opening firewall ports 5038 (HTTP) and 7189 (HTTPS)...
+echo [5/7] Generating internal HTTPS certificate (CA + server cert)...
+echo.
+if exist "C:\SCADA\Web\App\certs\scada-web.pfx" (
+    echo [INFO] Server certificate already exists - reusing.
+    echo        Re-run generate-https-cert.ps1 manually if the server IP changed.
+) else (
+    powershell -ExecutionPolicy Bypass -File "C:\SCADA\Web\App\certs\generate-https-cert.ps1"
+    if errorlevel 1 (
+        echo [WARN] Certificate generation failed - Web will fall back to HTTP-only on 5038.
+        echo        Re-run manually: powershell -ExecutionPolicy Bypass -File C:\SCADA\Web\App\certs\generate-https-cert.ps1
+    )
+)
+:: Assemble client CA installer bundle for easy distribution to each browsing PC
+if exist "C:\SCADA\Web\App\certs\ScadaEngine-CA.crt" (
+    if not exist "C:\SCADA\ClientCA_Installer" mkdir "C:\SCADA\ClientCA_Installer"
+    copy /Y "C:\SCADA\Web\App\certs\ScadaEngine-CA.crt"       "C:\SCADA\ClientCA_Installer\" >nul
+    copy /Y "C:\SCADA\Web\App\certs\install-ca-on-client.ps1" "C:\SCADA\ClientCA_Installer\" >nul
+    echo [OK] Client CA installer ready: C:\SCADA\ClientCA_Installer
+    echo      Copy that folder to each client PC, run install-ca-on-client.ps1 as Admin.
+)
+echo.
+
+echo [6/7] Opening firewall ports 5038 (HTTP) and 7189 (HTTPS)...
 netsh advfirewall firewall add rule name="ScadaEngine Web" dir=in action=allow protocol=TCP localport=5038
 netsh advfirewall firewall add rule name="ScadaEngine Web HTTPS" dir=in action=allow protocol=TCP localport=7189
 echo.
 
-echo [6/6] Starting services...
+echo [7/7] Starting services...
 net start ScadaEngineService
 net start ScadaWebService
 echo.
@@ -256,11 +278,12 @@ if "%_IS_UPGRADE%"=="1" (
     echo   C:\SCADA\Engine\App\Setting\DbMaintenanceSetting.json (weekly DB backup schedule)
 )
 echo.
-echo [OPTIONAL] Enable HTTPS for LAN access (https://server-ip:7189):
-echo   1. Run: powershell -ExecutionPolicy Bypass -File C:\SCADA\Web\App\certs\generate-https-cert.ps1
-echo   2. Restart Web service:  net stop ScadaWebService ^&^& net start ScadaWebService
-echo   3. Give C:\SCADA\Web\App\certs\ScadaEngine-CA.crt to each client, run install-ca-on-client.ps1 as Admin
-echo   (Skip to keep HTTP-only on port 5038. See docs: 功能說明書_內網HTTPS部署.md)
+echo [HTTPS] HTTPS is now ENABLED. http://server-ip:5038 auto-redirects to https://server-ip:7189.
+echo   - Until each client installs the CA, browsers show a certificate warning (click-through still works).
+echo   - To remove the warning: copy the C:\SCADA\ClientCA_Installer folder to each client PC,
+echo     run install-ca-on-client.ps1 as Administrator, then fully restart the browser.
+echo   - Connect using the server IP printed in the certs output above (must match the certificate SAN).
+echo   - To disable HTTPS (HTTP-only on 5038): delete C:\SCADA\Web\App\certs\scada-web.pfx and restart ScadaWebService.
 echo.
 pause
 "@ | Set-Content -Path "$ReleasePath\Install.bat" -Encoding ASCII
