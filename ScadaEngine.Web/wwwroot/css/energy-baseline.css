@@ -51,8 +51,63 @@
 
 .enb-missing-row td { color: #adb5bd; }
 
-.enb-pk-item { cursor: pointer; }
 .enb-pk-type-badge {
     font-size: 0.7rem;
     min-width: 66px;
+}
+
+/* ---- 下鑽式點位選擇 picker ---- */
+.enb-pk-crumb {
+    display: flex;
+    align-items: center;
+    min-height: 31px;
+}
+
+/* 來源類型卡片（step0） */
+.enb-pk-source-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 18px 8px;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: center;
+    transition: background .15s, border-color .15s, box-shadow .15s;
+}
+.enb-pk-source-card:hover {
+    background: #f1f8f4;
+    border-color: #43a047;
+    box-shadow: 0 2px 6px rgba(67, 160, 71, .12);
+}
+.enb-pk-source-card i { font-size: 26px; }
+.enb-pk-source-name { font-weight: 600; }
+.enb-pk-source-count { font-size: .78rem; color: #6c757d; }
+
+/* 設備 / 群組列（step1） */
+.enb-pk-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    border: 1px solid #e9ecef;
+    border-bottom: none;
+    cursor: pointer;
+    transition: background .12s;
+}
+.enb-pk-item:first-child { border-top-left-radius: 8px; border-top-right-radius: 8px; }
+.enb-pk-item:hover { background: #f1f8f4; }
+.enb-pk-item.enb-pk-sub { padding-left: 30px; background: #fafafa; }
+.enb-pk-item-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.enb-pk-item-sub { font-size: .78rem; color: #6c757d; flex-shrink: 0; }
+.enb-pk-chev { color: #adb5bd; font-size: 11px; flex-shrink: 0; transition: transform .2s; }
+.enb-pk-devsub { border: 1px solid #e9ecef; border-top: none; }
+
+/* 點位列（step2 / 全域搜尋）沿用 Bootstrap list-group-item，選中套 EMS 綠 */
+.enb-pk-point { cursor: pointer; }
+.enb-pk-point.active {
+    background: #e8f5e9;
+    border-color: #43a047 !important;
+    color: inherit;
 }

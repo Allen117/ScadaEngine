@@ -149,7 +149,20 @@
 
   <data name="enb.pk.title" xml:space="preserve"><value>選擇點位</value></data>
   <data name="enb.pk.search" xml:space="preserve"><value>搜尋 SID / 名稱 / 單位…</value></data>
+  <data name="enb.pk.search_all" xml:space="preserve"><value>搜尋全部點位（SID / 名稱 / 單位）…</value></data>
   <data name="enb.pk.no_match" xml:space="preserve"><value>無符合點位</value></data>
+  <data name="enb.pk.back" xml:space="preserve"><value>返回</value></data>
+  <data name="enb.pk.cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="enb.pk.confirm" xml:space="preserve"><value>確定</value></data>
+  <data name="enb.pk.title.device" xml:space="preserve"><value>選擇設備</value></data>
+  <data name="enb.pk.title.group" xml:space="preserve"><value>選擇群組</value></data>
+  <data name="enb.pk.title.point" xml:space="preserve"><value>選擇點位</value></data>
+  <data name="enb.pk.source.modbus" xml:space="preserve"><value>Modbus</value></data>
+  <data name="enb.pk.source.db" xml:space="preserve"><value>DB 來源</value></data>
+  <data name="enb.pk.source.opc" xml:space="preserve"><value>OPC UA</value></data>
+  <data name="enb.pk.source.calc" xml:space="preserve"><value>計算點位</value></data>
+  <data name="enb.pk.points_count" xml:space="preserve"><value>{count} 個點位</value></data>
+  <data name="enb.pk.ungrouped" xml:space="preserve"><value>未分群</value></data>
 
   <data name="enb.msg.load_failed" xml:space="preserve"><value>載入基礎資料失敗</value></data>
   <data name="enb.msg.need_name" xml:space="preserve"><value>請輸入模型名稱</value></data>

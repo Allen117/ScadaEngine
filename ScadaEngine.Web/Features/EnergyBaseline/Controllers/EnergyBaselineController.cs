@@ -50,29 +50,50 @@ public class EnergyBaselineController : Controller
 
     // ---------- 基礎資料（picker 用） ----------
 
-    /// <summary>全來源點位清單（Modbus + 計算 + DB + OPC UA），同 /CalcPoint/Points 慣例</summary>
+    /// <summary>
+    /// 全來源點位清單（Modbus + 計算 + DB + OPC UA），同 /CalcPoint/Points 慣例。
+    /// szGroupName 供 picker 下鑽分群（Modbus 留空由前端 api/devices 推斷所屬設備、
+    /// 計算＝GroupName、DB＝Coordinator 名、OPC UA＝Coordinator[/DeviceName]），比照 /Designer/Points。
+    /// </summary>
     [HttpGet("api/points")]
     public async Task<IActionResult> GetPoints()
     {
         var modbusPoints = await _repository.GetAllModbusPointsAsync();
         var calcPoints = await _calcPointService.GetAllAsync();
         var dbPoints = await _repository.GetAllDbPointsAsync();
+        var dbCoordNameMap = (await _repository.GetAllDbCoordinatorsAsync()).ToDictionary(c => c.Id, c => c.szName);
         var opcUaPoints = await _repository.GetAllOpcUaPointsAsync();
+        var opcUaCoordNameMap = (await _repository.GetAllOpcUaCoordinatorsAsync()).ToDictionary(c => c.Id, c => c.szName);
 
         var allPoints = modbusPoints.Select(p => new
         {
-            szSid = p.szSID, szName = p.szName, szUnit = p.szUnit, szType = "Modbus"
+            szSid = p.szSID, szName = p.szName, szUnit = p.szUnit, szType = "Modbus", szGroupName = ""
         }).Concat(calcPoints.Select(p => new
         {
-            szSid = p.szSID, szName = p.szName, szUnit = p.szUnit, szType = "Calculated"
+            szSid = p.szSID, szName = p.szName, szUnit = p.szUnit, szType = "Calculated", szGroupName = p.szGroupName
         })).Concat(dbPoints.Select(p => new
         {
-            szSid = p.szSID, szName = p.szName, szUnit = p.szUnit ?? string.Empty, szType = "DB"
+            szSid = p.szSID, szName = p.szName, szUnit = p.szUnit ?? string.Empty, szType = "DB",
+            szGroupName = dbCoordNameMap.TryGetValue(p.nCoordinatorId, out var szDbName) ? szDbName : "DB"
         })).Concat(opcUaPoints.Select(p => new
         {
-            szSid = p.szSID, szName = p.szName, szUnit = p.szUnit ?? string.Empty, szType = "OpcUa"
+            szSid = p.szSID, szName = p.szName, szUnit = p.szUnit ?? string.Empty, szType = "OpcUa",
+            szGroupName = opcUaCoordNameMap.TryGetValue(p.nCoordinatorId, out var szCoordName)
+                ? (string.IsNullOrEmpty(p.szDeviceName) ? szCoordName : $"{szCoordName}/{p.szDeviceName}")
+                : "OPCUA"
         }));
         return Json(allPoints);
+    }
+
+    /// <summary>設備（Modbus Coordinator）清單，供 picker Modbus 來源下鑽分群（比照 /Designer/Devices）</summary>
+    [HttpGet("api/devices")]
+    public async Task<IActionResult> GetDevices()
+    {
+        var devices = await _repository.GetAllCoordinatorsAsync();
+        return Json(devices.Select(d => new
+        {
+            nId = d.Id, szName = d.szName, szModbusID = d.szModbusID, szDeviceName = d.szDeviceName
+        }));
     }
 
     /// <summary>迴路清單（平坦，前端組樹/下拉）</summary>

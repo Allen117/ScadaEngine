@@ -10,6 +10,15 @@
     var g_vars = [];             // 編輯中的 X 變數 [{varType, sourceSid, sourceCircuitId, label, unit}]
     var g_pkTarget = null;       // 'target' 或變數列 index
     var g_pkModal = null;
+    var g_devices = [];          // Modbus Coordinator 清單（picker Modbus 來源下鑽用）
+    // ---- picker 下鑽狀態（比照 Designer 綁定 SID：來源→設備/群組→點位）----
+    var g_pkStep = 0;            // 0=來源 1=設備/群組 2=點位
+    var g_pkSource = null;       // 'modbus'|'db'|'opc'|'calc'
+    var g_pkDevId = null;        // Modbus Coordinator nId
+    var g_pkModbusId = null;     // 多子 ID 設備的子 ModbusID（int）或 null
+    var g_pkGroup = null;        // db/opc/calc 群組名（''=未分群）
+    var g_pkSelectedSid = null;  // 目前 highlight 的點位 SID
+    var g_pkGroupCache = [];     // 目前步驟 1 群組列快取（供 index 選取，避免名稱含引號）
     var g_scatterChart = null;
     var g_enpiChart = null;
     var g_seuChart = null;
@@ -52,10 +61,12 @@
     function loadAll() {
         Promise.all([
             fetch('/EnergyBaseline/api/circuits').then(function (r) { return r.json(); }),
-            fetch('/EnergyBaseline/api/points').then(function (r) { return r.json(); })
+            fetch('/EnergyBaseline/api/points').then(function (r) { return r.json(); }),
+            fetch('/EnergyBaseline/api/devices').then(function (r) { return r.json(); })
         ]).then(function (results) {
             g_circuits = results[0];
             g_points = results[1];
+            g_devices = results[2];
             return loadModels();
         }).catch(function (err) {
             alert(t('enb.msg.load_failed') + '\n' + err.message);
@@ -139,7 +150,12 @@
             : document.getElementById('enbTargetTypeCircuit')).checked = true;
         renderCircuitSelect(document.getElementById('enbTargetCircuit'), m.nTargetCircuitId);
         var elPt = document.getElementById('enbTargetPointDisplay');
-        elPt.value = m.szTargetType === 'point' ? (m.szTargetLabel || m.szTargetSID || '') : '';
+        if (m.szTargetType === 'point') {
+            var ptT = findPoint(m.szTargetSID);
+            elPt.value = ptT ? pkPointFullName(ptT) : (m.szTargetLabel || m.szTargetSID || '');
+        } else {
+            elPt.value = '';
+        }
         elPt.dataset.sid = m.szTargetSID || '';
         elPt.dataset.unit = m.szTargetUnit || '';
         elPt.dataset.label = m.szTargetType === 'point' ? (m.szTargetLabel || '') : '';
@@ -214,8 +230,13 @@
             if (v.varType === 'circuit') {
                 html += '<td><select class="form-select form-select-sm" onchange="window._enb.onVarCircuitChange(' + i + ', this.value)" id="enbVarCircuit' + i + '"></select></td>';
             } else {
+                var szPtDisplay = '';
+                if (v.sourceSid) {
+                    var pt = findPoint(v.sourceSid);
+                    szPtDisplay = pt ? pkPointFullName(pt) : v.sourceSid;
+                }
                 html += '<td><div class="input-group input-group-sm">'
-                    + '<input type="text" class="form-control" readonly value="' + escapeHtml(v.sourceSid || '') + '" placeholder="' + escapeHtml(t('enb.edit.select_placeholder')) + '" />'
+                    + '<input type="text" class="form-control" readonly value="' + escapeHtml(szPtDisplay) + '" title="' + escapeHtml(szPtDisplay) + '" placeholder="' + escapeHtml(t('enb.edit.select_placeholder')) + '" />'
                     + '<button class="btn btn-outline-secondary" type="button" onclick="window._enb.pickPoint(' + i + ')">' + escapeHtml(t('enb.edit.pick')) + '</button>'
                     + '</div></td>';
             }
@@ -264,40 +285,351 @@
         g_vars[i][szField] = szValue;
     }
 
-    // ============ 點位選擇 Modal ============
+    // ============ 點位選擇 Modal（下鑽式：來源→設備/群組→點位，比照 Designer 綁定 SID）============
 
+    // 來源類型定義（僅顯示有點位的來源）
+    var PK_SOURCES = [
+        { kind: 'modbus', icon: 'fa-server',        color: '#0d6efd', nameKey: 'enb.pk.source.modbus' },
+        { kind: 'db',     icon: 'fa-database',      color: '#20c997', nameKey: 'enb.pk.source.db' },
+        { kind: 'opc',    icon: 'fa-network-wired', color: '#6f42c1', nameKey: 'enb.pk.source.opc' },
+        { kind: 'calc',   icon: 'fa-calculator',    color: '#fd7e14', nameKey: 'enb.pk.source.calc' }
+    ];
+
+    // ---- SID / 分類工具 ----
+    function pkKind(p) {
+        switch (p.szType) {
+            case 'DB': return 'db';
+            case 'OpcUa': return 'opc';
+            case 'Calculated': return 'calc';
+            default: return 'modbus';
+        }
+    }
+    function sidNumericPrefix(szSid) {
+        var m = /^(\d+)-S\d+$/.exec(szSid || '');
+        return m ? parseInt(m[1], 10) : -1;
+    }
+    function modbusDeviceOf(szSid) {
+        var nPfx = sidNumericPrefix(szSid);
+        if (nPfx < 0) return null;
+        for (var k = 0; k < g_devices.length; k++) {
+            var d = g_devices[k];
+            if (nPfx >= d.nId * 65536 && nPfx < (d.nId + 1) * 65536) return d;
+        }
+        return null;
+    }
+    function modbusSubIdOf(szSid, d) {
+        var nPfx = sidNumericPrefix(szSid);
+        var mids = (d.szModbusID || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+        for (var j = 0; j < mids.length; j++) {
+            var mid = parseInt(mids[j], 10);
+            var base = d.nId * 65536 + mid * 256;
+            if (nPfx >= base && nPfx < base + 256) return mid;
+        }
+        return null;
+    }
+    function deviceScopeLabel(d, mid) {
+        if (mid == null) return d.szName;
+        var mids = (d.szModbusID || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+        var names = (d.szDeviceName || '').split(',').map(function (s) { return s.trim(); });
+        var idx = mids.indexOf(String(mid));
+        return (idx >= 0 && names[idx]) ? names[idx] : (d.szName + ' / ' + mid);
+    }
+    function findPoint(szSid) {
+        for (var i = 0; i < g_points.length; i++) if (g_points[i].szSid === szSid) return g_points[i];
+        return null;
+    }
+
+    // 點位所屬母設備/群組名 — 與 Designer picker.js _enrichPointsWithDeviceLabel 完全同邏輯：
+    // Modbus 單一 ID 設備＝Coordinator 名、多子 ID＝子設備名；db/opc/calc＝群組名。
+    function pkPointDeviceLabel(p) {
+        if (!p) return '';
+        if (pkKind(p) !== 'modbus') return p.szGroupName || '';
+        var d = modbusDeviceOf(p.szSid);
+        if (!d) return '';
+        var mids = (d.szModbusID || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+        var names = (d.szDeviceName || '').split(',').map(function (s) { return s.trim(); });
+        if (mids.length > 1) {
+            var nPfx = sidNumericPrefix(p.szSid);
+            for (var j = 0; j < mids.length; j++) {
+                var mid = parseInt(mids[j], 10);
+                var base = d.nId * 65536 + mid * 256;
+                if (nPfx >= base && nPfx < base + 256) return names[j] || d.szName;
+            }
+        }
+        return d.szName;
+    }
+    // 綁定顯示名（母設備名 / 點位名，Designer 綁定格式，無 SID）— Y 目標與 X 變數共用
+    function pkPointFullName(p) {
+        if (!p) return '';
+        var szDev = pkPointDeviceLabel(p);
+        return szDev ? (szDev + ' / ' + p.szName) : p.szName;
+    }
+
+    // ---- 開啟 picker ----
     function pickPoint(target) {
         g_pkTarget = target;
-        document.getElementById('enbPkSearch').value = '';
-        pkFilter('');
+        g_pkSource = null; g_pkDevId = null; g_pkModbusId = null; g_pkGroup = null; g_pkSelectedSid = null;
+        document.getElementById('enbPkConfirmBtn').disabled = true;
+        var szBound = getBoundSid(target);
+        if (szBound && findPoint(szBound)) showPickerForBoundSid(szBound);
+        else showPkStep0();
         g_pkModal.show();
     }
-
-    function pkFilter(szKeyword) {
-        var szKey = (szKeyword || '').toLowerCase();
-        var elList = document.getElementById('enbPkList');
-        var html = '';
-        var nShown = 0;
-        for (var i = 0; i < g_points.length && nShown < 300; i++) {
-            var p = g_points[i];
-            var szText = (p.szSid + ' ' + p.szName + ' ' + (p.szUnit || '')).toLowerCase();
-            if (szKey && szText.indexOf(szKey) < 0) continue;
-            nShown++;
-            html += '<div class="list-group-item list-group-item-action enb-pk-item" onclick="window._enb.pkSelect(' + i + ')">'
-                + '<div class="d-flex justify-content-between align-items-center">'
-                + '<div><strong>' + escapeHtml(p.szName) + '</strong>'
-                + '<span class="text-muted small ms-2">' + escapeHtml(p.szSid) + (p.szUnit ? ' | ' + escapeHtml(p.szUnit) : '') + '</span></div>'
-                + '<span class="badge bg-light text-dark border enb-pk-type-badge">' + escapeHtml(p.szType) + '</span>'
-                + '</div></div>';
-        }
-        elList.innerHTML = html || '<div class="list-group-item text-muted small">' + escapeHtml(t('enb.pk.no_match')) + '</div>';
+    function getBoundSid(target) {
+        if (target === 'target') return document.getElementById('enbTargetPointDisplay').dataset.sid || null;
+        var v = g_vars[target];
+        return v ? (v.sourceSid || null) : null;
     }
 
-    function pkSelect(nIndex) {
-        var p = g_points[nIndex];
+    // ---- 步驟切換 / 標題 ----
+    function setStep(n) {
+        g_pkStep = n;
+        document.getElementById('enbPkStep0').style.display = n === 0 ? '' : 'none';
+        document.getElementById('enbPkStep1').style.display = n === 1 ? '' : 'none';
+        document.getElementById('enbPkStep2').style.display = n === 2 ? '' : 'none';
+        document.getElementById('enbPkBackBtn').style.display = n === 0 ? 'none' : '';
+    }
+    function setPkTitle(sz) { document.getElementById('enbPkTitle').textContent = sz; }
+    function setPkScope(sz) { document.getElementById('enbPkScope').textContent = sz || ''; }
+
+    // ---- Step0：來源類型 ----
+    function showPkStep0() {
+        setStep(0);
+        setPkTitle(t('enb.pk.title'));
+        setPkScope('');
+        document.getElementById('enbPkGlobalSearch').value = '';
+        document.getElementById('enbPkGlobalResults').style.display = 'none';
+        document.getElementById('enbPkGlobalResults').innerHTML = '';
+        document.getElementById('enbPkSourceCards').style.display = '';
+        renderSourceCards();
+    }
+    function renderSourceCards() {
+        var counts = { modbus: 0, db: 0, opc: 0, calc: 0 };
+        g_points.forEach(function (p) { counts[pkKind(p)]++; });
+        var html = PK_SOURCES.filter(function (s) { return counts[s.kind] > 0; }).map(function (s) {
+            return '<div class="col-6"><div class="enb-pk-source-card" onclick="window._enb.pkSelectSource(\'' + s.kind + '\')">'
+                + '<i class="fas ' + s.icon + '" style="color:' + s.color + '"></i>'
+                + '<div class="enb-pk-source-name">' + escapeHtml(t(s.nameKey)) + '</div>'
+                + '<div class="enb-pk-source-count">' + escapeHtml(t('enb.pk.points_count', { count: counts[s.kind] })) + '</div>'
+                + '</div></div>';
+        }).join('');
+        document.getElementById('enbPkSourceCards').innerHTML = html
+            || '<div class="col-12 text-muted small text-center py-3">' + escapeHtml(t('enb.pk.no_match')) + '</div>';
+    }
+
+    function pkSelectSource(kind) {
+        g_pkSource = kind; g_pkDevId = null; g_pkModbusId = null; g_pkGroup = null;
+        if (kind === 'modbus') { showModbusDevices(); return; }
+        // db/opc/calc：依群組下鑽；只有單一群組時直接進點位
+        var groups = groupsOfKind(kind);
+        if (groups.length <= 1) { g_pkGroup = groups.length ? groups[0] : ''; showPkPoints(); return; }
+        showGroupStep(kind, groups);
+    }
+
+    // ---- Step1a：Modbus 設備 ----
+    function showModbusDevices() {
+        setStep(1);
+        setPkTitle(t('enb.pk.title.device'));
+        setPkScope(t('enb.pk.source.modbus'));
+        var elList = document.getElementById('enbPkGroupList');
+        var html = g_devices.map(function (d) {
+            var nPts = g_points.filter(function (p) {
+                if (pkKind(p) !== 'modbus') return false;
+                var dev = modbusDeviceOf(p.szSid); return dev && dev.nId === d.nId;
+            }).length;
+            if (nPts === 0) return '';
+            var mids = (d.szModbusID || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+            var names = (d.szDeviceName || '').split(',').map(function (s) { return s.trim(); });
+            if (mids.length > 1) {
+                var sub = mids.map(function (mid, j) {
+                    var szSubName = (j < names.length && names[j]) ? names[j] : mid;
+                    return '<div class="enb-pk-item enb-pk-sub" onclick="window._enb.pkSelectDevice(' + d.nId + ',' + parseInt(mid, 10) + ')">'
+                        + '<i class="fas fa-microchip text-info"></i>'
+                        + '<span class="enb-pk-item-name">' + escapeHtml(szSubName) + '</span>'
+                        + '<i class="fas fa-chevron-right enb-pk-chev"></i></div>';
+                }).join('');
+                return '<div class="enb-pk-item" onclick="window._enb.pkToggleDev(this)">'
+                    + '<i class="fas fa-server text-primary"></i>'
+                    + '<span class="enb-pk-item-name">' + escapeHtml(d.szName) + '</span>'
+                    + '<span class="enb-pk-item-sub">' + escapeHtml(t('enb.pk.points_count', { count: nPts })) + '</span>'
+                    + '<i class="fas fa-chevron-down enb-pk-chev enb-pk-dev-toggle"></i></div>'
+                    + '<div class="enb-pk-devsub" style="display:none">' + sub + '</div>';
+            }
+            return '<div class="enb-pk-item" onclick="window._enb.pkSelectDevice(' + d.nId + ',null)">'
+                + '<i class="fas fa-server text-primary"></i>'
+                + '<span class="enb-pk-item-name">' + escapeHtml(d.szName) + '</span>'
+                + '<span class="enb-pk-item-sub">' + escapeHtml(t('enb.pk.points_count', { count: nPts })) + '</span>'
+                + '<i class="fas fa-chevron-right enb-pk-chev"></i></div>';
+        }).join('');
+        elList.innerHTML = html || '<div class="list-group-item text-muted small">' + escapeHtml(t('enb.pk.no_match')) + '</div>';
+    }
+    function pkToggleDev(el) {
+        var sub = el.nextElementSibling;
+        var icon = el.querySelector('.enb-pk-dev-toggle');
+        if (sub.style.display === 'none') { sub.style.display = ''; if (icon) icon.style.transform = 'rotate(180deg)'; }
+        else { sub.style.display = 'none'; if (icon) icon.style.transform = ''; }
+    }
+    function pkSelectDevice(nId, mid) {
+        g_pkSource = 'modbus'; g_pkDevId = nId; g_pkModbusId = (mid == null ? null : mid);
+        showPkPoints();
+    }
+
+    // ---- Step1b：db/opc/calc 群組 ----
+    function groupsOfKind(kind) {
+        var set = {}, hasUngrouped = false;
+        g_points.forEach(function (p) {
+            if (pkKind(p) !== kind) return;
+            var g = p.szGroupName || '';
+            if (g === '') hasUngrouped = true; else set[g] = true;
+        });
+        var arr = Object.keys(set).sort();
+        if (hasUngrouped) arr.push('');   // 未分群桶放最後
+        return arr;
+    }
+    function showGroupStep(kind, groups) {
+        setStep(1);
+        setPkTitle(t('enb.pk.title.group'));
+        setPkScope(t(PK_SOURCES.find(function (s) { return s.kind === kind; }).nameKey));
+        g_pkGroupCache = groups.map(function (g) { return { kind: kind, group: g }; });
+        var html = g_pkGroupCache.map(function (item, i) {
+            var nPts = g_points.filter(function (p) { return pkKind(p) === kind && (p.szGroupName || '') === item.group; }).length;
+            var szName = item.group || t('enb.pk.ungrouped');
+            var szIcon = item.group ? 'fa-layer-group' : 'fa-inbox';
+            return '<div class="enb-pk-item" onclick="window._enb.pkSelectGroup(' + i + ')">'
+                + '<i class="fas ' + szIcon + ' text-warning"></i>'
+                + '<span class="enb-pk-item-name">' + escapeHtml(szName) + '</span>'
+                + '<span class="enb-pk-item-sub">' + escapeHtml(t('enb.pk.points_count', { count: nPts })) + '</span>'
+                + '<i class="fas fa-chevron-right enb-pk-chev"></i></div>';
+        }).join('');
+        document.getElementById('enbPkGroupList').innerHTML = html;
+    }
+    function pkSelectGroup(i) {
+        var item = g_pkGroupCache[i];
+        if (!item) return;
+        g_pkSource = item.kind; g_pkGroup = item.group;
+        showPkPoints();
+    }
+
+    // ---- Step2：點位 ----
+    function pointsInScope() {
+        return g_points.filter(function (p) {
+            if (pkKind(p) !== g_pkSource) return false;
+            if (g_pkSource === 'modbus') {
+                var d = modbusDeviceOf(p.szSid);
+                if (!d || d.nId !== g_pkDevId) return false;
+                if (g_pkModbusId != null && modbusSubIdOf(p.szSid, d) !== g_pkModbusId) return false;
+                return true;
+            }
+            return (p.szGroupName || '') === (g_pkGroup || '');
+        });
+    }
+    function currentScopeLabel() {
+        if (g_pkSource === 'modbus') {
+            var d = g_devices.find(function (x) { return x.nId === g_pkDevId; });
+            return d ? deviceScopeLabel(d, g_pkModbusId) : '';
+        }
+        return g_pkGroup || t('enb.pk.ungrouped');
+    }
+    function showPkPoints() {
+        setStep(2);
+        setPkTitle(t('enb.pk.title.point'));
+        setPkScope(currentScopeLabel());
+        g_pkSelectedSid = null;
+        document.getElementById('enbPkConfirmBtn').disabled = true;
+        document.getElementById('enbPkPointSearch').value = '';
+        renderPkPoints('');
+    }
+    function pkPointItemHtml(p, bShowSource) {
+        var szSel = (p.szSid === g_pkSelectedSid) ? ' active' : '';
+        var szBadge = bShowSource
+            ? '<span class="badge bg-light text-dark border enb-pk-type-badge">' + escapeHtml(p.szType) + '</span>' : '';
+        return '<div class="list-group-item list-group-item-action enb-pk-item enb-pk-point' + szSel + '" '
+            + 'onclick="window._enb.pkPointClick(this,\'' + escapeHtml(p.szSid) + '\')">'
+            + '<div class="d-flex justify-content-between align-items-center">'
+            + '<div><strong>' + escapeHtml(p.szName) + '</strong>'
+            + '<span class="text-muted small ms-2">' + escapeHtml(p.szSid) + (p.szUnit ? ' | ' + escapeHtml(p.szUnit) : '') + '</span></div>'
+            + szBadge + '</div></div>';
+    }
+    function renderPkPoints(szKeyword) {
+        var szKey = (szKeyword || '').toLowerCase();
+        var list = pointsInScope();
+        var html = '', nShown = 0;
+        for (var i = 0; i < list.length && nShown < 300; i++) {
+            var p = list[i];
+            if (szKey && (p.szSid + ' ' + p.szName + ' ' + (p.szUnit || '')).toLowerCase().indexOf(szKey) < 0) continue;
+            nShown++;
+            html += pkPointItemHtml(p, false);
+        }
+        document.getElementById('enbPkPointList').innerHTML = html
+            || '<div class="list-group-item text-muted small">' + escapeHtml(t('enb.pk.no_match')) + '</div>';
+    }
+    function pkPointFilter(szKeyword) { renderPkPoints(szKeyword); }
+
+    function pkPointClick(el, szSid) {
+        g_pkSelectedSid = szSid;
+        var box = el.closest('.list-group') || el.parentNode;
+        Array.prototype.forEach.call(box.querySelectorAll('.enb-pk-point.active'), function (n) { n.classList.remove('active'); });
+        el.classList.add('active');
+        document.getElementById('enbPkConfirmBtn').disabled = false;
+    }
+
+    // ---- 返回 ----
+    function pkBack() {
+        if (g_pkStep === 2) {
+            if (g_pkSource === 'modbus') { showModbusDevices(); return; }
+            var groups = groupsOfKind(g_pkSource);
+            if (groups.length <= 1) showPkStep0(); else showGroupStep(g_pkSource, groups);
+        } else if (g_pkStep === 1) {
+            showPkStep0();
+        }
+    }
+
+    // ---- 全域搜尋（step0 頂端，跨來源攤平）----
+    function pkGlobalSearch(szKeyword) {
+        var szKey = (szKeyword || '').trim().toLowerCase();
+        var elCards = document.getElementById('enbPkSourceCards');
+        var elRes = document.getElementById('enbPkGlobalResults');
+        if (!szKey) { elCards.style.display = ''; elRes.style.display = 'none'; elRes.innerHTML = ''; return; }
+        elCards.style.display = 'none'; elRes.style.display = '';
+        var html = '', nShown = 0;
+        for (var i = 0; i < g_points.length && nShown < 300; i++) {
+            var p = g_points[i];
+            if ((p.szSid + ' ' + p.szName + ' ' + (p.szUnit || '')).toLowerCase().indexOf(szKey) < 0) continue;
+            nShown++;
+            html += pkPointItemHtml(p, true);
+        }
+        elRes.innerHTML = html || '<div class="list-group-item text-muted small">' + escapeHtml(t('enb.pk.no_match')) + '</div>';
+    }
+
+    // ---- 反查定位（已綁定點位重開時直達所屬層級）----
+    function showPickerForBoundSid(szSid) {
+        var p = findPoint(szSid);
+        if (!p) { showPkStep0(); return; }
+        g_pkSource = pkKind(p);
+        if (g_pkSource === 'modbus') {
+            var d = modbusDeviceOf(szSid);
+            if (!d) { showModbusDevices(); return; }
+            g_pkDevId = d.nId; g_pkModbusId = modbusSubIdOf(szSid, d);
+        } else {
+            g_pkGroup = p.szGroupName || '';
+        }
+        showPkPoints();
+        g_pkSelectedSid = szSid;
+        renderPkPoints('');
+        document.getElementById('enbPkConfirmBtn').disabled = false;
+        setTimeout(function () {
+            var item = document.querySelector('#enbPkPointList .enb-pk-point.active');
+            if (item) item.scrollIntoView({ block: 'center' });
+        }, 30);
+    }
+
+    // ---- 確認帶回 ----
+    function pkConfirm() {
+        var p = findPoint(g_pkSelectedSid);
+        if (!p) return;
         if (g_pkTarget === 'target') {
             var elPt = document.getElementById('enbTargetPointDisplay');
-            elPt.value = p.szName + ' (' + p.szSid + ')';
+            elPt.value = pkPointFullName(p);
             elPt.dataset.sid = p.szSid;
             elPt.dataset.unit = p.szUnit || '';
             elPt.dataset.label = p.szName;
@@ -726,8 +1058,15 @@
         onVarCircuitChange: onVarCircuitChange,
         onVarField: onVarField,
         pickPoint: pickPoint,
-        pkFilter: pkFilter,
-        pkSelect: pkSelect,
+        pkSelectSource: pkSelectSource,
+        pkToggleDev: pkToggleDev,
+        pkSelectDevice: pkSelectDevice,
+        pkSelectGroup: pkSelectGroup,
+        pkPointClick: pkPointClick,
+        pkPointFilter: pkPointFilter,
+        pkGlobalSearch: pkGlobalSearch,
+        pkBack: pkBack,
+        pkConfirm: pkConfirm,
         queryEnpi: queryEnpi,
         exportEnpi: exportEnpi,
         querySeu: querySeu
