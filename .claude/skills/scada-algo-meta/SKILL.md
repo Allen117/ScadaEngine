@@ -49,7 +49,22 @@ description: "Use this skill when the user wants to generate, complete, or fix m
 - 用 Glob / Read 確認檔案存在。
 - 判斷副檔名：`.py` → Python 分支；`.cs` → C# 分支。
 
-### 2. 跑 inspect 腳本
+### 2. 部署 `_status.py` 共用模組（僅 `.py`，首次該資料夾才問）
+
+`evaluate_one` 回傳建議用 `make_result(...)` / `make_status(...)` 包裝（共用狀態碼定義），對應的共用模組為 `_status.py`，預期放在**演算法檔同資料夾**讓 Python 直接 `from _status import ...`。
+
+流程：
+1. 取 `<dirname> = dirname(<演算法檔絕對路徑>)`。
+2. 檢查 `<dirname>/_status.py` 是否存在：
+   - 存在 → 靜默跳過，繼續 step 3。
+   - 不存在 → 問使用者：「偵測到此資料夾沒有 `_status.py`（演算法狀態碼共用模組）。要部署一份到 `<dirname>/` 嗎？(y/n)」
+     - **y** → 用 Read 讀 `.claude/skills/scada-algo-meta/scripts/_status_template.py`，用 Write 寫到 `<dirname>/_status.py`。
+     - **n** → 跳過（使用者可能已在上層放共用版本，或暫時不需要）。
+3. C# 分支：v1 不處理 — `_AlgorithmStatus.cs` 由專案自帶，不在 skill 範圍。
+
+> ⚠️ `_status.py` 開頭底線 — 框架掃描演算法時會略過 `_` 開頭檔案，不會被誤當演算法載入。
+
+### 3. 跑 inspect 腳本
 從 repo root 執行：
 
 ```bash
@@ -62,10 +77,10 @@ python .claude/skills/scada-algo-meta/scripts/inspect_cs.py --file <檔案路徑
 
 輸出 JSON。解析欄位：
 
-- `ok: false, reason: "evaluate_one_missing"` → 進入 step 3（rename 流程）
-- `ok: true` → 繼續 step 4
+- `ok: false, reason: "evaluate_one_missing"` → 進入 step 4（rename 流程）
+- `ok: true` → 繼續 step 5
 
-### 3. evaluate_one 缺失 → 提議 rename
+### 4. evaluate_one 缺失 → 提議 rename
 
 inspect 輸出 `candidate_funcs` 列出檔內所有非 `_` 開頭的 top-level 函式：
 
@@ -77,34 +92,43 @@ inspect 輸出 `candidate_funcs` 列出檔內所有非 `_` 開頭的 top-level �
 - Python：`def {old}(` → `def evaluate_one(`；`{old}(` 函式呼叫也要改
 - C#：`{Old}(` → `EvaluateOne(`
 
-改完後**重新 inspect** 一次，繼續 step 4。
+改完後**重新 inspect** 一次，繼續 step 5。
 
 > ⚠️ rename 後用 Grep 掃舊名（`{old}\b`）一次，若還有命中要警告使用者人工確認剩下的是否該改。
 
-### 4. 處理 outputs uncertain / inconsistent
+### 5. 處理 outputs uncertain / inconsistent
 
 - `outputs_uncertain: true`（Python：return 非字面量 dict；C#：找不到任何 `["key"]=` 字面）
   → 印警告 + docstring + signature → **必須問**使用者：「無法靜態解析 output keys，請逐個列出（以逗號分隔）」
 - `outputs_inconsistent: true`（C# 多分支 key set 不同）
   → 印 `all_output_sets` → 問使用者「要全聯集（{merged}）還是手動指定？」
 
-### 5. 互動詢問必要欄位
+### 6. 互動詢問必要欄位
 
 針對「不在 `existing` 內」的欄位才問：
 
 1. **演算法中文名**（`algorithm`）— 必問
-2. **是否 variadic**（`variadic`）— 必問，y/n。若 y，預設所有 inputs/outputs 都視為 repeat（fixed 在 v1 不支援自動分割；使用者需手動編輯）
-3. **各 input/output 中文 label** — 逐個問；空白 Enter 跳過則 label = key（與 `_parse_kv_list` 一致）
+2. **是否 variadic**（`variadic`）— 必問，y/n。
+   - 若 **n**：走非變參，用 `inputs` / `outputs`。
+   - 若 **y**：對**每一個** input key 與**每一個** output key 逐一追問歸類：
+     「`{key}` 是每組重複（repeat，會加數字 suffix）還是全域固定（fixed，每組取同值不加 suffix）？(r/f，直接 Enter = r)」
+     - repeat → 進 `inputs_repeat` / `outputs_repeat`
+     - fixed  → 進 `inputs_fixed` / `outputs_fixed`
+   - **防呆**：variadic=y 時 repeat 埠（input 或 output）**至少要有一個**；若使用者把全部都標成 fixed，提示「全 fixed 等於沒有可重複的組，應改用非變參（variadic=n）」並回頭確認。
+3. **各 input/output 中文 label** — 逐個問；空白 Enter 跳過則 label = key（與 `_parse_kv_list` 一致）。variadic 模式下，label 一律跟著該 key 已歸類的 repeat/fixed 清單走。
 4. **description**（選填）— 若 inspect 抓到 docstring，建議使用者直接拿來用；否則問一句
 
 `existing` 已有的欄位**不要問也不要改**，靜默跳過。
 
-### 6. 組 meta dict + 呼叫 inject 腳本
+### 7. 組 meta dict + 呼叫 inject 腳本
 
 依使用者回答組 meta JSON：
 
 - 非變參：`{ "algorithm": "...", "inputs": "a, b", "outputs": "out", "description": "..." }`
-- 變參：`{ "algorithm": "...", "variadic": "true", "inputs_repeat": "a:標籤A, b:標籤B", "outputs_repeat": "out:標籤", "description": "..." }`
+- 變參（純 repeat）：`{ "algorithm": "...", "variadic": "true", "inputs_repeat": "a:標籤A, b:標籤B", "outputs_repeat": "out:標籤", "description": "..." }`
+- 變參（混合 fixed + repeat）：`{ "algorithm": "...", "variadic": "true", "inputs_fixed": "setpoint:壓差目標", "inputs_repeat": "pump_speed:水泵轉速", "outputs_repeat": "cmd:水泵命令", "description": "..." }`
+
+> 只在有內容時才放入對應欄位；某類（如 `inputs_fixed`）為空就整個省略，別放空字串。
 
 跑：
 
@@ -114,7 +138,7 @@ python .claude/skills/scada-algo-meta/scripts/inject_header.py --file <檔案路
 
 > 注意：bash 下傳 JSON 用單引號包整串，內含的雙引號不用 escape。Windows shell 用 `--meta-file` 避免引號地獄：先 Write 一個 tmp `.json` 再帶路徑。
 
-### 7. 印 diff + 重啟提示
+### 8. 印 diff + 重啟提示
 
 inject 腳本會自動印 unified diff。skill 額外提示使用者：
 
@@ -183,6 +207,34 @@ Skill:
   → 繼續詢問 label
 ```
 
+### 範例 5：dp_control.py 混合型（1 個固定壓差目標 + N 組水泵）
+
+```
+User: 幫 dp_control.py 補 metadata
+Skill:
+  → 跑 inspect_py.py
+  → 偵測：inputs=[setpoint, pump_speed], outputs=[cmd]，無 existing header
+
+  問 1：演算法中文名？ → User: 壓差控制
+  問 2：是否 variadic？ → User: y
+  問 3：setpoint 是 repeat 還是 fixed？ → User: f
+  問 4：pump_speed 是 repeat 還是 fixed？ → User: r（Enter 亦可）
+  問 5：cmd 是 repeat 還是 fixed？ → User: r
+  問 6：setpoint 中文 label？ → User: 壓差目標
+  問 7：pump_speed 中文 label？ → User: 水泵轉速
+  問 8：cmd 中文 label？ → User: 水泵命令
+  問 9：description？ → User: 依單一壓差目標控制多台水泵
+
+  → 組 meta：{ "algorithm": "壓差控制", "variadic": "true",
+              "inputs_fixed": "setpoint:壓差目標",
+              "inputs_repeat": "pump_speed:水泵轉速",
+              "outputs_repeat": "cmd:水泵命令",
+              "description": "依單一壓差目標控制多台水泵" }
+  → 跑 inject_header.py
+  → 產出 header：setpoint 不加 suffix，pump_speed / cmd 隨組數加 suffix
+  → 印 diff，提示重啟演算法 host 服務
+```
+
 ## 邊界與注意事項
 
 - **檔案有 BOM / CRLF**：inject 腳本會偵測並保留，無須特別處理
@@ -190,4 +242,4 @@ Skill:
 - **`_*.py` / `_*.cs`**：skill 不處理這些共用模組，若使用者誤指要明白拒絕
 - **variadic 不猜**：無論檔名或參數名怎麼長都不從程式碼推測 variadic，**必問使用者**
 - **outputs 抓不到一律問**：絕不靜默預設成 `["out"]` — output key 與 LogicFlow port 必須完全一致
-- **fixed inputs/outputs 在 v1 不自動分割**：variadic=true 時所有 inputs/outputs 預設都進 `_repeat`，使用者若需要 fixed 要事後手動編輯
+- **fixed / repeat 逐個詢問，不靜態推斷**：variadic=true 時對每個 input/output 明確問使用者歸 repeat 或 fixed（預設 repeat）。「哪個變數是全域唯一」是語意決策，無法從程式碼推斷，比照「variadic 不猜、必問」原則。至少要有一個 repeat 埠，否則應改回非變參。
