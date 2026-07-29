@@ -11,6 +11,23 @@
     function renderCanvasNodes() {
         const canvas = document.getElementById('diagramCanvas');
         if (!canvas) return;
+
+        // 重繪前保存目前 focus 的節點輸入框（node/欄位/游標/當前輸入值），重繪後還原。
+        // 否則背景輪詢每秒重建整個節點 DOM 會搶走 focus、並用 model 舊值蓋掉使用者正在打的字
+        // （例如 variadic 的「數量」框，點進去馬上就跳走、要試很多次）。
+        const _ae = document.activeElement;
+        let _focusSave = null;
+        if (_ae && _ae.tagName === 'INPUT' && canvas.contains(_ae) && _ae.dataset.nodeId != null) {
+            _focusSave = {
+                nodeId: _ae.dataset.nodeId,
+                field: _ae.dataset.field || null,
+                cls: _ae.classList[0] || null,
+                value: _ae.value,
+                selStart: null, selEnd: null
+            };
+            try { _focusSave.selStart = _ae.selectionStart; _focusSave.selEnd = _ae.selectionEnd; } catch (_) { }
+        }
+
         canvas.querySelectorAll('.flow-node').forEach(el => el.remove());
 
         // 確保 SVG 連線層存在
@@ -177,12 +194,13 @@
 
             // variadic 演算法：每組 repeat 埠用虛線框圍起來（N≥2 才顯示，hover 出 tooltip）
             if (n.type === 'algorithm' && n.operator && S.ALGO_OPS[n.operator] && S.ALGO_OPS[n.operator].variadic) {
-                const ranges = S.getAlgoGroupRanges(S.ALGO_OPS[n.operator], n.inputCount, nodeInputPorts, nodeOutputPorts);
+                const ranges = S.getAlgoGroupRanges(S.ALGO_OPS[n.operator], n.inputCount);
                 ranges.forEach(r => {
                     const fr = document.createElement('div');
                     fr.className = 'algo-group-frame';
-                    fr.style.top = `calc(${r.topPct}% - 10px)`;
-                    fr.style.height = `calc(${r.bottomPct - r.topPct}% + 20px)`;
+                    // 框 = 該組的帶範圍；內縮 1px 讓相鄰組框之間留一線縫、且不觸及固定帶
+                    fr.style.top = `calc(${r.topPct}% + 1px)`;
+                    fr.style.height = `calc(${r.bottomPct - r.topPct}% - 2px)`;
                     fr.title = S.t('logicflow.algorithm.group_index', { index: r.index });
                     el.appendChild(fr);
                 });
@@ -192,7 +210,8 @@
                 const pe = document.createElement('div');
                 pe.className = 'flow-port flow-port-in';
                 pe.dataset.port = p.key; pe.dataset.nodeId = n.id; pe.dataset.dir = 'in';
-                const pct = arr.length === 1 ? 50 : (20 + i * (60 / (arr.length - 1)));
+                // variadic 埠帶 topPct（分帶佈局）；非 variadic 沿用等距分佈
+                const pct = (p.topPct != null) ? p.topPct : (arr.length === 1 ? 50 : (20 + i * (60 / (arr.length - 1))));
                 pe.style.top = `calc(${pct}% - 5px)`;
                 pe.title = p.label;
                 pe.addEventListener('mousedown', onPortMouseDown);
@@ -204,7 +223,8 @@
                 const pe = document.createElement('div');
                 pe.className = 'flow-port flow-port-out';
                 pe.dataset.port = p.key; pe.dataset.nodeId = n.id; pe.dataset.dir = 'out';
-                pe.style.top = `calc(${arr.length === 1 ? 50 : 20 + i * (60 / (arr.length - 1))}% - 5px)`;
+                const pctOut = (p.topPct != null) ? p.topPct : (arr.length === 1 ? 50 : (20 + i * (60 / (arr.length - 1))));
+                pe.style.top = `calc(${pctOut}% - 5px)`;
                 pe.title = p.label;
                 pe.addEventListener('mousedown', onPortMouseDown);
                 el.appendChild(pe);
@@ -369,6 +389,22 @@
             el.addEventListener('mousedown', S.startDrag);
             canvas.appendChild(el);
         }
+
+        // 還原重繪前的輸入框 focus / 游標 / 當前輸入值（見上方保存邏輯）
+        if (_focusSave) {
+            let sel = `input[data-node-id="${_focusSave.nodeId}"]`;
+            if (_focusSave.field) sel += `[data-field="${_focusSave.field}"]`;
+            else if (_focusSave.cls) sel += `.${_focusSave.cls}`;
+            const inp = canvas.querySelector(sel);
+            if (inp) {
+                if (_focusSave.value != null) inp.value = _focusSave.value;
+                inp.focus();
+                try {
+                    if (_focusSave.selStart != null) inp.setSelectionRange(_focusSave.selStart, _focusSave.selEnd);
+                } catch (_) { /* type=number 不支援 setSelectionRange，focus 已足夠 */ }
+            }
+        }
+
         renderEdges();
         updateCanvasSize();
         S.startTimerEval(); // 有 timer 節點時啟動 1 秒 interval

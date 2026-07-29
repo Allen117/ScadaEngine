@@ -8,10 +8,22 @@
         if (!node || node.type !== 'algorithm' || !node.operator) return null;
         const aop = S.ALGO_OPS[node.operator];
         if (!aop) return null;
-        const ports = S.getAlgoPorts(aop, node.inputCount);
-        const maxPorts = Math.max(ports.inputs.length, ports.outputs.length, 1);
         const PORT_MIN_GAP_PX = 30;
         const BASE_H = 50;
+        // variadic：依「固定帶 + N 組帶」估高，確保每條帶內的埠間距 ≥ PORT_MIN_GAP_PX
+        if (aop.variadic) {
+            const N = Math.max(1, parseInt(node.inputCount, 10) || 1);
+            const hasFixed = (aop.inputsFixed || []).length > 0 || (aop.outputsFixed || []).length > 0;
+            const bandCount = N + (hasFixed ? 1 : 0);
+            const maxInBand = Math.max(
+                (aop.inputsFixed || []).length, (aop.outputsFixed || []).length,
+                (aop.inputsRepeat || []).length, (aop.outputsRepeat || []).length, 1);
+            // 帶內埠佔該帶 64%（BAND_INSET 0.18 兩側）；每帶需求高度換算回節點高（可用區 = 60%）
+            const bandNeedPx = maxInBand <= 1 ? PORT_MIN_GAP_PX : (maxInBand - 1) * PORT_MIN_GAP_PX / 0.64;
+            return Math.max(BASE_H, Math.ceil(bandNeedPx * bandCount / 0.6));
+        }
+        const ports = S.getAlgoPorts(aop, node.inputCount);
+        const maxPorts = Math.max(ports.inputs.length, ports.outputs.length, 1);
         if (maxPorts <= 1) return BASE_H;
         return Math.max(BASE_H, Math.ceil(PORT_MIN_GAP_PX * (maxPorts - 1) / 0.6));
     }

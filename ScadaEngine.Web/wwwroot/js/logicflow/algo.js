@@ -28,9 +28,38 @@
         } catch (e) { console.error('[LogicFlow] loadAlgorithms failed:', e); }
     }
 
-    // ── 變動埠展開：將 fixed + repeat × N 展開為 [{key, label}, ...] ──
-    // repeat/fixed 為 [{key, label}, ...]
-    function expandAlgoPorts(repeat, fixedList, n) {
+    // ── 分帶佈局（單一真相）：把節點垂直可用區間 [20%,80%] 切成「固定帶 + N 組帶」 ──
+    // 固定帶（若任一側有 fixed 埠才保留）永遠在最頂，之後每組各佔一條等高帶；
+    // 輸入側與輸出側共用同一組帶邊界（bandCount 只看 N 與 hasFixed），確保同組上下對齊、
+    // 且組框（= 帶範圍）不會跨到固定帶而吞掉固定埠。
+    // 回傳 { pcts:[每個埠的中心 %], bands:[{top,bottom} × N] }（bands 只含組帶，不含固定帶）
+    const LAYOUT_TOP = 20, LAYOUT_RANGE = 60, BAND_INSET = 0.18;
+    function bandLayout(fixedLen, repeatLen, N, hasFixed) {
+        const bandCount = N + (hasFixed ? 1 : 0);
+        const bandH = LAYOUT_RANGE / bandCount;
+        const placeInBand = (bandIdx, m) => {
+            const bt = LAYOUT_TOP + bandIdx * bandH;
+            if (m <= 0) return [];
+            if (m === 1) return [bt + bandH / 2];
+            const lo = bt + bandH * BAND_INSET, hi = bt + bandH * (1 - BAND_INSET);
+            const arr = [];
+            for (let j = 0; j < m; j++) arr.push(lo + j * (hi - lo) / (m - 1));
+            return arr;
+        };
+        const pcts = [];
+        if (hasFixed) placeInBand(0, fixedLen).forEach(p => pcts.push(p));
+        const bands = [];
+        for (let g = 0; g < N; g++) {
+            const bi = (hasFixed ? 1 : 0) + g;
+            placeInBand(bi, repeatLen).forEach(p => pcts.push(p));
+            bands.push({ top: LAYOUT_TOP + bi * bandH, bottom: LAYOUT_TOP + (bi + 1) * bandH });
+        }
+        return { pcts, bands };
+    }
+
+    // ── 變動埠展開：將 fixed + repeat × N 展開為 [{key, label, topPct?}, ...] ──
+    // repeat/fixed 為 [{key, label}, ...]；pcts 若給則依序掛上每個埠的垂直中心 %
+    function expandAlgoPorts(repeat, fixedList, n, pcts) {
         const out = [];
         (fixedList || []).forEach(p => out.push({ key: p.key, label: p.label || p.key }));
         const N = Math.max(1, parseInt(n, 10) || 1);
@@ -40,6 +69,7 @@
                 label: `${p.label || p.key} ${i}`
             }));
         }
+        if (pcts) out.forEach((p, idx) => { p.topPct = pcts[idx]; });
         return out;
     }
 
@@ -47,9 +77,13 @@
     function getAlgoPorts(op, inputCount) {
         if (!op) return { inputs: [], outputs: [{ key: 'out', label: 'out' }] };
         if (op.variadic) {
+            const N = Math.max(1, parseInt(inputCount, 10) || 1);
+            const hasFixed = (op.inputsFixed || []).length > 0 || (op.outputsFixed || []).length > 0;
+            const inPcts = bandLayout((op.inputsFixed || []).length, (op.inputsRepeat || []).length, N, hasFixed).pcts;
+            const outPcts = bandLayout((op.outputsFixed || []).length, (op.outputsRepeat || []).length, N, hasFixed).pcts;
             return {
-                inputs: expandAlgoPorts(op.inputsRepeat, op.inputsFixed, inputCount),
-                outputs: expandAlgoPorts(op.outputsRepeat, op.outputsFixed, inputCount)
+                inputs: expandAlgoPorts(op.inputsRepeat, op.inputsFixed, N, inPcts),
+                outputs: expandAlgoPorts(op.outputsRepeat, op.outputsFixed, N, outPcts)
             };
         }
         // 非 variadic：op.inputs/outputs 為 [{key, label}, ...]（兼容舊版純字串陣列）
@@ -62,29 +96,19 @@
         };
     }
 
-    // ── variadic 演算法：算出每組 (repeat #i) 在節點內的垂直 % 範圍，供畫外框 ──
+    // ── variadic 演算法：算出每組在節點內的垂直 % 帶範圍，供畫外框 ──
+    // 帶邊界只由 N 與 hasFixed 決定（與 fixed/repeat 埠數無關），故輸入輸出兩側一致。
     // 回傳 [{ index, topPct, bottomPct }, ...]；N<2 或沒有 repeat 埠時回空陣列
-    function getAlgoGroupRanges(op, inputCount, inputs, outputs) {
+    function getAlgoGroupRanges(op, inputCount) {
         if (!op || !op.variadic) return [];
         const N = Math.max(1, parseInt(inputCount, 10) || 1);
         if (N < 2) return [];
-        const fixedInLen = (op.inputsFixed || []).length;
         const repeatInLen = (op.inputsRepeat || []).length;
-        const fixedOutLen = (op.outputsFixed || []).length;
         const repeatOutLen = (op.outputsRepeat || []).length;
         if (repeatInLen === 0 && repeatOutLen === 0) return [];
-        const totalIn = inputs.length;
-        const totalOut = outputs.length;
-        const pctAt = (i, total) => total === 1 ? 50 : (20 + i * (60 / (total - 1)));
-        const ranges = [];
-        for (let g = 0; g < N; g++) {
-            const pcts = [];
-            for (let k = 0; k < repeatInLen; k++) pcts.push(pctAt(fixedInLen + g * repeatInLen + k, totalIn));
-            for (let k = 0; k < repeatOutLen; k++) pcts.push(pctAt(fixedOutLen + g * repeatOutLen + k, totalOut));
-            if (pcts.length === 0) continue;
-            ranges.push({ index: g + 1, topPct: Math.min(...pcts), bottomPct: Math.max(...pcts) });
-        }
-        return ranges;
+        const hasFixed = (op.inputsFixed || []).length > 0 || (op.outputsFixed || []).length > 0;
+        const bands = bandLayout(0, 0, N, hasFixed).bands;
+        return bands.map((b, g) => ({ index: g + 1, topPct: b.top, bottomPct: b.bottom }));
     }
 
     function _createAlgoMenuItem(key, op, isNodeMenu) {
