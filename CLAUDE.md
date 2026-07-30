@@ -81,40 +81,7 @@ wwwroot/
 
 ### 時間輸入一律 24 小時制 — 用 flatpickr
 
-**新增**任何 datetime / time 選擇控制項時，**禁止**用原生 `<input type="datetime-local">` / `<input type="time">`
-（Chromium 在 zh-TW Windows 下會強制吃 OS locale 顯示「下午 01:34」，`lang="en-GB"` trick 已證實對 datetime-local 無效）。
-
-改用 flatpickr + 共用 helper：
-
-```html
-<!-- View 頂端 -->
-<link rel="stylesheet" href="~/lib/flatpickr/flatpickr.min.css" />
-
-<!-- input 用 type="text" -->
-<input type="text" id="dtStart" class="form-control" autocomplete="off" />
-
-<!-- @section Scripts 依序載入 -->
-<script src="~/lib/flatpickr/flatpickr.min.js"></script>
-<script src="~/lib/flatpickr/zh-tw.js"></script>
-<script src="~/js/flatpickr-init.js"></script>
-<script src="~/js/myfeature.js"></script>
-```
-
-```js
-// feature.js 內初始化（依 <html lang> 自動切 zh-TW / en locale，強制 time_24hr）
-window._fpInit.datetime(document.getElementById('dtStart'));  // YYYY-MM-DD HH:mm
-window._fpInit.time(document.getElementById('txtStartTime'));  // HH:mm
-
-// 寫值要走 setDate，不能直接 .value = ...（picker 狀態不會同步）
-dtStart._flatpickr.setDate(new Date(), true);
-// 讀值照舊用 .value
-var s = dtStart.value;
-```
-
-Razor 預設值請輸出空白分隔格式以對齊 flatpickr `Y-m-d H:i`：
-`Model.dt.ToString("yyyy-MM-dd HH:mm")`。後端 `DateTime.TryParse` 對 T / 空白分隔都吃，不需改 API。
-
-date-only（純日期、無時間）可繼續用原生 `<input type="date">` — 無 AM/PM 問題不必引入 flatpickr。
+**新增** datetime / time 控制項**禁止**用原生 `<input type="datetime-local">` / `<input type="time">`（zh-TW Windows Chromium 會強制吃 OS locale 顯示「下午 01:34」）。改用 flatpickr + 共用 helper `window._fpInit`（date-only 純日期可續用原生 `<input type="date">`）。用法、載入順序、setDate 寫值範例見 [docs/設計規範.md](docs/設計規範.md) §時間輸入。
 
 ## Build & Run
 
@@ -131,10 +98,11 @@ Engine 是背景服務，無 HTTP endpoint。
 
 ```
 ScadaEngine.sln
-├── ScadaEngine.Common     — Shared models & DB config service (class library)
-├── ScadaEngine.Algorithm  — Algorithm utilities (class library, currently minimal)
-├── ScadaEngine.Engine     — .NET 8 Worker Service (Modbus → MQTT publisher)
-└── ScadaEngine.Web        — .NET 8 ASP.NET Core MVC (dashboard, http://localhost:5038)
+├── ScadaEngine.Common        — Shared models & DB config service (class library)
+├── ScadaEngine.Algorithm     — Algorithm utilities (class library, currently minimal)
+├── ScadaEngine.Engine        — .NET 8 Worker Service (Modbus → MQTT publisher)
+├── ScadaEngine.Web           — .NET 8 ASP.NET Core MVC (dashboard, http://localhost:5038)
+└── ScadaEngine.LicenseBridge — net48 Windows Service，HASP USB 加密狗授權驗證，靠 Named Pipe 供 Engine 呼叫
 ```
 
 ### 跨模組設計
@@ -147,7 +115,9 @@ ScadaEngine.sln
 - **用電報表**：On-demand 計算 + 葉子層 Hourly 預聚合 + Staleness Window
 - **電費計算**：Web 逐時計價（EnergyLeafHourly → ElectricityCostHourly，XX:05 觸發）+ EMS 電費狀態卡 + /HolidaySetting 假日（TOU 落 sun_offday）
 - **資料庫自動建立與備份**：DB 不存在時啟動安全網自建（無權限優雅降級）+ install-db.ps1 一次性安裝 + Engine 每週 BACKUP（A/B 輪替、結果寫 EventLog）
+- **資料表用途對照**：各表 Key 欄位 + 用途一覽 + SID 格式（完整定義以 DatabaseSchema.json 為準）
 - **演算法 status 協定**：LogicFlow 節點回傳結構 + per-output port 錯誤傳遞
+- **HASP 授權守衛（LicenseBridge）**：net48 bridge 服務靠 Named Pipe 驗加密狗；Engine 每 30 分鐘驗，失敗即暫停 Modbus 採集 + 發 MQTT `SCADA/Sys/License/Status`
 
 ---
 
@@ -159,9 +129,9 @@ ScadaEngine.sln
 | `ScadaEngine.Engine/MqttSetting/MqttSetting.json` | MQTT broker IP/port/topic/retain |
 | `ScadaEngine.Engine/Modbus/Modbus.json` | Modbus device definitions (IP, port, tags) |
 | `ScadaEngine.Engine/DatabaseSchema/DatabaseSchema.json` | 建表 + 欄位自動同步的**唯一真相來源** — 加欄位只改此檔，Engine 與 Web 啟動時自動補缺欄位（只加不減不改，詳見 docs/架構.md §資料庫結構初始化與欄位同步） |
-| `ScadaEngine.Engine/DBPoint/*.json` | DB 來源 Coordinator 點位定義（由 `DB通訊檔案產生工具.xlsm` 巨集產生，Engine 啟動 + reload MQTT 訊號時載入）。Web「DB 來源」頁可編輯**點位名稱與單位**回寫此檔（只改 Name/Unit 不動陣列結構），寫檔路徑由 Web `appsettings.json` 的 `EngineDbPointConfig`（WatchedFolder + MirrorFolder）明定，同 `EngineModbusConfig` 慣例 |
-| `ScadaEngine.Engine/OpcUaPoint/*.json` | OPC UA 來源定義（一檔一 Server 含 Devices 分組；由 Web「OPC UA 來源」頁動態編輯回寫，Engine 啟動 + reload MQTT 訊號時載入，免重啟）。Web 寫檔路徑由 Web `appsettings.json` 的 `EngineOpcUaConfig`（WatchedFolder + MirrorFolder）明定，同 `EngineModbusConfig` 慣例 |
-| `ScadaEngine.Engine/Setting/DbMaintenanceSetting.json` | 自動建 DB 路徑 + 每週備份排程（預設週日 03:00，A/B 兩檔輪替，Express 相容不依賴 SQL Agent）。同資料夾 `install-db.ps1` 為安裝腳本（建 DB / login / 資料夾 ACL，idempotent），已綁入 Install.bat 與 DeployService.ps1 install/update 自動執行，詳見 docs/架構.md §資料庫自動建立與每週備份 |
+| `ScadaEngine.Engine/DBPoint/*.json` | DB 來源 Coordinator 點位定義（`DB通訊檔案產生工具.xlsm` 巨集產生；Web「DB 來源」頁可編輯 Name/Unit 回寫）。細節見 docs/架構.md §資料流 + docs/功能說明書_DB來源管理.md |
+| `ScadaEngine.Engine/OpcUaPoint/*.json` | OPC UA 來源定義（一檔一 Server 含 Devices 分組；Web「OPC UA 來源」頁全欄位動態編輯回寫，免重啟）。細節見 docs/架構.md §資料流 + docs/功能說明書_OPCUA通訊.md |
+| `ScadaEngine.Engine/Setting/DbMaintenanceSetting.json` | 自動建 DB 路徑 + 每週備份排程。同資料夾 `install-db.ps1` 為安裝腳本（idempotent，已綁入部署流程）。細節見 docs/架構.md §資料庫自動建立與每週備份 |
 | `ScadaEngine.Engine/Setting/LineSetting.json` | Line Messaging API token + rate limit |
 | `ScadaEngine.Engine/Setting/EmailSetting.json` | SMTP host/port/帳密 + rate limit（MailKit）|
 | `ScadaEngine.Engine/Resources/notification.{zh-TW,en}.json` | Engine 通知訊息字典（Line + Email 共用，依群組 Language 切換）|
@@ -172,35 +142,7 @@ Web reads Engine's `dbSetting.json` via a relative path `../ScadaEngine.Engine/S
 
 ## Database Schema (SQL Server: `wsnCsharp`)
 
-| Table | Key Columns | Purpose |
-|-------|-------------|---------|
-| `ModbusCoordinator` | Id, Name, ModbusID, DelayTime, MonitorEnabled | Device registry (sidebar source) |
-| `ModbusPoints` | SID (PK), Name, Address, DataType, Ratio, Unit | Point configuration |
-| `HistoryData` | SID+Timestamp (PK), Value, Quality | Time-series history |
-| `LatestData` | SID (PK), Value, Timestamp, Quality | Last known value per point |
-| `Users` | UserID, Username, PasswordHash, Role, IsActive | Web login (SHA256 hex password)。Role：`Engineer`（工程師模式六頁獨佔：Designer/Modbus/DB/OpcUa/CalcPoint/LogicFlow，Admin 也不可見；bootstrap 帳號 `engineer` 由 install-db.ps1 seed）/ `Admin` / `User` |
-| `DBCoordinator` | Id, Name (UNIQUE), PollingInterval, ConnectTimeout, MonitorEnabled | DB 來源設備（由 `DBPoint/*.json` UPSERT by Name） |
-| `DBPoints` | SID (PK), CoordinatorId, Sequence, Name, Unit, Min, Max | DB 來源點位定義（每 Coordinator 上限 100 點；Sequence 由載入器以陣列順序自動產生） |
-| `DBLatestData` | SID (PK), Value, Timestamp, Quality | DB 來源統一入口表 — 外部系統 INSERT/UPDATE 此表（Value 寫工程值），Engine polling |
-| `OpcUaCoordinator` | Id, Name (UNIQUE), EndpointUrl, Username, Password, PollingInterval, ConnectTimeout, MonitorEnabled | OPC UA Server 註冊表（由 `OpcUaPoint/*.json` UPSERT by Name） |
-| `OpcUaPoints` | SID (PK), CoordinatorId, DeviceName, Sequence, Name, TagName, ControlType, Ratio, Unit, Min, Max | OPC UA 點位快照（Seq 由 Web 配號持久化於 JSON，刪除不回收） |
-| `LineNotifyTargets` | Id, GroupId, Label, MaxSeverity, Language, IsEnabled | Line 推播群組（Language 每群組獨立） |
-| `EmailGroups` | Id, Name (UNIQUE), Label, MaxSeverity, Language, IsEnabled | Email 通知群組 |
-| `EmailRecipients` | Id, GroupId, EmailAddress, DisplayName, IsEnabled | Email 收件人（多對一群組） |
-| `EmailGroupRuleMap` | (GroupId, AlarmRuleId) PK | 群組-規則路由（空表視為「全收」） |
-| `EventLog` | Id (PK), SID, EventType, ..., NotifyChannel, NotifyStatus, NotifyDetail, NotifyRelatedEventId | 警報與通知摘要共用表（通知摘要 EventType=3） |
-| `ElectricityCostHourly` | SID+HourStart+Period (PK), Kwh, UnitPrice, Cost, PlanId, PlanType, Season, Quality | 電費逐時計價結果（Web XX:05 背景計算；progressive 的 Cost=NULL 查詢時套級距） |
-| `Holidays` | HolidayDate (date PK) | 國定假日標註（/HolidaySetting 維護；TOU 計價落 sun_offday） |
-| `EnergyBaseline` | Id, Name, TargetType, Granularity(day=曆日/month=曆月), Status(draft/frozen), Intercept, R2, AdjR2, CvRmse, ... | ISO 50001 能源基線模型主檔（/EnergyBaseline；OLS 回歸走 MathNet.Numerics，詳見 docs/功能說明書_能源基線.md） |
-| `EnergyBaselineVariable` | Id, BaselineId, Sequence(1..5), VarType(point/circuit), SourceSID/SourceCircuitId, Coefficient, PValue | 基線相關變數 X 子檔（一模型最多 5 變數；名稱/單位存快照） |
-| `WeatherSetting` | Id(=1), ApiKey, DatasetId, StationId, PollIntervalMinutes, IsEnabled, LastFetch* | 氣象資料來源設定（單列；/WeatherSetting 維護，Web WeatherFetchService 依此抓 CWA 觀測寫 Weather DB 來源點位 S1 溫度/S2 濕度/S3 濕球溫度〔由 S1/S2 以 Stull 式推導，NCalc 亦有 WetBulb 自訂函數〕，詳見 docs/功能說明書_氣象資料來源.md） |
-| `EmsCardSetting` | CardKey (PK), IsVisible, SortOrder | EMS 首頁卡片顯示覆寫（每卡一列只存覆寫；卡片定義唯一真相來源為 Web `EmsCardRegistry`，/EmsCardSetting 維護。新增 EMS 首頁卡片走 SOP：docs/功能說明書_EMS頁面.md §9.4） |
-
-SID 格式：
-- Modbus：`{ModbusID}-S{N}` 例 `196865-S1`
-- 計算點位：`CALC-S{N}` 例 `CALC-S3`
-- DB 來源：`DB{CoordinatorId}-S{Sequence}` 例 `DB1-S5`
-- OPC UA 來源：`OPC{CoordinatorId}-S{Seq}` 例 `OPC1-S5`
+欄位定義唯一真相來源 = `ScadaEngine.Engine/DatabaseSchema/DatabaseSchema.json`（加欄位只改此檔，Engine / Web 啟動自動補缺欄位，只加不減不改）。**各表 Key 欄位與用途對照 + SID 格式** → [docs/架構.md](docs/架構.md) §資料表用途對照。
 
 ---
 
@@ -281,27 +223,7 @@ Defined in `ScadaEngine.Engine` but used by both Engine and Web. Web registers `
 
 改動 `.cshtml` / `.css` / `wwwroot/` 前先讀 [docs/設計規範.md](docs/設計規範.md)，含框架、元件模式、色彩、字體、間距、圓角、陰影、動畫、Z-Index、圖示慣例。
 
-### SCADA / EMS 雙主題（新頁面必讀）
-
-新增頁面前先判斷歸屬，確保色系統一：
-
-- **SCADA 體系**（預設）：深藍 navbar（`navbar-dark bg-primary`）、Bootstrap primary 藍 `#0d6efd`、紫色頁尾漸層
-- **EMS 體系**：淡綠 navbar、主色 `#43a047`、深綠 `#2e7d32`/`#1b5e20`、淺綠 `#e8f5e9`/`#c8e6c9`/`#f1f8f4`、綠色頁尾漸層
-
-**EMS 子頁掛載步驟**（自動套主題，不需在 View / Controller 手動切色）：
-
-1. 路由加入 `PermissionService.EmsRoutes[]`（同時加 `ConfigurablePages` 給權限管理用）
-2. `_Layout.cshtml` 偵測 `IsEmsRoute()` 自動掛 `body.ems-mode` class
-3. `ems.css` 自動套：navbar / brand / footer 綠色化 + `.text-primary` / `.btn-primary` / `.bg-primary` / `.form-control:focus` / `#treeContainer .tree-node.active` 等覆寫成綠
-4. navbar 加 nav-link（搭 i18n key `layout.menu.xxx`）
-
-**色號使用原則**：
-
-- **頁面內優先用 Bootstrap class**（`btn-primary`、`text-primary`、`bg-primary`、`spinner-border text-primary`）— EMS 模式會自動轉綠，不必兩套寫法
-- **新增 EMS 子頁專屬色**時，在 `ems.css` 用 `body.ems-mode .your-class { ... }` 覆寫，不要污染 SCADA 模式
-- 不要在 `.cshtml` 內 inline 硬寫藍色色號（如 `style="color:#0d6efd"`），會破壞 EMS 模式切換
-
-完整色票見 [docs/設計規範.md](docs/設計規範.md) §色彩系統。
+**SCADA / EMS 雙主題**（新頁面必讀）：全站依路由分兩套色系（SCADA 深藍 / EMS 淡綠）。新增頁面前先判斷歸屬 — **頁面內一律用 Bootstrap primary class（`btn-primary` / `text-primary` / `bg-primary`），不在 `.cshtml` inline 硬寫色號**，EMS 模式由 `ems.css` 自動轉綠。EMS 子頁掛載 4 步驟 SOP + 完整色票 → [docs/設計規範.md](docs/設計規範.md) §色彩系統 §SCADA / EMS 雙主題。
 
 ## i18n 規則（zh-TW + en，僅指定頁面）
 
@@ -316,12 +238,7 @@ Defined in `ScadaEngine.Engine` but used by both Engine and Web. Web registers `
 
 新增功能時，未在 i18n 範圍的頁面字串不需走 IStringLocalizer，但若**新增 Layout 側欄選單** 則該選單字必須走 `Views.Shared._Layout.{,en}.resx`。
 
-**警報訊息結構化**（Engine 跨 Web）：Engine 寫 EventLog 時除人類可讀 `Message` 外，須帶 `MessageKey`（i18n key）+ `MessageArgs`（JSON）。Web 顯示時透過 `AlarmMessageLocalizer` 依 culture 翻譯。三類警報固定 key：
-- `alarm.high_exceed` ← args `{ name, threshold }`
-- `alarm.low_below` ← args `{ name, threshold }`
-- `alarm.di_triggered` ← args `{ name, state }`
-
-**控制操作訊息結構化**（Web 內部）：ScadaPage 控制行為由 `ControlEventLogger` 寫入 `EventLog`（EventType=3 資訊、Severity=3 低）。10 種 `control.action.*` key（button_pressed / ao_manual_set / ao_switch_auto / do_set_on / do_set_off / do_switch_auto / pump_start / pump_stop / pump_freq_set / pump_switch_auto），args 統一以 `{ username, name, value? }` 結構傳入。`AlarmMessageLocalizer.ParseArgs` 對 `control.action.*` 前綴的 key 委派 `ControlEventLogger.ArgOrderForKey` 取位置順序，避免重複維護。新增動作類型時改動：`ControlActionType` enum + `ControlEventLogger.BuildKeyAndArgs/ArgOrderForKey` 兩個 switch + `SharedResource.{,en}.resx` 雙語 key。
+**訊息結構化**（警報 Engine 跨 Web + 控制操作 Web 內部）：EventLog / MQTT 除人類可讀 `Message` 外帶 `MessageKey` + `MessageArgs`（JSON），Web 顯示時經 `AlarmMessageLocalizer` 依 culture 翻譯。三類警報固定 key、10 種 `control.action.*` key、新增動作要改的 switch 一覽 → 見 [docs/功能說明書_多語系.md](docs/功能說明書_多語系.md) §警報訊息結構化 / §控制操作訊息結構化。
 
 DB 內容（點位名、迴路名、警報規則的 DiOnLabel/DiOffLabel）為使用者輸入，**不在 i18n 範圍** — 切英文時若 user input 為中文，這是運維責任而非系統責任。
 
