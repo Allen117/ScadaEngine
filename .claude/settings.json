@@ -75,5 +75,19 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:www.taipower.com.tw)"
     ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/dotnet-test-if-cs-changed.sh\"",
+            "timeout": 120,
+            "statusMessage": "改動 .cs → 跑 dotnet test 驗證中…"
+          }
+        ]
+      }
+    ]
   }
 }
