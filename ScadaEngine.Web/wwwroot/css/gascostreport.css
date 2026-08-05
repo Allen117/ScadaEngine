@@ -1,0 +1,33 @@
+/* 氣費報表頁專屬樣式 — 版型共用 energyreport.css 的 er-* class，此檔只放本頁追加樣式 */
+
+/* 無資料提示覆蓋層（蓋在 chart canvas 位置） */
+.gcr-nodata {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#gcrTableBody td {
+    font-size: 0.85rem;
+    padding: 6px 10px;
+}
+
+#gcrTableBody td.text-end {
+    font-family: monospace;
+    font-weight: 500;
+}
+
+/* 級距明細展開列 */
+.gcr-detail-row > td {
+    background: var(--bs-light, #f8f9fa);
+}
+
+.gcr-detail-table {
+    font-size: 0.8rem;
+}
+
+.gcr-detail-table th {
+    white-space: nowrap;
+}

@@ -1,0 +1,17 @@
+@* 氣費狀態卡（本期累計 m³ + 級距明細；可下拉切換氣表迴路，預設根迴路） *@
+<div class="col-md-6 col-lg-5 col-xl-4">
+    <div class="card shadow-sm h-100 d-flex flex-column">
+        <div class="card-header py-2 d-flex justify-content-between align-items-center flex-wrap gap-2"
+             style="background:#43a047;color:#fff;">
+            <span><i class="fas fa-fire me-1"></i>@Localizer["ems.gas.cost.title"]</span>
+            <span id="gasCostPeriodText" class="small opacity-75"></span>
+        </div>
+        <div class="card-body p-2 flex-grow-1 d-flex flex-column">
+            <select id="gasCostCircuitSelect" class="form-select form-select-sm mb-2" style="display:none;"></select>
+            <div id="gasCostCardBody" class="flex-grow-1">
+                <div class="text-center text-muted py-4">@Localizer["ems.gas.cost.loading"]</div>
+            </div>
+            <div id="gasCostCardFoot" class="small text-muted mt-1"></div>
+        </div>
+    </div>
+</div>

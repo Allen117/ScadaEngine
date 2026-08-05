@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="gascostreport.title" xml:space="preserve"><value>Gas Cost Report</value></data>
+  <data name="gascostreport.breadcrumb.energy" xml:space="preserve"><value>Energy Management</value></data>
+  <data name="gascostreport.filter.title" xml:space="preserve"><value>Query Conditions</value></data>
+  <data name="gascostreport.filter.circuit" xml:space="preserve"><value>Gas Meter Circuit</value></data>
+  <data name="gascostreport.filter.month_start" xml:space="preserve"><value>From Period</value></data>
+  <data name="gascostreport.filter.month_end" xml:space="preserve"><value>To Period</value></data>
+  <data name="gascostreport.button.query" xml:space="preserve"><value>Query</value></data>
+  <data name="gascostreport.button.export" xml:space="preserve"><value>Export Excel</value></data>
+  <data name="gascostreport.select.loading" xml:space="preserve"><value>Loading...</value></data>
+  <data name="gascostreport.select.placeholder" xml:space="preserve"><value>Select a circuit</value></data>
+  <data name="gascostreport.select.empty" xml:space="preserve"><value>No gas meter circuits</value></data>
+  <data name="gascostreport.period.hint" xml:space="preserve"><value>Period range: {0} ~ {1}, {2} period(s)</value></data>
+  <data name="gascostreport.chart.title" xml:space="preserve"><value>Cost by Period</value></data>
+  <data name="gascostreport.chart.dataset_label" xml:space="preserve"><value>{0} Gas Cost</value></data>
+  <data name="gascostreport.chart.y_axis" xml:space="preserve"><value>Cost (NTD)</value></data>
+  <data name="gascostreport.chart.x_axis" xml:space="preserve"><value>Period</value></data>
+  <data name="gascostreport.chart.no_data" xml:space="preserve"><value>No data found</value></data>
+  <data name="gascostreport.label.total" xml:space="preserve"><value>Total Cost</value></data>
+  <data name="gascostreport.label.total_m3" xml:space="preserve"><value>Total Usage</value></data>
+  <data name="gascostreport.unit.ntd" xml:space="preserve"><value>NTD</value></data>
+  <data name="gascostreport.table.title" xml:space="preserve"><value>Period Details</value></data>
+  <data name="gascostreport.table.col_period" xml:space="preserve"><value>Period</value></data>
+  <data name="gascostreport.table.col_m3" xml:space="preserve"><value>Usage (m³)</value></data>
+  <data name="gascostreport.table.col_plan" xml:space="preserve"><value>Applied Plan</value></data>
+  <data name="gascostreport.table.col_cost" xml:space="preserve"><value>Cost (NTD)</value></data>
+  <data name="gascostreport.table.col_detail" xml:space="preserve"><value>Detail</value></data>
+  <data name="gascostreport.table.empty" xml:space="preserve"><value>Select a circuit and period range, then query</value></data>
+  <data name="gascostreport.table.querying" xml:space="preserve"><value>Querying...</value></data>
+  <data name="gascostreport.table.no_data" xml:space="preserve"><value>No data found</value></data>
+  <data name="gascostreport.table.total" xml:space="preserve"><value>Total</value></data>
+  <data name="gascostreport.detail.col_range" xml:space="preserve"><value>Tier Range (units)</value></data>
+  <data name="gascostreport.detail.col_price" xml:space="preserve"><value>Unit Price (NTD/unit)</value></data>
+  <data name="gascostreport.detail.col_m3" xml:space="preserve"><value>Units (m³)</value></data>
+  <data name="gascostreport.detail.col_cost" xml:space="preserve"><value>Amount (NTD)</value></data>
+  <data name="gascostreport.detail.above" xml:space="preserve"><value>{0} units and above</value></data>
+  <data name="gascostreport.badge.stale" xml:space="preserve"><value>Incomplete data</value></data>
+  <data name="gascostreport.badge.stale_hint" xml:space="preserve"><value>Usage aggregation for this period has quality warnings; the cost is for reference only</value></data>
+  <data name="gascostreport.alert.select_circuit" xml:space="preserve"><value>Please select a circuit first</value></data>
+  <data name="gascostreport.alert.month_order" xml:space="preserve"><value>Invalid period range (end must not be earlier than start)</value></data>
+  <data name="gascostreport.alert.query_failed" xml:space="preserve"><value>Query failed: {0}</value></data>
+  <data name="gascostreport.alert.export_failed" xml:space="preserve"><value>Export failed: {0}</value></data>
+</root>

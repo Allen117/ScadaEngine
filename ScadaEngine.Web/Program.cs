@@ -174,6 +174,8 @@ builder.Services.AddScoped<ScadaEngine.Web.Services.WaterCircuitService>();
 // 月結週期（期別）— 電費與水費各一套，彼此獨立（內含各自的 static 快取，寫入時失效）
 builder.Services.AddScoped<ScadaEngine.Web.Services.BillingPeriodService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.WaterBillingPeriodService>();
+// 氣費期別 — 第三套，比電/水兩套多「刪除此期（IsSkipped）」以支援兩月一期
+builder.Services.AddScoped<ScadaEngine.Web.Services.GasBillingPeriodService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyReportService>();
 // ISO 50001 能源基準 — OLS 回歸引擎（純數學無狀態 → Singleton）+ 基線模型/取樣/SEU + EnPI 報告
 builder.Services.AddSingleton<ScadaEngine.Web.Services.BaselineRegressionEngine>();
@@ -198,6 +200,11 @@ builder.Services.AddScoped<ScadaEngine.Web.Services.WaterMeterCircuitService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.WaterUsageReportService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.WaterTariffService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.WaterCostService>();
+// 氣表（累積式天然氣 m³/Nm³/度）— 迴路樹 CRUD + 用氣報表（GasMeterLeafHourly 加總）+ 天然氣流動氣費（SystemSettings gas_tariff）
+builder.Services.AddScoped<ScadaEngine.Web.Services.GasMeterCircuitService>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.GasUsageReportService>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.GasTariffService>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.GasCostService>();
 // 氣象資料來源 — CWA API client（Singleton：測站清單快取）+ 設定表讀寫（Scoped）+ 背景抓取（寫 Weather DBLatestData）
 builder.Services.AddSingleton<ScadaEngine.Web.Services.WeatherCwaClient>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.WeatherSettingService>();
@@ -226,6 +233,8 @@ builder.Services.AddScoped<ScadaEngine.Web.Services.ElectricityCostReportExcelEx
 builder.Services.AddScoped<ScadaEngine.Web.Services.EnPIReportExcelExporter>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.WaterUsageReportExcelExporter>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.WaterCostReportExcelExporter>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.GasUsageReportExcelExporter>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.GasCostReportExcelExporter>();
 
 // Line 測試發送（內含 throttle 字典 → 必須 Singleton 才能跨請求保留狀態）
 builder.Services.AddHttpClient();

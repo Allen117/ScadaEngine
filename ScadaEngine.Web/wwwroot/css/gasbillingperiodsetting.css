@@ -1,0 +1,50 @@
+/* 氣費月結週期設定頁樣式（比電/水版多「已刪除期別」摺疊區） */
+
+.gbp-year-nav .gbp-year-input {
+    width: 90px;
+    text-align: center;
+}
+
+.gbp-table .gbp-col-month   { width: 150px; }
+.gbp-table .gbp-col-date    { width: 170px; }
+.gbp-table .gbp-col-days    { width: 80px; }
+.gbp-table .gbp-col-status  { width: 90px; }
+.gbp-table .gbp-col-actions { width: 260px; }
+
+/* 空窗（橙）/ 重疊（紅）警告 — 語意色，SCADA / EMS 兩主題共用（不隨 primary 轉綠）。
+   優先吃 Bootstrap 5.3 的 *-text-emphasis（深色、白底可讀）；
+   目前專案為 5.1 尚無該變數，fallback 取與電/水費版一致的深色值以確保小字對比度。 */
+.gbp-warn-gap     { color: var(--bs-warning-text-emphasis, #e65100); }
+.gbp-warn-overlap { color: var(--bs-danger-text-emphasis, #c62828); }
+
+/* 已刪除期別摺疊區 */
+.gbp-skipped-toggle {
+    color: var(--bs-secondary, #6c757d);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.gbp-skipped-toggle:hover {
+    color: var(--bs-primary);
+}
+
+.gbp-skipped-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.gbp-skipped-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 4px 8px;
+    border: 1px dashed #dee2e6;
+    border-radius: 6px;
+    background: #f8f9fa;
+}
+
+.gbp-skipped-item .gbp-skipped-label {
+    font-family: monospace;
+    color: #6c757d;
+}

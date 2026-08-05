@@ -1,0 +1,29 @@
+@* 用氣量長條圖卡片（日/月/年切換，日模式看今天時 60s 自動刷新；資料源 = 氣表根迴路） *@
+<div class="col-md-6 col-lg-7 col-xl-8">
+    <div class="card shadow-sm h-100 d-flex flex-column">
+        <div class="card-header py-2 d-flex justify-content-between align-items-center flex-wrap gap-2"
+             style="background:#43a047;color:#fff;">
+            <span>
+                <i class="fas fa-chart-bar me-1"></i>@Localizer["ems.gas.bar.title"]
+                <span id="gasBarCircuitName" class="small ms-1 opacity-75"></span>
+            </span>
+            <span class="d-flex align-items-center gap-2">
+                <span class="btn-group btn-group-sm ems-gran-group" role="group" aria-label="@Localizer["ems.gas.bar.gran_aria"]" id="gasBarGranGroup">
+                    <button type="button" class="btn ems-gran-btn active" data-gran="hour">@Localizer["ems.gas.gran.day"]</button>
+                    <button type="button" class="btn ems-gran-btn" data-gran="day">@Localizer["ems.gas.gran.month"]</button>
+                    <button type="button" class="btn ems-gran-btn" data-gran="month">@Localizer["ems.gas.gran.year"]</button>
+                </span>
+                <input type="date" id="gasBarPivotDate" class="form-control form-control-sm ems-hub-picker" />
+                <input type="month" id="gasBarPivotMonth" class="form-control form-control-sm ems-hub-picker" style="display:none;" />
+                <input type="number" id="gasBarPivotYear" min="2000" max="2100" class="form-control form-control-sm ems-hub-picker" style="display:none;" />
+            </span>
+        </div>
+        <div class="card-body p-2 flex-grow-1">
+            <div id="gasBarEmpty" class="ems-hub-empty" style="display:none;"></div>
+            <div id="gasBarChartWrap" class="ems-hub-chart-wrap">
+                <canvas id="gasBarChart"></canvas>
+            </div>
+            <div id="gasBarWarnNote" class="small text-warning mt-1" style="display:none;"></div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="gasbillingperiod.title" xml:space="preserve"><value>Gas Billing Cycle Settings</value></data>
+  <data name="gasbillingperiod.breadcrumb.energy" xml:space="preserve"><value>Energy Management</value></data>
+  <data name="gasbillingperiod.hint.overview" xml:space="preserve"><value>Set the gas-bill start/end dates for each billing period (month); periods without custom settings default to starting the day after the previous period ends, lasting one month (calendar month if nothing is customized). Changes take effect immediately — all monthly gas views (Gas Usage Report / Gas Cost Report / EMS gas meter cards) are split by billing period, and historical monthly reports are recalculated with the new settings.</value></data>
+  <data name="gasbillingperiod.hint.independent" xml:space="preserve"><value>This page affects gas usage and gas cost only. The gas utility reads meters on different dates than the power and water utilities, so all three billing cycles are configured independently — changes here do not affect electricity or water periods.</value></data>
+  <data name="gasbillingperiod.hint.bimonthly" xml:space="preserve"><value>Two-month cycle: click "Delete Period" on a period and it disappears, with its days merged into the previous period (or absorbed backwards by the next period if it is the first period of the year). Delete February, April, June, August, October and December to get 6 periods per year. Deleted periods are listed in the collapsible section below and can be fully restored.</value></data>
+  <data name="gasbillingperiod.hint.gap_overlap" xml:space="preserve"><value>Gaps or overlaps between periods are allowed (warning only): gas usage in a gap is not counted in any period, and usage in an overlap is counted in both periods.</value></data>
+  <data name="gasbillingperiod.table.title" xml:space="preserve"><value>Billing Periods</value></data>
+  <data name="gasbillingperiod.table.col_period" xml:space="preserve"><value>Period</value></data>
+  <data name="gasbillingperiod.table.col_start" xml:space="preserve"><value>Start Date</value></data>
+  <data name="gasbillingperiod.table.col_end" xml:space="preserve"><value>End Date (incl.)</value></data>
+  <data name="gasbillingperiod.table.col_days" xml:space="preserve"><value>Days</value></data>
+  <data name="gasbillingperiod.table.col_status" xml:space="preserve"><value>Status</value></data>
+  <data name="gasbillingperiod.table.col_warning" xml:space="preserve"><value>Continuity</value></data>
+  <data name="gasbillingperiod.table.col_actions" xml:space="preserve"><value>Actions</value></data>
+  <data name="gasbillingperiod.table.loading" xml:space="preserve"><value>Loading…</value></data>
+  <data name="gasbillingperiod.table.empty" xml:space="preserve"><value>All periods of this year have been deleted; restore one from the section below</value></data>
+  <data name="gasbillingperiod.status.default" xml:space="preserve"><value>Default</value></data>
+  <data name="gasbillingperiod.status.customized" xml:space="preserve"><value>Customized</value></data>
+  <data name="gasbillingperiod.warn.invalid" xml:space="preserve"><value>End date cannot be earlier than start date</value></data>
+  <data name="gasbillingperiod.warn.gap" xml:space="preserve"><value>{0}-day gap from previous period</value></data>
+  <data name="gasbillingperiod.warn.overlap" xml:space="preserve"><value>Overlaps previous period by {0} day(s)</value></data>
+  <data name="gasbillingperiod.button.save" xml:space="preserve"><value>Save</value></data>
+  <data name="gasbillingperiod.button.reset" xml:space="preserve"><value>Reset to Default</value></data>
+  <data name="gasbillingperiod.button.skip" xml:space="preserve"><value>Delete Period</value></data>
+  <data name="gasbillingperiod.button.unskip" xml:space="preserve"><value>Restore</value></data>
+  <data name="gasbillingperiod.skipped.header" xml:space="preserve"><value>Deleted periods (restorable)</value></data>
+  <data name="gasbillingperiod.confirm.reset" xml:space="preserve"><value>Reset period {0} to default (delete custom dates)?</value></data>
+  <data name="gasbillingperiod.confirm.skip_merge_prev" xml:space="preserve"><value>Delete period {0}? It will disappear from the list and all reports, and its days will be merged into the previous period {1} (whose end date extends to {2}), leaving no gap in the year. You can restore it from "Deleted periods" below.</value></data>
+  <data name="gasbillingperiod.confirm.skip_merge_next" xml:space="preserve"><value>Delete period {0}? It is the first period of the year, so its days will be absorbed backwards by the next period (whose start date moves to {1}), leaving no gap in the year. You can restore it from "Deleted periods" below.</value></data>
+  <data name="gasbillingperiod.confirm.unskip" xml:space="preserve"><value>Restore period {0}? The adjacent period will give back the days it absorbed.</value></data>
+  <data name="gasbillingperiod.msg.load_fail" xml:space="preserve"><value>Load failed: {0}</value></data>
+  <data name="gasbillingperiod.msg.save_fail" xml:space="preserve"><value>Save failed: {0}</value></data>
+  <data name="gasbillingperiod.msg.reset_fail" xml:space="preserve"><value>Reset failed: {0}</value></data>
+  <data name="gasbillingperiod.msg.skip_fail" xml:space="preserve"><value>Delete failed: {0}</value></data>
+  <data name="gasbillingperiod.msg.unskip_fail" xml:space="preserve"><value>Restore failed: {0}</value></data>
+</root>

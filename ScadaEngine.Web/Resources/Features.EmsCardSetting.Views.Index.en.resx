@@ -71,4 +71,7 @@
   <data name="emscard.name.waterusagebar" xml:space="preserve"><value>Water Usage Bar Chart</value></data>
   <data name="emscard.name.waterusagepie" xml:space="preserve"><value>Sub-circuit Water Usage Pie</value></data>
   <data name="emscard.name.watercost" xml:space="preserve"><value>Water Cost Status</value></data>
+  <data name="emscard.name.gasusagebar" xml:space="preserve"><value>Gas Usage Bar Chart</value></data>
+  <data name="emscard.name.gasusagepie" xml:space="preserve"><value>Sub-circuit Gas Usage Pie</value></data>
+  <data name="emscard.name.gascost" xml:space="preserve"><value>Gas Cost Status</value></data>
 </root>

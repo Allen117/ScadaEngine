@@ -8,6 +8,7 @@
     bool hasCostJs   = Model.HasCard("Cost");
     bool hasCostYoyJs = Model.HasCard("CostYoy");
     bool hasWaterJs  = Model.HasCard("WaterUsageBar") || Model.HasCard("WaterUsagePie") || Model.HasCard("WaterCost");
+    bool hasGasJs    = Model.HasCard("GasUsageBar") || Model.HasCard("GasUsagePie") || Model.HasCard("GasCost");
 }
 
 <div class="ems-hub">
@@ -32,7 +33,7 @@
 </div>
 
 @section Scripts {
-    @if (hasEmsJs || hasEnergyJs || hasWaterJs)
+    @if (hasEmsJs || hasEnergyJs || hasWaterJs || hasGasJs)
     {
         <script src="~/lib/chartjs/chart.umd.min.js"></script>
     }
@@ -55,5 +56,9 @@
     @if (hasWaterJs)
     {
         <script src="~/js/ems-hub-water.js" asp-append-version="true"></script>
+    }
+    @if (hasGasJs)
+    {
+        <script src="~/js/ems-hub-gas.js" asp-append-version="true"></script>
     }
 }

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="gastariff.title" xml:space="preserve"><value>Gas Tariff Settings</value></data>
+  <data name="gastariff.breadcrumb.energy" xml:space="preserve"><value>Energy Management</value></data>
+  <data name="gastariff.select.title" xml:space="preserve"><value>Tariff Plan Versions</value></data>
+  <data name="gastariff.select.plan" xml:space="preserve"><value>Plan Version</value></data>
+  <data name="gastariff.button.add_version" xml:space="preserve"><value>Add Plan Version</value></data>
+  <data name="gastariff.button.del_plan" xml:space="preserve"><value>Delete Plan</value></data>
+  <data name="gastariff.hint.effective" xml:space="preserve"><value>When calculating each period, the latest version with effective date ≤ period start date is applied; if the period starts before all effective dates, the earliest version is used.</value></data>
+  <data name="gastariff.hint.period_decoupled" xml:space="preserve"><value>Natural gas has no nationwide standard tariff, so the default is a blank template (unit price 0) — enter the tiers and prices from your gas utility contract. Tiers are fully decoupled from billing period length: for a two-month billing cycle, enter the per-period tier figures directly; the system applies no multiplier.</value></data>
+  <data name="gastariff.editor.loading" xml:space="preserve"><value>Loading…</value></data>
+  <data name="gastariff.badge.progressive" xml:space="preserve"><value>Progressive Tiers</value></data>
+  <data name="gastariff.button.reset" xml:space="preserve"><value>Restore Default Template</value></data>
+  <data name="gastariff.button.save" xml:space="preserve"><value>Save</value></data>
+  <data name="gastariff.label.name" xml:space="preserve"><value>Plan Name</value></data>
+  <data name="gastariff.label.effective_date" xml:space="preserve"><value>Effective Date</value></data>
+  <data name="gastariff.label.effective_from" xml:space="preserve"><value>effective {0}</value></data>
+  <data name="gastariff.section.tiers" xml:space="preserve"><value>Gas Flow Charge Progressive Tiers (NTD per unit, 1 unit = 1 m³)</value></data>
+  <data name="gastariff.col.tier_range" xml:space="preserve"><value>Tier Range (units)</value></data>
+  <data name="gastariff.col.price" xml:space="preserve"><value>Unit Price (NTD/unit)</value></data>
+  <data name="gastariff.col.actions" xml:space="preserve"><value>Actions</value></data>
+  <data name="gastariff.tier.unit" xml:space="preserve"><value>units</value></data>
+  <data name="gastariff.tier.above" xml:space="preserve"><value>units and above</value></data>
+  <data name="gastariff.button.add_tier" xml:space="preserve"><value>Add Tier</value></data>
+  <data name="gastariff.button.del_tier" xml:space="preserve"><value>Delete Tier</value></data>
+  <data name="gastariff.err.name_empty" xml:space="preserve"><value>Plan name is required</value></data>
+  <data name="gastariff.err.date_format" xml:space="preserve"><value>Invalid effective date format (yyyy-MM-dd)</value></data>
+  <data name="gastariff.err.no_tier" xml:space="preserve"><value>At least one tier is required</value></data>
+  <data name="gastariff.err.tier_order" xml:space="preserve"><value>Tier upper bound is required and must not be less than its lower bound</value></data>
+  <data name="gastariff.err.price_negative" xml:space="preserve"><value>Unit price must not be negative</value></data>
+  <data name="gastariff.msg.load_fail" xml:space="preserve"><value>Failed to load settings</value></data>
+  <data name="gastariff.msg.saved" xml:space="preserve"><value>Saved</value></data>
+  <data name="gastariff.msg.save_fail" xml:space="preserve"><value>Save failed: {0}</value></data>
+  <data name="gastariff.msg.reset_fail" xml:space="preserve"><value>Restore failed: {0}</value></data>
+  <data name="gastariff.msg.seed_undeletable" xml:space="preserve"><value>The default plan template cannot be deleted</value></data>
+  <data name="gastariff.msg.last_plan" xml:space="preserve"><value>At least one plan version must remain</value></data>
+  <data name="gastariff.confirm.del_plan" xml:space="preserve"><value>Delete plan version "{0}"? The change takes effect after saving.</value></data>
+  <data name="gastariff.confirm.reset" xml:space="preserve"><value>Restore all settings to the default template (single blank tier, unit price 0)? All custom plan versions and rates will be removed.</value></data>
+</root>

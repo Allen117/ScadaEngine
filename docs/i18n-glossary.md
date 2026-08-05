@@ -35,6 +35,11 @@
 | 水費設定 | Water Tariff Settings | `/WaterTariffSetting` |
 | 水費報表 | Water Cost Report | `/WaterCostReport` |
 | 水費月結週期 | Water Billing Cycle | `/WaterBillingPeriodSetting` |
+| 氣表/迴路設定 | Gas Meter / Circuit | `/GasMeterSetting`（累積式天然氣表） |
+| 用氣報表 | Gas Usage Report | `/GasUsageReport` |
+| 氣費設定 | Gas Tariff Settings | `/GasTariffSetting` |
+| 氣費報表 | Gas Cost Report | `/GasCostReport` |
+| 氣費月結週期 | Gas Billing Cycle | `/GasBillingPeriodSetting` |
 | 水系統迴路設定 | Chilled Water Circuit Settings | `/ChilledWaterSystem` |
 | 月結週期設定 | Billing Cycle Settings | `/BillingPeriodSetting` |
 | 電費設定 | Tariff Settings | `/TariffSetting` |
@@ -61,6 +66,7 @@
 | 月結週期 / 結算週期 | Billing Cycle | 月粒度報表期界設定 |
 | 電費月結週期 | Electricity Billing Cycle | `/BillingPeriodSetting`；DB 表 `BillingPeriods` |
 | 水費月結週期 | Water Billing Cycle | `/WaterBillingPeriodSetting`；DB 表 `WaterBillingPeriods`，與電費各自獨立 |
+| 氣費月結週期 | Gas Billing Cycle | `/GasBillingPeriodSetting`；DB 表 `GasBillingPeriods`，與電/水各自獨立；多 `IsSkipped` 支援兩月一期 |
 | 期別 | Billing Period | 一期 = 一個 YYYY-MM 結算區間 |
 | 曆月 | Calendar Month | 自然月（1 日～月底）；冷凍噸報表 / 能源申報 / 能源基線刻意用此，不走期別 |
 | 空窗 | Gap | 期別間未被涵蓋的日數 |
@@ -274,6 +280,29 @@
 | 水費狀態 | Water Cost | EMS 卡片標題 |
 | 用水量長條圖 | Water Usage Bar Chart | EMS 卡名 |
 | 子迴路用水占比圓餅圖 | Sub-circuit Water Share Pie | EMS 卡名 |
+
+## 用氣報表 / 氣費（天然氣）
+
+| zh-TW | en | 備註 |
+|---|---|---|
+| 天然氣 | Natural Gas | 領域名詞 |
+| 氣表 | Gas Meter | 累積式天然氣量表（m³ / Nm³ / 度） |
+| 用氣量 | Gas Usage | (m³) |
+| 用氣量分布 | Gas Consumption | chart 標題 |
+| 流動氣費 | Gas Flow Charge | 按度計收（分段累進）；不含基本費 |
+| 氣費 | Gas Cost | 帳單金額 |
+| 度（氣） | Unit (m³) | 天然氣 1 度 = 1 m³；UI 一律顯示 m³ |
+| 氣度 / 天然氣度 / 瓦斯度 | Gas Unit | 現場點位單位字樣，UnitScale=1 |
+| 標準立方公尺 | Normal Cubic Meter (Nm³) | 單位不翻，顯示 Nm³ |
+| 熱值 | Calorific Value | 本系統**不**做熱值換算 |
+| 供氣事業 | Gas Utility | 無全國統一費率，費率依合約 |
+| 兩月一期 | Two-month Billing Cycle | 供氣事業常見抄表週期 |
+| 刪除此期 | Delete Period | 期別設定頁動作（寫 IsSkipped=1，日數併入前一期） |
+| 復原 | Restore | 復原已刪除的期別 |
+| 已刪除的期別（可復原） | Deleted periods (restorable) | 期別設定頁摺疊區 |
+| 氣費狀態 | Gas Cost | EMS 卡片標題 |
+| 用氣量長條圖 | Gas Usage Bar Chart | EMS 卡名 |
+| 子迴路用氣占比圓餅圖 | Sub-circuit Gas Share Pie | EMS 卡名 |
 
 ## 能源基準（ISO 50001）
 
@@ -762,6 +791,9 @@
 | 子迴路用電占比圓餅圖 | Sub-circuit Energy Share Pie | 卡名 |
 | 去年同期比較 | Year-over-Year Comparison | 卡名 |
 | 電費狀態 | Electricity Cost Status | 卡名 |
+| 用氣量長條圖 | Gas Usage Bar Chart | 卡名 |
+| 子迴路用氣占比圓餅圖 | Sub-circuit Gas Usage Pie | 卡名 |
+| 氣費狀態 | Gas Cost Status | 卡名 |
 
 ## 翻譯原則
 

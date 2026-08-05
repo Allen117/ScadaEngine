@@ -71,4 +71,7 @@
   <data name="emscard.name.waterusagebar" xml:space="preserve"><value>用水量長條圖</value></data>
   <data name="emscard.name.waterusagepie" xml:space="preserve"><value>子迴路用水占比圓餅圖</value></data>
   <data name="emscard.name.watercost" xml:space="preserve"><value>水費狀態</value></data>
+  <data name="emscard.name.gasusagebar" xml:space="preserve"><value>用氣量長條圖</value></data>
+  <data name="emscard.name.gasusagepie" xml:space="preserve"><value>子迴路用氣占比圓餅圖</value></data>
+  <data name="emscard.name.gascost" xml:space="preserve"><value>氣費狀態</value></data>
 </root>

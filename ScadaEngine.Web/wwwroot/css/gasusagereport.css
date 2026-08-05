@@ -1,0 +1,82 @@
+/* 用氣報表頁專屬樣式 */
+
+.gur-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+}
+
+.gur-filter-bar .gur-circuit {
+    flex: 0 0 220px;
+}
+
+.gur-filter-bar .gur-narrow-unit {
+    flex: 0 0 90px;
+}
+
+.gur-filter-bar .gur-narrow-date {
+    flex: 0 0 130px;
+}
+
+.gur-filter-bar .gur-wide-date {
+    flex: 0 0 240px;
+}
+
+/* 斷線 bucket 標記 — 表格內以警示色 ⚠ 提示，hover 有 tooltip */
+.gur-stale-mark {
+    color: var(--bs-warning, #f0ad4e);
+    cursor: help;
+    font-size: 0.85em;
+}
+
+.gur-hour-group .gur-hour-select {
+    flex: 0 0 72px;
+    padding-right: 1.5rem;
+    background-position: right 0.4rem center;
+}
+
+.gur-filter-bar .gur-btn .btn {
+    white-space: nowrap;
+}
+
+.gur-period {
+    display: none;
+}
+
+.gur-period.active {
+    display: block;
+}
+
+/* 月粒度期別提示 — 與日期欄同列尾端，自身高度貼齊輸入框底部 */
+.gur-filter-bar .gur-period-hint {
+    flex: 1 1 auto;
+    padding-bottom: 6px;
+    min-width: 240px;
+}
+
+#gurTableBody td {
+    font-size: 0.85rem;
+    padding: 6px 10px;
+}
+
+#gurTableBody td.text-end {
+    font-family: monospace;
+    font-weight: 500;
+}
+
+#gurTableBody tr.gur-total {
+    background-color: var(--bs-warning-bg-subtle, #fff3cd) !important;
+    font-weight: bold;
+}
+
+#gurWarnText {
+    color: var(--bs-orange, #fd7e14);
+    font-weight: 500;
+}
+
+#btnGurToggleBreakdown {
+    white-space: nowrap;
+    font-size: 0.8rem;
+    padding: 0.2rem 0.55rem;
+}

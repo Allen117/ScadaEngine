@@ -35,6 +35,9 @@
     <None Update="Setting\water-tariff-taiwater-defaults.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Setting\gas-tariff-defaults.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <!-- 內網 HTTPS 憑證（含私鑰）絕不打包進 publish/release，避免私鑰外洩。
          開發時 dotnet run 讀專案目錄 certs\scada-web.pfx（ContentRoot=專案目錄，不需 copy）；
          部署機由 certs\generate-https-cert.ps1 在該機現產，見 docs/功能說明書_內網HTTPS部署.md -->

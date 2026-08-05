@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="gastariff.title" xml:space="preserve"><value>氣費設定</value></data>
+  <data name="gastariff.breadcrumb.energy" xml:space="preserve"><value>能源管理</value></data>
+  <data name="gastariff.select.title" xml:space="preserve"><value>費率方案版本</value></data>
+  <data name="gastariff.select.plan" xml:space="preserve"><value>方案版本</value></data>
+  <data name="gastariff.button.add_version" xml:space="preserve"><value>新增方案版本</value></data>
+  <data name="gastariff.button.del_plan" xml:space="preserve"><value>刪除方案</value></data>
+  <data name="gastariff.hint.effective" xml:space="preserve"><value>計算各期氣費時，依「生效日 ≤ 期別起日」自動選用最新的方案版本；期別起日早於所有生效日時，採用生效日最早的版本。</value></data>
+  <data name="gastariff.hint.period_decoupled" xml:space="preserve"><value>天然氣無全國統一費率，預設為空白範本（單價 0），請依供氣事業合約帳單自行填入級距與單價。級距與月結期別長度完全解耦 — 若設為兩月一期，請直接填「一期」的級距數字，系統不做任何倍率換算。</value></data>
+  <data name="gastariff.editor.loading" xml:space="preserve"><value>載入中…</value></data>
+  <data name="gastariff.badge.progressive" xml:space="preserve"><value>分段累進</value></data>
+  <data name="gastariff.button.reset" xml:space="preserve"><value>還原預設範本</value></data>
+  <data name="gastariff.button.save" xml:space="preserve"><value>儲存</value></data>
+  <data name="gastariff.label.name" xml:space="preserve"><value>方案名稱</value></data>
+  <data name="gastariff.label.effective_date" xml:space="preserve"><value>生效日</value></data>
+  <data name="gastariff.label.effective_from" xml:space="preserve"><value>{0} 生效</value></data>
+  <data name="gastariff.section.tiers" xml:space="preserve"><value>流動氣費分段累進級距（元/度，1 度 = 1 m³）</value></data>
+  <data name="gastariff.col.tier_range" xml:space="preserve"><value>級距（度）</value></data>
+  <data name="gastariff.col.price" xml:space="preserve"><value>單價（元/度）</value></data>
+  <data name="gastariff.col.actions" xml:space="preserve"><value>操作</value></data>
+  <data name="gastariff.tier.unit" xml:space="preserve"><value>度</value></data>
+  <data name="gastariff.tier.above" xml:space="preserve"><value>度以上</value></data>
+  <data name="gastariff.button.add_tier" xml:space="preserve"><value>新增級距</value></data>
+  <data name="gastariff.button.del_tier" xml:space="preserve"><value>刪除級距</value></data>
+  <data name="gastariff.err.name_empty" xml:space="preserve"><value>方案名稱不可為空</value></data>
+  <data name="gastariff.err.date_format" xml:space="preserve"><value>生效日格式不正確（yyyy-MM-dd）</value></data>
+  <data name="gastariff.err.no_tier" xml:space="preserve"><value>至少須有一個級距</value></data>
+  <data name="gastariff.err.tier_order" xml:space="preserve"><value>級距上限不可為空且不可小於下限</value></data>
+  <data name="gastariff.err.price_negative" xml:space="preserve"><value>單價不可為負數</value></data>
+  <data name="gastariff.msg.load_fail" xml:space="preserve"><value>設定載入失敗</value></data>
+  <data name="gastariff.msg.saved" xml:space="preserve"><value>已儲存</value></data>
+  <data name="gastariff.msg.save_fail" xml:space="preserve"><value>儲存失敗：{0}</value></data>
+  <data name="gastariff.msg.reset_fail" xml:space="preserve"><value>還原失敗：{0}</value></data>
+  <data name="gastariff.msg.seed_undeletable" xml:space="preserve"><value>預設方案範本無法刪除</value></data>
+  <data name="gastariff.msg.last_plan" xml:space="preserve"><value>至少須保留一個方案版本</value></data>
+  <data name="gastariff.confirm.del_plan" xml:space="preserve"><value>確定刪除方案版本「{0}」？儲存後才會生效。</value></data>
+  <data name="gastariff.confirm.reset" xml:space="preserve"><value>確定整份還原為預設範本（空白單一級距、單價 0）？所有自訂方案版本與費率將被移除。</value></data>
+</root>

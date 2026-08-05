@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="gasbillingperiod.title" xml:space="preserve"><value>氣費月結週期設定</value></data>
+  <data name="gasbillingperiod.breadcrumb.energy" xml:space="preserve"><value>能源管理</value></data>
+  <data name="gasbillingperiod.hint.overview" xml:space="preserve"><value>每個期別（月份）各自設定氣費單起訖日期；未自訂的期別預設 = 上期結束 +1 天起算一個月（完全未自訂時 = 自然月）。設定即時生效，所有用氣月粒度顯示（用氣報表 / 氣費報表 / EMS 氣表卡片）依期別切分，歷史月報也會用新設定重算。</value></data>
+  <data name="gasbillingperiod.hint.independent" xml:space="preserve"><value>本頁僅影響用氣與氣費；供氣事業抄表日與台電、台水皆不同，三套月結週期各自獨立設定，改這裡不會動到電費或水費期別。</value></data>
+  <data name="gasbillingperiod.hint.bimonthly" xml:space="preserve"><value>兩月一期：按某期的「刪除此期」，該期即消失、其日數併入前一期（該年第一期則由下一期向前吸收）。依序刪掉 2/4/6/8/10/12 月即得全年 6 期。已刪除的期別收在下方摺疊區，按「復原」可完整還原。</value></data>
+  <data name="gasbillingperiod.hint.gap_overlap" xml:space="preserve"><value>期別間允許空窗或重疊（僅警告不阻擋）：空窗段的用氣不會被任何期計入，重疊段會被兩期重複計入。</value></data>
+  <data name="gasbillingperiod.table.title" xml:space="preserve"><value>期別列表</value></data>
+  <data name="gasbillingperiod.table.col_period" xml:space="preserve"><value>期別</value></data>
+  <data name="gasbillingperiod.table.col_start" xml:space="preserve"><value>起始日期</value></data>
+  <data name="gasbillingperiod.table.col_end" xml:space="preserve"><value>結束日期（含）</value></data>
+  <data name="gasbillingperiod.table.col_days" xml:space="preserve"><value>天數</value></data>
+  <data name="gasbillingperiod.table.col_status" xml:space="preserve"><value>狀態</value></data>
+  <data name="gasbillingperiod.table.col_warning" xml:space="preserve"><value>連續性</value></data>
+  <data name="gasbillingperiod.table.col_actions" xml:space="preserve"><value>動作</value></data>
+  <data name="gasbillingperiod.table.loading" xml:space="preserve"><value>載入中…</value></data>
+  <data name="gasbillingperiod.table.empty" xml:space="preserve"><value>該年所有期別皆已刪除，請於下方摺疊區復原</value></data>
+  <data name="gasbillingperiod.status.default" xml:space="preserve"><value>預設</value></data>
+  <data name="gasbillingperiod.status.customized" xml:space="preserve"><value>已自訂</value></data>
+  <data name="gasbillingperiod.warn.invalid" xml:space="preserve"><value>結束日期不可早於起始日期</value></data>
+  <data name="gasbillingperiod.warn.gap" xml:space="preserve"><value>與上期間有 {0} 天空窗</value></data>
+  <data name="gasbillingperiod.warn.overlap" xml:space="preserve"><value>與上期重疊 {0} 天</value></data>
+  <data name="gasbillingperiod.button.save" xml:space="preserve"><value>儲存</value></data>
+  <data name="gasbillingperiod.button.reset" xml:space="preserve"><value>還原預設</value></data>
+  <data name="gasbillingperiod.button.skip" xml:space="preserve"><value>刪除此期</value></data>
+  <data name="gasbillingperiod.button.unskip" xml:space="preserve"><value>復原</value></data>
+  <data name="gasbillingperiod.skipped.header" xml:space="preserve"><value>已刪除的期別（可復原）</value></data>
+  <data name="gasbillingperiod.confirm.reset" xml:space="preserve"><value>確定將 {0} 期還原為預設（刪除自訂起訖）？</value></data>
+  <data name="gasbillingperiod.confirm.skip_merge_prev" xml:space="preserve"><value>確定刪除 {0} 期？該期將從清單與所有報表消失，其日數併入前一期 {1}（前一期結束日將延伸至 {2}），全年不會出現空窗。此操作可於下方「已刪除的期別」摺疊區復原。</value></data>
+  <data name="gasbillingperiod.confirm.skip_merge_next" xml:space="preserve"><value>確定刪除 {0} 期？該期為本年度第一期，其日數將由下一期向前吸收（下一期起始日將提前至 {1}），全年不會出現空窗。此操作可於下方「已刪除的期別」摺疊區復原。</value></data>
+  <data name="gasbillingperiod.confirm.unskip" xml:space="preserve"><value>確定復原 {0} 期？相鄰期別將收回先前被吸收的日數。</value></data>
+  <data name="gasbillingperiod.msg.load_fail" xml:space="preserve"><value>載入失敗：{0}</value></data>
+  <data name="gasbillingperiod.msg.save_fail" xml:space="preserve"><value>儲存失敗：{0}</value></data>
+  <data name="gasbillingperiod.msg.reset_fail" xml:space="preserve"><value>還原失敗：{0}</value></data>
+  <data name="gasbillingperiod.msg.skip_fail" xml:space="preserve"><value>刪除失敗：{0}</value></data>
+  <data name="gasbillingperiod.msg.unskip_fail" xml:space="preserve"><value>復原失敗：{0}</value></data>
+</root>

@@ -1,0 +1,83 @@
+@model ScadaEngine.Web.Features.GasBillingPeriodSetting.Models.GasBillingPeriodSettingViewModel
+@{
+    ViewData["Title"] = Localizer["gasbillingperiod.title"].Value;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-2">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="mb-0">
+            <i class="fas fa-calendar-check text-primary me-2"></i>@Localizer["gasbillingperiod.title"]
+        </h2>
+        <span class="text-muted small">
+            <i class="fas fa-leaf me-1"></i>@Localizer["gasbillingperiod.breadcrumb.energy"]
+        </span>
+    </div>
+
+    <!-- 說明卡 -->
+    <div class="card shadow-sm mb-3">
+        <div class="card-body py-2 px-3 text-muted small">
+            <i class="fas fa-info-circle me-1"></i>@Localizer["gasbillingperiod.hint.overview"]<br />
+            <i class="fas fa-fire me-1 text-primary"></i>@Localizer["gasbillingperiod.hint.independent"]<br />
+            <i class="fas fa-calendar-minus me-1 text-primary"></i>@Localizer["gasbillingperiod.hint.bimonthly"]<br />
+            <i class="fas fa-exclamation-triangle me-1 text-warning"></i>@Localizer["gasbillingperiod.hint.gap_overlap"]
+        </div>
+    </div>
+
+    <!-- 年份切換 + 期別列表（只列實際存在的期別） -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-table me-1"></i>@Localizer["gasbillingperiod.table.title"]</span>
+            <div class="gbp-year-nav d-flex align-items-center gap-1">
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window._gbp.prevYear()">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <input type="number" id="gbpYear" class="form-control form-control-sm gbp-year-input"
+                       min="2000" max="2100" value="@Model.nCurrentYear" />
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window._gbp.nextYear()">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered align-middle mb-0 gbp-table">
+                    <thead class="table-dark">
+                        <tr>
+                            <th class="gbp-col-month">@Localizer["gasbillingperiod.table.col_period"]</th>
+                            <th class="gbp-col-date">@Localizer["gasbillingperiod.table.col_start"]</th>
+                            <th class="gbp-col-date">@Localizer["gasbillingperiod.table.col_end"]</th>
+                            <th class="gbp-col-days text-end">@Localizer["gasbillingperiod.table.col_days"]</th>
+                            <th class="gbp-col-status">@Localizer["gasbillingperiod.table.col_status"]</th>
+                            <th class="gbp-col-warn">@Localizer["gasbillingperiod.table.col_warning"]</th>
+                            <th class="gbp-col-actions">@Localizer["gasbillingperiod.table.col_actions"]</th>
+                        </tr>
+                    </thead>
+                    <tbody id="gbpTableBody">
+                        <tr><td colspan="7" class="text-center text-muted py-4">
+                            <div class="spinner-border spinner-border-sm text-primary me-1"></div>@Localizer["gasbillingperiod.table.loading"]
+                        </td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-light py-2 small" id="gbpSkippedFooter" style="display:none;">
+            <a class="gbp-skipped-toggle" data-bs-toggle="collapse" href="#gbpSkippedBox" role="button">
+                <i class="fas fa-chevron-down me-1"></i>@Localizer["gasbillingperiod.skipped.header"]
+                （<span id="gbpSkippedCount">0</span>）
+            </a>
+            <div class="collapse mt-2" id="gbpSkippedBox">
+                <div id="gbpSkippedList" class="gbp-skipped-list"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="~/css/gasbillingperiodsetting.css" asp-append-version="true" />
+
+@section Scripts {
+    <script src="~/js/gasbillingperiodsetting.js" asp-append-version="true"></script>
+    <script>
+        window._gbpInit = { year: @Model.nCurrentYear };
+    </script>
+}

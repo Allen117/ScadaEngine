@@ -1,0 +1,26 @@
+@* 子迴路用氣占比圓餅圖卡片（根迴路直接子迴路各自區間總 m³，自帶日/月/年切換） *@
+<div class="col-md-6 col-lg-5 col-xl-4">
+    <div class="card shadow-sm h-100 d-flex flex-column">
+        <div class="card-header py-2 d-flex justify-content-between align-items-center flex-wrap gap-2"
+             style="background:#43a047;color:#fff;">
+            <span><i class="fas fa-chart-pie me-1"></i>@Localizer["ems.gas.pie.title"]</span>
+            <span class="d-flex align-items-center gap-2">
+                <span class="btn-group btn-group-sm ems-gran-group" role="group" aria-label="@Localizer["ems.gas.pie.gran_aria"]" id="gasPieGranGroup">
+                    <button type="button" class="btn ems-gran-btn active" data-gran="hour">@Localizer["ems.gas.gran.day"]</button>
+                    <button type="button" class="btn ems-gran-btn" data-gran="day">@Localizer["ems.gas.gran.month"]</button>
+                    <button type="button" class="btn ems-gran-btn" data-gran="month">@Localizer["ems.gas.gran.year"]</button>
+                </span>
+                <input type="date" id="gasPiePivotDate" class="form-control form-control-sm ems-hub-picker" />
+                <input type="month" id="gasPiePivotMonth" class="form-control form-control-sm ems-hub-picker" style="display:none;" />
+                <input type="number" id="gasPiePivotYear" min="2000" max="2100" class="form-control form-control-sm ems-hub-picker" style="display:none;" />
+            </span>
+        </div>
+        <div class="card-body p-2 flex-grow-1">
+            <div id="gasPieEmpty" class="ems-hub-empty" style="display:none;"></div>
+            <div id="gasPieChartWrap" class="ems-hub-chart-wrap">
+                <canvas id="gasPieChart"></canvas>
+            </div>
+            <div id="gasPieNegNote" class="small text-muted mt-1"></div>
+        </div>
+    </div>
+</div>

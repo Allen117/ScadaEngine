@@ -1,0 +1,55 @@
+/* 氣費設定頁 — 天然氣流動氣費方案編輯（結構仿 watertariffsetting.css） */
+
+/* 方案版本選擇列 */
+.gt-select-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1rem;
+    align-items: flex-end;
+}
+
+.gt-plan-select {
+    min-width: 300px;
+    flex: 1 1 300px;
+    max-width: 480px;
+}
+
+.gt-plan-btns {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-bottom: 0.15rem;
+}
+
+/* 級距編輯區塊 */
+.gt-section-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    padding-left: 0.5rem;
+    border-left: 3px solid var(--bs-primary, #0d6efd);
+}
+
+body.ems-mode .gt-section-title {
+    border-left-color: #43a047;
+}
+
+.gt-table th {
+    white-space: nowrap;
+}
+
+.gt-price {
+    max-width: 8.5rem;
+}
+
+.gt-tier-to {
+    width: 6.5rem;
+}
+
+.gt-col-price {
+    width: 10rem;
+}
+
+.gt-col-actions {
+    width: 4.5rem;
+    text-align: center;
+}

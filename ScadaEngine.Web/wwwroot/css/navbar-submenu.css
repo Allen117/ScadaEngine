@@ -1,0 +1,89 @@
+/* 導覽列多層下拉子選單（Bootstrap 5 無內建 submenu，此檔補上） */
+
+.dropdown-submenu {
+    position: relative;
+}
+
+/* 子選單預設隱藏，滑到父項或子選單本身時展開 */
+.dropdown-submenu > .dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 100%;
+    margin-top: -0.5rem;
+    margin-left: 0;
+}
+
+.dropdown-submenu:hover > .dropdown-menu,
+.dropdown-submenu.show > .dropdown-menu {
+    display: block;
+}
+
+/* 空間不足時往左側展開（由 navbar-submenu.js 判斷後掛上） */
+.dropdown-submenu > .dropdown-menu.submenu-flip {
+    left: auto;
+    right: 100%;
+}
+
+/* 父項箭頭改為指向右側 */
+.dropdown-submenu > .dropdown-toggle::after {
+    float: right;
+    margin-top: 0.5em;
+    margin-left: 0.5rem;
+    transform: rotate(-90deg);
+}
+
+/* 父項本身不是連結，避免點擊後跳頁 */
+.dropdown-submenu > .dropdown-toggle {
+    cursor: default;
+}
+
+/* ============ 下拉選單圖示尺寸統一 + 文字左緣切齊 ============
+   Font Awesome 是字型圖示，各字符的 advance width 本來就不同
+   （fa-tint 窄、fa-file-invoice-dollar / fa-th-large 寬），直接排在文字前面
+   會讓每一列的文字左緣參差不齊。這裡把圖示統一成固定寬度並置中
+   （等同 FA 的 .fa-fw），文字左緣即自動對齊。
+
+   刻意用 CSS 而非逐項加 class：選單項散在 _Layout 各權限判斷分支中，
+   日後新增頁面只要照現有寫法放 <i class="fas fa-xxx me-2">，不必記得補 fa-fw。 */
+.navbar .dropdown-menu .dropdown-item > .fa,
+.navbar .dropdown-menu .dropdown-item > .fas,
+.navbar .dropdown-menu .dropdown-item > .far,
+.navbar .dropdown-menu .dropdown-item > .fab {
+    display: inline-block;
+    width: 1.25em;          /* = FA .fa-fw */
+    font-size: 1em;         /* 擋掉個別項目誤用 fa-lg / fa-sm 造成大小不一 */
+    line-height: inherit;
+    text-align: center;
+    vertical-align: -0.05em;
+    flex-shrink: 0;
+}
+
+/* 子選單父項（如「水表」「氣表」群組）也是 .dropdown-item，
+   其 ::after 箭頭已 float:right，圖示同樣吃上面的規則，此處只補右側留白，
+   避免長標籤與箭頭貼在一起 */
+.navbar .dropdown-menu .dropdown-item.dropdown-toggle {
+    padding-right: 2.25rem;
+}
+
+/* 小螢幕（navbar 收合成漢堡選單）改為內嵌縮排展開，不做橫向 flyout */
+@media (max-width: 991.98px) {
+    .dropdown-submenu > .dropdown-menu {
+        position: static;
+        float: none;
+        margin: 0 0 0 1rem;
+        border: 0;
+        box-shadow: none;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+
+    .dropdown-submenu > .dropdown-menu.submenu-flip {
+        left: auto;
+        right: auto;
+    }
+
+    .dropdown-submenu > .dropdown-toggle::after {
+        transform: none;
+    }
+}

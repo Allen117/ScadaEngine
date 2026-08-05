@@ -88,4 +88,23 @@
   <data name="ems.water.cost.stale" xml:space="preserve"><value>Incomplete data</value></data>
   <data name="ems.water.cost.stale_note" xml:space="preserve"><value>Water meter data incomplete; cost may be underestimated</value></data>
   <data name="ems.water.cost.effective" xml:space="preserve"><value>Plan "{0}" (effective from {1})</value></data>
+
+  <!-- Gas meter cards (ems-hub-gas.js) -->
+  <data name="ems.gas.no_root" xml:space="preserve"><value>No gas meter circuit configured. Create one in "Gas Meter / Circuit" first.</value></data>
+  <data name="ems.gas.no_data" xml:space="preserve"><value>No gas usage data in this period</value></data>
+  <data name="ems.gas.neg_excluded" xml:space="preserve"><value>{0}: {1} m³ (excluded from share)</value></data>
+  <data name="ems.gas.stale_note" xml:space="preserve"><value>Some intervals have incomplete gas meter data (meter may be offline)</value></data>
+  <data name="ems.gas.cost.period" xml:space="preserve"><value>Period {0}</value></data>
+  <data name="ems.gas.cost.no_plan" xml:space="preserve"><value>No gas tariff plan configured</value></data>
+  <data name="ems.gas.cost.goto_tariff" xml:space="preserve"><value>Go to Gas Tariff Settings</value></data>
+  <data name="ems.gas.cost.unit_ntd" xml:space="preserve"><value>NT$</value></data>
+  <data name="ems.gas.cost.total_m3" xml:space="preserve"><value>Period total {0} m³</value></data>
+  <data name="ems.gas.cost.col_tier" xml:space="preserve"><value>Tier</value></data>
+  <data name="ems.gas.cost.col_cost" xml:space="preserve"><value>Cost (NT$)</value></data>
+  <data name="ems.gas.cost.tier_range" xml:space="preserve"><value>{0}~{1} m³</value></data>
+  <data name="ems.gas.cost.tier_above" xml:space="preserve"><value>{0} m³ and above</value></data>
+  <data name="ems.gas.cost.per_m3" xml:space="preserve"><value>NT$/m³</value></data>
+  <data name="ems.gas.cost.stale" xml:space="preserve"><value>Incomplete data</value></data>
+  <data name="ems.gas.cost.stale_note" xml:space="preserve"><value>Gas meter data incomplete; cost may be underestimated</value></data>
+  <data name="ems.gas.cost.effective" xml:space="preserve"><value>Plan "{0}" (effective from {1})</value></data>
 </root>

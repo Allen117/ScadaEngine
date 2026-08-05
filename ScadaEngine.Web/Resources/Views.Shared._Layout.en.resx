@@ -69,6 +69,9 @@
   <data name="layout.menu.eventlog" xml:space="preserve"><value>Event Log</value></data>
 
   <data name="layout.menu.ems_settings" xml:space="preserve"><value>EMS Settings</value></data>
+  <data name="layout.menu.group_water_system" xml:space="preserve"><value>Water System</value></data>
+  <data name="layout.menu.group_power_meter" xml:space="preserve"><value>Power Meter</value></data>
+  <data name="layout.menu.group_water_meter" xml:space="preserve"><value>Water Meter</value></data>
   <data name="layout.menu.reports" xml:space="preserve"><value>Reports</value></data>
   <data name="layout.menu.energy_meter" xml:space="preserve"><value>Energy Meter / Circuit</value></data>
   <data name="layout.menu.energy_report" xml:space="preserve"><value>Energy Report</value></data>
@@ -83,6 +86,12 @@
   <data name="layout.menu.chilled_water" xml:space="preserve"><value>Chilled Water Circuit Settings</value></data>
   <data name="layout.menu.billing_period" xml:space="preserve"><value>Electricity Billing Cycle</value></data>
   <data name="layout.menu.water_billing_period" xml:space="preserve"><value>Water Billing Cycle</value></data>
+  <data name="layout.menu.group_gas_meter" xml:space="preserve"><value>Gas Meter</value></data>
+  <data name="layout.menu.gas_meter" xml:space="preserve"><value>Gas Meter / Circuit</value></data>
+  <data name="layout.menu.gas_usage_report" xml:space="preserve"><value>Gas Usage Report</value></data>
+  <data name="layout.menu.gas_tariff_setting" xml:space="preserve"><value>Gas Tariff Settings</value></data>
+  <data name="layout.menu.gas_cost_report" xml:space="preserve"><value>Gas Cost Report</value></data>
+  <data name="layout.menu.gas_billing_period" xml:space="preserve"><value>Gas Billing Cycle</value></data>
   <data name="layout.menu.tariff_setting" xml:space="preserve"><value>Tariff Settings</value></data>
   <data name="layout.menu.holiday_setting" xml:space="preserve"><value>National Holidays</value></data>
   <data name="layout.menu.ems_card_setting" xml:space="preserve"><value>Card Display Settings</value></data>

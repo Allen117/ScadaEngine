@@ -28,6 +28,9 @@
     <!-- Font Awesome 6 Icons (本機) -->
     <link rel="stylesheet" href="~/lib/font-awesome/css/all.min.css">
 
+    <!-- 導覽列子選單 -->
+    <link rel="stylesheet" href="~/css/navbar-submenu.css">
+
     @if (isEmsMode)
     {
         <link rel="stylesheet" href="~/css/ems.css">
@@ -141,7 +144,7 @@
                                     </a>
                                 </li>
                             }
-                            @if (canAccess("/EnergyReport") || canAccess("/ElectricityCostReport") || canAccess("/RefrigerationTonReport") || canAccess("/WaterUsageReport") || canAccess("/WaterCostReport") || canAccess("/EnergyDeclaration"))
+                            @if (canAccess("/EnergyReport") || canAccess("/ElectricityCostReport") || canAccess("/RefrigerationTonReport") || canAccess("/WaterUsageReport") || canAccess("/WaterCostReport") || canAccess("/GasUsageReport") || canAccess("/GasCostReport") || canAccess("/EnergyDeclaration"))
                             {
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
@@ -169,6 +172,15 @@
                                         {
                                             <li><a class="dropdown-item" href="/WaterCostReport"><i class="fas fa-hand-holding-usd me-2"></i>@Localizer["layout.menu.water_cost_report"]</a></li>
                                         }
+                                        @if (canAccess("/GasUsageReport"))
+                                        {
+                                            <li><a class="dropdown-item" href="/GasUsageReport"><i class="fas fa-fire me-2"></i>@Localizer["layout.menu.gas_usage_report"]</a></li>
+                                        }
+                                        @if (canAccess("/GasCostReport"))
+                                        {
+                                            @* fa-receipt：與同一選單內的「電費報表」fa-file-invoice-dollar 區隔 *@
+                                            <li><a class="dropdown-item" href="/GasCostReport"><i class="fas fa-receipt me-2"></i>@Localizer["layout.menu.gas_cost_report"]</a></li>
+                                        }
                                         @if (canAccess("/EnergyDeclaration"))
                                         {
                                             <li><a class="dropdown-item" href="/EnergyDeclaration"><i class="fas fa-file-signature me-2"></i>@Localizer["layout.menu.energy_declaration"]</a></li>
@@ -185,7 +197,7 @@
                                     </a>
                                 </li>
                             }
-                            @if (canAccess("/ChilledWaterSystem") || canAccess("/EnergyMeter") || canAccess("/WaterMeterSetting") || canAccess("/BillingPeriodSetting") || canAccess("/WaterBillingPeriodSetting") || canAccess("/TariffSetting") || canAccess("/WaterTariffSetting") || canAccess("/HolidaySetting") || canAccess("/EmsCardSetting"))
+                            @if (canAccess("/ChilledWaterSystem") || canAccess("/EnergyMeter") || canAccess("/WaterMeterSetting") || canAccess("/GasMeterSetting") || canAccess("/BillingPeriodSetting") || canAccess("/WaterBillingPeriodSetting") || canAccess("/GasBillingPeriodSetting") || canAccess("/TariffSetting") || canAccess("/WaterTariffSetting") || canAccess("/GasTariffSetting") || canAccess("/HolidaySetting") || canAccess("/EmsCardSetting"))
                             {
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
@@ -195,31 +207,80 @@
                                     <ul class="dropdown-menu">
                                         @if (canAccess("/ChilledWaterSystem"))
                                         {
-                                            <li><a class="dropdown-item" href="/ChilledWaterSystem"><i class="fas fa-tint me-2"></i>@Localizer["layout.menu.chilled_water"]</a></li>
+                                            <li class="dropdown-submenu">
+                                                <a class="dropdown-item dropdown-toggle" href="#" role="button"><i class="fas fa-water me-2"></i>@Localizer["layout.menu.group_water_system"]</a>
+                                                <ul class="dropdown-menu">
+                                                    <li><a class="dropdown-item" href="/ChilledWaterSystem"><i class="fas fa-tint me-2"></i>@Localizer["layout.menu.chilled_water"]</a></li>
+                                                </ul>
+                                            </li>
                                         }
-                                        @if (canAccess("/EnergyMeter"))
+                                        @if (canAccess("/EnergyMeter") || canAccess("/BillingPeriodSetting") || canAccess("/TariffSetting"))
                                         {
-                                            <li><a class="dropdown-item" href="/EnergyMeter"><i class="fas fa-sitemap me-2"></i>@Localizer["layout.menu.energy_meter"]</a></li>
+                                            <li class="dropdown-submenu">
+                                                <a class="dropdown-item dropdown-toggle" href="#" role="button"><i class="fas fa-bolt me-2"></i>@Localizer["layout.menu.group_power_meter"]</a>
+                                                <ul class="dropdown-menu">
+                                                    @if (canAccess("/EnergyMeter"))
+                                                    {
+                                                        <li><a class="dropdown-item" href="/EnergyMeter"><i class="fas fa-sitemap me-2"></i>@Localizer["layout.menu.energy_meter"]</a></li>
+                                                    }
+                                                    @if (canAccess("/BillingPeriodSetting"))
+                                                    {
+                                                        <li><a class="dropdown-item" href="/BillingPeriodSetting"><i class="fas fa-calendar-check me-2"></i>@Localizer["layout.menu.billing_period"]</a></li>
+                                                    }
+                                                    @if (canAccess("/TariffSetting"))
+                                                    {
+                                                        <li><a class="dropdown-item" href="/TariffSetting"><i class="fas fa-file-invoice-dollar me-2"></i>@Localizer["layout.menu.tariff_setting"]</a></li>
+                                                    }
+                                                </ul>
+                                            </li>
                                         }
-                                        @if (canAccess("/WaterMeterSetting"))
+                                        @if (canAccess("/WaterMeterSetting") || canAccess("/WaterBillingPeriodSetting") || canAccess("/WaterTariffSetting"))
                                         {
-                                            <li><a class="dropdown-item" href="/WaterMeterSetting"><i class="fas fa-faucet me-2"></i>@Localizer["layout.menu.water_meter"]</a></li>
+                                            <li class="dropdown-submenu">
+                                                <a class="dropdown-item dropdown-toggle" href="#" role="button"><i class="fas fa-faucet me-2"></i>@Localizer["layout.menu.group_water_meter"]</a>
+                                                <ul class="dropdown-menu">
+                                                    @if (canAccess("/WaterMeterSetting"))
+                                                    {
+                                                        <li><a class="dropdown-item" href="/WaterMeterSetting"><i class="fas fa-faucet me-2"></i>@Localizer["layout.menu.water_meter"]</a></li>
+                                                    }
+                                                    @if (canAccess("/WaterBillingPeriodSetting"))
+                                                    {
+                                                        <li><a class="dropdown-item" href="/WaterBillingPeriodSetting"><i class="fas fa-calendar-day me-2"></i>@Localizer["layout.menu.water_billing_period"]</a></li>
+                                                    }
+                                                    @if (canAccess("/WaterTariffSetting"))
+                                                    {
+                                                        <li><a class="dropdown-item" href="/WaterTariffSetting"><i class="fas fa-tint me-2"></i>@Localizer["layout.menu.water_tariff_setting"]</a></li>
+                                                    }
+                                                </ul>
+                                            </li>
                                         }
-                                        @if (canAccess("/BillingPeriodSetting"))
+                                        @if (canAccess("/GasMeterSetting") || canAccess("/GasBillingPeriodSetting") || canAccess("/GasTariffSetting"))
                                         {
-                                            <li><a class="dropdown-item" href="/BillingPeriodSetting"><i class="fas fa-calendar-check me-2"></i>@Localizer["layout.menu.billing_period"]</a></li>
+                                            <li class="dropdown-submenu">
+                                                <a class="dropdown-item dropdown-toggle" href="#" role="button"><i class="fas fa-fire me-2"></i>@Localizer["layout.menu.group_gas_meter"]</a>
+                                                <ul class="dropdown-menu">
+                                                    @if (canAccess("/GasMeterSetting"))
+                                                    {
+                                                        <li><a class="dropdown-item" href="/GasMeterSetting"><i class="fas fa-gas-pump me-2"></i>@Localizer["layout.menu.gas_meter"]</a></li>
+                                                    }
+                                                    @if (canAccess("/GasBillingPeriodSetting"))
+                                                    {
+                                                        <li><a class="dropdown-item" href="/GasBillingPeriodSetting"><i class="fas fa-calendar-day me-2"></i>@Localizer["layout.menu.gas_billing_period"]</a></li>
+                                                    }
+                                                    @if (canAccess("/GasTariffSetting"))
+                                                    {
+                                                        @* fa-money-bill-wave：與所屬「氣表」群組標頭 fa-fire 區隔 *@
+                                                        <li><a class="dropdown-item" href="/GasTariffSetting"><i class="fas fa-money-bill-wave me-2"></i>@Localizer["layout.menu.gas_tariff_setting"]</a></li>
+                                                    }
+                                                </ul>
+                                            </li>
                                         }
-                                        @if (canAccess("/WaterBillingPeriodSetting"))
+                                        @if (canAccess("/HolidaySetting") || canAccess("/EmsCardSetting"))
                                         {
-                                            <li><a class="dropdown-item" href="/WaterBillingPeriodSetting"><i class="fas fa-calendar-day me-2"></i>@Localizer["layout.menu.water_billing_period"]</a></li>
-                                        }
-                                        @if (canAccess("/TariffSetting"))
-                                        {
-                                            <li><a class="dropdown-item" href="/TariffSetting"><i class="fas fa-file-invoice-dollar me-2"></i>@Localizer["layout.menu.tariff_setting"]</a></li>
-                                        }
-                                        @if (canAccess("/WaterTariffSetting"))
-                                        {
-                                            <li><a class="dropdown-item" href="/WaterTariffSetting"><i class="fas fa-tint me-2"></i>@Localizer["layout.menu.water_tariff_setting"]</a></li>
+                                            @if (canAccess("/ChilledWaterSystem") || canAccess("/EnergyMeter") || canAccess("/BillingPeriodSetting") || canAccess("/TariffSetting") || canAccess("/WaterMeterSetting") || canAccess("/WaterBillingPeriodSetting") || canAccess("/WaterTariffSetting") || canAccess("/GasMeterSetting") || canAccess("/GasBillingPeriodSetting") || canAccess("/GasTariffSetting"))
+                                            {
+                                                <li><hr class="dropdown-divider"></li>
+                                            }
                                         }
                                         @if (canAccess("/HolidaySetting"))
                                         {
@@ -569,6 +630,9 @@
             });
         })();
     </script>
+
+    <!-- 導覽列子選單 -->
+    <script src="~/js/navbar-submenu.js"></script>
 
     <!-- 授權守衛監控 -->
     <script src="~/js/license-monitor.js"></script>

@@ -1,0 +1,13 @@
+{
+  "_comment": "天然氣流動氣費預設值（分段累進，元/度，1 度 = 1 m³）。天然氣無全國統一費率，本檔刻意為【空白單一級距範本、單價 0】— 請於 /GasTariffSetting 依供氣事業合約帳單自行新增級距與單價。此檔為唯讀 seed：使用者修改存 SystemSettings.gas_tariff；「還原預設」與首次載入以本檔為準。⚠️ 級距與期別長度解耦 — 兩月一期時請直接填「一期」的級距數字，系統不做倍率換算。",
+  "plans": [
+    {
+      "szPlanId": "gas-flow-default",
+      "szName": "天然氣流動氣費",
+      "szEffectiveDate": "2000-01-01",
+      "tiers": [
+        { "nFrom": 1, "nTo": null, "dPrice": 0 }
+      ]
+    }
+  ]
+}

@@ -69,6 +69,9 @@
   <data name="layout.menu.eventlog" xml:space="preserve"><value>事件記錄</value></data>
 
   <data name="layout.menu.ems_settings" xml:space="preserve"><value>能管設定</value></data>
+  <data name="layout.menu.group_water_system" xml:space="preserve"><value>水系統</value></data>
+  <data name="layout.menu.group_power_meter" xml:space="preserve"><value>電表</value></data>
+  <data name="layout.menu.group_water_meter" xml:space="preserve"><value>水表</value></data>
   <data name="layout.menu.reports" xml:space="preserve"><value>報表查詢</value></data>
   <data name="layout.menu.energy_meter" xml:space="preserve"><value>電表/迴路設定</value></data>
   <data name="layout.menu.energy_report" xml:space="preserve"><value>用電報表</value></data>
@@ -83,6 +86,12 @@
   <data name="layout.menu.chilled_water" xml:space="preserve"><value>水系統迴路設定</value></data>
   <data name="layout.menu.billing_period" xml:space="preserve"><value>電費月結週期</value></data>
   <data name="layout.menu.water_billing_period" xml:space="preserve"><value>水費月結週期</value></data>
+  <data name="layout.menu.group_gas_meter" xml:space="preserve"><value>氣表</value></data>
+  <data name="layout.menu.gas_meter" xml:space="preserve"><value>氣表/迴路設定</value></data>
+  <data name="layout.menu.gas_usage_report" xml:space="preserve"><value>用氣報表</value></data>
+  <data name="layout.menu.gas_tariff_setting" xml:space="preserve"><value>氣費設定</value></data>
+  <data name="layout.menu.gas_cost_report" xml:space="preserve"><value>氣費報表</value></data>
+  <data name="layout.menu.gas_billing_period" xml:space="preserve"><value>氣費月結週期</value></data>
   <data name="layout.menu.tariff_setting" xml:space="preserve"><value>電費設定</value></data>
   <data name="layout.menu.holiday_setting" xml:space="preserve"><value>國定假日設定</value></data>
   <data name="layout.menu.ems_card_setting" xml:space="preserve"><value>卡片顯示設定</value></data>

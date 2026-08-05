@@ -1,0 +1,172 @@
+@{
+    ViewData["Title"] = Localizer["gasmeter.title"].Value;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-2">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="mb-0">
+            @* 圖示與側欄「氣表/迴路設定」選單一致（fa-gas-pump）；勿改回 fa-sitemap — 那是電表迴路設定的 *@
+            <i class="fas fa-gas-pump text-primary me-2"></i>@Localizer["gasmeter.title"]
+        </h2>
+        <span class="text-muted small">
+            <i class="fas fa-fire me-1"></i>@Localizer["gasmeter.subtitle"]
+        </span>
+    </div>
+
+    <div class="row g-3">
+        <!-- 左側樹狀清單 -->
+        <div class="col-md-5">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-2">
+                    <span><i class="fas fa-folder-tree me-1"></i>@Localizer["gasmeter.tree.header"]</span>
+                    <button class="btn btn-sm btn-outline-light py-0" onclick="window._gm.openCreateModal(null)">
+                        <i class="fas fa-plus me-1"></i>@Localizer["gasmeter.tree.add_root"]
+                    </button>
+                </div>
+                <div class="card-body p-2" style="height: calc(100vh - 250px); overflow-y: auto;">
+                    <div id="treeContainer">
+                        <div class="text-center mt-5"><div class="spinner-border spinner-border-sm text-primary"></div> @Localizer["gasmeter.tree.loading"]</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右側詳情 -->
+        <div class="col-md-7">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light py-2">
+                    <span id="detailTitle"><i class="fas fa-hand-pointer me-1"></i>@Localizer["gasmeter.detail.placeholder_title"]</span>
+                </div>
+                <div class="card-body" id="detailArea">
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-sitemap fa-4x mb-3 d-block" style="opacity:.3"></i>
+                        <p>@Localizer["gasmeter.detail.placeholder_body"]</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 新增/編輯 Modal -->
+<div class="modal fade" id="circuitModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title"><i class="fas fa-edit me-1"></i><span id="modalTitle">@Localizer["gasmeter.modal.create_title"]</span></h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="gmId">
+                <input type="hidden" id="gmParentId">
+                <input type="hidden" id="gmSid">
+                <input type="hidden" id="gmUnitScale">
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold"><i class="fas fa-tag me-1"></i>@Localizer["gasmeter.form.name"]</label>
+                    <input type="text" class="form-control form-control-sm" id="gmName" placeholder="@Localizer["gasmeter.form.name_placeholder"]">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold"><i class="fas fa-cog me-1"></i>@Localizer["gasmeter.form.type"]</label>
+                    <div class="btn-group btn-group-sm w-100" role="group">
+                        <input type="radio" class="btn-check" name="gmType" id="gmTypeVirtual" value="virtual" checked>
+                        <label class="btn btn-outline-primary" for="gmTypeVirtual">
+                            <i class="fas fa-folder me-1"></i>@Localizer["gasmeter.form.type_virtual"]
+                        </label>
+                        <input type="radio" class="btn-check" name="gmType" id="gmTypeMeter" value="meter">
+                        <label class="btn btn-outline-primary" for="gmTypeMeter">
+                            <i class="fas fa-fire me-1"></i>@Localizer["gasmeter.form.type_meter"]
+                        </label>
+                    </div>
+                </div>
+
+                <div class="mb-3" id="gmSignRow">
+                    <label class="form-label fw-semibold"><i class="fas fa-plus-minus me-1"></i>@Localizer["gasmeter.form.sign"]</label>
+                    <div class="btn-group btn-group-sm w-100" role="group">
+                        <input type="radio" class="btn-check" name="gmSign" id="gmSignPos" value="1" checked>
+                        <label class="btn btn-outline-success" for="gmSignPos">
+                            <i class="fas fa-plus me-1"></i>@Localizer["gasmeter.form.sign_pos"]
+                        </label>
+                        <input type="radio" class="btn-check" name="gmSign" id="gmSignNeg" value="-1">
+                        <label class="btn btn-outline-danger" for="gmSignNeg">
+                            <i class="fas fa-minus me-1"></i>@Localizer["gasmeter.form.sign_neg"]
+                        </label>
+                    </div>
+                    <small class="text-muted d-block mt-1">@Localizer["gasmeter.form.sign_hint"]</small>
+                </div>
+
+                <div class="mb-3" id="gmMeterFields" style="display:none;">
+                    <label class="form-label fw-semibold"><i class="fas fa-plug me-1"></i>@Localizer["gasmeter.form.point"]</label>
+                    <div class="d-flex gap-2 align-items-center">
+                        <div class="form-control form-control-sm gm-point-display" id="gmPointDisplay">@Localizer["gasmeter.form.point_unbound"]</div>
+                        <button type="button" class="btn btn-sm btn-outline-primary flex-shrink-0" onclick="window._gm.openPointPicker()">
+                            <i class="fas fa-crosshairs me-1"></i>@Localizer["gasmeter.btn.pick_point"]
+                        </button>
+                    </div>
+                    <small class="text-muted d-block mt-1">@Localizer["gasmeter.form.point_hint"]</small>
+                    <div class="alert alert-info py-1 px-2 mt-1 mb-0 small">
+                        <i class="fas fa-info-circle me-1"></i>@Localizer["gasmeter.form.name_filter_hint"]
+                    </div>
+                    <div class="gm-unitscale-info mt-1" id="gmUnitScaleInfo" style="display:none;"></div>
+
+                    <label class="form-label fw-semibold mt-3"><i class="fas fa-sort-numeric-up me-1"></i>@Localizer["gasmeter.form.max_volume"]</label>
+                    <input type="text" inputmode="numeric" class="form-control form-control-sm" id="gmMaxVolume" placeholder="@Localizer["gasmeter.form.max_volume_placeholder"]">
+                    <small class="text-muted d-block mt-1">@Localizer["gasmeter.form.max_volume_hint"]</small>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold"><i class="fas fa-comment me-1"></i>@Localizer["gasmeter.form.desc"]</label>
+                    <textarea class="form-control form-control-sm" id="gmDesc" rows="2" placeholder="@Localizer["gasmeter.form.desc_placeholder"]"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer py-1">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">@Localizer["gasmeter.btn.cancel"]</button>
+                <button type="button" class="btn btn-sm btn-primary" onclick="window._gm.saveCircuit()">
+                    <i class="fas fa-save me-1"></i>@Localizer["gasmeter.btn.save"]
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 兩步驟點位選擇器 Modal（設備 → 點位清單＋搜尋） -->
+<div class="modal fade" id="gmPointPickerModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title"><i class="fas fa-crosshairs me-1"></i>@Localizer["gasmeter.picker.title"]</h6>
+                <button type="button" class="btn-close" onclick="window._gm.closePointPicker(false)"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-2">
+                    <div class="col-md-5">
+                        <div class="pp-panel-title"><i class="fas fa-server me-1"></i>@Localizer["gasmeter.picker.device"]</div>
+                        <div id="ppDeviceList" class="pp-list"></div>
+                    </div>
+                    <div class="col-md-7">
+                        <div class="pp-panel-title"><i class="fas fa-plug me-1"></i>@Localizer["gasmeter.picker.point"]</div>
+                        <input type="text" class="form-control form-control-sm mb-1" id="ppSearch" placeholder="@Localizer["gasmeter.picker.search_placeholder"]" autocomplete="off">
+                        <div id="ppPointList" class="pp-list"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer py-1">
+                <button type="button" class="btn btn-sm btn-outline-danger me-auto" onclick="window._gm.clearPickedPoint()">
+                    <i class="fas fa-eraser me-1"></i>@Localizer["gasmeter.btn.clear_binding"]
+                </button>
+                <button type="button" class="btn btn-sm btn-secondary" onclick="window._gm.closePointPicker(false)">@Localizer["gasmeter.btn.cancel"]</button>
+                <button type="button" class="btn btn-sm btn-primary" id="ppConfirmBtn" disabled onclick="window._gm.closePointPicker(true)">
+                    <i class="fas fa-check me-1"></i>@Localizer["gasmeter.btn.confirm"]
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="~/css/gasmeter.css" asp-append-version="true" />
+
+@section Scripts {
+    <script src="~/js/gasmeter.js" asp-append-version="true"></script>
+}

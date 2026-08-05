@@ -38,6 +38,9 @@ public static class EmsCardRegistry
         new("WaterUsageBar", "_CardWaterUsageBar", "emscard.name.waterusagebar", "col-md-6 col-lg-7 col-xl-8", "fa-chart-bar",           8),
         new("WaterUsagePie", "_CardWaterUsagePie", "emscard.name.waterusagepie", "col-md-6 col-lg-5 col-xl-4", "fa-chart-pie",           9),
         new("WaterCost",     "_CardWaterCost",     "emscard.name.watercost",     "col-md-6 col-lg-5 col-xl-4", "fa-hand-holding-droplet", 10),
+        new("GasUsageBar",   "_CardGasUsageBar",   "emscard.name.gasusagebar",   "col-md-6 col-lg-7 col-xl-8", "fa-chart-bar",           11),
+        new("GasUsagePie",   "_CardGasUsagePie",   "emscard.name.gasusagepie",   "col-md-6 col-lg-5 col-xl-4", "fa-chart-pie",           12),
+        new("GasCost",       "_CardGasCost",       "emscard.name.gascost",       "col-md-6 col-lg-5 col-xl-4", "fa-fire",                13),
     ];
 
     /// <summary>卡片鍵是否存在於註冊表（Save 白名單檢查用）</summary>

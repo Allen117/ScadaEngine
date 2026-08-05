@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ScadaEngine.Common.Data.Models;
 using ScadaEngine.Engine.Data.Interfaces;
 using ScadaEngine.Web.Features.EnergyMeter.Models;
 using ScadaEngine.Web.Features.Ems.Models;
@@ -24,6 +25,10 @@ public class EmsController : Controller
     private readonly WaterMeterCircuitService _waterCircuitService;
     private readonly WaterUsageReportService _waterReportService;
     private readonly WaterCostService _waterCostService;
+    private readonly GasBillingPeriodService _gasBillingPeriodService;
+    private readonly GasMeterCircuitService _gasCircuitService;
+    private readonly GasUsageReportService _gasReportService;
+    private readonly GasCostService _gasCostService;
 
     public EmsController(
         IDataRepository repo,
@@ -36,7 +41,11 @@ public class EmsController : Controller
         WaterBillingPeriodService waterBillingPeriodService,
         WaterMeterCircuitService waterCircuitService,
         WaterUsageReportService waterReportService,
-        WaterCostService waterCostService)
+        WaterCostService waterCostService,
+        GasBillingPeriodService gasBillingPeriodService,
+        GasMeterCircuitService gasCircuitService,
+        GasUsageReportService gasReportService,
+        GasCostService gasCostService)
     {
         _repo                 = repo;
         _circuitService       = circuitService;
@@ -49,6 +58,10 @@ public class EmsController : Controller
         _waterCircuitService  = waterCircuitService;
         _waterReportService   = waterReportService;
         _waterCostService     = waterCostService;
+        _gasBillingPeriodService = gasBillingPeriodService;
+        _gasCircuitService    = gasCircuitService;
+        _gasReportService     = gasReportService;
+        _gasCostService       = gasCostService;
     }
 
     [HttpGet("/EMS")]
@@ -561,27 +574,152 @@ public class EmsController : Controller
         return Ok(await _waterCostService.GetStatusAsync(circuitId));
     }
 
+    // ────────────────────────── 氣表三卡 API ──────────────────────────
+
+    /// <summary>取得氣表迴路完整階層（flat 清單，前端組樹；用氣量卡根迴路名 + 氣費卡下拉用）</summary>
+    [HttpGet("/EMS/api/gas-circuit-tree")]
+    public async Task<IActionResult> GetGasCircuitTree()
+    {
+        var nodes = await _gasCircuitService.GetAllAsync();
+        return Ok(nodes.Select(n => new
+        {
+            id        = n.nId,
+            name      = n.szName,
+            parentId  = n.nParentId,
+            sortOrder = n.nSortOrder,
+            sid       = n.szSID
+        }));
+    }
+
+    /// <summary>取得指定氣表迴路的用氣量（長條圖用）；circuitId 空 = 根迴路（全廠）</summary>
+    /// <param name="granularity">month / day / hour（同 circuit-energy）</param>
+    /// <param name="pivot">month=年份(2026)；day=年月(2026-06)；hour=日期(2026-06-29)</param>
+    [HttpGet("/EMS/api/gas-usage")]
+    public async Task<IActionResult> GetGasUsage(
+        [FromQuery] int? circuitId,
+        [FromQuery] string? granularity,
+        [FromQuery] string? pivot)
+    {
+        if (string.IsNullOrWhiteSpace(granularity) || string.IsNullOrWhiteSpace(pivot))
+            return BadRequest(new { error = "granularity, pivot 皆為必填" });
+
+        DateTime dtStart, dtEnd;
+        try { (dtStart, dtEnd) = await ParseGasPivotAsync(granularity, pivot); }
+        catch { return BadRequest(new { error = "pivot 格式不正確" }); }
+
+        int nCircuitId;
+        if (circuitId.HasValue)
+        {
+            nCircuitId = circuitId.Value;
+        }
+        else
+        {
+            var root = await _gasCircuitService.GetRootAsync();
+            if (root == null)
+                return Ok(new EmsGasUsageDto());   // 未建根迴路 → 空資料（前端顯示無資料）
+            nCircuitId = root.nId;
+        }
+
+        var result = await _gasReportService.GetReportAsync(nCircuitId, granularity, dtStart, dtEnd);
+        return Ok(new EmsGasUsageDto
+        {
+            labels     = result.buckets.Select(b => b.szLabel).ToList(),
+            values     = result.buckets.Select(b => b.dM3).ToList(),
+            hasWarning = result.isHasWarning
+        });
+    }
+
+    /// <summary>根迴路直接子迴路在區間內的用氣量拆解（圓餅圖用）；無子迴路時回根迴路自己一筆</summary>
+    /// <param name="granularity">month / day / hour（同 circuit-energy）</param>
+    /// <param name="pivot">month=年份(2026)；day=年月(2026-06)；hour=日期(2026-06-29)</param>
+    [HttpGet("/EMS/api/gas-breakdown")]
+    public async Task<IActionResult> GetGasBreakdown(
+        [FromQuery] string? granularity,
+        [FromQuery] string? pivot)
+    {
+        if (string.IsNullOrWhiteSpace(granularity) || string.IsNullOrWhiteSpace(pivot))
+            return BadRequest(new { error = "granularity, pivot 皆為必填" });
+
+        DateTime dtStart, dtEnd;
+        try { (dtStart, dtEnd) = await ParseGasPivotAsync(granularity, pivot); }
+        catch { return BadRequest(new { error = "pivot 格式不正確" }); }
+
+        var root = await _gasCircuitService.GetRootAsync();
+        if (root == null)
+            return Ok(new EmsGasBreakdownDto { hasRoot = false });
+
+        var dto = new EmsGasBreakdownDto { hasRoot = true };
+
+        var children = await _gasCircuitService.GetDirectChildrenAsync(root.nId);
+        if (children.Count == 0)
+        {
+            var (dTotalM3, isWarn) = await _gasReportService.GetTotalM3Async(root.nId, granularity, dtStart, dtEnd);
+            if (isWarn) dto.hasWarning = true;
+            dto.items.Add(new EmsGasBreakdownItemDto
+            {
+                id   = root.nId,
+                name = root.szName,
+                m3   = Math.Round(dTotalM3, 3)
+            });
+            return Ok(dto);
+        }
+
+        foreach (var child in children)
+        {
+            // 子迴路內部葉子的 sign 已由計算核心累乘（相對於 child），child 自己對父的方向在這裡補乘
+            // （負值不入餅，由前端列於下方小字 — 比照 water-breakdown）
+            var nChildSign = child.nSign == -1 ? -1 : 1;
+            var (dTotalM3, isWarn) = await _gasReportService.GetTotalM3Async(child.nId, granularity, dtStart, dtEnd);
+            if (isWarn) dto.hasWarning = true;
+            dto.items.Add(new EmsGasBreakdownItemDto
+            {
+                id   = child.nId,
+                name = child.szName,
+                m3   = Math.Round(dTotalM3 * nChildSign, 3)
+            });
+        }
+        return Ok(dto);
+    }
+
+    /// <summary>氣費狀態卡 — 指定氣表迴路（未指定 = 根迴路）本期累計 m³ 與級距氣費</summary>
+    [HttpGet("/EMS/api/gas-cost")]
+    public async Task<IActionResult> GetGasCost([FromQuery] int? circuitId)
+    {
+        return Ok(await _gasCostService.GetStatusAsync(circuitId));
+    }
+
     /// <summary>
     /// pivot → 報表服務的 (dtStart, dtEnd)，**電費期別**版（用電長條/圓餅/去年同期/電費卡）。
     /// month（年檢視）：pivot=年份 → 期別 1~12 月（報表月粒度語意 = 含頭尾期別）；
     /// day（月檢視）：pivot=YYYY-MM → 該期別的實際起訖日（日粒度 dtEnd 為含訖日）；
     /// hour（日檢視）：pivot=YYYY-MM-DD → 該日（維持自然日，不受期別影響）。
     ///
-    /// ⚠️ 水表卡片請用 <see cref="ParseWaterPivotAsync"/> — 兩者刻意拆成兩支而非加參數，
-    /// 讓「呼叫錯期別」變成編譯期選錯函式（看得見），而不是靜默走錯期別（查不出來）。
+    /// ⚠️ 水表卡片請用 <see cref="ParseWaterPivotAsync"/>、氣表卡片請用 <see cref="ParseGasPivotAsync"/> —
+    /// 三者刻意拆成三支而非加參數，讓「呼叫錯期別」變成編譯期選錯函式（看得見），
+    /// 而不是靜默走錯期別（查不出來）。
     /// </summary>
     private Task<(DateTime Start, DateTime End)> ParsePivotAsync(string granularity, string pivot)
-        => ParsePivotCoreAsync(granularity, pivot, isWater: false);
+        => ParsePivotCoreAsync(granularity, pivot, PeriodKind.Electricity);
 
     /// <summary>
     /// pivot → (dtStart, dtEnd)，**水費期別**版（用水長條/圓餅/水費卡）。語意同電費版，
     /// 差別只在 day（月檢視）取的是水費期別的實際起訖日。
     /// </summary>
     private Task<(DateTime Start, DateTime End)> ParseWaterPivotAsync(string granularity, string pivot)
-        => ParsePivotCoreAsync(granularity, pivot, isWater: true);
+        => ParsePivotCoreAsync(granularity, pivot, PeriodKind.Water);
+
+    /// <summary>
+    /// pivot → (dtStart, dtEnd)，**氣費期別**版（用氣長條/圓餅/氣費卡）。語意同電/水費版，
+    /// 差別只在 day（月檢視）取的是氣費期別的實際起訖日（該月被「刪除」時取吸收它的那一期）。
+    /// </summary>
+    private Task<(DateTime Start, DateTime End)> ParseGasPivotAsync(string granularity, string pivot)
+        => ParsePivotCoreAsync(granularity, pivot, PeriodKind.Gas);
+
+    /// <summary>期別來源三選一 — 電費 / 水費 / 氣費各自獨立設定</summary>
+    private enum PeriodKind { Electricity, Water, Gas }
 
     private async Task<(DateTime Start, DateTime End)> ParsePivotCoreAsync(
-        string granularity, string pivot, bool isWater)
+        string granularity, string pivot, PeriodKind kind)
     {
         switch (granularity)
         {
@@ -594,9 +732,20 @@ public class EmsController : Controller
                 {
                     var dtYM = DateTime.ParseExact(pivot + "-01", "yyyy-MM-dd",
                         System.Globalization.CultureInfo.InvariantCulture);
-                    var period = isWater
-                        ? await _waterBillingPeriodService.GetPeriodAsync(dtYM.Year, dtYM.Month)
-                        : await _billingPeriodService.GetPeriodAsync(dtYM.Year, dtYM.Month);
+                    var period = kind switch
+                    {
+                        PeriodKind.Water => await _waterBillingPeriodService.GetPeriodAsync(dtYM.Year, dtYM.Month),
+                        // 氣費期別可被刪除（兩月一期）→ 取吸收該月的那一期；全年皆刪則退回自然月
+                        PeriodKind.Gas => await _gasBillingPeriodService.GetPeriodAsync(dtYM.Year, dtYM.Month)
+                                          ?? new BillingPeriodRange
+                                          {
+                                              nYear = dtYM.Year,
+                                              nMonth = dtYM.Month,
+                                              dtStart = dtYM,
+                                              dtEndExclusive = dtYM.AddMonths(1),
+                                          },
+                        _ => await _billingPeriodService.GetPeriodAsync(dtYM.Year, dtYM.Month),
+                    };
                     return (period.dtStart, period.dtEndInclusive);
                 }
             case "hour":
