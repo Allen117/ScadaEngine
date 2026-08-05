@@ -51,9 +51,10 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
-  <data name="billingperiod.title" xml:space="preserve"><value>月結週期設定</value></data>
+  <data name="billingperiod.title" xml:space="preserve"><value>電費月結週期設定</value></data>
   <data name="billingperiod.breadcrumb.energy" xml:space="preserve"><value>能源管理</value></data>
-  <data name="billingperiod.hint.overview" xml:space="preserve"><value>每個期別（月份）各自設定電費單起訖日期；未自訂的期別預設 = 上期結束 +1 天起算一個月（完全未自訂時 = 自然月）。設定即時生效，所有月粒度報表（用電報表 / 冷凍噸報表 / EMS 頁面）依期別切分，歷史月報也會用新設定重算。</value></data>
+  <data name="billingperiod.hint.overview" xml:space="preserve"><value>每個期別（月份）各自設定電費單起訖日期；未自訂的期別預設 = 上期結束 +1 天起算一個月（完全未自訂時 = 自然月）。設定即時生效，用電報表 / 電費報表 / EMS 電費卡片依期別切分，歷史月報也會用新設定重算。</value></data>
+  <data name="billingperiod.hint.electricity_only" xml:space="preserve"><value>本頁僅影響「電費」相關報表。水費另有獨立的月結週期設定（台水與台電抄表日不同），冷凍噸報表則固定走曆月以對齊能源申報。</value></data>
   <data name="billingperiod.hint.gap_overlap" xml:space="preserve"><value>期別間允許空窗或重疊（僅警告不阻擋）：空窗段的用電不會被任何期計入，重疊段會被兩期重複計入。</value></data>
   <data name="billingperiod.table.title" xml:space="preserve"><value>期別列表</value></data>
   <data name="billingperiod.table.col_period" xml:space="preserve"><value>期別</value></data>

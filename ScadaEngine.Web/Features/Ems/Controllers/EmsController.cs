@@ -20,6 +20,7 @@ public class EmsController : Controller
     private readonly MainMeterAggregationService _aggregation;
     private readonly ElectricityCostService _costService;
     private readonly EmsCardSettingService _cardSettingService;
+    private readonly WaterBillingPeriodService _waterBillingPeriodService;
     private readonly WaterMeterCircuitService _waterCircuitService;
     private readonly WaterUsageReportService _waterReportService;
     private readonly WaterCostService _waterCostService;
@@ -32,6 +33,7 @@ public class EmsController : Controller
         MainMeterAggregationService aggregation,
         ElectricityCostService costService,
         EmsCardSettingService cardSettingService,
+        WaterBillingPeriodService waterBillingPeriodService,
         WaterMeterCircuitService waterCircuitService,
         WaterUsageReportService waterReportService,
         WaterCostService waterCostService)
@@ -43,6 +45,7 @@ public class EmsController : Controller
         _aggregation          = aggregation;
         _costService          = costService;
         _cardSettingService   = cardSettingService;
+        _waterBillingPeriodService = waterBillingPeriodService;
         _waterCircuitService  = waterCircuitService;
         _waterReportService   = waterReportService;
         _waterCostService     = waterCostService;
@@ -474,7 +477,7 @@ public class EmsController : Controller
             return BadRequest(new { error = "granularity, pivot 皆為必填" });
 
         DateTime dtStart, dtEnd;
-        try { (dtStart, dtEnd) = await ParsePivotAsync(granularity, pivot); }
+        try { (dtStart, dtEnd) = await ParseWaterPivotAsync(granularity, pivot); }
         catch { return BadRequest(new { error = "pivot 格式不正確" }); }
 
         int nCircuitId;
@@ -511,7 +514,7 @@ public class EmsController : Controller
             return BadRequest(new { error = "granularity, pivot 皆為必填" });
 
         DateTime dtStart, dtEnd;
-        try { (dtStart, dtEnd) = await ParsePivotAsync(granularity, pivot); }
+        try { (dtStart, dtEnd) = await ParseWaterPivotAsync(granularity, pivot); }
         catch { return BadRequest(new { error = "pivot 格式不正確" }); }
 
         var root = await _waterCircuitService.GetRootAsync();
@@ -559,12 +562,26 @@ public class EmsController : Controller
     }
 
     /// <summary>
-    /// pivot → 報表服務的 (dtStart, dtEnd)。
+    /// pivot → 報表服務的 (dtStart, dtEnd)，**電費期別**版（用電長條/圓餅/去年同期/電費卡）。
     /// month（年檢視）：pivot=年份 → 期別 1~12 月（報表月粒度語意 = 含頭尾期別）；
     /// day（月檢視）：pivot=YYYY-MM → 該期別的實際起訖日（日粒度 dtEnd 為含訖日）；
     /// hour（日檢視）：pivot=YYYY-MM-DD → 該日（維持自然日，不受期別影響）。
+    ///
+    /// ⚠️ 水表卡片請用 <see cref="ParseWaterPivotAsync"/> — 兩者刻意拆成兩支而非加參數，
+    /// 讓「呼叫錯期別」變成編譯期選錯函式（看得見），而不是靜默走錯期別（查不出來）。
     /// </summary>
-    private async Task<(DateTime Start, DateTime End)> ParsePivotAsync(string granularity, string pivot)
+    private Task<(DateTime Start, DateTime End)> ParsePivotAsync(string granularity, string pivot)
+        => ParsePivotCoreAsync(granularity, pivot, isWater: false);
+
+    /// <summary>
+    /// pivot → (dtStart, dtEnd)，**水費期別**版（用水長條/圓餅/水費卡）。語意同電費版，
+    /// 差別只在 day（月檢視）取的是水費期別的實際起訖日。
+    /// </summary>
+    private Task<(DateTime Start, DateTime End)> ParseWaterPivotAsync(string granularity, string pivot)
+        => ParsePivotCoreAsync(granularity, pivot, isWater: true);
+
+    private async Task<(DateTime Start, DateTime End)> ParsePivotCoreAsync(
+        string granularity, string pivot, bool isWater)
     {
         switch (granularity)
         {
@@ -577,7 +594,9 @@ public class EmsController : Controller
                 {
                     var dtYM = DateTime.ParseExact(pivot + "-01", "yyyy-MM-dd",
                         System.Globalization.CultureInfo.InvariantCulture);
-                    var period = await _billingPeriodService.GetPeriodAsync(dtYM.Year, dtYM.Month);
+                    var period = isWater
+                        ? await _waterBillingPeriodService.GetPeriodAsync(dtYM.Year, dtYM.Month)
+                        : await _billingPeriodService.GetPeriodAsync(dtYM.Year, dtYM.Month);
                     return (period.dtStart, period.dtEndInclusive);
                 }
             case "hour":

@@ -52,7 +52,7 @@ public class TariffSettingController : Controller
         }
     }
 
-    /// <summary>整份設定（採用方案 + 全部方案）</summary>
+    /// <summary>整份設定（採用時間軸 + 方案目錄 + 衍生的今日採用方案）</summary>
     [HttpGet("api/config")]
     public async Task<IActionResult> GetConfig()
     {
@@ -67,7 +67,34 @@ public class TariffSettingController : Controller
         }
     }
 
-    /// <summary>儲存單一方案（整份驗證：級距連續 / 時段覆蓋 24h 不重疊）</summary>
+    /// <summary>
+    /// 儲存整份設定（採用時間軸 + 方案目錄）— 時間軸編輯用。
+    /// szActivePlanId 為衍生欄位，由後端依今日重算，不吃前端傳入值。
+    /// </summary>
+    [HttpPost("api/config")]
+    public async Task<IActionResult> SaveConfig([FromBody] SaveTariffConfigRequest dto)
+    {
+        try
+        {
+            await _service.SaveConfigAsync(new TariffConfig
+            {
+                adoptions = dto.adoptions,
+                plans = dto.plans,
+            });
+            return Ok(new { success = true });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "電費設定整份儲存失敗");
+            return StatusCode(500, new { message = "儲存失敗" });
+        }
+    }
+
+    /// <summary>儲存單一方案（整份驗證：級距連續 / 時段覆蓋 24h 不重疊）。方案不存在時視為新增自建方案。</summary>
     [HttpPost("api/plan")]
     public async Task<IActionResult> SavePlan([FromBody] TariffPlan plan)
     {
@@ -87,7 +114,27 @@ public class TariffSettingController : Controller
         }
     }
 
-    /// <summary>設為採用方案</summary>
+    /// <summary>刪除自建方案（台電 seed 方案與仍被採用時間軸引用的方案不可刪）</summary>
+    [HttpDelete("api/plan/{planId}")]
+    public async Task<IActionResult> DeletePlan(string planId)
+    {
+        try
+        {
+            await _service.DeletePlanAsync(planId);
+            return Ok(new { success = true });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "電費設定方案刪除失敗 {PlanId}", planId);
+            return StatusCode(500, new { message = "刪除失敗" });
+        }
+    }
+
+    /// <summary>設為採用方案（= 於採用時間軸補一筆「今日起採用」）</summary>
     [HttpPost("api/active")]
     public async Task<IActionResult> SetActive([FromBody] SetActivePlanRequest dto)
     {

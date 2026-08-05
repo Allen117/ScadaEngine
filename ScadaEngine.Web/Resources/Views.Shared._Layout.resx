@@ -81,7 +81,8 @@
   <data name="layout.menu.energy_declaration" xml:space="preserve"><value>能源申報</value></data>
   <data name="layout.menu.energy_baseline" xml:space="preserve"><value>能源基準</value></data>
   <data name="layout.menu.chilled_water" xml:space="preserve"><value>水系統迴路設定</value></data>
-  <data name="layout.menu.billing_period" xml:space="preserve"><value>月結週期設定</value></data>
+  <data name="layout.menu.billing_period" xml:space="preserve"><value>電費月結週期</value></data>
+  <data name="layout.menu.water_billing_period" xml:space="preserve"><value>水費月結週期</value></data>
   <data name="layout.menu.tariff_setting" xml:space="preserve"><value>電費設定</value></data>
   <data name="layout.menu.holiday_setting" xml:space="preserve"><value>國定假日設定</value></data>
   <data name="layout.menu.ems_card_setting" xml:space="preserve"><value>卡片顯示設定</value></data>

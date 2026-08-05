@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using Dapper;
 using Microsoft.Data.SqlClient;
@@ -7,15 +8,24 @@ using ScadaEngine.Web.Features.TariffSetting.Models;
 namespace ScadaEngine.Web.Services;
 
 /// <summary>
-/// 電費設定 — 台電各類電價方案的讀寫與驗證。
+/// 電費設定 — 台電各類電價方案 + 使用者自建方案的讀寫與驗證，以及「採用時間軸」選版。
 /// 台電預設值：Setting/tariff-taipower-defaults.json（唯讀 seed，隨程式部署）；
 /// 使用者設定：SystemSettings.electricity_tariff（整份 JSON，整份載入整份儲存）。
 /// DB 無值時回傳 seed；DB 有值時以 DB 為準，seed 新增的方案自動補齊（by szPlanId）。
-/// 本版只管設定 — 電費計算（接主要電表）留待後續版本。
+///
+/// 選版語意（與水費差異）：計價某日時取 adoptions 中生效日 &lt;= 該日的最新一筆；
+/// 查無適用（日期早於所有生效日 / 時間軸為空 / 指向已刪方案）一律回 null = 該時段不計價
+/// （水費是退回最早方案 — 水費必然有台水公告費率，電費則沿用「未選方案不計算」的既有行為）。
 /// </summary>
 public class TariffSettingService
 {
     private const string SettingKey = "electricity_tariff";
+
+    /// <summary>使用者自建方案的類別代碼（與台電 lighting/lv/hv/ehv 分開列示）</summary>
+    public const string CustomCategory = "custom";
+
+    /// <summary>舊資料遷移用的極早生效日 — 任何歷史日期都選得到，確保歷史電費數字不變</summary>
+    private const string LegacyEffectiveDate = "2000-01-01";
 
     private static readonly JsonSerializerOptions _jsonOptions = new() { WriteIndented = false };
 
@@ -68,6 +78,7 @@ public class TariffSettingService
 
     /// <summary>
     /// 取得整份設定 — DB 無值回 seed；有值以 DB 為準並補齊 seed 新增方案。
+    /// 舊資料（只有 szActivePlanId、無 adoptions）在記憶體中自動遷移為一筆極早生效的採用紀錄。
     /// </summary>
     public async Task<TariffConfig> GetConfigAsync()
     {
@@ -103,52 +114,87 @@ public class TariffSettingService
             if (!savedIds.Contains(seedPlan.szPlanId))
                 config.plans.Add(Clone(seedPlan));
         }
+
+        MigrateLegacyActivePlan(config);
         return config;
     }
 
     // ---------- 寫入 ----------
 
-    /// <summary>儲存單一方案（整份設定讀出 → 替換 → 存回）。驗證失敗丟 ArgumentException。</summary>
+    /// <summary>
+    /// 儲存單一方案（整份設定讀出 → 替換／新增 → 存回）。驗證失敗丟 ArgumentException。
+    /// 既有方案：szCategory/szType 以既有值為準（防前端竄改造成渲染錯亂），custom 方案例外可改型態；
+    /// 不存在的方案：視為新增自建方案，強制歸入 custom 類別。
+    /// </summary>
     public async Task SavePlanAsync(TariffPlan plan)
     {
-        var szError = ValidatePlan(plan);
-        if (szError != null)
-            throw new ArgumentException(szError);
-
         var config = await GetConfigAsync();
         var nIdx = config.plans.FindIndex(p =>
             string.Equals(p.szPlanId, plan.szPlanId, StringComparison.OrdinalIgnoreCase));
-        if (nIdx < 0)
-            throw new ArgumentException($"方案不存在：{plan.szPlanId}");
 
-        // 類別/型態為結構性欄位，以既有值為準（防前端竄改造成渲染錯亂）
-        plan.szCategory = config.plans[nIdx].szCategory;
-        plan.szType = config.plans[nIdx].szType;
-        config.plans[nIdx] = plan;
+        if (nIdx < 0)
+        {
+            // 新增 → 一律為使用者自建方案（台電 seed 方案只能由 seed 檔帶入）
+            plan.szCategory = CustomCategory;
+        }
+        else if (IsCustom(config.plans[nIdx]))
+        {
+            // 自建方案：類別鎖 custom，型態可改（三型皆可自建）
+            plan.szCategory = CustomCategory;
+        }
+        else
+        {
+            plan.szCategory = config.plans[nIdx].szCategory;
+            plan.szType = config.plans[nIdx].szType;
+            plan.szName = config.plans[nIdx].szName;   // seed 方案顯示名走 i18n，不吃前端輸入
+        }
+
+        var szError = ValidatePlan(plan);
+        if (szError != null)
+            throw new ArgumentException(szError);
+        if (IsCustom(plan) && string.IsNullOrWhiteSpace(plan.szName))
+            throw new ArgumentException("自建方案名稱不可為空");
+
+        if (nIdx < 0) config.plans.Add(plan);
+        else config.plans[nIdx] = plan;
 
         await SaveConfigAsync(config);
-        _logger.LogInformation("電費設定已更新方案 {PlanId}", plan.szPlanId);
+        _logger.LogInformation("電費設定已{Action}方案 {PlanId}", nIdx < 0 ? "新增" : "更新", plan.szPlanId);
     }
 
-    /// <summary>設定採用方案（planId 須存在）</summary>
+    /// <summary>
+    /// 設為採用方案 = 在時間軸補（或覆蓋）一筆「今日起採用」。
+    /// 時間軸才是唯一真相，因此本操作不直接寫 szActivePlanId（存檔時由 adoptions 重算）。
+    /// </summary>
     public async Task SetActivePlanAsync(string szPlanId)
     {
         var config = await GetConfigAsync();
         if (!config.plans.Any(p => string.Equals(p.szPlanId, szPlanId, StringComparison.OrdinalIgnoreCase)))
             throw new ArgumentException($"方案不存在：{szPlanId}");
 
-        config.szActivePlanId = szPlanId;
+        var szToday = DateTime.Today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        config.adoptions.RemoveAll(a => a.szEffectiveDate == szToday);
+        config.adoptions.Add(new TariffAdoption { szEffectiveDate = szToday, szPlanId = szPlanId });
+
         await SaveConfigAsync(config);
-        _logger.LogInformation("電費設定採用方案切換為 {PlanId}", szPlanId);
+        _logger.LogInformation("電費設定自 {Date} 起採用方案 {PlanId}", szToday, szPlanId);
     }
 
-    /// <summary>還原單一方案為台電預設，回傳還原後的方案</summary>
+    /// <summary>還原單一方案為台電預設，回傳還原後的方案。自建方案無 seed 可還原 → 明確報錯。</summary>
     public async Task<TariffPlan> ResetPlanAsync(string szPlanId)
     {
         var seed = GetSeed();
         var seedPlan = seed.plans.FirstOrDefault(p =>
-            string.Equals(p.szPlanId, szPlanId, StringComparison.OrdinalIgnoreCase))
-            ?? throw new ArgumentException($"方案不存在：{szPlanId}");
+            string.Equals(p.szPlanId, szPlanId, StringComparison.OrdinalIgnoreCase));
+        if (seedPlan == null)
+        {
+            var config0 = await GetConfigAsync();
+            var existing = config0.plans.FirstOrDefault(p =>
+                string.Equals(p.szPlanId, szPlanId, StringComparison.OrdinalIgnoreCase));
+            throw new ArgumentException(existing != null
+                ? $"自建方案無台電預設可還原：{szPlanId}"
+                : $"方案不存在：{szPlanId}");
+        }
 
         var config = await GetConfigAsync();
         var nIdx = config.plans.FindIndex(p =>
@@ -162,8 +208,60 @@ public class TariffSettingService
         return restored;
     }
 
-    private async Task SaveConfigAsync(TariffConfig config)
+    /// <summary>
+    /// 刪除自建方案 — 台電 seed 方案不可刪（載入時會自動補回）；
+    /// 仍被採用時間軸引用者拒絕（否則該時段的歷史會突然沒方案可算）。
+    /// </summary>
+    public async Task DeletePlanAsync(string szPlanId)
     {
+        var config = await GetConfigAsync();
+        var plan = config.plans.FirstOrDefault(p =>
+            string.Equals(p.szPlanId, szPlanId, StringComparison.OrdinalIgnoreCase))
+            ?? throw new ArgumentException($"方案不存在：{szPlanId}");
+
+        if (!IsCustom(plan))
+            throw new ArgumentException($"台電預設方案不可刪除：{szPlanId}");
+
+        var used = config.adoptions
+            .Where(a => string.Equals(a.szPlanId, szPlanId, StringComparison.OrdinalIgnoreCase))
+            .Select(a => a.szEffectiveDate)
+            .ToList();
+        if (used.Count > 0)
+            throw new ArgumentException($"方案仍被採用時間軸引用（生效日 {string.Join("、", used)}），請先移除該採用紀錄再刪除方案");
+
+        config.plans.RemoveAll(p => string.Equals(p.szPlanId, szPlanId, StringComparison.OrdinalIgnoreCase));
+        await SaveConfigAsync(config);
+        _logger.LogInformation("電費設定已刪除自建方案 {PlanId}", szPlanId);
+    }
+
+    /// <summary>
+    /// 儲存整份設定 — 存前驗證所有方案與採用時間軸，並重算衍生欄位 szActivePlanId。
+    /// 驗證失敗丟 ArgumentException。
+    /// </summary>
+    public async Task SaveConfigAsync(TariffConfig config)
+    {
+        config.plans ??= [];
+        config.adoptions ??= [];
+        if (config.plans.Count == 0)
+            throw new ArgumentException("至少須保留一個方案");
+
+        var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var plan in config.plans)
+        {
+            var szPlanError = ValidatePlan(plan);
+            if (szPlanError != null)
+                throw new ArgumentException($"{PlanDisplay(plan)}：{szPlanError}");
+            if (!ids.Add(plan.szPlanId))
+                throw new ArgumentException($"方案 Id 重複：{plan.szPlanId}");
+        }
+
+        var (isValid, szError) = ValidateAdoptions(config);
+        if (!isValid)
+            throw new ArgumentException(szError);
+
+        // szActivePlanId 為衍生欄位 — 每次存檔由時間軸反推今日採用方案
+        config.szActivePlanId = SelectPlanForDate(config, DateTime.Today)?.szPlanId ?? string.Empty;
+
         var szJson = JsonSerializer.Serialize(config, _jsonOptions);
         const string szSql = @"
             IF EXISTS (SELECT * FROM SystemSettings WHERE SettingKey = @SettingKey)
@@ -174,13 +272,92 @@ public class TariffSettingService
         await conn.ExecuteAsync(szSql, new { SettingKey, szJson });
     }
 
+    // ---------- static 純邏輯（單元測試用） ----------
+
+    /// <summary>是否為使用者自建方案</summary>
+    public static bool IsCustom(TariffPlan plan) =>
+        string.Equals(plan.szCategory, CustomCategory, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// 依日期選用生效方案 — adoptions 中生效日 &lt;= dtDate 的最新一筆，再由 plans 查方案。
+    /// 查無適用（時間軸為空 / 日期早於所有生效日 / 指向已刪除方案）一律回 null = 該時段不計價。
+    /// 同一生效日有多筆時取後定義者（ValidateAdoptions 已擋重複，此為防禦性行為）。
+    /// </summary>
+    public static TariffPlan? SelectPlanForDate(TariffConfig config, DateTime dtDate)
+    {
+        if (config?.adoptions == null || config.adoptions.Count == 0 || config.plans == null) return null;
+
+        TariffAdoption? best = null;
+        var dtBest = DateTime.MinValue;
+        foreach (var adoption in config.adoptions)
+        {
+            if (!TryParseDate(adoption.szEffectiveDate, out var dtEffective)) continue;
+            if (dtEffective > dtDate.Date) continue;
+            if (best == null || dtEffective >= dtBest)
+            {
+                best = adoption;
+                dtBest = dtEffective;
+            }
+        }
+        if (best == null) return null;
+
+        var szBestPlanId = best.szPlanId;
+        return config.plans.FirstOrDefault(p =>
+            string.Equals(p.szPlanId, szBestPlanId, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// 舊資料相容（記憶體遷移，不寫 DB）— 只有 szActivePlanId 而無 adoptions 時，
+    /// 補一筆極早生效日的採用紀錄，使任何歷史日期都選到同一方案 → 歷史電費數字完全不變。
+    /// </summary>
+    public static void MigrateLegacyActivePlan(TariffConfig config)
+    {
+        if (config == null) return;
+        config.adoptions ??= [];
+        if (config.adoptions.Count > 0) return;
+        if (string.IsNullOrWhiteSpace(config.szActivePlanId)) return;
+
+        config.adoptions.Add(new TariffAdoption
+        {
+            szEffectiveDate = LegacyEffectiveDate,
+            szPlanId = config.szActivePlanId,
+        });
+    }
+
+    /// <summary>
+    /// 採用時間軸驗證 — 生效日須為 yyyy-MM-dd；szPlanId 非空且須存在於 plans；同一生效日不可重複。
+    /// 空清單合法（= 尚未採用任何方案）。
+    /// </summary>
+    public static (bool isValid, string szError) ValidateAdoptions(TariffConfig config)
+    {
+        if (config == null) return (false, "設定不可為空");
+        if (config.adoptions == null || config.adoptions.Count == 0) return (true, string.Empty);
+
+        var planIds = (config.plans ?? []).Select(p => p.szPlanId).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var seenDates = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var adoption in config.adoptions)
+        {
+            var szDate = adoption.szEffectiveDate?.Trim() ?? string.Empty;
+            if (!TryParseDate(szDate, out _))
+                return (false, $"採用生效日格式不正確（應為 yyyy-MM-dd）：{adoption.szEffectiveDate}");
+            if (string.IsNullOrWhiteSpace(adoption.szPlanId))
+                return (false, $"採用生效日 {szDate} 未選擇方案");
+            if (!planIds.Contains(adoption.szPlanId))
+                return (false, $"採用生效日 {szDate} 指向不存在的方案：{adoption.szPlanId}");
+            if (!seenDates.Add(szDate))
+                return (false, $"採用生效日重複：{szDate}");
+        }
+        return (true, string.Empty);
+    }
+
     // ---------- 驗證 ----------
 
     private static readonly string[] _dayTypes = ["weekday", "sat", "sun_offday"];
     private static readonly string[] _seasons = ["summer", "nonsummer"];
 
     /// <summary>方案驗證 — 回傳錯誤訊息，null = 通過</summary>
-    public string? ValidatePlan(TariffPlan plan)
+    public static string? ValidatePlan(TariffPlan plan)
     {
         if (string.IsNullOrWhiteSpace(plan.szPlanId))
             return "方案 Id 不可為空";
@@ -330,6 +507,15 @@ public class TariffSettingService
     }
 
     // ---------- 工具 ----------
+
+    /// <summary>解析 "yyyy-MM-dd"（採用時間軸生效日）</summary>
+    private static bool TryParseDate(string? szDate, out DateTime dtDate) =>
+        DateTime.TryParseExact(szDate?.Trim() ?? string.Empty, "yyyy-MM-dd",
+            CultureInfo.InvariantCulture, DateTimeStyles.None, out dtDate);
+
+    /// <summary>錯誤訊息用的方案顯示字（自建有名稱，seed 只有 i18n key → 用 Id）</summary>
+    private static string PlanDisplay(TariffPlan plan) =>
+        string.IsNullOrWhiteSpace(plan.szName) ? plan.szPlanId : $"{plan.szName}（{plan.szPlanId}）";
 
     /// <summary>解析 "HH:mm" 為當日分鐘數；"24:00" 視為 1440</summary>
     private static bool TryParseTime(string szTime, out int nMinutes)

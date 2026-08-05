@@ -171,8 +171,9 @@ builder.Services.AddScoped<ScadaEngine.Web.Services.LineTargetService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.EmailGroupService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyCircuitService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.WaterCircuitService>();
-// 月結週期（期別）— 全系統月粒度報表的唯一期界來源（內含 static 快取，寫入時失效）
+// 月結週期（期別）— 電費與水費各一套，彼此獨立（內含各自的 static 快取，寫入時失效）
 builder.Services.AddScoped<ScadaEngine.Web.Services.BillingPeriodService>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.WaterBillingPeriodService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyReportService>();
 // ISO 50001 能源基準 — OLS 回歸引擎（純數學無狀態 → Singleton）+ 基線模型/取樣/SEU + EnPI 報告
 builder.Services.AddSingleton<ScadaEngine.Web.Services.BaselineRegressionEngine>();

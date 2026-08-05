@@ -15,25 +15,25 @@ namespace ScadaEngine.Web.Services;
 ///   - 葉子值取自 <c>WaterLeafHourly</c>（已預聚合），非 boundary 相減
 ///   - 階層加總無 sign（WaterCircuit 表無 Sign 欄位）
 ///   - 無 MaxKwh 溢位概念
+///   - **月粒度走曆月，不走任何月結期別**（2026-08-05 起）：本報表綁定能源申報、
+///     申報固定曆月，且冷凍噸不是算錢的報表，跟著電費期別走反而與申報數字對不上。
+///     ⚠️ 行為變更 — 已自訂電費期別的現場，月數字會與此版之前不同。
 /// </summary>
 public class RefrigerationTonReportService
 {
     private readonly ILogger<RefrigerationTonReportService> _logger;
     private readonly DatabaseConfigService _configService;
     private readonly WaterCircuitService _circuitService;
-    private readonly BillingPeriodService _billingPeriodService;
     private string _szConnectionString = string.Empty;
 
     public RefrigerationTonReportService(
         ILogger<RefrigerationTonReportService> logger,
         DatabaseConfigService configService,
-        WaterCircuitService circuitService,
-        BillingPeriodService billingPeriodService)
+        WaterCircuitService circuitService)
     {
         _logger = logger;
         _configService = configService;
         _circuitService = circuitService;
-        _billingPeriodService = billingPeriodService;
     }
 
     private async Task<SqlConnection> GetConnectionAsync()
@@ -52,7 +52,7 @@ public class RefrigerationTonReportService
         if (circuit == null)
             throw new InvalidOperationException($"水系統迴路 Id={nCircuitId} 不存在");
 
-        var (ranges, labels) = await BuildBucketRangesAsync(szGranularity, dtStart, dtEnd);
+        var (ranges, labels) = BuildBucketRanges(szGranularity, dtStart, dtEnd);
 
         var result = new RefrigerationTonReportResult
         {
@@ -79,7 +79,7 @@ public class RefrigerationTonReportService
         if (circuit == null)
             throw new InvalidOperationException($"水系統迴路 Id={nCircuitId} 不存在");
 
-        var (ranges, labels) = await BuildBucketRangesAsync(szGranularity, dtStart, dtEnd);
+        var (ranges, labels) = BuildBucketRanges(szGranularity, dtStart, dtEnd);
 
         var result = new RefrigerationTonReportResult
         {
@@ -124,18 +124,12 @@ public class RefrigerationTonReportService
     }
 
     /// <summary>
-    /// 產生 N 個 bucket 的 [起, 訖) 邊界對與標籤 — 與 EnergyReportService 同構。
-    /// 月粒度 = 期別（BillingPeriodService 解析，期別間可能空窗/重疊）；其餘粒度沿用連續邊界切法。
+    /// 產生 N 個 bucket 的 [起, 訖) 邊界對與標籤。
+    /// **所有粒度（含月）皆為連續曆制邊界** — 冷凍噸報表不走月結期別（理由見 class 註解）。
     /// </summary>
-    private async Task<(List<(DateTime dtStart, DateTime dtEnd)> ranges, List<string> labels)>
-        BuildBucketRangesAsync(string szGranularity, DateTime dtStart, DateTime dtEnd)
+    private (List<(DateTime dtStart, DateTime dtEnd)> ranges, List<string> labels)
+        BuildBucketRanges(string szGranularity, DateTime dtStart, DateTime dtEnd)
     {
-        if (szGranularity == "month")
-        {
-            var periods = await _billingPeriodService.GetPeriodRangesAsync(dtStart, dtEnd);
-            return (periods.Select(p => (p.dtStart, p.dtEndExclusive)).ToList(),
-                    periods.Select(p => p.szLabel).ToList());
-        }
         var boundaries = BuildBoundaries(szGranularity, dtStart, dtEnd);
         var ranges = new List<(DateTime, DateTime)>(boundaries.Count - 1);
         for (var i = 0; i < boundaries.Count - 1; i++)
@@ -144,8 +138,9 @@ public class RefrigerationTonReportService
     }
 
     /// <summary>
-    /// 能源申報專用 — 指定年度的 12 個「曆月」bucket（每月 1 號 00:00 ~ 次月 1 號 00:00），
-    /// 不走月結期別（BillingPeriodService）。共用 ComputeBucketSumsForCircuitAsync 計算核心。
+    /// 能源申報專用 — 指定年度的 12 個「曆月」bucket（每月 1 號 00:00 ~ 次月 1 號 00:00）。
+    /// 共用 ComputeBucketSumsForCircuitAsync 計算核心。
+    /// 註：本服務月粒度本身也已改曆月，此方法保留是因為它固定取「整年 12 個月」而非任意區間。
     /// </summary>
     public async Task<RefrigerationTonReportResult> GetCalendarMonthlyReportAsync(int nCircuitId, int nYear)
     {
@@ -326,8 +321,19 @@ public class RefrigerationTonReportService
                     break;
                 }
             case "month":
-                // 月粒度已改為期別切法（每期一對 [起, 訖) 邊界，可能不連續）— 走 BuildBucketRangesAsync
-                throw new ArgumentException("月粒度期界由 BillingPeriodService 解析，不支援 BuildBoundaries");
+                {
+                    // 曆月切界（每月 1 號 00:00）— 冷凍噸報表刻意不走月結期別，理由見 class 註解
+                    var t = new DateTime(dtStart.Year, dtStart.Month, 1);
+                    var endMonth = new DateTime(dtEnd.Year, dtEnd.Month, 1);
+                    if (endMonth < t) endMonth = t;
+                    while (t <= endMonth)
+                    {
+                        list.Add(t);
+                        t = t.AddMonths(1);
+                    }
+                    list.Add(endMonth.AddMonths(1));
+                    break;
+                }
             case "year":
                 {
                     var t = new DateTime(dtStart.Year, 1, 1);

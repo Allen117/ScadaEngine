@@ -185,7 +185,7 @@
                                     </a>
                                 </li>
                             }
-                            @if (canAccess("/ChilledWaterSystem") || canAccess("/EnergyMeter") || canAccess("/WaterMeterSetting") || canAccess("/BillingPeriodSetting") || canAccess("/TariffSetting") || canAccess("/WaterTariffSetting") || canAccess("/HolidaySetting") || canAccess("/EmsCardSetting"))
+                            @if (canAccess("/ChilledWaterSystem") || canAccess("/EnergyMeter") || canAccess("/WaterMeterSetting") || canAccess("/BillingPeriodSetting") || canAccess("/WaterBillingPeriodSetting") || canAccess("/TariffSetting") || canAccess("/WaterTariffSetting") || canAccess("/HolidaySetting") || canAccess("/EmsCardSetting"))
                             {
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
@@ -208,6 +208,10 @@
                                         @if (canAccess("/BillingPeriodSetting"))
                                         {
                                             <li><a class="dropdown-item" href="/BillingPeriodSetting"><i class="fas fa-calendar-check me-2"></i>@Localizer["layout.menu.billing_period"]</a></li>
+                                        }
+                                        @if (canAccess("/WaterBillingPeriodSetting"))
+                                        {
+                                            <li><a class="dropdown-item" href="/WaterBillingPeriodSetting"><i class="fas fa-calendar-day me-2"></i>@Localizer["layout.menu.water_billing_period"]</a></li>
                                         }
                                         @if (canAccess("/TariffSetting"))
                                         {

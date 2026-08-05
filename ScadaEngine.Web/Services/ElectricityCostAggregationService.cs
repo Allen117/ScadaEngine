@@ -5,7 +5,7 @@ namespace ScadaEngine.Web.Services;
 /// 啟動時 catch-up 近 N 天（appsettings ElectricityCost:CatchUpDays，預設 7），
 /// 主迴圈每 30 秒檢查是否到 XX:05（晚於 Engine 葉子聚合的 XX:02），
 /// 到達就以 UPSERT 語意重算近 48 小時 rolling window（吸收 Engine 的 hourly 回填）。
-/// 未選採用方案（szActivePlanId 空）時不計算，選定後下一輪自動生效。
+/// 採用時間軸（adoptions）為空 = 未採用任何方案時不計算，設定後下一輪自動生效。
 /// Singleton BackgroundService — ElectricityCostService 為 Scoped，透過 CreateScope 取用。
 /// </summary>
 public class ElectricityCostAggregationService : BackgroundService

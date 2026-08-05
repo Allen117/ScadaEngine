@@ -17,7 +17,8 @@ namespace ScadaEngine.Web.Services;
 ///   （Holidays 表 → sun_offday；週六 → sat；週日 → sun_offday；其餘 → weekday）
 /// - flat：整小時單一時段 all，單價依季節
 /// - progressive：只存 kWh（Period=all，UnitPrice/Cost=NULL）— 累進單價是月總度數的函數，查詢時套級距
-/// - 重算一律用「目前生效方案」費率覆蓋區間（DELETE + INSERT，分塊交易）
+/// - 重算依「採用時間軸」逐日選版（TariffSettingService.SelectPlanForDate）覆蓋區間（DELETE + INSERT，分塊交易）；
+///   某天查無適用方案 → 該天跳過不產列（改費率不會追溯改寫歷史電費）
 /// </summary>
 public class ElectricityCostService
 {
@@ -75,8 +76,9 @@ public class ElectricityCostService
         DateTime dtFrom, DateTime dtToExclusive);
 
     /// <summary>
-    /// 以「目前生效方案」重算區間 [dtFrom, dtToExclusive) 的電費（DELETE + INSERT 覆蓋，7 天一塊分交易）。
-    /// 未選採用方案時回 isSuccess=false。時間自動截整點。
+    /// 依採用時間軸「逐日選版」重算區間 [dtFrom, dtToExclusive) 的電費（DELETE + INSERT 覆蓋，7 天一塊分交易）。
+    /// 區間內完全沒有適用方案時回 isSuccess=false（不動既有資料）；部分天數無方案則該天不產列。
+    /// 時間自動截整點。
     /// </summary>
     public async Task<RecalculateResult> RecalculateRangeAsync(
         DateTime dtFrom, DateTime dtToExclusive, CancellationToken ct = default)
@@ -89,8 +91,9 @@ public class ElectricityCostService
             return new RecalculateResult(false, "range_too_large", 0, 0, dtFrom, dtToExclusive);
 
         var config = await _tariffService.GetConfigAsync();
-        var plan = FindActivePlan(config);
-        if (plan == null)
+        // 逐日快取選版（同一天內共用同一方案，避免每小時重查）；區間 <= 366 天故最多 367 筆
+        var planByDay = BuildPlanByDay(config, dtFrom, dtToExclusive);
+        if (planByDay.Count == 0)
             return new RecalculateResult(false, "no_active_plan", 0, 0, dtFrom, dtToExclusive);
 
         var holidays = await _holidayService.GetAllAsync();
@@ -111,8 +114,17 @@ public class ElectricityCostService
                 new { dtChunk, dtChunkEnd })).ToList();
 
             var costRows = new List<CostRow>(sourceRows.Count * 2);
+            var pricedHours = new HashSet<DateTime>();
             foreach (var src in sourceRows)
+            {
+                // 該日未採用任何方案 → 不產列。搭配下方無條件 DELETE，效果是「該日舊列被清掉且不重寫」。
+                // 這是刻意的：時間軸上沒有採用方案的日子，留著舊方案算出的金額等於讓錯誤數字無聲存活，
+                // 比缺資料更糟。且本表是衍生資料 —— 來源 EnergyLeafHourly 未被動到，
+                // 使用者補上該期間的採用紀錄後重算即可完整還原（含 Kwh 快照）。
+                if (!planByDay.TryGetValue(src.HourStart.Date, out var plan)) continue;
                 AppendCostRows(costRows, plan, holidays, src.SID, src.HourStart, src.DeltaKwh, src.Quality);
+                pricedHours.Add(src.HourStart);
+            }
 
             using var tran = conn.BeginTransaction();
             try
@@ -129,28 +141,32 @@ public class ElectricityCostService
                 throw;
             }
 
-            nTotalHours += sourceRows.Select(r => r.HourStart).Distinct().Count();
+            nTotalHours += pricedHours.Count;
             nTotalRows += costRows.Count;
         }
 
+        var szPlanIds = string.Join(",", planByDay.Values.Select(p => p.szPlanId).Distinct());
         _logger.LogInformation(
-            "電費重算完成：{From:yyyy-MM-dd HH:00} ~ {To:yyyy-MM-dd HH:00}，方案 {PlanId}，小時數 {Hours}、寫入 {Rows} 列",
-            dtFrom, dtToExclusive, plan.szPlanId, nTotalHours, nTotalRows);
+            "電費重算完成：{From:yyyy-MM-dd HH:00} ~ {To:yyyy-MM-dd HH:00}，方案 {PlanIds}，小時數 {Hours}、寫入 {Rows} 列",
+            dtFrom, dtToExclusive, szPlanIds, nTotalHours, nTotalRows);
         return new RecalculateResult(true, null, nTotalHours, nTotalRows, dtFrom, dtToExclusive);
     }
 
-    /// <summary>目前是否已選採用方案（背景服務判斷是否計算用）</summary>
-    public async Task<bool> HasActivePlanAsync()
+    /// <summary>
+    /// 建立「日期 → 該日適用方案」對照（無適用方案的日子不入表）。
+    /// 選版邏輯集中在 TariffSettingService.SelectPlanForDate，本處只負責逐日展開與快取。
+    /// </summary>
+    private static Dictionary<DateTime, TariffPlan> BuildPlanByDay(
+        TariffConfig config, DateTime dtFrom, DateTime dtToExclusive)
     {
-        var config = await _tariffService.GetConfigAsync();
-        return FindActivePlan(config) != null;
-    }
-
-    private static TariffPlan? FindActivePlan(TariffConfig config)
-    {
-        if (string.IsNullOrWhiteSpace(config.szActivePlanId)) return null;
-        return config.plans.FirstOrDefault(p =>
-            string.Equals(p.szPlanId, config.szActivePlanId, StringComparison.OrdinalIgnoreCase));
+        var map = new Dictionary<DateTime, TariffPlan>();
+        var dtLastDay = dtToExclusive.AddTicks(-1).Date;
+        for (var dtDay = dtFrom.Date; dtDay <= dtLastDay; dtDay = dtDay.AddDays(1))
+        {
+            var plan = TariffSettingService.SelectPlanForDate(config, dtDay);
+            if (plan != null) map[dtDay] = plan;
+        }
+        return map;
     }
 
     private record CostRow(string szSID, DateTime dtHourStart, string szPeriod,
@@ -333,6 +349,7 @@ public class ElectricityCostService
 
     /// <summary>
     /// 取得指定迴路（未指定 = 主要電表，無主要電表則第一個根節點）本期電費狀態。
+    /// 方案依「本期起日」選版（跨版本換方案時卡片顯示的是本期實際適用的方案）。
     /// - tou / flat：kWh 與金額為葉子列 × EffectiveSign 精確加總
     /// - progressive：卡片級距金額只對根迴路精確；子迴路以 kWh 占比分攤（isEstimated=true）
     /// - surcharge（簡易型月總度數超額加價）：同 progressive 邏輯，門檻套根迴路總量
@@ -342,7 +359,8 @@ public class ElectricityCostService
         var dto = new EmsElectricityCostDto();
 
         var config = await _tariffService.GetConfigAsync();
-        var plan = FindActivePlan(config);
+        var period = await _billingPeriodService.GetCurrentPeriodAsync(DateTime.Today);
+        var plan = TariffSettingService.SelectPlanForDate(config, period.dtStart);
         if (plan == null) return dto;   // hasPlan = false
 
         dto.hasPlan = true;
@@ -364,8 +382,6 @@ public class ElectricityCostService
         dto.circuitId = target.nId;
         dto.circuitName = target.szName;
         dto.isRootCircuit = target.nId == root.nId;
-
-        var period = await _billingPeriodService.GetCurrentPeriodAsync(DateTime.Today);
         dto.periodLabel = period.szLabel;
 
         using var conn = await GetConnectionAsync();

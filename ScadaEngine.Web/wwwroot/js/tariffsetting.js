@@ -1,17 +1,25 @@
-// 電費設定頁邏輯 — 台電各類電價方案（累進 / 單一費率 / 時間電價）檢視與編輯。
+// 電費設定頁邏輯 — 台電各類電價方案 + 使用者自建方案（累進 / 單一費率 / 時間電價）檢視與編輯，
+// 外加「採用時間軸」（哪天起改用哪個方案）與全量重算。
 // 資料模型見 Features/TariffSetting/Models/TariffSettingModels.cs；台電預設 seed 見 Setting/tariff-taipower-defaults.json。
 // 時間輸入用 flatpickr（24h）；訖時 00:00 代表 24:00（當日結束），起時晚於訖時代表跨午夜。
+// 生效日為 date-only → 用原生 <input type="date">（無 AM/PM 問題，不需 flatpickr）。
 (function () {
     'use strict';
 
-    var CATEGORIES = ['lighting', 'lv', 'hv', 'ehv'];
+    var CATEGORIES = ['lighting', 'lv', 'hv', 'ehv', 'custom'];
+    var CUSTOM = 'custom';
+    var PLAN_TYPES = ['progressive', 'flat', 'tou'];
     var DAY_TYPES = ['weekday', 'sat', 'sun_offday'];
     var SEASONS = ['summer', 'nonsummer'];
     var PERIOD_ORDER = { peak: 0, semipeak: 1, offpeak: 2 };
 
-    var g_config = null;      // 整份 TariffConfig（伺服器版）
+    // 全量重算單段天數上限（後端 MaxRecalculateDays = 366，留 1 天餘裕給含頭含尾）
+    var SEGMENT_DAYS = 365;
+
+    var g_config = null;      // 整份 TariffConfig（伺服器版 + 本機新增方案）
     var g_plan = null;        // 目前顯示方案的工作副本（collect() 時由 DOM 回填）
     var g_dirty = false;
+    var g_newPlanIds = [];    // 尚未存到伺服器的新方案 Id（刪除時只需本機移除）
 
     document.addEventListener('DOMContentLoaded', function () {
         if (window.i18n) window.i18n.ready(load);
@@ -36,6 +44,7 @@
             return;
         }
 
+        if (!g_config.adoptions) g_config.adoptions = [];
         fillCategorySelect();
         loadCostSummary();
 
@@ -49,6 +58,7 @@
             selectPlan(initial.szPlanId);
         }
         updateActiveCard();
+        renderAdoptions();
 
         document.getElementById('tsCategory').addEventListener('change', onCategoryChange);
         document.getElementById('tsPlan').addEventListener('change', onPlanChange);
@@ -86,8 +96,15 @@
         }
     }
 
+    function isCustom(p) { return !!p && p.szCategory === CUSTOM; }
+
+    // 自建方案顯示使用者輸入的名稱；台電 seed 方案走 i18n key
+    function planName(p) {
+        return p.szName ? p.szName : t('tariff.plan.' + p.szPlanId);
+    }
+
     function planLabel(p) {
-        return t('tariff.category.' + p.szCategory) + '－' + t('tariff.plan.' + p.szPlanId);
+        return t('tariff.category.' + p.szCategory) + '－' + planName(p);
     }
 
     // ── 方案選單 ─────────────────────────────────────────
@@ -102,12 +119,14 @@
     function fillPlanSelect(category) {
         var sel = document.getElementById('tsPlan');
         var activeSuffix = ' (' + t('tariffsetting.badge.active') + ')';
-        sel.innerHTML = g_config.plans
-            .filter(function (p) { return p.szCategory === category; })
-            .map(function (p) {
-                var suffix = p.szPlanId === g_config.szActivePlanId ? activeSuffix : '';
-                return '<option value="' + p.szPlanId + '">' + escapeHtml(t('tariff.plan.' + p.szPlanId) + suffix) + '</option>';
-            }).join('');
+        var plans = g_config.plans.filter(function (p) { return p.szCategory === category; });
+        sel.innerHTML = plans.map(function (p) {
+            var suffix = p.szPlanId === g_config.szActivePlanId ? activeSuffix : '';
+            return '<option value="' + escapeHtml(p.szPlanId) + '">' + escapeHtml(planName(p) + suffix) + '</option>';
+        }).join('');
+        if (plans.length === 0) {
+            sel.innerHTML = '<option value="">' + escapeHtml(t('tariffsetting.select.empty')) + '</option>';
+        }
         document.getElementById('tsCategoryDesc').textContent = t('tariff.category_desc.' + category);
     }
 
@@ -120,6 +139,18 @@
         fillPlanSelect(category);
         var first = document.getElementById('tsPlan').value;
         if (first) selectPlan(first);
+        else renderEmptyCategory();
+    }
+
+    // 類別下無任何方案（自訂類別初始狀態）→ 清空編輯區
+    function renderEmptyCategory() {
+        g_plan = null;
+        g_dirty = false;
+        document.getElementById('tsPlanTitle').textContent = t('tariffsetting.editor.no_plan');
+        document.getElementById('tsTypeBadge').innerHTML = '';
+        document.getElementById('tsPlanContainer').innerHTML =
+            '<div class="text-center text-muted py-4">' + escapeHtml(t('tariffsetting.editor.no_plan_hint')) + '</div>';
+        updateActiveCard();
     }
 
     function onPlanChange() {
@@ -148,19 +179,25 @@
         document.getElementById('tsActivePlanName').textContent = active ? planLabel(active) : t('tariffsetting.card.no_active');
         var isActive = g_plan && g_plan.szPlanId === g_config.szActivePlanId;
         document.getElementById('tsActiveBadge').classList.toggle('d-none', !isActive);
-        document.getElementById('btnTsSetActive').classList.toggle('d-none', !!isActive);
+        document.getElementById('btnTsSetActive').classList.toggle('d-none', !!isActive || !g_plan);
+
+        // 只有自建方案可刪（台電 seed 方案刪了下次載入也會自動補回）
+        var btnDel = document.getElementById('btnTsDelPlan');
+        btnDel.disabled = !isCustom(g_plan);
+        btnDel.title = isCustom(g_plan) ? '' : t('tariffsetting.msg.seed_undeletable');
     }
 
     // ── 渲染 ─────────────────────────────────────────────
 
     function renderPlan() {
         var p = g_plan;
+        if (!p) { renderEmptyCategory(); return; }
         document.getElementById('tsPlanTitle').textContent = planLabel(p);
         document.getElementById('tsTypeBadge').innerHTML =
             '<span class="badge ' + (p.szType === 'tou' ? 'bg-primary' : 'bg-secondary') + '">' +
             escapeHtml(t('tariff.type.' + p.szType)) + '</span>';
 
-        var html = '';
+        var html = renderIdentity(p);
         if (p.szNoteKey) {
             html += '<div class="alert alert-info py-2 ts-note"><i class="fas fa-info-circle me-1"></i>' +
                 escapeHtml(t(p.szNoteKey)) + '</div>';
@@ -187,8 +224,33 @@
         container.querySelectorAll('.ts-summer-month').forEach(function (el) {
             el.addEventListener('change', function () { rebuildDayOptions(el); });
         });
+        // 自建方案改型態 → 換骨架重繪
+        var typeSel = document.getElementById('tsPlanType');
+        if (typeSel) typeSel.addEventListener('change', function () { onTypeChange(typeSel.value); });
 
         updateActiveCard();
+    }
+
+    // 方案名稱 / 型態（名稱與型態僅自建方案可編輯；seed 方案顯示 i18n 名稱且唯讀）
+    function renderIdentity(p) {
+        var custom = isCustom(p);
+        var typeCell = custom
+            ? '<select id="tsPlanType" class="form-select form-select-sm">' +
+              PLAN_TYPES.map(function (ty) {
+                  return '<option value="' + ty + '"' + (ty === p.szType ? ' selected' : '') + '>' +
+                      escapeHtml(t('tariff.type.' + ty)) + '</option>';
+              }).join('') + '</select>'
+            : '<input type="text" class="form-control form-control-sm" value="' +
+              escapeHtml(t('tariff.type.' + p.szType)) + '" disabled>';
+
+        return '<div class="row g-3 mb-3 ts-identity">' +
+            '<div class="col-md-5"><label class="form-label small mb-1 fw-semibold">' +
+            escapeHtml(t('tariffsetting.label.plan_name')) + '</label>' +
+            '<input type="text" id="tsPlanName" class="form-control form-control-sm" maxlength="50" value="' +
+            escapeHtml(custom ? (p.szName || '') : planName(p)) + '"' + (custom ? '' : ' disabled') + '></div>' +
+            '<div class="col-md-4"><label class="form-label small mb-1 fw-semibold">' +
+            escapeHtml(t('tariffsetting.label.plan_type')) + '</label>' + typeCell + '</div>' +
+            '</div>';
     }
 
     function renderSummerRange(p) {
@@ -239,28 +301,40 @@
             (value == null ? '' : value) + '" ' + attrs + '>';
     }
 
-    // 累進級距表
+    // 累進級距表（自建方案多一欄增刪；台電 seed 級距結構固定不給增刪）
     function renderTiers(p) {
+        var custom = isCustom(p);
         var rows = p.tiers.map(function (tier, i) {
             var isLast = i === p.tiers.length - 1;
             var rangeCell;
-            if (i === 0) {
+            if (isLast) {
+                rangeCell = '<span class="text-nowrap">' + tier.nFrom + ' ' + escapeHtml(t('tariffsetting.tier.kwh_above')) + '</span>';
+            } else if (i === 0) {
                 rangeCell = '<span class="text-nowrap">' +
                     '<input type="number" class="form-control form-control-sm ts-tier-to d-inline-block" step="1" min="1" value="' + tier.nTo + '" data-tier="' + i + '" data-field="to"> ' +
                     escapeHtml(t('tariffsetting.tier.kwh_below')) + '</span>';
-            } else if (isLast) {
-                rangeCell = '<span class="text-nowrap">' + tier.nFrom + ' ' + escapeHtml(t('tariffsetting.tier.kwh_above')) + '</span>';
             } else {
                 rangeCell = '<span class="text-nowrap">' + tier.nFrom + ' ~ ' +
                     '<input type="number" class="form-control form-control-sm ts-tier-to d-inline-block" step="1" min="1" value="' + tier.nTo + '" data-tier="' + i + '" data-field="to"> ' +
                     escapeHtml(t('tariffsetting.tier.kwh')) + '</span>';
             }
+            var actionCell = custom
+                ? '<td class="text-center"><button type="button" class="btn btn-outline-danger btn-sm"' +
+                  (p.tiers.length <= 2 ? ' disabled' : '') + ' title="' + escapeHtml(t('tariffsetting.button.del_tier')) +
+                  '" onclick="window._ts.removeTier(' + i + ')"><i class="fas fa-times"></i></button></td>'
+                : '';
             return '<tr>' +
                 '<td>' + rangeCell + '</td>' +
                 '<td>' + priceInput(tier.dSummer, 'data-tier="' + i + '" data-field="summer"') + '</td>' +
                 '<td>' + priceInput(tier.dNonSummer, 'data-tier="' + i + '" data-field="nonsummer"') + '</td>' +
+                actionCell +
                 '</tr>';
         }).join('');
+
+        var addBtn = custom
+            ? '<button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="window._ts.addTier()">' +
+              '<i class="fas fa-plus me-1"></i>' + escapeHtml(t('tariffsetting.button.add_tier')) + '</button>'
+            : '';
 
         return sectionCard('tariffsetting.section.tiers',
             '<div class="table-responsive"><table class="table table-sm table-bordered align-middle mb-0 ts-table">' +
@@ -268,7 +342,8 @@
             '<th>' + escapeHtml(t('tariffsetting.col.tier_range')) + '</th>' +
             '<th>' + escapeHtml(t('tariffsetting.col.summer')) + ' (' + escapeHtml(t('tariffsetting.unit.per_kwh')) + ')</th>' +
             '<th>' + escapeHtml(t('tariffsetting.col.nonsummer')) + ' (' + escapeHtml(t('tariffsetting.unit.per_kwh')) + ')</th>' +
-            '</tr></thead><tbody>' + rows + '</tbody></table></div>');
+            (custom ? '<th class="ts-col-actions">' + escapeHtml(t('tariffsetting.col.actions')) + '</th>' : '') +
+            '</tr></thead><tbody>' + rows + '</tbody></table></div>' + addBtn);
     }
 
     // 基本電費表
@@ -387,6 +462,12 @@
 
     function collect() {
         var p = g_plan;
+        if (!p) return null;
+        if (isCustom(p)) {
+            p.szName = val('tsPlanName').trim();
+            var typeSel = document.getElementById('tsPlanType');
+            if (typeSel) p.szType = typeSel.value;
+        }
         p.szSummerStart = pad2(val('tsSummerStartM')) + '-' + pad2(val('tsSummerStartD'));
         p.szSummerEnd = pad2(val('tsSummerEndM')) + '-' + pad2(val('tsSummerEndD'));
 
@@ -443,8 +524,13 @@
     // ── 前端驗證（與後端同規則） ──────────────────────────
 
     function validate(p) {
+        if (isCustom(p) && !p.szName) return t('tariffsetting.err.name_empty');
         if (p.szType === 'progressive') return validateTiers(p.tiers);
         if (p.szType === 'tou') return validateFlow(p.flowRates);
+        if (p.szType === 'flat') {
+            if (!p.flatRate) return t('tariffsetting.err.flat_missing');
+            if (p.flatRate.dSummer < 0 || p.flatRate.dNonSummer < 0) return t('tariffsetting.err.price_negative');
+        }
         return null;
     }
 
@@ -511,10 +597,274 @@
 
     function toHHmm(min) { return pad2(Math.floor(min / 60)) + ':' + pad2(min % 60); }
 
+    // ── 自建方案 CRUD ────────────────────────────────────
+
+    // 型態骨架 — 從空白建立 / 換型態時填入該型態的最小合法結構（後端驗證會擋不合法者）
+    function applyTypeSkeleton(p, szType) {
+        p.szType = szType;
+        p.szNoteKey = null;
+        p.surcharge = null;
+        if (szType === 'progressive') {
+            p.tiers = [
+                { nFrom: 1, nTo: 120, dSummer: 0, dNonSummer: 0 },
+                { nFrom: 121, nTo: null, dSummer: 0, dNonSummer: 0 }
+            ];
+            p.flatRate = null;
+            p.flowRates = [];
+            p.baseFees = [];
+        } else if (szType === 'flat') {
+            p.tiers = [];
+            p.flatRate = { dSummer: 0, dNonSummer: 0 };
+            p.flowRates = [];
+        } else {
+            // tou：每（日別 × 季節）給一列覆蓋 24h 的單一時段；細分時段建議用「複製方案」從台電方案改
+            p.tiers = [];
+            p.flatRate = null;
+            p.flowRates = [];
+            DAY_TYPES.forEach(function (dayType) {
+                SEASONS.forEach(function (season) {
+                    p.flowRates.push({
+                        szDayType: dayType, szSeason: season, szPeriod: 'peak',
+                        szName: null, ranges: ['00:00-24:00'], dPrice: 0
+                    });
+                });
+            });
+        }
+        return p;
+    }
+
+    function newPlanId() {
+        return 'custom_' + Date.now();
+    }
+
+    // 切到自訂類別並選中方案（新增/複製共用）
+    function adoptNewPlan(plan) {
+        g_config.plans.push(plan);
+        g_newPlanIds.push(plan.szPlanId);
+        document.getElementById('tsCategory').value = CUSTOM;
+        fillPlanSelect(CUSTOM);
+        document.getElementById('tsPlan').value = plan.szPlanId;
+        g_plan = JSON.parse(JSON.stringify(plan));
+        g_dirty = true;
+        renderPlan();
+        renderAdoptions();   // 時間軸下拉要看得到新方案
+    }
+
+    function addPlan() {
+        if (!confirmDiscardDirty()) return;
+        var plan = applyTypeSkeleton({
+            szPlanId: newPlanId(),
+            szName: t('tariffsetting.plan.new_name'),
+            szCategory: CUSTOM,
+            szSummerStart: '06-01',
+            szSummerEnd: '09-30',
+            szNoteKey: null,
+            tiers: [], flatRate: null, baseFees: [], flowRates: [], surcharge: null
+        }, 'flat');
+        adoptNewPlan(plan);
+    }
+
+    function copyPlan() {
+        if (!g_plan) return;
+        if (!confirmDiscardDirty()) return;
+        var src = findPlan(g_plan.szPlanId) || g_plan;
+        var copy = JSON.parse(JSON.stringify(src));
+        copy.szPlanId = newPlanId();
+        copy.szCategory = CUSTOM;
+        copy.szNoteKey = null;   // 台電方案備註（如「指定 30 日尖峰」）不適用於自建方案
+        copy.szName = t('tariffsetting.plan.copy_name', { 0: planName(src) });
+        adoptNewPlan(copy);
+    }
+
+    async function deletePlan() {
+        if (!isCustom(g_plan)) { alert(t('tariffsetting.msg.seed_undeletable')); return; }
+        var szPlanId = g_plan.szPlanId;
+        var used = (g_config.adoptions || []).filter(function (a) { return a.szPlanId === szPlanId; });
+        if (used.length > 0) { alert(t('tariffsetting.msg.plan_in_use')); return; }
+        if (!confirm(t('tariffsetting.confirm.del_plan', { 0: planName(g_plan) }))) return;
+
+        // 尚未存到伺服器的新方案只需本機移除
+        var isLocalOnly = g_newPlanIds.indexOf(szPlanId) >= 0;
+        if (!isLocalOnly) {
+            try {
+                var res = await fetch('/TariffSetting/api/plan/' + encodeURIComponent(szPlanId), { method: 'DELETE' });
+                if (!res.ok) throw new Error((await res.json().catch(function () { return {}; })).message || res.statusText);
+            } catch (e) {
+                alert(t('tariffsetting.msg.del_plan_fail', { 0: e.message }));
+                return;
+            }
+        }
+        g_config.plans = g_config.plans.filter(function (x) { return x.szPlanId !== szPlanId; });
+        g_newPlanIds = g_newPlanIds.filter(function (x) { return x !== szPlanId; });
+        g_dirty = false;
+
+        fillPlanSelect(CUSTOM);
+        var next = document.getElementById('tsPlan').value;
+        if (next) selectPlan(next);
+        else renderEmptyCategory();
+        renderAdoptions();
+    }
+
+    function onTypeChange(szType) {
+        collect();
+        applyTypeSkeleton(g_plan, szType);
+        g_dirty = true;
+        renderPlan();
+    }
+
+    // 累進級距增刪（自建方案限定）
+    function addTier() {
+        var p = collect();
+        if (!p) return;
+        var last = p.tiers[p.tiers.length - 1];
+        if (last) {
+            last.nTo = last.nFrom + 99;
+            p.tiers.push({ nFrom: last.nTo + 1, nTo: null, dSummer: last.dSummer, dNonSummer: last.dNonSummer });
+        } else {
+            p.tiers.push({ nFrom: 1, nTo: null, dSummer: 0, dNonSummer: 0 });
+        }
+        g_dirty = true;
+        renderPlan();
+    }
+
+    function removeTier(idx) {
+        var p = collect();
+        if (!p || p.tiers.length <= 2) return;
+        p.tiers.splice(idx, 1);
+        rechainTiers(p.tiers);
+        g_dirty = true;
+        renderPlan();
+    }
+
+    // 級距鏈重算：後續 nFrom = 上一級 nTo+1、最後一級 nTo=null
+    function rechainTiers(tiers) {
+        for (var i = 0; i < tiers.length; i++) {
+            if (i > 0) tiers[i].nFrom = (tiers[i - 1].nTo || 0) + 1;
+            if (i === tiers.length - 1) tiers[i].nTo = null;
+        }
+    }
+
+    // ── 採用時間軸 ───────────────────────────────────────
+
+    function sortAdoptions() {
+        g_config.adoptions.sort(function (a, b) {
+            return (a.szEffectiveDate || '').localeCompare(b.szEffectiveDate || '');
+        });
+    }
+
+    function renderAdoptions() {
+        var list = document.getElementById('tsAdoptionList');
+        if (!list) return;
+        var adoptions = g_config.adoptions || [];
+        if (adoptions.length === 0) {
+            list.innerHTML = '<div class="text-muted small py-2">' + escapeHtml(t('tariffsetting.adoption.empty')) + '</div>';
+            return;
+        }
+
+        var planOpts = g_config.plans.map(function (p) {
+            return { id: p.szPlanId, label: planLabel(p) };
+        });
+
+        var rows = adoptions.map(function (a, i) {
+            var opts = planOpts.map(function (o) {
+                return '<option value="' + escapeHtml(o.id) + '"' + (o.id === a.szPlanId ? ' selected' : '') + '>' +
+                    escapeHtml(o.label) + '</option>';
+            }).join('');
+            return '<tr>' +
+                '<td><input type="date" class="form-control form-control-sm ts-adopt-date" value="' +
+                escapeHtml(a.szEffectiveDate || '') + '" data-adopt="' + i + '" data-field="date"></td>' +
+                '<td><select class="form-select form-select-sm" data-adopt="' + i + '" data-field="plan">' + opts + '</select></td>' +
+                '<td class="text-center"><button type="button" class="btn btn-outline-danger btn-sm" title="' +
+                escapeHtml(t('tariffsetting.adoption.del')) + '" onclick="window._ts.removeAdoption(' + i + ')">' +
+                '<i class="fas fa-times"></i></button></td>' +
+                '</tr>';
+        }).join('');
+
+        list.innerHTML = '<div class="table-responsive"><table class="table table-sm table-bordered align-middle mb-0 ts-table ts-adopt-table">' +
+            '<thead class="table-light"><tr>' +
+            '<th class="ts-col-date">' + escapeHtml(t('tariffsetting.adoption.effective_date')) + '</th>' +
+            '<th>' + escapeHtml(t('tariffsetting.adoption.plan')) + '</th>' +
+            '<th class="ts-col-actions">' + escapeHtml(t('tariffsetting.col.actions')) + '</th>' +
+            '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+    }
+
+    // DOM → g_config.adoptions 回填
+    function collectAdoptions() {
+        document.querySelectorAll('#tsAdoptionList [data-adopt]').forEach(function (el) {
+            var a = g_config.adoptions[parseInt(el.getAttribute('data-adopt'), 10)];
+            if (!a) return;
+            if (el.getAttribute('data-field') === 'date') a.szEffectiveDate = el.value;
+            else a.szPlanId = el.value;
+        });
+    }
+
+    function addAdoption() {
+        collectAdoptions();
+        if (g_config.plans.length === 0) return;
+        var current = g_plan ? g_plan.szPlanId : g_config.plans[0].szPlanId;
+        g_config.adoptions.push({ szEffectiveDate: dateStr(new Date()), szPlanId: current });
+        sortAdoptions();
+        renderAdoptions();
+    }
+
+    function removeAdoption(idx) {
+        collectAdoptions();
+        g_config.adoptions.splice(idx, 1);
+        renderAdoptions();
+    }
+
+    async function saveAdoptions() {
+        collectAdoptions();
+        var err = validateAdoptions();
+        if (err) { alert(err); return; }
+        sortAdoptions();
+
+        try {
+            var res = await fetch('/TariffSetting/api/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adoptions: g_config.adoptions, plans: g_config.plans })
+            });
+            if (!res.ok) throw new Error((await res.json().catch(function () { return {}; })).message || res.statusText);
+            g_newPlanIds = [];   // 整份存回後所有方案都已落地
+            // szActivePlanId 由後端依今日重算 → 重讀整份設定同步顯示
+            var cfgRes = await fetch('/TariffSetting/api/config');
+            if (cfgRes.ok) {
+                var fresh = await cfgRes.json();
+                g_config.szActivePlanId = fresh.szActivePlanId;
+            }
+            renderAdoptions();
+            fillPlanSelect(document.getElementById('tsCategory').value);
+            if (g_plan) document.getElementById('tsPlan').value = g_plan.szPlanId;
+            updateActiveCard();
+            loadCostSummary();
+            alert(t('tariffsetting.msg.saved'));
+        } catch (e) {
+            alert(t('tariffsetting.msg.save_fail', { 0: e.message }));
+        }
+    }
+
+    // 前端驗證（與後端 ValidateAdoptions 同規則）
+    function validateAdoptions() {
+        var seen = {};
+        for (var i = 0; i < g_config.adoptions.length; i++) {
+            var a = g_config.adoptions[i];
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(a.szEffectiveDate || ''))
+                return t('tariffsetting.err.adopt_date_format');
+            if (!a.szPlanId || !findPlan(a.szPlanId))
+                return t('tariffsetting.err.adopt_plan_missing', { 0: a.szEffectiveDate });
+            if (seen[a.szEffectiveDate])
+                return t('tariffsetting.err.adopt_date_dup', { 0: a.szEffectiveDate });
+            seen[a.szEffectiveDate] = true;
+        }
+        return null;
+    }
+
     // ── 動作 ─────────────────────────────────────────────
 
     async function savePlan() {
         var p = collect();
+        if (!p) return;
         var err = validate(p);
         if (err) { alert(err); return; }
 
@@ -528,15 +878,23 @@
             // 寫回本地整份設定
             var idx = g_config.plans.findIndex(function (x) { return x.szPlanId === p.szPlanId; });
             if (idx >= 0) g_config.plans[idx] = JSON.parse(JSON.stringify(p));
+            else g_config.plans.push(JSON.parse(JSON.stringify(p)));
+            g_newPlanIds = g_newPlanIds.filter(function (x) { return x !== p.szPlanId; });
             g_dirty = false;
+            fillPlanSelect(document.getElementById('tsCategory').value);
+            document.getElementById('tsPlan').value = p.szPlanId;
+            document.getElementById('tsPlanTitle').textContent = planLabel(p);
+            renderAdoptions();
             alert(t('tariffsetting.msg.saved'));
         } catch (e) {
             alert(t('tariffsetting.msg.save_fail', { 0: e.message }));
         }
     }
 
+    // 設為採用方案 = 在時間軸補一筆「今日起採用」（後端同語意）
     async function setActive() {
         if (!g_plan) return;
+        if (g_newPlanIds.indexOf(g_plan.szPlanId) >= 0) { alert(t('tariffsetting.msg.save_plan_first')); return; }
         try {
             var res = await fetch('/TariffSetting/api/active', {
                 method: 'POST',
@@ -544,10 +902,15 @@
                 body: JSON.stringify({ planId: g_plan.szPlanId })
             });
             if (!res.ok) throw new Error((await res.json().catch(function () { return {}; })).message || res.statusText);
+            var szToday = dateStr(new Date());
+            g_config.adoptions = (g_config.adoptions || []).filter(function (a) { return a.szEffectiveDate !== szToday; });
+            g_config.adoptions.push({ szEffectiveDate: szToday, szPlanId: g_plan.szPlanId });
+            sortAdoptions();
             g_config.szActivePlanId = g_plan.szPlanId;
             fillPlanSelect(g_plan.szCategory);
             document.getElementById('tsPlan').value = g_plan.szPlanId;
             updateActiveCard();
+            renderAdoptions();
         } catch (e) {
             alert(t('tariffsetting.msg.active_fail', { 0: e.message }));
         }
@@ -555,7 +918,8 @@
 
     async function resetPlan() {
         if (!g_plan) return;
-        if (!confirm(t('tariffsetting.confirm.reset', { 0: t('tariff.plan.' + g_plan.szPlanId) }))) return;
+        if (isCustom(g_plan)) { alert(t('tariffsetting.msg.custom_no_reset')); return; }
+        if (!confirm(t('tariffsetting.confirm.reset', { 0: planName(g_plan) }))) return;
         try {
             var res = await fetch('/TariffSetting/api/reset', {
                 method: 'POST',
@@ -582,8 +946,21 @@
         return d.getFullYear() + '-' + pad2n(d.getMonth() + 1) + '-' + pad2n(d.getDate());
     }
 
+    function hasAdoptions() {
+        return !!g_config && !!g_config.adoptions && g_config.adoptions.length > 0;
+    }
+
+    /// 最早生效日（全量重算起點）
+    function earliestAdoptionDate() {
+        var dates = g_config.adoptions
+            .map(function (a) { return a.szEffectiveDate; })
+            .filter(function (d) { return /^\d{4}-\d{2}-\d{2}$/.test(d || ''); })
+            .sort();
+        return dates.length > 0 ? dates[0] : null;
+    }
+
     function openRecalc() {
-        if (!g_config || !g_config.szActivePlanId) {
+        if (!hasAdoptions()) {
             alert(t('tariffsetting.recalc.no_active'));
             return;
         }
@@ -593,44 +970,96 @@
         start.setDate(start.getDate() - 6);
         document.getElementById('tsRecalcStart').value = dateStr(start);
         document.getElementById('tsRecalcEnd').value = dateStr(end);
+        document.getElementById('tsRecalcFull').checked = false;
+        toggleFullRecalc();
         document.getElementById('tsRecalcResult').innerHTML = '';
         new bootstrap.Modal(document.getElementById('tsRecalcModal')).show();
     }
 
+    // 全量重算 = [最早生效日, 今天]，前端切段逐段打既有 API（後端不做狀態機）
+    function toggleFullRecalc() {
+        var isFull = document.getElementById('tsRecalcFull').checked;
+        document.getElementById('tsRecalcStart').disabled = isFull;
+        document.getElementById('tsRecalcEnd').disabled = isFull;
+        document.getElementById('tsRecalcFullHint').classList.toggle('d-none', !isFull);
+        if (isFull) {
+            var szEarliest = earliestAdoptionDate();
+            if (szEarliest) {
+                document.getElementById('tsRecalcStart').value = szEarliest;
+                document.getElementById('tsRecalcEnd').value = dateStr(new Date());
+            }
+        }
+    }
+
+    // [start, end]（含頭含尾）切為每段 <= SEGMENT_DAYS 天
+    function buildSegments(szStart, szEnd) {
+        var segments = [];
+        var dtCursor = new Date(szStart + 'T00:00:00');
+        var dtEnd = new Date(szEnd + 'T00:00:00');
+        while (dtCursor <= dtEnd) {
+            var dtSegEnd = new Date(dtCursor.getTime());
+            dtSegEnd.setDate(dtSegEnd.getDate() + SEGMENT_DAYS - 1);
+            if (dtSegEnd > dtEnd) dtSegEnd = dtEnd;
+            segments.push({ start: dateStr(dtCursor), end: dateStr(dtSegEnd) });
+            dtCursor = new Date(dtSegEnd.getTime());
+            dtCursor.setDate(dtCursor.getDate() + 1);
+        }
+        return segments;
+    }
+
+    async function recalcSegment(szStart, szEnd) {
+        var res = await fetch('/TariffSetting/api/recalculate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ start: szStart, end: szEnd })
+        });
+        var data = await res.json().catch(function () { return {}; });
+        if (!res.ok) {
+            var key = data.errorCode === 'no_active_plan' ? 'tariffsetting.recalc.no_active'
+                : data.errorCode === 'range_too_large' ? 'tariffsetting.recalc.err_too_large'
+                : data.errorCode === 'invalid_range' ? 'tariffsetting.recalc.err_range'
+                : null;
+            throw new Error(key ? t(key) : (data.errorCode || res.statusText));
+        }
+        return data;
+    }
+
     async function runRecalc() {
+        var isFull = document.getElementById('tsRecalcFull').checked;
         var start = document.getElementById('tsRecalcStart').value;
         var end = document.getElementById('tsRecalcEnd').value;
         var resultEl = document.getElementById('tsRecalcResult');
+
+        if (isFull && !hasAdoptions()) {
+            resultEl.innerHTML = '<span class="text-danger">' + escapeHtml(t('tariffsetting.recalc.no_active')) + '</span>';
+            return;
+        }
         if (!start || !end || start > end) {
             resultEl.innerHTML = '<span class="text-danger">' + escapeHtml(t('tariffsetting.recalc.err_range')) + '</span>';
             return;
         }
-        // 前端同步後端 366 天上限防呆
-        if ((new Date(end) - new Date(start)) / 86400000 > 366) {
+        // 單段模式同步後端 366 天上限防呆（全量模式自動切段，不受此限）
+        if (!isFull && (new Date(end) - new Date(start)) / 86400000 > 366) {
             resultEl.innerHTML = '<span class="text-danger">' + escapeHtml(t('tariffsetting.recalc.err_too_large')) + '</span>';
             return;
         }
 
+        var segments = isFull ? buildSegments(start, end) : [{ start: start, end: end }];
         var btn = document.getElementById('btnTsRecalcRun');
         btn.disabled = true;
-        resultEl.innerHTML = '<span class="text-muted"><i class="fas fa-spinner fa-spin me-1"></i>' +
-            escapeHtml(t('tariffsetting.recalc.running')) + '</span>';
+        var nHours = 0, nRows = 0;
         try {
-            var res = await fetch('/TariffSetting/api/recalculate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ start: start, end: end })
-            });
-            var data = await res.json().catch(function () { return {}; });
-            if (!res.ok) {
-                var key = data.errorCode === 'no_active_plan' ? 'tariffsetting.recalc.no_active'
-                    : data.errorCode === 'range_too_large' ? 'tariffsetting.recalc.err_too_large'
-                    : data.errorCode === 'invalid_range' ? 'tariffsetting.recalc.err_range'
-                    : null;
-                throw new Error(key ? t(key) : (data.errorCode || res.statusText));
+            for (var i = 0; i < segments.length; i++) {
+                resultEl.innerHTML = '<span class="text-muted"><i class="fas fa-spinner fa-spin me-1"></i>' +
+                    escapeHtml(segments.length > 1
+                        ? t('tariffsetting.recalc.progress', { 0: i + 1, 1: segments.length, 2: segments[i].start, 3: segments[i].end })
+                        : t('tariffsetting.recalc.running')) + '</span>';
+                var data = await recalcSegment(segments[i].start, segments[i].end);
+                nHours += data.hours || 0;
+                nRows += data.rows || 0;
             }
             resultEl.innerHTML = '<span class="text-success"><i class="fas fa-check-circle me-1"></i>' +
-                escapeHtml(t('tariffsetting.recalc.done', { 0: data.from, 1: data.to, 2: data.hours, 3: data.rows })) + '</span>';
+                escapeHtml(t('tariffsetting.recalc.done', { 0: start, 1: end, 2: nHours, 3: nRows })) + '</span>';
             loadCostSummary();   // 重算後刷新頂部累計卡片
         } catch (e) {
             resultEl.innerHTML = '<span class="text-danger">' +
@@ -669,7 +1098,16 @@
         resetPlan: resetPlan,
         addRange: addRange,
         removeRange: removeRange,
+        addPlan: addPlan,
+        copyPlan: copyPlan,
+        deletePlan: deletePlan,
+        addTier: addTier,
+        removeTier: removeTier,
+        addAdoption: addAdoption,
+        removeAdoption: removeAdoption,
+        saveAdoptions: saveAdoptions,
         openRecalc: openRecalc,
+        toggleFullRecalc: toggleFullRecalc,
         runRecalc: runRecalc
     };
 })();

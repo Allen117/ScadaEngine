@@ -4,13 +4,34 @@ namespace ScadaEngine.Web.Features.TariffSetting.Models;
 /// 電費設定整份組態 — 對應 SystemSettings.electricity_tariff 的 JSON value。
 /// 台電預設值來自 Setting/tariff-taipower-defaults.json（唯讀 seed），
 /// 使用者修改整份存回 DB；seed 新增方案時載入端自動補齊（by szPlanId）。
+///
+/// 「方案目錄 + 採用時間軸」雙層結構：
+/// - plans = 目錄（台電 20 個 seed 方案為不同用戶類別「並存」的選項，彼此不是版本關係）
+/// - adoptions = 唯一真相的採用時間軸（哪天起改用哪個方案），計價時依日期選版 → 歷史電費不被改費率追溯改寫
 /// </summary>
 public class TariffConfig
 {
-    /// <summary>目前採用方案 Id（空字串 = 尚未選擇）</summary>
+    /// <summary>
+    /// 目前（今天）採用的方案 Id — 【衍生欄位】，每次存檔時由 adoptions 反推寫入。
+    /// 唯一真相是 adoptions；此欄位只為既有讀取點與前端 badge 方便，不可單獨修改。
+    /// </summary>
     public string szActivePlanId { get; set; } = string.Empty;
 
+    /// <summary>採用時間軸（唯一真相）— 空清單 = 尚未採用任何方案（該時段不計價）</summary>
+    public List<TariffAdoption> adoptions { get; set; } = [];
+
+    /// <summary>方案目錄（台電 seed + 使用者自建）</summary>
     public List<TariffPlan> plans { get; set; } = [];
+}
+
+/// <summary>採用時間軸一列 — 「szEffectiveDate 起改用 szPlanId」（含當日）</summary>
+public class TariffAdoption
+{
+    /// <summary>生效日（yyyy-MM-dd，含當日）</summary>
+    public string szEffectiveDate { get; set; } = string.Empty;
+
+    /// <summary>該日起採用的方案 Id（須存在於 TariffConfig.plans）</summary>
+    public string szPlanId { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -23,7 +44,13 @@ public class TariffPlan
     /// <summary>方案穩定識別碼（如 hv_tou2），同時是 i18n key 後綴</summary>
     public string szPlanId { get; set; } = string.Empty;
 
-    /// <summary>類別：lighting（表燈住商）| lv（低壓電力）| hv（高壓電力）| ehv（特高壓電力）</summary>
+    /// <summary>
+    /// 自建方案顯示名（使用者輸入，不在 i18n 範圍）；
+    /// 空字串 = 沿用 i18n key tariff.plan.{szPlanId}（台電 seed 方案一律留空）
+    /// </summary>
+    public string szName { get; set; } = string.Empty;
+
+    /// <summary>類別：lighting（表燈住商）| lv（低壓電力）| hv（高壓電力）| ehv（特高壓電力）| custom（使用者自建）</summary>
     public string szCategory { get; set; } = string.Empty;
 
     /// <summary>型態：progressive | flat | tou</summary>
@@ -124,10 +151,20 @@ public class TariffSurcharge
 
 // ---------- Request DTOs ----------
 
-/// <summary>設為採用方案</summary>
+/// <summary>設為採用方案（= 自今日起採用，等同在時間軸補一筆今日生效）</summary>
 public class SetActivePlanRequest
 {
     public string planId { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// 整份設定存回 — 只收 adoptions 與 plans；szActivePlanId 是衍生欄位，由後端重算，
+/// 刻意不開放前端傳入（避免時間軸與指標打架）。
+/// </summary>
+public class SaveTariffConfigRequest
+{
+    public List<TariffAdoption> adoptions { get; set; } = [];
+    public List<TariffPlan> plans { get; set; } = [];
 }
 
 /// <summary>還原單一方案為台電預設</summary>

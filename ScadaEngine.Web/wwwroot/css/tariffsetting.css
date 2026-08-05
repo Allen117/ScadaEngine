@@ -34,6 +34,15 @@
     padding-bottom: 0.15rem;
 }
 
+/* 自建方案 CRUD 按鈕群（新增 / 複製 / 刪除） */
+.ts-plan-btns {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-bottom: 0.15rem;
+    margin-left: auto;
+}
+
 /* 方案內容區塊 */
 .ts-section-title {
     font-weight: 600;
@@ -92,6 +101,29 @@ body.ems-mode .ts-section-title {
 
 .ts-col-price {
     width: 8.5rem;
+}
+
+.ts-col-actions {
+    width: 4.5rem;
+    text-align: center;
+}
+
+/* 方案名稱 / 型態列 */
+.ts-identity {
+    max-width: 46rem;
+}
+
+/* 採用時間軸 */
+.ts-col-date {
+    width: 12rem;
+}
+
+.ts-adopt-table {
+    max-width: 46rem;
+}
+
+.ts-adopt-date {
+    max-width: 11rem;
 }
 
 /* 日別區塊 */

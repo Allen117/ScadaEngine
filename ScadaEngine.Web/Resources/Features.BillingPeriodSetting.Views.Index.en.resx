@@ -51,9 +51,10 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
-  <data name="billingperiod.title" xml:space="preserve"><value>Billing Cycle Settings</value></data>
+  <data name="billingperiod.title" xml:space="preserve"><value>Electricity Billing Cycle Settings</value></data>
   <data name="billingperiod.breadcrumb.energy" xml:space="preserve"><value>Energy Management</value></data>
-  <data name="billingperiod.hint.overview" xml:space="preserve"><value>Set the utility-bill start/end dates for each billing period (month); periods without custom settings default to starting the day after the previous period ends, lasting one month (calendar month if nothing is customized). Changes take effect immediately — all monthly reports (Energy Report / Refrigeration Ton Report / EMS pages) are split by billing period, and historical monthly reports are recalculated with the new settings.</value></data>
+  <data name="billingperiod.hint.overview" xml:space="preserve"><value>Set the electricity-bill start/end dates for each billing period (month); periods without custom settings default to starting the day after the previous period ends, lasting one month (calendar month if nothing is customized). Changes take effect immediately — the Energy Report, Electricity Cost Report and EMS cost cards are split by billing period, and historical monthly reports are recalculated with the new settings.</value></data>
+  <data name="billingperiod.hint.electricity_only" xml:space="preserve"><value>This page affects electricity reports only. Water has its own billing cycle settings (water and power utilities read meters on different days), and the Refrigeration Ton Report always uses calendar months to stay aligned with Energy Declaration.</value></data>
   <data name="billingperiod.hint.gap_overlap" xml:space="preserve"><value>Gaps or overlaps between periods are allowed (warning only): energy in a gap is not counted in any period, and energy in an overlap is counted in both periods.</value></data>
   <data name="billingperiod.table.title" xml:space="preserve"><value>Billing Periods</value></data>
   <data name="billingperiod.table.col_period" xml:space="preserve"><value>Period</value></data>

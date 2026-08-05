@@ -8,6 +8,7 @@ namespace ScadaEngine.Web.Services;
 /// 每迴路獨立套級距（不做占比分攤 — 與電費 progressive 的根迴路分攤不同，
 /// 水表迴路彼此獨立計量，各自就是一只錶）。
 /// 方案版本依「期別起日」選用（WaterTariffService.SelectPlanForDate）；
+/// 計費週期走**水費**期別（WaterBillingPeriodService，與電費期別各自獨立）；
 /// 用水量來源 WaterUsageReportService（isHasWarning → isStale 註記）。
 /// </summary>
 public class WaterCostService
@@ -15,14 +16,14 @@ public class WaterCostService
     private readonly WaterTariffService _tariffService;
     private readonly WaterUsageReportService _usageService;
     private readonly WaterMeterCircuitService _circuitService;
-    private readonly BillingPeriodService _billingPeriodService;
+    private readonly WaterBillingPeriodService _billingPeriodService;
     private readonly ILogger<WaterCostService> _logger;
 
     public WaterCostService(
         WaterTariffService tariffService,
         WaterUsageReportService usageService,
         WaterMeterCircuitService circuitService,
-        BillingPeriodService billingPeriodService,
+        WaterBillingPeriodService billingPeriodService,
         ILogger<WaterCostService> logger)
     {
         _tariffService = tariffService;
@@ -82,7 +83,7 @@ public class WaterCostService
     // ---------- 查詢 ----------
 
     /// <summary>
-    /// 本期水費狀態（EMS 水費狀態卡用）— nCircuitId = null 取根迴路；期別 = 今天所屬月結期別。
+    /// 本期水費狀態（EMS 水費狀態卡用）— nCircuitId = null 取根迴路；期別 = 今天所屬**水費**月結期別。
     /// 無方案（hasPlan=false）時仍回用水量，金額為 0。
     /// </summary>
     public async Task<WaterCostStatusDto> GetStatusAsync(int? nCircuitId)

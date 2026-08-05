@@ -599,11 +599,26 @@
       ]
     },
     {
-      "_comment": "月結週期（期別）設定 — 只存被使用者自訂過的期別；沒有 row 的期別由 Web BillingPeriodService 依級聯規則推導（起始 = 上期結束 +1 天、長度一個月），完全無自訂 row 時 = 自然月。查詢時 exclusive 邊界 = EndDate + 1 天。",
+      "_comment": "電費月結週期（期別）設定 — 只存被使用者自訂過的期別；沒有 row 的期別由 Web BillingPeriodService 依級聯規則推導（起始 = 上期結束 +1 天、長度一個月），完全無自訂 row 時 = 自然月。查詢時 exclusive 邊界 = EndDate + 1 天。用電/電費報表與 EMS 電費卡專用；水費期別另見 WaterBillingPeriods。",
       "TableName": "BillingPeriods",
       "Columns": [
         { "Name": "PeriodYear",  "Type": "int",      "IsPrimaryKey": true, "Nullable": false,
           "_comment": "期別年份（= 起始所在月份的年，台電慣例）" },
+        { "Name": "PeriodMonth", "Type": "int",      "IsPrimaryKey": true, "Nullable": false,
+          "_comment": "期別月份 1–12" },
+        { "Name": "StartDate",   "Type": "datetime", "Nullable": false,
+          "_comment": "起始日 00:00（含）" },
+        { "Name": "EndDate",     "Type": "datetime", "Nullable": false,
+          "_comment": "結束日 00:00（inclusive 語意 — 該日整天算入本期）" },
+        { "Name": "UpdatedAt",   "Type": "datetime", "Nullable": false, "Default": "getdate()" }
+      ]
+    },
+    {
+      "_comment": "水費月結週期（期別）設定 — 結構與 BillingPeriods 完全相同，但**獨立一套**（台水與台電抄表日不同）。用水報表 / 水費報表 / EMS 水表卡專用，由 Web WaterBillingPeriodService 讀寫；推導規則同電費版。",
+      "TableName": "WaterBillingPeriods",
+      "Columns": [
+        { "Name": "PeriodYear",  "Type": "int",      "IsPrimaryKey": true, "Nullable": false,
+          "_comment": "期別年份（= 起始所在月份的年）" },
         { "Name": "PeriodMonth", "Type": "int",      "IsPrimaryKey": true, "Nullable": false,
           "_comment": "期別月份 1–12" },
         { "Name": "StartDate",   "Type": "datetime", "Nullable": false,

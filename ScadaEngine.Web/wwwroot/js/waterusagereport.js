@@ -65,7 +65,7 @@
     // 日粒度預設起訖 = 本期（今天所屬月結期別）起始～結束；失敗時保留 initDefaults 的自然月預設
     async function applyCurrentPeriodDefaults() {
         try {
-            const res = await fetch('/BillingPeriodSetting/api/current');
+            const res = await fetch('/WaterBillingPeriodSetting/api/current');
             if (!res.ok) return;
             const p = await res.json();
             if (p && p.start && p.end) {
@@ -87,7 +87,7 @@
         const toYm = document.getElementById('wurMonthEnd').value;
         if (!fromYm || !toYm || toYm < fromYm) { hintEl.textContent = ''; return; }
         try {
-            const res = await fetch(`/BillingPeriodSetting/api/range?fromYm=${encodeURIComponent(fromYm)}&toYm=${encodeURIComponent(toYm)}`);
+            const res = await fetch(`/WaterBillingPeriodSetting/api/range?fromYm=${encodeURIComponent(fromYm)}&toYm=${encodeURIComponent(toYm)}`);
             if (!res.ok) { hintEl.textContent = ''; return; }
             const periods = await res.json();
             if (!periods.length) { hintEl.textContent = ''; return; }

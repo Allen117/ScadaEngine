@@ -34,6 +34,7 @@
 | 用水報表 | Water Usage Report | `/WaterUsageReport` |
 | 水費設定 | Water Tariff Settings | `/WaterTariffSetting` |
 | 水費報表 | Water Cost Report | `/WaterCostReport` |
+| 水費月結週期 | Water Billing Cycle | `/WaterBillingPeriodSetting` |
 | 水系統迴路設定 | Chilled Water Circuit Settings | `/ChilledWaterSystem` |
 | 月結週期設定 | Billing Cycle Settings | `/BillingPeriodSetting` |
 | 電費設定 | Tariff Settings | `/TariffSetting` |
@@ -58,10 +59,19 @@
 | 設備 / 協調器 | Device / Coordinator | 設備層 |
 | 迴路 | Circuit | 能源管理用，**不**翻成 Loop |
 | 月結週期 / 結算週期 | Billing Cycle | 月粒度報表期界設定 |
-| 期別 | Billing Period | 一期 = 一個 YYYY-MM 結算區間；DB 表 `BillingPeriods` |
+| 電費月結週期 | Electricity Billing Cycle | `/BillingPeriodSetting`；DB 表 `BillingPeriods` |
+| 水費月結週期 | Water Billing Cycle | `/WaterBillingPeriodSetting`；DB 表 `WaterBillingPeriods`，與電費各自獨立 |
+| 期別 | Billing Period | 一期 = 一個 YYYY-MM 結算區間 |
+| 曆月 | Calendar Month | 自然月（1 日～月底）；冷凍噸報表 / 能源申報 / 能源基線刻意用此，不走期別 |
 | 空窗 | Gap | 期別間未被涵蓋的日數 |
 | 重疊 | Overlap | 期別間重複涵蓋的日數 |
 | 電價方案 | Tariff Plan | 台電電價表一種方案 |
+| 採用時間軸 | Adoption Timeline | 「哪天起改用哪個方案」的紀錄清單（`adoptions`） |
+| 採用紀錄 | Adoption | 時間軸上一列 = 生效日 + 方案 |
+| 生效日 | Effective Date | 該採用紀錄開始適用的日期 |
+| 自訂（方案類別） | Custom | 使用者自建方案的類別，與台電四類並列 |
+| 新增方案 / 複製方案 | Add Plan / Duplicate Plan | 自建方案操作 |
+| 全量重算 | Recalculate All | 依採用時間軸從最早生效日重算至今（前端分段） |
 | 非時間電價（累進） | Non-TOU (Progressive) | 表燈累進級距計價 |
 | 時間電價 | Time-of-Use (TOU) | 依時段計價 |
 | 簡易型 / 標準型時間電價 | Simple / Standard TOU | 表燈 TOU 兩型 |

@@ -65,15 +65,35 @@
   <data name="tariffsetting.select.title" xml:space="preserve"><value>電價方案選擇</value></data>
   <data name="tariffsetting.select.category" xml:space="preserve"><value>用電類別</value></data>
   <data name="tariffsetting.select.plan" xml:space="preserve"><value>電價方案</value></data>
+  <data name="tariffsetting.select.empty" xml:space="preserve"><value>（此類別尚無方案）</value></data>
   <data name="tariffsetting.button.set_active" xml:space="preserve"><value>設為採用方案</value></data>
   <data name="tariffsetting.badge.active" xml:space="preserve"><value>採用中</value></data>
 
   <data name="tariffsetting.editor.loading" xml:space="preserve"><value>載入中…</value></data>
+  <data name="tariffsetting.editor.no_plan" xml:space="preserve"><value>尚未選擇方案</value></data>
+  <data name="tariffsetting.editor.no_plan_hint" xml:space="preserve"><value>此類別尚無方案，請按「新增方案」建立，或切換到台電類別後按「複製方案」修改。</value></data>
   <data name="tariffsetting.button.save" xml:space="preserve"><value>儲存</value></data>
   <data name="tariffsetting.button.reset" xml:space="preserve"><value>還原台電預設</value></data>
   <data name="tariffsetting.button.add_range" xml:space="preserve"><value>加時段</value></data>
   <data name="tariffsetting.button.del_range" xml:space="preserve"><value>刪除此時段</value></data>
+  <data name="tariffsetting.button.add_tier" xml:space="preserve"><value>加級距</value></data>
+  <data name="tariffsetting.button.del_tier" xml:space="preserve"><value>刪除此級距</value></data>
   <data name="tariffsetting.button.recalculate" xml:space="preserve"><value>重新計算電費</value></data>
+  <data name="tariffsetting.button.add_plan" xml:space="preserve"><value>新增方案</value></data>
+  <data name="tariffsetting.button.copy_plan" xml:space="preserve"><value>複製方案</value></data>
+  <data name="tariffsetting.button.del_plan" xml:space="preserve"><value>刪除方案</value></data>
+
+  <data name="tariffsetting.adoption.title" xml:space="preserve"><value>採用時間軸</value></data>
+  <data name="tariffsetting.adoption.hint" xml:space="preserve"><value>指定「哪天起改用哪個方案」，電費逐日依此選版計算 — 之後修改費率或換方案不會追溯改寫更早的歷史電費。改動後請按「儲存採用時間軸」，再用「重新計算電費」回溯受影響區間。</value></data>
+  <data name="tariffsetting.adoption.add" xml:space="preserve"><value>新增採用</value></data>
+  <data name="tariffsetting.adoption.del" xml:space="preserve"><value>刪除此採用紀錄</value></data>
+  <data name="tariffsetting.adoption.save" xml:space="preserve"><value>儲存採用時間軸</value></data>
+  <data name="tariffsetting.adoption.empty" xml:space="preserve"><value>尚未採用任何方案 — 此狀態不計算電費。請按「新增採用」或到上方選擇方案後按「設為採用方案」。</value></data>
+  <data name="tariffsetting.adoption.effective_date" xml:space="preserve"><value>生效日（含當日）</value></data>
+  <data name="tariffsetting.adoption.plan" xml:space="preserve"><value>採用方案</value></data>
+
+  <data name="tariffsetting.plan.new_name" xml:space="preserve"><value>自訂方案</value></data>
+  <data name="tariffsetting.plan.copy_name" xml:space="preserve"><value>{0} 複本</value></data>
 
   <data name="tariffsetting.recalc.title" xml:space="preserve"><value>重新計算電費</value></data>
   <data name="tariffsetting.recalc.warning" xml:space="preserve"><value>將以「目前採用方案」的費率覆蓋重算所選區間的電費資料（換方案或修改費率後回溯用）。</value></data>
@@ -88,10 +108,15 @@
   <data name="tariffsetting.recalc.no_active" xml:space="preserve"><value>尚未選擇採用方案，請先設定採用方案再執行重算。</value></data>
   <data name="tariffsetting.recalc.err_range" xml:space="preserve"><value>請選擇正確的起訖日期（起日不可晚於訖日）。</value></data>
   <data name="tariffsetting.recalc.err_too_large" xml:space="preserve"><value>重算區間不可超過 366 天。</value></data>
+  <data name="tariffsetting.recalc.full" xml:space="preserve"><value>全量重算（自最早生效日至今日）</value></data>
+  <data name="tariffsetting.recalc.full_hint" xml:space="preserve"><value>全量重算會自動切成多段依序執行（每段最多 365 天），期間請勿關閉此視窗。</value></data>
+  <data name="tariffsetting.recalc.progress" xml:space="preserve"><value>重算中：第 {0} 段 / 共 {1} 段（{2} ~ {3}）…</value></data>
 
   <data name="tariffsetting.label.summer_range" xml:space="preserve"><value>夏月期間</value></data>
   <data name="tariffsetting.label.month" xml:space="preserve"><value>月</value></data>
   <data name="tariffsetting.label.day" xml:space="preserve"><value>日</value></data>
+  <data name="tariffsetting.label.plan_name" xml:space="preserve"><value>方案名稱</value></data>
+  <data name="tariffsetting.label.plan_type" xml:space="preserve"><value>計價型態</value></data>
 
   <data name="tariffsetting.section.tiers" xml:space="preserve"><value>累進級距（流動電費）</value></data>
   <data name="tariffsetting.section.base_fees" xml:space="preserve"><value>基本電費</value></data>
@@ -108,6 +133,7 @@
   <data name="tariffsetting.col.period_name" xml:space="preserve"><value>區間名稱</value></data>
   <data name="tariffsetting.col.time_ranges" xml:space="preserve"><value>時間區間</value></data>
   <data name="tariffsetting.col.price" xml:space="preserve"><value>每度單價（元）</value></data>
+  <data name="tariffsetting.col.actions" xml:space="preserve"><value>操作</value></data>
 
   <data name="tariffsetting.unit.per_kwh" xml:space="preserve"><value>元/度</value></data>
   <data name="tariffsetting.na" xml:space="preserve"><value>—</value></data>
@@ -129,18 +155,29 @@
 
   <data name="tariffsetting.confirm.reset" xml:space="preserve"><value>確定要將「{0}」還原為台電預設值？此方案的所有修改將被覆蓋。</value></data>
   <data name="tariffsetting.confirm.switch_dirty" xml:space="preserve"><value>尚有未儲存的修改，切換方案將放棄修改，確定繼續？</value></data>
+  <data name="tariffsetting.confirm.del_plan" xml:space="preserve"><value>確定要刪除自建方案「{0}」？此動作無法復原。</value></data>
 
   <data name="tariffsetting.msg.saved" xml:space="preserve"><value>已儲存</value></data>
   <data name="tariffsetting.msg.save_fail" xml:space="preserve"><value>儲存失敗：{0}</value></data>
   <data name="tariffsetting.msg.reset_fail" xml:space="preserve"><value>還原失敗：{0}</value></data>
   <data name="tariffsetting.msg.active_fail" xml:space="preserve"><value>切換採用方案失敗：{0}</value></data>
   <data name="tariffsetting.msg.load_fail" xml:space="preserve"><value>設定載入失敗，請重新整理頁面</value></data>
+  <data name="tariffsetting.msg.del_plan_fail" xml:space="preserve"><value>刪除方案失敗：{0}</value></data>
+  <data name="tariffsetting.msg.seed_undeletable" xml:space="preserve"><value>台電預設方案不可刪除（僅自建方案可刪）</value></data>
+  <data name="tariffsetting.msg.plan_in_use" xml:space="preserve"><value>此方案仍被採用時間軸引用，請先刪除相關採用紀錄再刪除方案。</value></data>
+  <data name="tariffsetting.msg.save_plan_first" xml:space="preserve"><value>此方案尚未儲存，請先按「儲存」再設為採用方案。</value></data>
+  <data name="tariffsetting.msg.custom_no_reset" xml:space="preserve"><value>自建方案無台電預設可還原。</value></data>
 
   <data name="tariffsetting.err.tier_order" xml:space="preserve"><value>級距上限必須大於下限且逐級遞增</value></data>
   <data name="tariffsetting.err.price_negative" xml:space="preserve"><value>單價不可為負數</value></data>
+  <data name="tariffsetting.err.name_empty" xml:space="preserve"><value>自建方案名稱不可為空</value></data>
+  <data name="tariffsetting.err.flat_missing" xml:space="preserve"><value>單一費率不可為空</value></data>
   <data name="tariffsetting.err.range_format" xml:space="preserve"><value>「{0}」時間區間格式不正確（起訖不可相同）</value></data>
   <data name="tariffsetting.err.group_overlap" xml:space="preserve"><value>「{0}」時段重疊（{1} 附近）</value></data>
   <data name="tariffsetting.err.group_gap" xml:space="preserve"><value>「{0}」時段未覆蓋 24 小時（{1} 有空隙）</value></data>
+  <data name="tariffsetting.err.adopt_date_format" xml:space="preserve"><value>採用生效日格式不正確（應為 yyyy-MM-dd）</value></data>
+  <data name="tariffsetting.err.adopt_plan_missing" xml:space="preserve"><value>生效日 {0} 未選擇有效方案</value></data>
+  <data name="tariffsetting.err.adopt_date_dup" xml:space="preserve"><value>採用生效日重複：{0}</value></data>
 
   <data name="tariff.type.progressive" xml:space="preserve"><value>非時間電價（累進）</value></data>
   <data name="tariff.type.flat" xml:space="preserve"><value>非時間電價（單一費率）</value></data>
@@ -150,11 +187,13 @@
   <data name="tariff.category.lv" xml:space="preserve"><value>低壓電力</value></data>
   <data name="tariff.category.hv" xml:space="preserve"><value>高壓電力</value></data>
   <data name="tariff.category.ehv" xml:space="preserve"><value>特高壓電力</value></data>
+  <data name="tariff.category.custom" xml:space="preserve"><value>自訂</value></data>
 
   <data name="tariff.category_desc.lighting" xml:space="preserve"><value>適用一般住家、機關學校、小型營業場所（夏月 6/1～9/30）</value></data>
   <data name="tariff.category_desc.lv" xml:space="preserve"><value>適用契約容量未滿 100 瓩之用電場所（夏月 6/1～9/30）</value></data>
   <data name="tariff.category_desc.hv" xml:space="preserve"><value>適用契約容量 100 瓩以上、以 11.4kV 或 22.8kV 供電（夏月 5/16～10/15）</value></data>
   <data name="tariff.category_desc.ehv" xml:space="preserve"><value>適用契約容量 1,000 瓩以上、以 69kV 以上供電（夏月 5/16～10/15）</value></data>
+  <data name="tariff.category_desc.custom" xml:space="preserve"><value>使用者自建方案（如轉供、分租計價）— 可從空白建立或複製台電方案再改</value></data>
 
   <data name="tariff.plan.lighting_res_prog" xml:space="preserve"><value>非時間電價（累進）住宅用</value></data>
   <data name="tariff.plan.lighting_nonbiz_prog" xml:space="preserve"><value>非時間電價（累進）非營業用</value></data>

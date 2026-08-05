@@ -13,7 +13,8 @@
 | 電費報表 | `/ElectricityCostReport` |
 | 冷凍噸報表 | `/RefrigerationTonReport` |
 | 能源申報 | `/EnergyDeclaration` |
-| 月結週期設定 | `/BillingPeriodSetting` |
+| 電費月結週期 | `/BillingPeriodSetting` |
+| 水費月結週期 | `/WaterBillingPeriodSetting` |
 | 電費設定 | `/TariffSetting` |
 | 國定假日設定 | `/HolidaySetting` |
 | 卡片顯示設定 | `/EmsCardSetting` |
@@ -73,6 +74,7 @@ public static readonly string[] EmsRoutes =
     "/RefrigerationTonReport",
     "/EnergyDeclaration",
     "/BillingPeriodSetting",
+    "/WaterBillingPeriodSetting",
     "/TariffSetting",
     "/HolidaySetting",
     "/EmsCardSetting",
@@ -196,6 +198,16 @@ granularity / pivot 協定同 `/EMS/api/circuit-energy`（`hour`→`yyyy-MM-dd`�
 - `month`（年檢視）：pivot = 年份 → 該年 **1～12 月期別** 12 根柱（期別非自然月時柱標籤顯示完整期間）
 - `day`（月檢視）：pivot = YYYY-MM → 該**期別**實際起訖日逐日展開（非 1 號～月底）；日圖加總 = 年檢視該期柱值
 - `hour`（日檢視）：pivot = YYYY-MM-DD → 該自然日，不受期別影響
+
+**電 / 水各走各的期別**（2026-08-05 拆分）：pivot 解析拆成兩支 —
+
+| 函式 | 期別來源 | 服務的 API |
+|---|---|---|
+| `ParsePivotAsync` | 電費期別（`BillingPeriodService`） | `circuit-energy` / `main-meter-breakdown` / `main-meter-yoy` / `main-meter-cost-yoy` |
+| `ParseWaterPivotAsync` | **水費期別**（`WaterBillingPeriodService`） | `water-usage` / `water-breakdown` |
+
+> 刻意拆成兩支函式而非加 `bool isWater` 參數：呼叫點若用錯，前者是編譯期選錯函式（改動時看得見），
+> 後者是漏傳參數後**靜默走錯期別**，數字錯了也查不出來。
 
 > ⚠️ 已知限制：主要電表綁 SID 且掛有子迴路時，計算核心 `GetLeavesUnderAsync` 會把主錶自身 + 子孫葉子一併加總（/CircuitInfo、/EnergyReport 亦同此行為）。目前線上僅單一主錶無子迴路，尚未觸發；未來在主錶下掛分錶時需另案處理「主錶量測 vs 分錶加總」的語意。
 

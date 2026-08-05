@@ -8,7 +8,7 @@ namespace ScadaEngine.Web.Services;
 
 /// <summary>
 /// 用水報表 — 直接加總 Engine 預聚合表 WaterMeterLeafHourly（sparse storage，缺小時=無列）。
-/// 流程：依粒度產生 N 個 bucket 的 [起, 訖) 邊界對（月粒度 = 期別，見 BillingPeriodService）
+/// 流程：依粒度產生 N 個 bucket 的 [起, 訖) 邊界對（月粒度 = **水費**期別，見 WaterBillingPeriodService）
 /// → 一次撈出迴路下所有葉子在總區間內的 hourly 列 →
 /// 每列依 HourStart 落入的 bucket 累加 DeltaM3 × 該葉子 EffectiveSign = 該 bucket 用水量。
 /// DeltaM3 已由 Engine 換算為 m³（UnitScale / 溢位皆已處理），此處不再套 dUnitScale / dMaxVolume。
@@ -19,14 +19,14 @@ public class WaterUsageReportService
     private readonly ILogger<WaterUsageReportService> _logger;
     private readonly DatabaseConfigService _configService;
     private readonly WaterMeterCircuitService _circuitService;
-    private readonly BillingPeriodService _billingPeriodService;
+    private readonly WaterBillingPeriodService _billingPeriodService;
     private string _szConnectionString = string.Empty;
 
     public WaterUsageReportService(
         ILogger<WaterUsageReportService> logger,
         DatabaseConfigService configService,
         WaterMeterCircuitService circuitService,
-        BillingPeriodService billingPeriodService)
+        WaterBillingPeriodService billingPeriodService)
     {
         _logger = logger;
         _configService = configService;
@@ -168,7 +168,7 @@ public class WaterUsageReportService
 
     /// <summary>
     /// 產生 N 個 bucket 的 [起, 訖) 邊界對與標籤。
-    /// 月粒度 = 期別：dtStart/dtEnd 的年月視為期別編號，期界由 BillingPeriodService 解析
+    /// 月粒度 = 水費期別：dtStart/dtEnd 的年月視為期別編號，期界由 WaterBillingPeriodService 解析
     /// （期別間可能空窗/重疊 → 不共用邊界點）；其餘粒度沿用連續邊界切法。
     /// </summary>
     private async Task<(List<(DateTime dtStart, DateTime dtEnd)> ranges, List<string> labels)>
@@ -283,9 +283,9 @@ public class WaterUsageReportService
                     break;
                 }
             case "month":
-                // 月粒度期界由 BillingPeriodService 解析（每期一對 [起, 訖) 邊界，可能不連續），
+                // 月粒度期界由 WaterBillingPeriodService 解析（每期一對 [起, 訖) 邊界，可能不連續），
                 // 不能用單一連續邊界列表表達 — 走 BuildBucketRangesAsync
-                throw new ArgumentException("月粒度期界由 BillingPeriodService 解析，不支援 BuildBoundaries");
+                throw new ArgumentException("月粒度期界由 WaterBillingPeriodService 解析，不支援 BuildBoundaries");
             case "year":
                 {
                     // dtStart=當年 1/1，dtEnd=當年 1/1

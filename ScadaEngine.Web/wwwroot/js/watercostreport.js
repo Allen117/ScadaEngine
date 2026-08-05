@@ -42,7 +42,7 @@
         const toYm = document.getElementById('wcrMonthEnd').value;
         if (!fromYm || !toYm || toYm < fromYm) { hintEl.textContent = ''; return; }
         try {
-            const res = await fetch(`/BillingPeriodSetting/api/range?fromYm=${encodeURIComponent(fromYm)}&toYm=${encodeURIComponent(toYm)}`);
+            const res = await fetch(`/WaterBillingPeriodSetting/api/range?fromYm=${encodeURIComponent(fromYm)}&toYm=${encodeURIComponent(toYm)}`);
             if (!res.ok) { hintEl.textContent = ''; return; }
             const periods = await res.json();
             if (!periods.length) { hintEl.textContent = ''; return; }
