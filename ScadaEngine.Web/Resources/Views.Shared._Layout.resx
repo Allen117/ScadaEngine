@@ -74,6 +74,10 @@
   <data name="layout.menu.energy_report" xml:space="preserve"><value>用電報表</value></data>
   <data name="layout.menu.electricity_cost_report" xml:space="preserve"><value>電費報表</value></data>
   <data name="layout.menu.refrigeration_ton_report" xml:space="preserve"><value>冷凍噸報表</value></data>
+  <data name="layout.menu.water_meter" xml:space="preserve"><value>水表/迴路設定</value></data>
+  <data name="layout.menu.water_usage_report" xml:space="preserve"><value>用水報表</value></data>
+  <data name="layout.menu.water_tariff_setting" xml:space="preserve"><value>水費設定</value></data>
+  <data name="layout.menu.water_cost_report" xml:space="preserve"><value>水費報表</value></data>
   <data name="layout.menu.energy_declaration" xml:space="preserve"><value>能源申報</value></data>
   <data name="layout.menu.energy_baseline" xml:space="preserve"><value>能源基準</value></data>
   <data name="layout.menu.chilled_water" xml:space="preserve"><value>水系統迴路設定</value></data>

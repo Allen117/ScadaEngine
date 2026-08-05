@@ -70,4 +70,22 @@
   <data name="ems.cost.estimated_note" xml:space="preserve"><value>級距/加價類金額為依 kWh 占比分攤之估算值</value></data>
   <data name="ems.cost.exclude_base" xml:space="preserve"><value>不含基本電費</value></data>
   <data name="ems.cost.data_until" xml:space="preserve"><value>資料計算至 {0}</value></data>
+
+  <data name="ems.water.no_root" xml:space="preserve"><value>尚未建立水表迴路，請先至「水表/迴路設定」建立</value></data>
+  <data name="ems.water.no_data" xml:space="preserve"><value>期間內無用水資料</value></data>
+  <data name="ems.water.neg_excluded" xml:space="preserve"><value>{0}：{1} m³（未列入占比）</value></data>
+  <data name="ems.water.stale_note" xml:space="preserve"><value>部分時段水表資料不完整（可能斷線）</value></data>
+  <data name="ems.water.cost.period" xml:space="preserve"><value>本期 {0}</value></data>
+  <data name="ems.water.cost.no_plan" xml:space="preserve"><value>尚未選擇水費方案</value></data>
+  <data name="ems.water.cost.goto_tariff" xml:space="preserve"><value>前往水費設定</value></data>
+  <data name="ems.water.cost.unit_ntd" xml:space="preserve"><value>元</value></data>
+  <data name="ems.water.cost.total_m3" xml:space="preserve"><value>本期累計 {0} m³</value></data>
+  <data name="ems.water.cost.col_tier" xml:space="preserve"><value>級距</value></data>
+  <data name="ems.water.cost.col_cost" xml:space="preserve"><value>水費（元）</value></data>
+  <data name="ems.water.cost.tier_range" xml:space="preserve"><value>{0}~{1} m³</value></data>
+  <data name="ems.water.cost.tier_above" xml:space="preserve"><value>{0} m³ 以上</value></data>
+  <data name="ems.water.cost.per_m3" xml:space="preserve"><value>元/m³</value></data>
+  <data name="ems.water.cost.stale" xml:space="preserve"><value>資料不完整</value></data>
+  <data name="ems.water.cost.stale_note" xml:space="preserve"><value>水表資料不完整，金額可能低估</value></data>
+  <data name="ems.water.cost.effective" xml:space="preserve"><value>方案「{0}」（{1} 起生效）</value></data>
 </root>

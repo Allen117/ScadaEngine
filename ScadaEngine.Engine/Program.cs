@@ -113,6 +113,11 @@ try
     builder.Services.AddSingleton<WaterLeafAggregator>();
     builder.Services.AddHostedService<WaterLeafAggregationService>();
 
+    // 註冊水表葉子層 hourly 預聚合（boundary 相減 + MaxVolume 溢位 + UnitScale 換算，與電表預聚合對稱）
+    builder.Services.AddSingleton<WaterMeterLeafHourlyRepository>();
+    builder.Services.AddSingleton<WaterMeterLeafAggregator>();
+    builder.Services.AddHostedService<WaterMeterLeafAggregationService>();
+
     // 註冊需量計算服務（每分鐘計算各電表迴路 15min 滑動 TWA 功率）
     builder.Services.AddHostedService<DemandCalculatorService>();
 

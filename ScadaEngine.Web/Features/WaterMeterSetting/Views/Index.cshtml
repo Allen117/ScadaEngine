@@ -1,0 +1,168 @@
+@{
+    ViewData["Title"] = Localizer["watermeter.title"].Value;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-2">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="mb-0">
+            <i class="fas fa-sitemap text-primary me-2"></i>@Localizer["watermeter.title"]
+        </h2>
+        <span class="text-muted small">
+            <i class="fas fa-tint me-1"></i>@Localizer["watermeter.subtitle"]
+        </span>
+    </div>
+
+    <div class="row g-3">
+        <!-- 左側樹狀清單 -->
+        <div class="col-md-5">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-2">
+                    <span><i class="fas fa-folder-tree me-1"></i>@Localizer["watermeter.tree.header"]</span>
+                    <button class="btn btn-sm btn-outline-light py-0" onclick="window._wm.openCreateModal(null)">
+                        <i class="fas fa-plus me-1"></i>@Localizer["watermeter.tree.add_root"]
+                    </button>
+                </div>
+                <div class="card-body p-2" style="height: calc(100vh - 250px); overflow-y: auto;">
+                    <div id="treeContainer">
+                        <div class="text-center mt-5"><div class="spinner-border spinner-border-sm text-primary"></div> @Localizer["watermeter.tree.loading"]</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右側詳情 -->
+        <div class="col-md-7">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light py-2">
+                    <span id="detailTitle"><i class="fas fa-hand-pointer me-1"></i>@Localizer["watermeter.detail.placeholder_title"]</span>
+                </div>
+                <div class="card-body" id="detailArea">
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-sitemap fa-4x mb-3 d-block" style="opacity:.3"></i>
+                        <p>@Localizer["watermeter.detail.placeholder_body"]</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 新增/編輯 Modal -->
+<div class="modal fade" id="circuitModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title"><i class="fas fa-edit me-1"></i><span id="modalTitle">@Localizer["watermeter.modal.create_title"]</span></h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="wmId">
+                <input type="hidden" id="wmParentId">
+                <input type="hidden" id="wmSid">
+                <input type="hidden" id="wmUnitScale">
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold"><i class="fas fa-tag me-1"></i>@Localizer["watermeter.form.name"]</label>
+                    <input type="text" class="form-control form-control-sm" id="wmName" placeholder="@Localizer["watermeter.form.name_placeholder"]">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold"><i class="fas fa-cog me-1"></i>@Localizer["watermeter.form.type"]</label>
+                    <div class="btn-group btn-group-sm w-100" role="group">
+                        <input type="radio" class="btn-check" name="wmType" id="wmTypeVirtual" value="virtual" checked>
+                        <label class="btn btn-outline-primary" for="wmTypeVirtual">
+                            <i class="fas fa-folder me-1"></i>@Localizer["watermeter.form.type_virtual"]
+                        </label>
+                        <input type="radio" class="btn-check" name="wmType" id="wmTypeMeter" value="meter">
+                        <label class="btn btn-outline-primary" for="wmTypeMeter">
+                            <i class="fas fa-tint me-1"></i>@Localizer["watermeter.form.type_meter"]
+                        </label>
+                    </div>
+                </div>
+
+                <div class="mb-3" id="wmSignRow">
+                    <label class="form-label fw-semibold"><i class="fas fa-plus-minus me-1"></i>@Localizer["watermeter.form.sign"]</label>
+                    <div class="btn-group btn-group-sm w-100" role="group">
+                        <input type="radio" class="btn-check" name="wmSign" id="wmSignPos" value="1" checked>
+                        <label class="btn btn-outline-success" for="wmSignPos">
+                            <i class="fas fa-plus me-1"></i>@Localizer["watermeter.form.sign_pos"]
+                        </label>
+                        <input type="radio" class="btn-check" name="wmSign" id="wmSignNeg" value="-1">
+                        <label class="btn btn-outline-danger" for="wmSignNeg">
+                            <i class="fas fa-minus me-1"></i>@Localizer["watermeter.form.sign_neg"]
+                        </label>
+                    </div>
+                    <small class="text-muted d-block mt-1">@Localizer["watermeter.form.sign_hint"]</small>
+                </div>
+
+                <div class="mb-3" id="wmMeterFields" style="display:none;">
+                    <label class="form-label fw-semibold"><i class="fas fa-plug me-1"></i>@Localizer["watermeter.form.point"]</label>
+                    <div class="d-flex gap-2 align-items-center">
+                        <div class="form-control form-control-sm wm-point-display" id="wmPointDisplay">@Localizer["watermeter.form.point_unbound"]</div>
+                        <button type="button" class="btn btn-sm btn-outline-primary flex-shrink-0" onclick="window._wm.openPointPicker()">
+                            <i class="fas fa-crosshairs me-1"></i>@Localizer["watermeter.btn.pick_point"]
+                        </button>
+                    </div>
+                    <small class="text-muted d-block mt-1">@Localizer["watermeter.form.point_hint"]</small>
+                    <div class="wm-unitscale-info mt-1" id="wmUnitScaleInfo" style="display:none;"></div>
+
+                    <label class="form-label fw-semibold mt-3"><i class="fas fa-sort-numeric-up me-1"></i>@Localizer["watermeter.form.max_volume"]</label>
+                    <input type="text" inputmode="numeric" class="form-control form-control-sm" id="wmMaxVolume" placeholder="@Localizer["watermeter.form.max_volume_placeholder"]">
+                    <small class="text-muted d-block mt-1">@Localizer["watermeter.form.max_volume_hint"]</small>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold"><i class="fas fa-comment me-1"></i>@Localizer["watermeter.form.desc"]</label>
+                    <textarea class="form-control form-control-sm" id="wmDesc" rows="2" placeholder="@Localizer["watermeter.form.desc_placeholder"]"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer py-1">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">@Localizer["watermeter.btn.cancel"]</button>
+                <button type="button" class="btn btn-sm btn-primary" onclick="window._wm.saveCircuit()">
+                    <i class="fas fa-save me-1"></i>@Localizer["watermeter.btn.save"]
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 兩步驟點位選擇器 Modal（設備 → 點位清單＋搜尋） -->
+<div class="modal fade" id="wmPointPickerModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title"><i class="fas fa-crosshairs me-1"></i>@Localizer["watermeter.picker.title"]</h6>
+                <button type="button" class="btn-close" onclick="window._wm.closePointPicker(false)"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-2">
+                    <div class="col-md-5">
+                        <div class="pp-panel-title"><i class="fas fa-server me-1"></i>@Localizer["watermeter.picker.device"]</div>
+                        <div id="ppDeviceList" class="pp-list"></div>
+                    </div>
+                    <div class="col-md-7">
+                        <div class="pp-panel-title"><i class="fas fa-plug me-1"></i>@Localizer["watermeter.picker.point"]</div>
+                        <input type="text" class="form-control form-control-sm mb-1" id="ppSearch" placeholder="@Localizer["watermeter.picker.search_placeholder"]" autocomplete="off">
+                        <div id="ppPointList" class="pp-list"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer py-1">
+                <button type="button" class="btn btn-sm btn-outline-danger me-auto" onclick="window._wm.clearPickedPoint()">
+                    <i class="fas fa-eraser me-1"></i>@Localizer["watermeter.btn.clear_binding"]
+                </button>
+                <button type="button" class="btn btn-sm btn-secondary" onclick="window._wm.closePointPicker(false)">@Localizer["watermeter.btn.cancel"]</button>
+                <button type="button" class="btn btn-sm btn-primary" id="ppConfirmBtn" disabled onclick="window._wm.closePointPicker(true)">
+                    <i class="fas fa-check me-1"></i>@Localizer["watermeter.btn.confirm"]
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="~/css/watermeter.css" asp-append-version="true" />
+
+@section Scripts {
+    <script src="~/js/watermeter.js" asp-append-version="true"></script>
+}

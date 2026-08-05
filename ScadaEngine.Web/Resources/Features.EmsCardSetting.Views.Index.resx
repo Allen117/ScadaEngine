@@ -68,4 +68,7 @@
   <data name="emscard.name.yoy" xml:space="preserve"><value>去年同期比較</value></data>
   <data name="emscard.name.cost" xml:space="preserve"><value>電費狀態</value></data>
   <data name="emscard.name.costyoy" xml:space="preserve"><value>電費去年同期比較</value></data>
+  <data name="emscard.name.waterusagebar" xml:space="preserve"><value>用水量長條圖</value></data>
+  <data name="emscard.name.waterusagepie" xml:space="preserve"><value>子迴路用水占比圓餅圖</value></data>
+  <data name="emscard.name.watercost" xml:space="preserve"><value>水費狀態</value></data>
 </root>

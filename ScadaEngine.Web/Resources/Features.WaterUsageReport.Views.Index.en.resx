@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="waterusagereport.title" xml:space="preserve"><value>Water Usage Report</value></data>
+  <data name="waterusagereport.breadcrumb.water" xml:space="preserve"><value>Energy Management</value></data>
+
+  <data name="waterusagereport.filter.title" xml:space="preserve"><value>Query Conditions</value></data>
+  <data name="waterusagereport.filter.circuit" xml:space="preserve"><value>Circuit</value></data>
+  <data name="waterusagereport.filter.granularity" xml:space="preserve"><value>Granularity</value></data>
+  <data name="waterusagereport.filter.date" xml:space="preserve"><value>Date</value></data>
+  <data name="waterusagereport.filter.hour_start" xml:space="preserve"><value>From Hour</value></data>
+  <data name="waterusagereport.filter.hour_end" xml:space="preserve"><value>To Hour</value></data>
+  <data name="waterusagereport.filter.month_start" xml:space="preserve"><value>From Month</value></data>
+  <data name="waterusagereport.filter.month_end" xml:space="preserve"><value>To Month</value></data>
+  <data name="waterusagereport.filter.day_start" xml:space="preserve"><value>From Date</value></data>
+  <data name="waterusagereport.filter.day_end" xml:space="preserve"><value>To Date</value></data>
+  <data name="waterusagereport.filter.year_start" xml:space="preserve"><value>From Year</value></data>
+  <data name="waterusagereport.filter.year_end" xml:space="preserve"><value>To Year</value></data>
+
+  <data name="waterusagereport.granularity.hour" xml:space="preserve"><value>Hour</value></data>
+  <data name="waterusagereport.granularity.day" xml:space="preserve"><value>Day</value></data>
+  <data name="waterusagereport.granularity.month" xml:space="preserve"><value>Month</value></data>
+  <data name="waterusagereport.granularity.year" xml:space="preserve"><value>Year</value></data>
+
+  <data name="waterusagereport.button.query" xml:space="preserve"><value>Query</value></data>
+  <data name="waterusagereport.button.export" xml:space="preserve"><value>Export Excel</value></data>
+  <data name="waterusagereport.button.show_breakdown" xml:space="preserve"><value>Show breakdown</value></data>
+  <data name="waterusagereport.button.show_total" xml:space="preserve"><value>Show total</value></data>
+
+  <data name="waterusagereport.chart.title" xml:space="preserve"><value>Water Consumption</value></data>
+  <data name="waterusagereport.chart.y_axis" xml:space="preserve"><value>m³</value></data>
+  <data name="waterusagereport.chart.x_axis" xml:space="preserve"><value>Period</value></data>
+  <data name="waterusagereport.chart.dataset_label" xml:space="preserve"><value>{0} (m³)</value></data>
+  <data name="waterusagereport.chart.dataset_total_label" xml:space="preserve"><value>{0} Total (m³)</value></data>
+  <data name="waterusagereport.chart.breakdown_total_label" xml:space="preserve"><value>Total: {0} m³</value></data>
+
+  <data name="waterusagereport.table.title" xml:space="preserve"><value>Data Detail</value></data>
+  <data name="waterusagereport.table.col_period" xml:space="preserve"><value>Period</value></data>
+  <data name="waterusagereport.table.col_m3" xml:space="preserve"><value>Water Usage (m³)</value></data>
+  <data name="waterusagereport.table.total" xml:space="preserve"><value>Total</value></data>
+  <data name="waterusagereport.table.empty" xml:space="preserve"><value>No query yet</value></data>
+  <data name="waterusagereport.table.no_data" xml:space="preserve"><value>No data</value></data>
+  <data name="waterusagereport.table.querying" xml:space="preserve"><value>Querying…</value></data>
+
+  <data name="waterusagereport.label.total" xml:space="preserve"><value>Total</value></data>
+  <data name="waterusagereport.warning.stale_data" xml:space="preserve"><value>⚠ Water meter data incomplete for some periods (possible disconnection)</value></data>
+  <data name="waterusagereport.tooltip.stale" xml:space="preserve"><value>Water meter data incomplete for this period (possible disconnection)</value></data>
+
+  <data name="waterusagereport.select.loading" xml:space="preserve"><value>-- Loading --</value></data>
+  <data name="waterusagereport.select.placeholder" xml:space="preserve"><value>-- Select Circuit --</value></data>
+  <data name="waterusagereport.select.empty" xml:space="preserve"><value>No circuits configured</value></data>
+
+  <data name="waterusagereport.alert.select_circuit" xml:space="preserve"><value>Please select a circuit</value></data>
+  <data name="waterusagereport.alert.month_order" xml:space="preserve"><value>End month must not be earlier than start month</value></data>
+  <data name="waterusagereport.alert.day_order" xml:space="preserve"><value>End date must not be earlier than start date</value></data>
+  <data name="waterusagereport.alert.hour_order" xml:space="preserve"><value>End hour must not be earlier than start hour</value></data>
+  <data name="waterusagereport.alert.year_order" xml:space="preserve"><value>End year must not be earlier than start year</value></data>
+  <data name="waterusagereport.alert.query_failed" xml:space="preserve"><value>Query failed: {0}</value></data>
+  <data name="waterusagereport.alert.export_failed" xml:space="preserve"><value>Export failed: {0}</value></data>
+
+  <data name="waterusagereport.console.load_circuit_failed" xml:space="preserve"><value>[WaterUsageReport] Failed to load circuits</value></data>
+
+  <data name="waterusagereport.period.hint" xml:space="preserve"><value>Actual period range: {0} ~ {1} (per billing cycle settings)</value></data>
+</root>

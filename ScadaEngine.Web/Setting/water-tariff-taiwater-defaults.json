@@ -1,0 +1,16 @@
+{
+  "_comment": "台水流動水費預設值（分段累進，元/度，1 度 = 1 m³）。此檔為唯讀 seed — 使用者修改存 SystemSettings.water_tariff；「還原台水預設」與首次載入以本檔為準。台水調價時只需更新本檔。",
+  "plans": [
+    {
+      "szPlanId": "taiwater-flow-default",
+      "szName": "台水流動水費",
+      "szEffectiveDate": "2000-01-01",
+      "tiers": [
+        { "nFrom": 1, "nTo": 10, "dPrice": 7.35 },
+        { "nFrom": 11, "nTo": 30, "dPrice": 9.45 },
+        { "nFrom": 31, "nTo": 50, "dPrice": 11.55 },
+        { "nFrom": 51, "nTo": null, "dPrice": 12.075 }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <!-- Page -->
+  <data name="watermeter.title" xml:space="preserve"><value>Water Meter / Circuit</value></data>
+  <data name="watermeter.subtitle" xml:space="preserve"><value>Water Management</value></data>
+
+  <!-- Tree -->
+  <data name="watermeter.tree.header" xml:space="preserve"><value>Circuit Hierarchy</value></data>
+  <data name="watermeter.tree.add_root" xml:space="preserve"><value>Add Meter/Circuit</value></data>
+  <data name="watermeter.tree.loading" xml:space="preserve"><value>Loading...</value></data>
+  <data name="watermeter.tree.empty" xml:space="preserve"><value>No circuits yet. Click Add at the top right.</value></data>
+  <data name="watermeter.tree.load_failed" xml:space="preserve"><value>Load failed</value></data>
+
+  <!-- Detail -->
+  <data name="watermeter.detail.placeholder_title" xml:space="preserve"><value>Select a circuit on the left</value></data>
+  <data name="watermeter.detail.placeholder_body" xml:space="preserve"><value>Select a node on the left to view/edit its details</value></data>
+  <data name="watermeter.detail.type" xml:space="preserve"><value>Type</value></data>
+  <data name="watermeter.detail.name" xml:space="preserve"><value>Name</value></data>
+  <data name="watermeter.detail.sign" xml:space="preserve"><value>Contribution</value></data>
+  <data name="watermeter.detail.point" xml:space="preserve"><value>Point</value></data>
+  <data name="watermeter.detail.unit_scale" xml:space="preserve"><value>Unit Conversion</value></data>
+  <data name="watermeter.detail.max_volume" xml:space="preserve"><value>Overflow Limit MaxVolume</value></data>
+  <data name="watermeter.detail.desc" xml:space="preserve"><value>Description</value></data>
+  <data name="watermeter.detail.none" xml:space="preserve"><value>None</value></data>
+  <data name="watermeter.detail.not_set" xml:space="preserve"><value>Not set</value></data>
+  <data name="watermeter.detail.point_missing" xml:space="preserve"><value>Point not found</value></data>
+
+  <!-- Type badges -->
+  <data name="watermeter.badge.virtual" xml:space="preserve"><value>Virtual circuit</value></data>
+  <data name="watermeter.badge.meter" xml:space="preserve"><value>Physical water meter</value></data>
+
+  <!-- Form -->
+  <data name="watermeter.form.name" xml:space="preserve"><value>Name</value></data>
+  <data name="watermeter.form.name_placeholder" xml:space="preserve"><value>e.g. Plant main meter / Cooling tower makeup</value></data>
+  <data name="watermeter.form.type" xml:space="preserve"><value>Node Type</value></data>
+  <data name="watermeter.form.type_virtual" xml:space="preserve"><value>Virtual circuit</value></data>
+  <data name="watermeter.form.type_meter" xml:space="preserve"><value>Physical water meter</value></data>
+  <data name="watermeter.form.sign" xml:space="preserve"><value>Contribution</value></data>
+  <data name="watermeter.form.sign_pos" xml:space="preserve"><value>Positive (add to parent)</value></data>
+  <data name="watermeter.form.sign_neg" xml:space="preserve"><value>Negative (subtract from parent)</value></data>
+  <data name="watermeter.form.sign_hint" xml:space="preserve"><value>For formulas like "main meter − allocated sub-meters"; not applicable to root nodes</value></data>
+  <data name="watermeter.form.point" xml:space="preserve"><value>Water Flow Point</value></data>
+  <data name="watermeter.form.point_unbound" xml:space="preserve"><value>No point bound yet</value></data>
+  <data name="watermeter.form.point_hint" xml:space="preserve"><value>Only cumulative points with m³ / L family units are listed (incl. calculated and DB source points)</value></data>
+  <data name="watermeter.form.unit_scale_display" xml:space="preserve"><value>Point unit {unit} → scale factor {scale} (m³)</value></data>
+  <data name="watermeter.form.max_volume" xml:space="preserve"><value>Overflow Limit MaxVolume</value></data>
+  <data name="watermeter.form.max_volume_placeholder" xml:space="preserve"><value>e.g. 1,000,000,000 (in the point's raw unit)</value></data>
+  <data name="watermeter.form.max_volume_hint" xml:space="preserve"><value>Used to compute delta when the meter reading overflows/resets, in the point's raw unit; leave blank to skip overflow handling</value></data>
+  <data name="watermeter.form.desc" xml:space="preserve"><value>Description</value></data>
+  <data name="watermeter.form.desc_placeholder" xml:space="preserve"><value>Optional</value></data>
+
+  <!-- Buttons -->
+  <data name="watermeter.btn.save" xml:space="preserve"><value>Save</value></data>
+  <data name="watermeter.btn.cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="watermeter.btn.confirm" xml:space="preserve"><value>OK</value></data>
+  <data name="watermeter.btn.clear_binding" xml:space="preserve"><value>Clear binding</value></data>
+  <data name="watermeter.btn.pick_point" xml:space="preserve"><value>Select point</value></data>
+  <data name="watermeter.btn.add_child" xml:space="preserve"><value>Add child</value></data>
+  <data name="watermeter.btn.edit" xml:space="preserve"><value>Edit</value></data>
+  <data name="watermeter.btn.delete" xml:space="preserve"><value>Delete</value></data>
+
+  <!-- Modal titles -->
+  <data name="watermeter.modal.create_title" xml:space="preserve"><value>Add Meter/Circuit</value></data>
+  <data name="watermeter.modal.create_child_title" xml:space="preserve"><value>Add Child Node</value></data>
+  <data name="watermeter.modal.edit_title" xml:space="preserve"><value>Edit: {name}</value></data>
+
+  <!-- Two-step point picker -->
+  <data name="watermeter.picker.title" xml:space="preserve"><value>Select Water Flow Point</value></data>
+  <data name="watermeter.picker.device" xml:space="preserve"><value>Devices</value></data>
+  <data name="watermeter.picker.point" xml:space="preserve"><value>Points</value></data>
+  <data name="watermeter.picker.search_placeholder" xml:space="preserve"><value>Search point name / SID...</value></data>
+  <data name="watermeter.picker.no_data" xml:space="preserve"><value>No points available</value></data>
+  <data name="watermeter.picker.pick_device_first" xml:space="preserve"><value>Select a device on the left first</value></data>
+  <data name="watermeter.picker.pick_subunit_first" xml:space="preserve"><value>Select a sub-unit first</value></data>
+  <data name="watermeter.picker.no_match" xml:space="preserve"><value>No matching points</value></data>
+
+  <!-- Source groups -->
+  <data name="watermeter.group.modbus" xml:space="preserve"><value>Modbus Devices</value></data>
+  <data name="watermeter.group.calculated" xml:space="preserve"><value>Calculated Points</value></data>
+  <data name="watermeter.group.db" xml:space="preserve"><value>DB Sources</value></data>
+  <data name="watermeter.group.unspecified" xml:space="preserve"><value>Unspecified</value></data>
+
+  <!-- Tree node tooltip -->
+  <data name="watermeter.sign.neg_tooltip" xml:space="preserve"><value>Negative: subtracted from parent circuit</value></data>
+
+  <!-- Frontend messages -->
+  <data name="watermeter.msg.name_required" xml:space="preserve"><value>Please enter a name</value></data>
+  <data name="watermeter.msg.sid_required" xml:space="preserve"><value>A physical water meter must bind a water flow point</value></data>
+  <data name="watermeter.msg.save_failed" xml:space="preserve"><value>Save failed: {msg}</value></data>
+  <data name="watermeter.msg.delete_failed" xml:space="preserve"><value>Delete failed: {msg}</value></data>
+  <data name="watermeter.msg.sort_failed" xml:space="preserve"><value>Sort update failed: {msg}</value></data>
+  <data name="watermeter.msg.confirm_delete" xml:space="preserve"><value>Delete "{name}"?</value></data>
+  <data name="watermeter.msg.confirm_delete_children" xml:space="preserve"><value>This circuit has child nodes; deleting will also remove all descendants. Continue?</value></data>
+
+  <!-- Backend error codes -->
+  <data name="watermeter.err.name_required" xml:space="preserve"><value>Name cannot be empty</value></data>
+  <data name="watermeter.err.invalid_sign" xml:space="preserve"><value>Sign must be +1 or -1</value></data>
+  <data name="watermeter.err.node_not_found" xml:space="preserve"><value>Node not found</value></data>
+  <data name="watermeter.err.invalid_water_point" xml:space="preserve"><value>Point not found, or its unit is not a water volume unit (m³ / liter). Please reselect the point.</value></data>
+  <data name="watermeter.err.has_children" xml:space="preserve"><value>This circuit has child nodes; deletion will remove all descendants</value></data>
+  <data name="watermeter.err.sort_failed" xml:space="preserve"><value>Sort update failed</value></data>
+  <data name="watermeter.err.unknown" xml:space="preserve"><value>Unknown error</value></data>
+</root>

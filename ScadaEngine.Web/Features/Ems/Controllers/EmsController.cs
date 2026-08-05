@@ -20,6 +20,9 @@ public class EmsController : Controller
     private readonly MainMeterAggregationService _aggregation;
     private readonly ElectricityCostService _costService;
     private readonly EmsCardSettingService _cardSettingService;
+    private readonly WaterMeterCircuitService _waterCircuitService;
+    private readonly WaterUsageReportService _waterReportService;
+    private readonly WaterCostService _waterCostService;
 
     public EmsController(
         IDataRepository repo,
@@ -28,7 +31,10 @@ public class EmsController : Controller
         BillingPeriodService billingPeriodService,
         MainMeterAggregationService aggregation,
         ElectricityCostService costService,
-        EmsCardSettingService cardSettingService)
+        EmsCardSettingService cardSettingService,
+        WaterMeterCircuitService waterCircuitService,
+        WaterUsageReportService waterReportService,
+        WaterCostService waterCostService)
     {
         _repo                 = repo;
         _circuitService       = circuitService;
@@ -37,6 +43,9 @@ public class EmsController : Controller
         _aggregation          = aggregation;
         _costService          = costService;
         _cardSettingService   = cardSettingService;
+        _waterCircuitService  = waterCircuitService;
+        _waterReportService   = waterReportService;
+        _waterCostService     = waterCostService;
     }
 
     [HttpGet("/EMS")]
@@ -434,6 +443,119 @@ public class EmsController : Controller
             // 去年為 0（含無資料）時無法算增減比，回 null 由前端顯示 --；負底取絕對值保留增減方向語意
             pctChange    = dLastYear == 0 ? null : Math.Round(dDiff / Math.Abs(dLastYear) * 100, 1)
         };
+    }
+
+    // ────────────────────────── 水表三卡 API ──────────────────────────
+
+    /// <summary>取得水表迴路完整階層（flat 清單，前端組樹；用水量卡根迴路名 + 水費卡下拉用）</summary>
+    [HttpGet("/EMS/api/water-circuit-tree")]
+    public async Task<IActionResult> GetWaterCircuitTree()
+    {
+        var nodes = await _waterCircuitService.GetAllAsync();
+        return Ok(nodes.Select(n => new
+        {
+            id        = n.nId,
+            name      = n.szName,
+            parentId  = n.nParentId,
+            sortOrder = n.nSortOrder
+        }));
+    }
+
+    /// <summary>取得指定水表迴路的用水量（長條圖用）；circuitId 空 = 根迴路（全廠）</summary>
+    /// <param name="granularity">month / day / hour（同 circuit-energy）</param>
+    /// <param name="pivot">month=年份(2026)；day=年月(2026-06)；hour=日期(2026-06-29)</param>
+    [HttpGet("/EMS/api/water-usage")]
+    public async Task<IActionResult> GetWaterUsage(
+        [FromQuery] int? circuitId,
+        [FromQuery] string? granularity,
+        [FromQuery] string? pivot)
+    {
+        if (string.IsNullOrWhiteSpace(granularity) || string.IsNullOrWhiteSpace(pivot))
+            return BadRequest(new { error = "granularity, pivot 皆為必填" });
+
+        DateTime dtStart, dtEnd;
+        try { (dtStart, dtEnd) = await ParsePivotAsync(granularity, pivot); }
+        catch { return BadRequest(new { error = "pivot 格式不正確" }); }
+
+        int nCircuitId;
+        if (circuitId.HasValue)
+        {
+            nCircuitId = circuitId.Value;
+        }
+        else
+        {
+            var root = await _waterCircuitService.GetRootAsync();
+            if (root == null)
+                return Ok(new EmsWaterUsageDto());   // 未建根迴路 → 空資料（前端顯示無資料）
+            nCircuitId = root.nId;
+        }
+
+        var result = await _waterReportService.GetReportAsync(nCircuitId, granularity, dtStart, dtEnd);
+        return Ok(new EmsWaterUsageDto
+        {
+            labels     = result.buckets.Select(b => b.szLabel).ToList(),
+            values     = result.buckets.Select(b => b.dM3).ToList(),
+            hasWarning = result.isHasWarning
+        });
+    }
+
+    /// <summary>根迴路直接子迴路在區間內的用水量拆解（圓餅圖用）；無子迴路時回根迴路自己一筆</summary>
+    /// <param name="granularity">month / day / hour（同 circuit-energy）</param>
+    /// <param name="pivot">month=年份(2026)；day=年月(2026-06)；hour=日期(2026-06-29)</param>
+    [HttpGet("/EMS/api/water-breakdown")]
+    public async Task<IActionResult> GetWaterBreakdown(
+        [FromQuery] string? granularity,
+        [FromQuery] string? pivot)
+    {
+        if (string.IsNullOrWhiteSpace(granularity) || string.IsNullOrWhiteSpace(pivot))
+            return BadRequest(new { error = "granularity, pivot 皆為必填" });
+
+        DateTime dtStart, dtEnd;
+        try { (dtStart, dtEnd) = await ParsePivotAsync(granularity, pivot); }
+        catch { return BadRequest(new { error = "pivot 格式不正確" }); }
+
+        var root = await _waterCircuitService.GetRootAsync();
+        if (root == null)
+            return Ok(new EmsWaterBreakdownDto { hasRoot = false });
+
+        var dto = new EmsWaterBreakdownDto { hasRoot = true };
+
+        var children = await _waterCircuitService.GetDirectChildrenAsync(root.nId);
+        if (children.Count == 0)
+        {
+            var (dTotalM3, isWarn) = await _waterReportService.GetTotalM3Async(root.nId, granularity, dtStart, dtEnd);
+            if (isWarn) dto.hasWarning = true;
+            dto.items.Add(new EmsWaterBreakdownItemDto
+            {
+                id   = root.nId,
+                name = root.szName,
+                m3   = Math.Round(dTotalM3, 3)
+            });
+            return Ok(dto);
+        }
+
+        foreach (var child in children)
+        {
+            // 子迴路內部葉子的 sign 已由計算核心累乘（相對於 child），child 自己對父的方向在這裡補乘
+            // （負值不入餅，由前端列於下方小字 — 比照 main-meter-breakdown）
+            var nChildSign = child.nSign == -1 ? -1 : 1;
+            var (dTotalM3, isWarn) = await _waterReportService.GetTotalM3Async(child.nId, granularity, dtStart, dtEnd);
+            if (isWarn) dto.hasWarning = true;
+            dto.items.Add(new EmsWaterBreakdownItemDto
+            {
+                id   = child.nId,
+                name = child.szName,
+                m3   = Math.Round(dTotalM3 * nChildSign, 3)
+            });
+        }
+        return Ok(dto);
+    }
+
+    /// <summary>水費狀態卡 — 指定水表迴路（未指定 = 根迴路）本期累計 m³ 與級距水費</summary>
+    [HttpGet("/EMS/api/water-cost")]
+    public async Task<IActionResult> GetWaterCost([FromQuery] int? circuitId)
+    {
+        return Ok(await _waterCostService.GetStatusAsync(circuitId));
     }
 
     /// <summary>

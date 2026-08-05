@@ -1,0 +1,29 @@
+<!-- 用水量長條圖卡片（日/月/年切換，日模式看今天時 60s 自動刷新；資料源 = 水表根迴路） -->
+<div class="col-md-6 col-lg-7 col-xl-8">
+    <div class="card shadow-sm h-100 d-flex flex-column">
+        <div class="card-header py-2 d-flex justify-content-between align-items-center flex-wrap gap-2"
+             style="background:#43a047;color:#fff;">
+            <span>
+                <i class="fas fa-chart-bar me-1"></i>@Localizer["ems.water.bar.title"]
+                <span id="waterBarCircuitName" class="small ms-1 opacity-75"></span>
+            </span>
+            <span class="d-flex align-items-center gap-2">
+                <span class="btn-group btn-group-sm ems-gran-group" role="group" aria-label="用水量長條圖粒度切換" id="waterBarGranGroup">
+                    <button type="button" class="btn ems-gran-btn active" data-gran="hour">日</button>
+                    <button type="button" class="btn ems-gran-btn" data-gran="day">月</button>
+                    <button type="button" class="btn ems-gran-btn" data-gran="month">年</button>
+                </span>
+                <input type="date" id="waterBarPivotDate" class="form-control form-control-sm ems-hub-picker" />
+                <input type="month" id="waterBarPivotMonth" class="form-control form-control-sm ems-hub-picker" style="display:none;" />
+                <input type="number" id="waterBarPivotYear" min="2000" max="2100" class="form-control form-control-sm ems-hub-picker" style="display:none;" />
+            </span>
+        </div>
+        <div class="card-body p-2 flex-grow-1">
+            <div id="waterBarEmpty" class="ems-hub-empty" style="display:none;"></div>
+            <div id="waterBarChartWrap" class="ems-hub-chart-wrap">
+                <canvas id="waterBarChart"></canvas>
+            </div>
+            <div id="waterBarWarnNote" class="small text-warning mt-1" style="display:none;"></div>
+        </div>
+    </div>
+</div>

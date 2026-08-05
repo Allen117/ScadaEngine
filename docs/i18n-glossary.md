@@ -30,6 +30,10 @@
 | 冷凍噸報表 | Refrigeration Ton Report | `/RefrigerationTonReport` |
 | 能源申報 | Energy Declaration | `/EnergyDeclaration` |
 | 電表/迴路設定 | Energy Meter / Circuit | `/EnergyMeter` |
+| 水表/迴路設定 | Water Meter / Circuit | `/WaterMeterSetting`（累積式水表，非冰水系統） |
+| 用水報表 | Water Usage Report | `/WaterUsageReport` |
+| 水費設定 | Water Tariff Settings | `/WaterTariffSetting` |
+| 水費報表 | Water Cost Report | `/WaterCostReport` |
 | 水系統迴路設定 | Chilled Water Circuit Settings | `/ChilledWaterSystem` |
 | 月結週期設定 | Billing Cycle Settings | `/BillingPeriodSetting` |
 | 電費設定 | Tariff Settings | `/TariffSetting` |
@@ -237,6 +241,29 @@
 | 總計 | Total | 與「合計」同義 |
 | 查詢區間 | Query Range | Excel 標籤 |
 | 操作者 | Operator | Excel 標籤（不是「比較運算子」） |
+
+## 用水報表 / 水費
+
+| zh-TW | en | 備註 |
+|---|---|---|
+| 水表 | Water Meter | 累積式水量表（m³/L），與冰水系統（Chilled Water）區分 |
+| 用水量 | Water Usage | (m³) |
+| 用水量分布 | Water Usage | chart 標題 |
+| 流動水費 | Water Usage Charge | 台水按度計收（分段累進）；不含基本費 |
+| 基本費 | Base Fee | 台水按口徑計收，本系統**不**計算 |
+| 分段累進 | Progressive Tiers | 台水流動水費級距計價 |
+| 級距 | Tier | 與電費「級距」同詞 |
+| 以上 | and above | 末級級距上限（nTo=null） |
+| 度（水） | Unit (m³) | 1 度 = 1 立方公尺；UI 一律顯示 m³ 避免與電度混淆 |
+| 立方公尺 / 立方米 | Cubic Meter (m³) | 單位不翻，顯示 m³ |
+| 公升 | Liter (L) | UnitScale=0.001 自動換算 m³ |
+| 溢位上限 | Rollover Max Value | 水表累積讀數歸零上限（MaxVolume） |
+| 生效日 | Effective Date | 水費方案版本生效日期 |
+| 方案版本 | Plan Version | 依期別起日選用生效方案 |
+| 台水 | Taiwan Water Corporation | 品牌名，可縮寫 Taiwater |
+| 水費狀態 | Water Cost | EMS 卡片標題 |
+| 用水量長條圖 | Water Usage Bar Chart | EMS 卡名 |
+| 子迴路用水占比圓餅圖 | Sub-circuit Water Share Pie | EMS 卡名 |
 
 ## 能源基準（ISO 50001）
 

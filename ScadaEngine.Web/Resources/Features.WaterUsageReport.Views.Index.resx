@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="waterusagereport.title" xml:space="preserve"><value>用水報表</value></data>
+  <data name="waterusagereport.breadcrumb.water" xml:space="preserve"><value>能源管理</value></data>
+
+  <data name="waterusagereport.filter.title" xml:space="preserve"><value>查詢條件</value></data>
+  <data name="waterusagereport.filter.circuit" xml:space="preserve"><value>迴路</value></data>
+  <data name="waterusagereport.filter.granularity" xml:space="preserve"><value>單位</value></data>
+  <data name="waterusagereport.filter.date" xml:space="preserve"><value>日期</value></data>
+  <data name="waterusagereport.filter.hour_start" xml:space="preserve"><value>起時</value></data>
+  <data name="waterusagereport.filter.hour_end" xml:space="preserve"><value>訖時</value></data>
+  <data name="waterusagereport.filter.month_start" xml:space="preserve"><value>起月</value></data>
+  <data name="waterusagereport.filter.month_end" xml:space="preserve"><value>訖月</value></data>
+  <data name="waterusagereport.filter.day_start" xml:space="preserve"><value>起日</value></data>
+  <data name="waterusagereport.filter.day_end" xml:space="preserve"><value>訖日</value></data>
+  <data name="waterusagereport.filter.year_start" xml:space="preserve"><value>起年</value></data>
+  <data name="waterusagereport.filter.year_end" xml:space="preserve"><value>訖年</value></data>
+
+  <data name="waterusagereport.granularity.hour" xml:space="preserve"><value>時</value></data>
+  <data name="waterusagereport.granularity.day" xml:space="preserve"><value>日</value></data>
+  <data name="waterusagereport.granularity.month" xml:space="preserve"><value>月</value></data>
+  <data name="waterusagereport.granularity.year" xml:space="preserve"><value>年</value></data>
+
+  <data name="waterusagereport.button.query" xml:space="preserve"><value>查詢</value></data>
+  <data name="waterusagereport.button.export" xml:space="preserve"><value>匯出 Excel</value></data>
+  <data name="waterusagereport.button.show_breakdown" xml:space="preserve"><value>顯示明細</value></data>
+  <data name="waterusagereport.button.show_total" xml:space="preserve"><value>顯示合計</value></data>
+
+  <data name="waterusagereport.chart.title" xml:space="preserve"><value>用水量分布</value></data>
+  <data name="waterusagereport.chart.y_axis" xml:space="preserve"><value>m³</value></data>
+  <data name="waterusagereport.chart.x_axis" xml:space="preserve"><value>時段</value></data>
+  <data name="waterusagereport.chart.dataset_label" xml:space="preserve"><value>{0} (m³)</value></data>
+  <data name="waterusagereport.chart.dataset_total_label" xml:space="preserve"><value>{0} 合計 (m³)</value></data>
+  <data name="waterusagereport.chart.breakdown_total_label" xml:space="preserve"><value>合計：{0} m³</value></data>
+
+  <data name="waterusagereport.table.title" xml:space="preserve"><value>數據明細</value></data>
+  <data name="waterusagereport.table.col_period" xml:space="preserve"><value>時段</value></data>
+  <data name="waterusagereport.table.col_m3" xml:space="preserve"><value>用水量 (m³)</value></data>
+  <data name="waterusagereport.table.total" xml:space="preserve"><value>合計</value></data>
+  <data name="waterusagereport.table.empty" xml:space="preserve"><value>尚未查詢</value></data>
+  <data name="waterusagereport.table.no_data" xml:space="preserve"><value>無資料</value></data>
+  <data name="waterusagereport.table.querying" xml:space="preserve"><value>查詢中…</value></data>
+
+  <data name="waterusagereport.label.total" xml:space="preserve"><value>總計</value></data>
+  <data name="waterusagereport.warning.stale_data" xml:space="preserve"><value>⚠ 部分時段水表資料不完整（可能斷線）</value></data>
+  <data name="waterusagereport.tooltip.stale" xml:space="preserve"><value>此區間水表資料不完整（可能斷線）</value></data>
+
+  <data name="waterusagereport.select.loading" xml:space="preserve"><value>-- 載入中 --</value></data>
+  <data name="waterusagereport.select.placeholder" xml:space="preserve"><value>-- 請選擇迴路 --</value></data>
+  <data name="waterusagereport.select.empty" xml:space="preserve"><value>尚未設定迴路</value></data>
+
+  <data name="waterusagereport.alert.select_circuit" xml:space="preserve"><value>請選擇迴路</value></data>
+  <data name="waterusagereport.alert.month_order" xml:space="preserve"><value>訖月不可早於起月</value></data>
+  <data name="waterusagereport.alert.day_order" xml:space="preserve"><value>訖日不可早於起日</value></data>
+  <data name="waterusagereport.alert.hour_order" xml:space="preserve"><value>訖時不可早於起時</value></data>
+  <data name="waterusagereport.alert.year_order" xml:space="preserve"><value>訖年不可早於起年</value></data>
+  <data name="waterusagereport.alert.query_failed" xml:space="preserve"><value>查詢失敗：{0}</value></data>
+  <data name="waterusagereport.alert.export_failed" xml:space="preserve"><value>匯出失敗：{0}</value></data>
+
+  <data name="waterusagereport.console.load_circuit_failed" xml:space="preserve"><value>[WaterUsageReport] 載入迴路失敗</value></data>
+
+  <data name="waterusagereport.period.hint" xml:space="preserve"><value>期別實際區間：{0} ～ {1}（依月結週期設定）</value></data>
+</root>

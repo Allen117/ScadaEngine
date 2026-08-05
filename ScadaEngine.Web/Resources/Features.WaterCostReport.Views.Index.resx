@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="watercostreport.title" xml:space="preserve"><value>水費報表</value></data>
+  <data name="watercostreport.breadcrumb.energy" xml:space="preserve"><value>能源管理</value></data>
+  <data name="watercostreport.filter.title" xml:space="preserve"><value>查詢條件</value></data>
+  <data name="watercostreport.filter.circuit" xml:space="preserve"><value>水表迴路</value></data>
+  <data name="watercostreport.filter.month_start" xml:space="preserve"><value>起始期別</value></data>
+  <data name="watercostreport.filter.month_end" xml:space="preserve"><value>結束期別</value></data>
+  <data name="watercostreport.button.query" xml:space="preserve"><value>查詢</value></data>
+  <data name="watercostreport.button.export" xml:space="preserve"><value>匯出 Excel</value></data>
+  <data name="watercostreport.select.loading" xml:space="preserve"><value>載入中...</value></data>
+  <data name="watercostreport.select.placeholder" xml:space="preserve"><value>請選擇迴路</value></data>
+  <data name="watercostreport.select.empty" xml:space="preserve"><value>無水表迴路資料</value></data>
+  <data name="watercostreport.period.hint" xml:space="preserve"><value>期別區間：{0} ~ {1}</value></data>
+  <data name="watercostreport.chart.title" xml:space="preserve"><value>各期水費</value></data>
+  <data name="watercostreport.chart.dataset_label" xml:space="preserve"><value>{0} 水費</value></data>
+  <data name="watercostreport.chart.y_axis" xml:space="preserve"><value>水費（元）</value></data>
+  <data name="watercostreport.chart.x_axis" xml:space="preserve"><value>期別</value></data>
+  <data name="watercostreport.chart.no_data" xml:space="preserve"><value>查無資料</value></data>
+  <data name="watercostreport.label.total" xml:space="preserve"><value>總水費</value></data>
+  <data name="watercostreport.label.total_m3" xml:space="preserve"><value>總用水量</value></data>
+  <data name="watercostreport.unit.ntd" xml:space="preserve"><value>元</value></data>
+  <data name="watercostreport.table.title" xml:space="preserve"><value>期別明細</value></data>
+  <data name="watercostreport.table.col_period" xml:space="preserve"><value>期別</value></data>
+  <data name="watercostreport.table.col_m3" xml:space="preserve"><value>用水量 (m³)</value></data>
+  <data name="watercostreport.table.col_plan" xml:space="preserve"><value>套用方案</value></data>
+  <data name="watercostreport.table.col_cost" xml:space="preserve"><value>水費（元）</value></data>
+  <data name="watercostreport.table.col_detail" xml:space="preserve"><value>明細</value></data>
+  <data name="watercostreport.table.empty" xml:space="preserve"><value>請選擇迴路與期別區間後查詢</value></data>
+  <data name="watercostreport.table.querying" xml:space="preserve"><value>查詢中...</value></data>
+  <data name="watercostreport.table.no_data" xml:space="preserve"><value>查無資料</value></data>
+  <data name="watercostreport.table.total" xml:space="preserve"><value>合計</value></data>
+  <data name="watercostreport.detail.col_range" xml:space="preserve"><value>級距（度）</value></data>
+  <data name="watercostreport.detail.col_price" xml:space="preserve"><value>單價（元/度）</value></data>
+  <data name="watercostreport.detail.col_m3" xml:space="preserve"><value>度數 (m³)</value></data>
+  <data name="watercostreport.detail.col_cost" xml:space="preserve"><value>金額（元）</value></data>
+  <data name="watercostreport.detail.above" xml:space="preserve"><value>{0} 度以上</value></data>
+  <data name="watercostreport.badge.stale" xml:space="preserve"><value>資料不完整</value></data>
+  <data name="watercostreport.badge.stale_hint" xml:space="preserve"><value>該期用水量彙總含品質警示，金額僅供參考</value></data>
+  <data name="watercostreport.alert.select_circuit" xml:space="preserve"><value>請先選擇迴路</value></data>
+  <data name="watercostreport.alert.month_order" xml:space="preserve"><value>期別區間不正確（結束不可早於起始）</value></data>
+  <data name="watercostreport.alert.query_failed" xml:space="preserve"><value>查詢失敗：{0}</value></data>
+  <data name="watercostreport.alert.export_failed" xml:space="preserve"><value>匯出失敗：{0}</value></data>
+</root>

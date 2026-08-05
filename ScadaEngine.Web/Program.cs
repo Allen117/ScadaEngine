@@ -192,6 +192,11 @@ builder.Services.AddScoped<ScadaEngine.Web.Services.ElectricityCostService>();
 builder.Services.AddHostedService<ScadaEngine.Web.Services.ElectricityCostAggregationService>();
 // EMS 首頁卡片顯示設定 — EmsCardRegistry merge DB 覆寫（/EmsCardSetting 維護、/EMS 渲染共用）
 builder.Services.AddScoped<ScadaEngine.Web.Services.EmsCardSettingService>();
+// 水表（累積式 m³/L）— 迴路樹 CRUD + 用水報表（WaterMeterLeafHourly 加總）+ 台水流動水費（SystemSettings water_tariff）
+builder.Services.AddScoped<ScadaEngine.Web.Services.WaterMeterCircuitService>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.WaterUsageReportService>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.WaterTariffService>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.WaterCostService>();
 // 氣象資料來源 — CWA API client（Singleton：測站清單快取）+ 設定表讀寫（Scoped）+ 背景抓取（寫 Weather DBLatestData）
 builder.Services.AddSingleton<ScadaEngine.Web.Services.WeatherCwaClient>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.WeatherSettingService>();
@@ -218,6 +223,8 @@ builder.Services.AddScoped<ScadaEngine.Web.Services.RefrigerationTonReportExcelE
 builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyDeclarationExcelExporter>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.ElectricityCostReportExcelExporter>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.EnPIReportExcelExporter>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.WaterUsageReportExcelExporter>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.WaterCostReportExcelExporter>();
 
 // Line 測試發送（內含 throttle 字典 → 必須 Singleton 才能跨請求保留狀態）
 builder.Services.AddHttpClient();
