@@ -39,6 +39,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 個別 plan.md 已由 `docs/plans/.gitignore` 排除，不會進 git。詳細工作流見 `docs/plans/README.md`。
 
+## Git Commit 訊息格式
+
+- **Subject（第一行）**：≤ 72 字元（約 30 個中文字），一句話講清楚改了什麼，讓 `git log --oneline` 可掃
+- 空一行後接 **body**：詳細內容照舊全寫（動機、設計決策、相容性、bug 修正、i18n / docs 同步），資訊量不減，只是從單行 subject 搬進 body，建議 `-` 條列分項
+- 歷史 commit 為千字單行 subject 舊格式，**不回改**；讀舊 history 時知悉即可
+
 ## Project Overview
 
 .NET 8 SCADA 工業監控系統，包含 Engine（Modbus 資料採集 + MQTT 發布）與 Web（ASP.NET Core MVC 儀表板）。

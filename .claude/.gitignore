@@ -1,2 +1,5 @@
 # 個人本地覆寫，不進版控
 settings.local.json
+
+# webapp-testing 執行產物（測試 session 截圖），非 skill 本體
+skills/webapp-testing/screenshots/
