@@ -31,6 +31,9 @@
     <!-- 導覽列子選單 -->
     <link rel="stylesheet" href="~/css/navbar-submenu.css">
 
+    <!-- 全站搜尋（Ctrl+K） -->
+    <link rel="stylesheet" href="~/css/global-search.css">
+
     @if (isEmsMode)
     {
         <link rel="stylesheet" href="~/css/ems.css">
@@ -441,6 +444,17 @@
                                 </a>
                             </li>
                         }
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <!-- 全站搜尋（Ctrl+K） -->
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" title="@Localizer["layout.search.title"] (Ctrl+K)"
+                                   onclick="window._globalSearch.open(event)">
+                                    <i class="fas fa-search me-1"></i><span class="d-none d-lg-inline">@Localizer["layout.search.nav_hint"]</span>
+                                    <span class="gs-nav-kbd d-none d-xl-inline ms-1"><kbd>Ctrl</kbd> <kbd>K</kbd></span>
+                                </a>
+                            </li>
+                        }
                         <!-- 語系切換 -->
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-label="@Localizer["layout.lang.label"]">
@@ -560,6 +574,26 @@
         </div>
     </div>
 
+    <!-- 全站搜尋 Modal（Ctrl+K 命令面板） -->
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <div class="modal fade" id="globalSearchModal" tabindex="-1" aria-label="@Localizer["layout.search.title"]" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="gs-input-wrap">
+                        <i class="fas fa-search text-primary"></i>
+                        <input id="globalSearchInput" type="text" class="form-control"
+                               placeholder="@Localizer["layout.search.placeholder"]"
+                               aria-label="@Localizer["layout.search.title"]" autocomplete="off" />
+                        <kbd>Esc</kbd>
+                    </div>
+                    <div id="globalSearchResults" class="gs-results"></div>
+                    <div class="gs-footer text-muted">@Localizer["layout.search.hint"]</div>
+                </div>
+            </div>
+        </div>
+    }
+
     <!-- 登出用隱藏表單 (POST + AntiForgeryToken) -->
     @if (User.Identity?.IsAuthenticated == true)
     {
@@ -573,6 +607,12 @@
 
     <!-- i18n helper（要在頁面其他 JS 之前載入）-->
     <script src="~/js/i18n.js"></script>
+
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <!-- 全站搜尋（Ctrl+K） -->
+        <script src="~/js/global-search.js"></script>
+    }
 
     <script>
         (function () {

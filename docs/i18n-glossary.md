@@ -15,6 +15,7 @@
 
 | zh-TW | en | 路由 / 備註 |
 |---|---|---|
+| 全站搜尋 | Global Search | Ctrl+K 命令面板（_Layout 共用元件，無獨立路由） |
 | 即時監控 | SCADA Page | `/ScadaPage` |
 | 即時數據 | Realtime Data | `/RealTime` |
 | 控制邏輯 | Control Logic | top-level menu |

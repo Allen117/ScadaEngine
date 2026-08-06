@@ -250,6 +250,9 @@ builder.Services.AddSingleton<ScadaEngine.Engine.Services.CSharpAlgorithmService
 // 多語系：把 .resx 打包成 JSON 給前端 i18n.js（Singleton 內部有 ConcurrentDictionary 快取）
 builder.Services.AddSingleton<ScadaEngine.Web.Services.I18nResourceService>();
 
+// 全站搜尋索引（Ctrl+K 命令面板 — 註冊表 + 雙語標題，依登入者權限過濾）
+builder.Services.AddSingleton<ScadaEngine.Web.Services.GlobalSearchService>();
+
 // 警報訊息 i18n 翻譯器（依當前 culture 套 messageKey + args → 顯示字串）
 builder.Services.AddScoped<ScadaEngine.Web.Services.AlarmMessageLocalizer>();
 

@@ -126,4 +126,12 @@
   <data name="layout.lang.label" xml:space="preserve"><value>語系</value></data>
   <data name="layout.lang.zh" xml:space="preserve"><value>繁體中文</value></data>
   <data name="layout.lang.en" xml:space="preserve"><value>English</value></data>
+
+  <data name="layout.search.title" xml:space="preserve"><value>全站搜尋</value></data>
+  <data name="layout.search.nav_hint" xml:space="preserve"><value>搜尋</value></data>
+  <data name="layout.search.placeholder" xml:space="preserve"><value>搜尋頁面名稱…</value></data>
+  <data name="layout.search.no_result" xml:space="preserve"><value>找不到符合的頁面</value></data>
+  <data name="layout.search.recent" xml:space="preserve"><value>最近使用</value></data>
+  <data name="layout.search.hint" xml:space="preserve"><value>↑↓ 選擇 · Enter 前往 · Esc 關閉</value></data>
+  <data name="layout.search.error" xml:space="preserve"><value>搜尋索引載入失敗，請重新整理頁面</value></data>
 </root>
