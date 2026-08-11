@@ -825,6 +825,54 @@
       ]
     },
     {
+      "_comment": "能源日報快照 — 一列 = 一天的日報 JSON（Web DailyReportSchedulerService 每日 02:00 生成，Email 與 Web 頁讀同一份，歷史日報不受後續資料回補影響）。MailStatus 為「已寄過」冪等依據：0=未寄 1=成功 2=失敗 3=停用。",
+      "TableName": "DailyReportSnapshot",
+      "Columns": [
+        { "Name": "Id",          "Type": "int",      "IsPrimaryKey": true, "IsIdentity": true, "Nullable": false },
+        { "Name": "ReportDate",  "Type": "date",     "IsUnique": true, "Nullable": false,
+          "_comment": "報告日（= 資料日，前一日）" },
+        { "Name": "PayloadJson", "Type": "nvarchar", "Length": -1, "Nullable": false,
+          "_comment": "DailyReportData 序列化 JSON；nvarchar(MAX)" },
+        { "Name": "GeneratedAt", "Type": "datetime", "Nullable": false, "Default": "getdate()",
+          "_comment": "快照生成時間" },
+        { "Name": "MailStatus",  "Type": "tinyint",  "Nullable": false, "Default": 0,
+          "_comment": "0=未寄 1=成功 2=失敗 3=停用（生成當下 IsMailEnabled=0）" },
+        { "Name": "MailDetail",  "Type": "nvarchar", "Length": 500, "Nullable": true,
+          "_comment": "寄送結果摘要（成功/失敗收件人統計）" }
+      ]
+    },
+    {
+      "_comment": "能源日報設定 — 單列（Id=1）。/DailyReportSetting 頁維護。SectionFlags bitmask：1=警報 2=電 4=水 8=氣 16=RTh 32=單日比較 64=月累計比較 128=智慧提示。",
+      "TableName": "DailyReportSetting",
+      "Columns": [
+        { "Name": "Id",                   "Type": "int",      "IsPrimaryKey": true, "Nullable": false,
+          "_comment": "固定 1（單列設定）" },
+        { "Name": "IsMailEnabled",        "Type": "bit",      "Nullable": false, "Default": 0,
+          "_comment": "每日自動寄送開關（快照照常生成，只是不寄）" },
+        { "Name": "SectionFlags",         "Type": "int",      "Nullable": false, "Default": 255,
+          "_comment": "內容區塊 bitmask，預設全開" },
+        { "Name": "DiffThresholdPercent", "Type": "float",    "Nullable": false, "Default": 15,
+          "_comment": "差異提示門檻 ±%（智慧摘要觸發用）" },
+        { "Name": "Language",             "Type": "nvarchar", "Length": 10, "Nullable": false, "Default": "zh-TW",
+          "_comment": "日報語言（全局單選）：'zh-TW' 或 'en'" },
+        { "Name": "IsHolidayHintEnabled", "Type": "bit",      "Nullable": false, "Default": 1,
+          "_comment": "假日提示開關（24 小時生產場域可整體停用，停用後假日徽章與假日類智慧提示皆不出現）" },
+        { "Name": "UpdatedAt",            "Type": "datetime", "Nullable": true }
+      ]
+    },
+    {
+      "_comment": "能源日報收件人清單 — 獨立於警報 EmailRecipients（語意為「訂閱名單」非「警報路由」）；SMTP 連線沿用 Engine EmailSetting.json。",
+      "TableName": "DailyReportRecipients",
+      "Columns": [
+        { "Name": "Id",           "Type": "int",      "IsPrimaryKey": true, "IsIdentity": true, "Nullable": false },
+        { "Name": "EmailAddress", "Type": "nvarchar", "Length": 200, "Nullable": false },
+        { "Name": "DisplayName",  "Type": "nvarchar", "Length": 100, "Nullable": true },
+        { "Name": "IsEnabled",    "Type": "bit",      "Nullable": false, "Default": 1 },
+        { "Name": "CreatedAt",    "Type": "datetime", "Nullable": false, "Default": "getdate()" },
+        { "Name": "UpdatedAt",    "Type": "datetime", "Nullable": true }
+      ]
+    },
+    {
       "_comment": "EMS 首頁卡片顯示設定 — 每卡一列，只存覆寫（隱藏/順序）。卡片定義的唯一真相來源是 Web 的 EmsCardRegistry；DB 無列的新卡片預設顯示、排在所有 DB 列之後；DB 有但註冊表沒有的列會被忽略。表空 = 全開、預設順序。/EmsCardSetting 頁維護。",
       "TableName": "EmsCardSetting",
       "Columns": [

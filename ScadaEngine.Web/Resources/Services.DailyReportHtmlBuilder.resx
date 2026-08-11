@@ -1,0 +1,102 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="mail.subject" xml:space="preserve"><value>能源日報 {0}</value></data>
+  <data name="mail.subject.test" xml:space="preserve"><value>【測試】能源日報 {0}</value></data>
+  <data name="mail.title" xml:space="preserve"><value>能源日報</value></data>
+  <data name="mail.test_badge" xml:space="preserve"><value>測試</value></data>
+  <data name="mail.holiday_badge" xml:space="preserve"><value>假日</value></data>
+  <data name="mail.generated_at" xml:space="preserve"><value>產生時間</value></data>
+  <data name="mail.stale_warning" xml:space="preserve"><value>報告日最後時段資料缺漏，數據可能不完整</value></data>
+  <data name="mail.section.alarm" xml:space="preserve"><value>警報摘要</value></data>
+  <data name="mail.alarm.occurred" xml:space="preserve"><value>發生</value></data>
+  <data name="mail.alarm.cleared" xml:space="preserve"><value>已恢復</value></data>
+  <data name="mail.alarm.unack" xml:space="preserve"><value>未確認</value></data>
+  <data name="mail.alarm.none" xml:space="preserve"><value>前一日無警報/故障事件</value></data>
+  <data name="mail.alarm.more" xml:space="preserve"><value>其餘 {0} 筆請至系統查看</value></data>
+  <data name="mail.alarm.col.time" xml:space="preserve"><value>時間</value></data>
+  <data name="mail.alarm.col.type" xml:space="preserve"><value>類型</value></data>
+  <data name="mail.alarm.col.severity" xml:space="preserve"><value>嚴重度</value></data>
+  <data name="mail.alarm.col.message" xml:space="preserve"><value>訊息</value></data>
+  <data name="mail.alarm.col.status" xml:space="preserve"><value>狀態</value></data>
+  <data name="mail.alarm.type.alarm" xml:space="preserve"><value>警報</value></data>
+  <data name="mail.alarm.type.fault" xml:space="preserve"><value>故障</value></data>
+  <data name="mail.alarm.status.cleared" xml:space="preserve"><value>已恢復</value></data>
+  <data name="mail.alarm.status.active" xml:space="preserve"><value>未恢復</value></data>
+  <data name="mail.severity.0" xml:space="preserve"><value>緊急</value></data>
+  <data name="mail.severity.1" xml:space="preserve"><value>高</value></data>
+  <data name="mail.severity.2" xml:space="preserve"><value>中</value></data>
+  <data name="mail.severity.3" xml:space="preserve"><value>低</value></data>
+  <data name="mail.section.hourly" xml:space="preserve"><value>{0}時報表（{1}）</value></data>
+  <data name="mail.energy.electricity" xml:space="preserve"><value>用電</value></data>
+  <data name="mail.energy.water" xml:space="preserve"><value>用水</value></data>
+  <data name="mail.energy.gas" xml:space="preserve"><value>用氣</value></data>
+  <data name="mail.energy.rth" xml:space="preserve"><value>冷凍噸</value></data>
+  <data name="mail.total" xml:space="preserve"><value>日總量</value></data>
+  <data name="mail.peak_hour" xml:space="preserve"><value>峰值時段</value></data>
+  <data name="mail.section.day_compare" xml:space="preserve"><value>單日比較</value></data>
+  <data name="mail.col.energy" xml:space="preserve"><value>能源別</value></data>
+  <data name="mail.col.day" xml:space="preserve"><value>報告日</value></data>
+  <data name="mail.col.prevday" xml:space="preserve"><value>前日</value></data>
+  <data name="mail.col.diff_prev" xml:space="preserve"><value>vs 前日</value></data>
+  <data name="mail.col.lastweek" xml:space="preserve"><value>上週同星期</value></data>
+  <data name="mail.col.diff_lastweek" xml:space="preserve"><value>vs 上週</value></data>
+  <data name="mail.efficiency.label" xml:space="preserve"><value>kWh/RTh（每冷凍噸耗電）</value></data>
+  <data name="mail.weather.line" xml:space="preserve"><value>外氣日均溫：報告日 {0}°C、前日 {1}°C、上週同星期 {2}°C</value></data>
+  <data name="mail.section.mtd" xml:space="preserve"><value>月累計比較（本月 vs 去年同期）</value></data>
+  <data name="mail.col.mtd_current" xml:space="preserve"><value>本月累計</value></data>
+  <data name="mail.col.mtd_lastyear" xml:space="preserve"><value>去年同期</value></data>
+  <data name="mail.col.diff" xml:space="preserve"><value>差異</value></data>
+  <data name="mail.section.insights" xml:space="preserve"><value>智慧摘要</value></data>
+  <data name="mail.footer" xml:space="preserve"><value>本郵件由 SCADA 系統自動發送，請勿直接回覆</value></data>
+</root>

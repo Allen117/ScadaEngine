@@ -195,6 +195,12 @@ builder.Services.AddScoped<ScadaEngine.Web.Services.ElectricityCostService>();
 builder.Services.AddHostedService<ScadaEngine.Web.Services.ElectricityCostAggregationService>();
 // EMS 首頁卡片顯示設定 — EmsCardRegistry merge DB 覆寫（/EmsCardSetting 維護、/EMS 渲染共用）
 builder.Services.AddScoped<ScadaEngine.Web.Services.EmsCardSettingService>();
+// 能源日報 — 聚合四報表 + 比較 + 規則式提示 → 快照；02:00 排程生成 + 寄送（/DailyReport 瀏覽、/DailyReportSetting 設定）
+builder.Services.AddScoped<ScadaEngine.Web.Services.DailyReportService>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.DailyReportInsightService>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.DailyReportHtmlBuilder>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.DailyReportMailService>();
+builder.Services.AddHostedService<ScadaEngine.Web.Services.DailyReportSchedulerService>();
 // 水表（累積式 m³/L）— 迴路樹 CRUD + 用水報表（WaterMeterLeafHourly 加總）+ 台水流動水費（SystemSettings water_tariff）
 builder.Services.AddScoped<ScadaEngine.Web.Services.WaterMeterCircuitService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.WaterUsageReportService>();

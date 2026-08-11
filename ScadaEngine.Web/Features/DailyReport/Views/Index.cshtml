@@ -1,0 +1,186 @@
+@model ScadaEngine.Web.Features.DailyReport.Models.DailyReportViewModel
+@using ScadaEngine.Web.Services
+@{
+    ViewData["Title"] = "能源日報";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    bool isCanAccessSetting = PermissionService.CanAccessPage(User, "/DailyReportSetting");
+}
+
+<div class="container-fluid mt-2">
+    <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+        <h2 class="mb-0">
+            <i class="fas fa-newspaper text-primary me-2"></i>能源日報
+        </h2>
+        <div class="d-flex align-items-center gap-2">
+            <input type="date" id="drDate" class="form-control form-control-sm" style="width:160px;"
+                   value="@Model.szDefaultDate" max="@Model.szMaxDate">
+            <button class="btn btn-primary btn-sm" onclick="window._dr.load()">
+                <i class="fas fa-search me-1"></i>查詢
+            </button>
+            @if (isCanAccessSetting)
+            {
+                <a class="btn btn-outline-secondary btn-sm" href="/DailyReportSetting">
+                    <i class="fas fa-cog me-1"></i>日報設定
+                </a>
+            }
+        </div>
+    </div>
+
+    <!-- 狀態徽章列 -->
+    <div id="drBadges" class="mb-3 d-flex align-items-center gap-2 flex-wrap d-none">
+        <span id="drBadgeHoliday" class="badge bg-warning text-dark d-none"><i class="fas fa-calendar-day me-1"></i>假日</span>
+        <span id="drBadgeStale" class="badge bg-danger d-none"><i class="fas fa-exclamation-triangle me-1"></i>最後時段資料缺漏</span>
+        <span id="drBadgeAdhoc" class="badge bg-secondary d-none" title="此日期無 02:00 快照，為即時計算結果"><i class="fas fa-bolt me-1"></i>即時計算</span>
+        <span id="drBadgeMail" class="badge bg-light text-dark border d-none"></span>
+        <span id="drGeneratedAt" class="text-muted small"></span>
+    </div>
+
+    <div id="drLoading" class="text-center text-muted py-5 d-none">
+        <div class="spinner-border text-primary mb-2" role="status"></div>
+        <div>日報計算中…</div>
+    </div>
+    <div id="drError" class="alert alert-danger d-none"></div>
+
+    <div id="drContent" class="d-none">
+        <!-- 警報摘要 -->
+        <div class="card shadow-sm mb-3 d-none" id="drCardAlarm">
+            <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-bell me-1"></i>警報摘要（警報 + 故障）</span>
+                <span id="drAlarmCounts" class="small"></span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover table-bordered mb-0 dr-alarm-table">
+                        <thead class="table-dark">
+                            <tr>
+                                <th style="width:90px;">時間</th>
+                                <th style="width:70px;">類型</th>
+                                <th style="width:70px;">嚴重度</th>
+                                <th>訊息</th>
+                                <th style="width:90px;">狀態</th>
+                                <th style="width:70px;">確認</th>
+                            </tr>
+                        </thead>
+                        <tbody id="drAlarmBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-light py-2 text-center d-none" id="drAlarmMoreWrap">
+                <button class="btn btn-sm btn-outline-secondary" id="drAlarmMoreBtn" onclick="window._dr.toggleAlarms()"></button>
+            </div>
+        </div>
+
+        <!-- 四能源別時報表 -->
+        <div class="row g-3 mb-3" id="drHourlyRow">
+            <div class="col-lg-6 d-none" id="drCardElectricity">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-light py-2 d-flex justify-content-between">
+                        <span><i class="fas fa-bolt me-1"></i>用電時報表（kWh）</span>
+                        <span class="text-muted small" id="drNameElectricity"></span>
+                    </div>
+                    <div class="card-body"><div style="height:220px;"><canvas id="drChartElectricity"></canvas></div></div>
+                    <div class="card-footer bg-light text-muted small">日總量：<span id="drTotalElectricity" class="fw-bold text-primary">--</span> kWh</div>
+                </div>
+            </div>
+            <div class="col-lg-6 d-none" id="drCardWater">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-light py-2 d-flex justify-content-between">
+                        <span><i class="fas fa-water me-1"></i>用水時報表（m&#179;）</span>
+                        <span class="text-muted small" id="drNameWater"></span>
+                    </div>
+                    <div class="card-body"><div style="height:220px;"><canvas id="drChartWater"></canvas></div></div>
+                    <div class="card-footer bg-light text-muted small">日總量：<span id="drTotalWater" class="fw-bold text-primary">--</span> m&#179;</div>
+                </div>
+            </div>
+            <div class="col-lg-6 d-none" id="drCardGas">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-light py-2 d-flex justify-content-between">
+                        <span><i class="fas fa-fire me-1"></i>用氣時報表（m&#179;）</span>
+                        <span class="text-muted small" id="drNameGas"></span>
+                    </div>
+                    <div class="card-body"><div style="height:220px;"><canvas id="drChartGas"></canvas></div></div>
+                    <div class="card-footer bg-light text-muted small">日總量：<span id="drTotalGas" class="fw-bold text-primary">--</span> m&#179;</div>
+                </div>
+            </div>
+            <div class="col-lg-6 d-none" id="drCardRth">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-light py-2 d-flex justify-content-between">
+                        <span><i class="fas fa-snowflake me-1"></i>冷凍噸時報表（RT&#183;h）</span>
+                        <span class="text-muted small" id="drNameRth"></span>
+                    </div>
+                    <div class="card-body"><div style="height:220px;"><canvas id="drChartRth"></canvas></div></div>
+                    <div class="card-footer bg-light text-muted small">日總量：<span id="drTotalRth" class="fw-bold text-primary">--</span> RT&#183;h</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 比較區 -->
+        <div class="row g-3 mb-3">
+            <div class="col-lg-7 d-none" id="drCardDayCompare">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-light py-2">
+                        <i class="fas fa-exchange-alt me-1"></i>單日比較（報告日 vs 前日 / 上週同星期）
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-bordered mb-0 dr-compare-table">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>能源別</th>
+                                        <th class="text-end">報告日</th>
+                                        <th class="text-end">前日</th>
+                                        <th class="text-end">vs 前日</th>
+                                        <th class="text-end">上週同星期</th>
+                                        <th class="text-end">vs 上週</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="drDayCompareBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-light text-muted small d-none" id="drWeatherLine"></div>
+                </div>
+            </div>
+            <div class="col-lg-5 d-none" id="drCardMtd">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-light py-2">
+                        <i class="fas fa-calendar-alt me-1"></i>月累計比較（本月 vs 去年同期）
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-bordered mb-0 dr-compare-table">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>能源別</th>
+                                        <th class="text-end">本月累計</th>
+                                        <th class="text-end">去年同期</th>
+                                        <th class="text-end">差異</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="drMtdBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-light text-muted small" id="drMtdRange"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 智慧摘要 -->
+        <div class="card shadow-sm mb-3 d-none" id="drCardInsights">
+            <div class="card-header bg-light py-2">
+                <i class="fas fa-lightbulb me-1"></i>智慧摘要
+            </div>
+            <div class="card-body py-2">
+                <ul class="mb-0 dr-insight-list" id="drInsightList"></ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="~/css/dailyreport.css" asp-append-version="true" />
+
+@section Scripts {
+    <script src="~/lib/chartjs/chart.umd.min.js"></script>
+    <script src="~/js/dailyreport.js" asp-append-version="true"></script>
+}

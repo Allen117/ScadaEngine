@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="insight.energy.electricity" xml:space="preserve"><value>用電</value></data>
+  <data name="insight.energy.water" xml:space="preserve"><value>用水</value></data>
+  <data name="insight.energy.gas" xml:space="preserve"><value>用氣</value></data>
+  <data name="insight.energy.rth" xml:space="preserve"><value>冷凍噸</value></data>
+  <data name="insight.holiday.report_day" xml:space="preserve"><value>報告日為假日，能耗型態與工作日不同屬正常</value></data>
+  <data name="insight.holiday.lastweek" xml:space="preserve"><value>上週同星期為假日，比較僅供參考</value></data>
+  <data name="insight.holiday.prevday" xml:space="preserve"><value>前日為假日，vs 前日比較僅供參考</value></data>
+  <data name="insight.weather.higher_lastweek" xml:space="preserve"><value>報告日均溫 {0}°C，較上週同星期高 {1}°C，空調負載增加為可能原因</value></data>
+  <data name="insight.weather.lower_lastweek" xml:space="preserve"><value>報告日均溫 {0}°C，較上週同星期低 {1}°C，空調負載減少為可能原因</value></data>
+  <data name="insight.weather.higher_prevday" xml:space="preserve"><value>報告日均溫 {0}°C，較前日高 {1}°C，空調負載增加為可能原因</value></data>
+  <data name="insight.weather.lower_prevday" xml:space="preserve"><value>報告日均溫 {0}°C，較前日低 {1}°C，空調負載減少為可能原因</value></data>
+  <data name="insight.alarm.surge" xml:space="preserve"><value>{0}較前日增加 {1}%，當日發生 {2} 筆警報/故障事件，可能相關</value></data>
+  <data name="insight.alarm.drop" xml:space="preserve"><value>{0}較前日減少 {1}%，當日發生 {2} 筆警報/故障事件，可能相關</value></data>
+  <data name="insight.efficiency.up_prevday" xml:space="preserve"><value>單位冷凍噸耗電 {0} kWh/RTh，較前日上升 {1}%，主機效率或負載率變化為可能原因</value></data>
+  <data name="insight.efficiency.up_lastweek" xml:space="preserve"><value>單位冷凍噸耗電 {0} kWh/RTh，較上週同星期上升 {1}%，主機效率或負載率變化為可能原因</value></data>
+  <data name="insight.efficiency.down_prevday" xml:space="preserve"><value>單位冷凍噸耗電 {0} kWh/RTh，較前日下降 {1}%</value></data>
+  <data name="insight.efficiency.down_lastweek" xml:space="preserve"><value>單位冷凍噸耗電 {0} kWh/RTh，較上週同星期下降 {1}%</value></data>
+  <data name="insight.none" xml:space="preserve"><value>差異原因無明確線索，建議查看時趨勢圖進一步分析</value></data>
+</root>

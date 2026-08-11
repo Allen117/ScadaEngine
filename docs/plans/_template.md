@@ -98,6 +98,30 @@
 ### YYYY-MM-DD
 -
 
+## 討論過程與成本記錄
+
+<!-- CLAUDE.md §Token / 成本記錄：token 一律取自 session transcript 的 message.usage 或使用者 /cost，禁止估計 -->
+
+### 討論過程摘要
+
+<!-- 寫完 plan 時記錄：提了哪些問題 → 使用者怎麼回 → plan 因此怎麼改 -->
+
+-
+
+### 成本記錄
+
+| 階段 | 模型 | Input | Output | Cache Read | Cache Write | 備註 |
+|------|------|-------|--------|------------|-------------|------|
+| Plan 撰寫 | | | | | | 寫完 plan 時填 |
+| 實作（commit 後追記，可多列） | | | | | | |
+
+### Archive 總結（搬進 _archive 前回填）
+
+- **總 token**：input __ / output __ / cache read __ / cache write __
+- **模型**：
+- **API 費用（當下牌價，附計算式）**：牌價查詢日 YYYY-MM-DD，來源 __
+  - 計算式：
+
 ## 完成後補充
 
 <!-- 實作完成時回填，作為下次類似任務的參考 -->

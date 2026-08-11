@@ -1,0 +1,102 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="mail.subject" xml:space="preserve"><value>Daily Energy Report {0}</value></data>
+  <data name="mail.subject.test" xml:space="preserve"><value>[Test] Daily Energy Report {0}</value></data>
+  <data name="mail.title" xml:space="preserve"><value>Daily Energy Report</value></data>
+  <data name="mail.test_badge" xml:space="preserve"><value>TEST</value></data>
+  <data name="mail.holiday_badge" xml:space="preserve"><value>Holiday</value></data>
+  <data name="mail.generated_at" xml:space="preserve"><value>Generated at</value></data>
+  <data name="mail.stale_warning" xml:space="preserve"><value>Data for the last hour of the report day is missing; figures may be incomplete</value></data>
+  <data name="mail.section.alarm" xml:space="preserve"><value>Alarm Summary</value></data>
+  <data name="mail.alarm.occurred" xml:space="preserve"><value>Occurred</value></data>
+  <data name="mail.alarm.cleared" xml:space="preserve"><value>Cleared</value></data>
+  <data name="mail.alarm.unack" xml:space="preserve"><value>Unacknowledged</value></data>
+  <data name="mail.alarm.none" xml:space="preserve"><value>No alarm or fault events on the report day</value></data>
+  <data name="mail.alarm.more" xml:space="preserve"><value>{0} more item(s) - see the system for full details</value></data>
+  <data name="mail.alarm.col.time" xml:space="preserve"><value>Time</value></data>
+  <data name="mail.alarm.col.type" xml:space="preserve"><value>Type</value></data>
+  <data name="mail.alarm.col.severity" xml:space="preserve"><value>Severity</value></data>
+  <data name="mail.alarm.col.message" xml:space="preserve"><value>Message</value></data>
+  <data name="mail.alarm.col.status" xml:space="preserve"><value>Status</value></data>
+  <data name="mail.alarm.type.alarm" xml:space="preserve"><value>Alarm</value></data>
+  <data name="mail.alarm.type.fault" xml:space="preserve"><value>Fault</value></data>
+  <data name="mail.alarm.status.cleared" xml:space="preserve"><value>Cleared</value></data>
+  <data name="mail.alarm.status.active" xml:space="preserve"><value>Active</value></data>
+  <data name="mail.severity.0" xml:space="preserve"><value>Critical</value></data>
+  <data name="mail.severity.1" xml:space="preserve"><value>High</value></data>
+  <data name="mail.severity.2" xml:space="preserve"><value>Medium</value></data>
+  <data name="mail.severity.3" xml:space="preserve"><value>Low</value></data>
+  <data name="mail.section.hourly" xml:space="preserve"><value>Hourly {0} ({1})</value></data>
+  <data name="mail.energy.electricity" xml:space="preserve"><value>Electricity</value></data>
+  <data name="mail.energy.water" xml:space="preserve"><value>Water</value></data>
+  <data name="mail.energy.gas" xml:space="preserve"><value>Gas</value></data>
+  <data name="mail.energy.rth" xml:space="preserve"><value>Refrigeration ton</value></data>
+  <data name="mail.total" xml:space="preserve"><value>Daily total</value></data>
+  <data name="mail.peak_hour" xml:space="preserve"><value>Peak hour</value></data>
+  <data name="mail.section.day_compare" xml:space="preserve"><value>Daily Comparison</value></data>
+  <data name="mail.col.energy" xml:space="preserve"><value>Energy</value></data>
+  <data name="mail.col.day" xml:space="preserve"><value>Report day</value></data>
+  <data name="mail.col.prevday" xml:space="preserve"><value>Prev. day</value></data>
+  <data name="mail.col.diff_prev" xml:space="preserve"><value>vs prev. day</value></data>
+  <data name="mail.col.lastweek" xml:space="preserve"><value>Same weekday last week</value></data>
+  <data name="mail.col.diff_lastweek" xml:space="preserve"><value>vs last week</value></data>
+  <data name="mail.efficiency.label" xml:space="preserve"><value>kWh/RTh (power per refrigeration ton)</value></data>
+  <data name="mail.weather.line" xml:space="preserve"><value>Outdoor avg temp: report day {0}°C, prev. day {1}°C, same weekday last week {2}°C</value></data>
+  <data name="mail.section.mtd" xml:space="preserve"><value>Month-to-Date vs Last Year</value></data>
+  <data name="mail.col.mtd_current" xml:space="preserve"><value>This month</value></data>
+  <data name="mail.col.mtd_lastyear" xml:space="preserve"><value>Last year</value></data>
+  <data name="mail.col.diff" xml:space="preserve"><value>Diff</value></data>
+  <data name="mail.section.insights" xml:space="preserve"><value>Insights</value></data>
+  <data name="mail.footer" xml:space="preserve"><value>This email was sent automatically by the SCADA system; please do not reply.</value></data>
+</root>

@@ -30,10 +30,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - ❌ 不可自設「回答完問題就動手」「說 OK 就動手」等暗示性條件來繞過此規則
 4. 實作中即時更新勾選狀態
 5. 實作完成後先停下，等使用者驗證
-6. 使用者明確說「沒問題」「OK」「可以」「過了」之後，自動執行 `git add` 相關檔案 → `git commit`（訊息走專案風格）→ `git push`，再回填 commit hash 並把 plan 搬到 `docs/plans/_archive/`
+6. 使用者明確說「沒問題」「OK」「可以」「過了」之後，自動執行 `git add` 相關檔案 → `git commit`（訊息走專案風格）→ `git push`，再回填 commit hash 與**成本總結**（見下方 Token / 成本記錄）並把 plan 搬到 `docs/plans/_archive/`
    - ✅ 授權 scope 僅限「plan 流程收尾 + 使用者明確確認」，不代表其他情境也預先授權 push
    - ⚠️ 若 pre-commit hook 失敗，修好後建**新** commit，禁止 `--no-verify`
    - ⚠️ 若 push 被 reject（非 fast-forward 等），停下回報，不可 force push
+
+### Token / 成本記錄（報告用）
+
+每份 plan 都要在 plan.md 的「討論過程與成本記錄」段（見 `_template.md`）記錄成本，供未來報告使用：
+
+- **寫完 plan 時**：記錄 (a) 討論過程摘要 — 提了哪些問題、使用者怎麼回、因此 plan 改了什麼；(b) 撰寫 plan 至此花費的 token 數（input / output 分列）與**使用模型**
+- **實作期間**：每次 `git commit` / `git push` 後，追記該階段累計 token（跨對話的 plan：每個對話收尾前先把該對話用量寫進 plan，避免遺失）
+- **Archive 時**：回填**總 token**（input / output / cache read / cache write 分列）、**模型**、**對應 API 費用** — 費用依「當下」官方牌價換算並列出計算式；牌價必須現查（`claude-api` skill 或 https://docs.anthropic.com/en/docs/about-claude/pricing），**不可憑記憶報價**
+- **token 取得方式**（模型無法自省用量，禁止估計或編造）：
+  1. 解析本 session transcript：`C:\Users\Allen\.claude\projects\c--Users-Allen-Desktop-ScadaEngine\` 下最近修改的 `<session-id>.jsonl`，加總各則 assistant 訊息的 `message.usage`（`input_tokens` / `output_tokens` / `cache_read_input_tokens` / `cache_creation_input_tokens`）
+  2. 若無法讀取，請使用者執行 `/cost` 並貼上結果
+- 若某階段數字取不到，如實標「未取得」，不可補估
 
 **不需要 plan.md**：單檔小修、問答、讀碼、bug 根因調查、使用者已給出明確一步到位指令。
 
@@ -100,6 +112,7 @@ ScadaEngine.sln
 - **用水報表與水費**：累積式水表 `WaterMeter*` 體系（boundary 相減 + MaxVolume 溢位 + UnitScale 換算 m³）+ 台水流動水費分段累進 on-demand（無逐時表）；與冷凍噸 WaterCircuit 無關
 - **用氣報表與氣費**：累積式天然氣表 `GasMeter*` 體系（與水表平行複製、各自獨立；Engine XX:03 聚合）。兩處刻意差異：點位判定走**單位 + 點位名稱關鍵字雙條件**（單位納入「度」但靠名稱擋掉電表點位，水表僅看單位）；氣費期別多 `IsSkipped` 支援**兩月一期**
 - **月結期別四分**：電費 `BillingPeriods` / 水費 `WaterBillingPeriods` / 氣費 `GasBillingPeriods`（各自獨立設定頁，氣費多 IsSkipped）/ 曆月（冷凍噸、能源申報、能源基線刻意不走期別）— 對照表見 docs/架構.md §用電報表
+- **能源日報**：Web 每日 02:00 生成前一日快照（電/水/氣/RTh root 合計 + 警報摘要 + 單日/MTD 比較 + 規則式提示，不串 LLM）→ `DailyReportSnapshot` JSON + HTML Email（SMTP 沿用 EmailSetting.json、收件清單獨立 `DailyReportRecipients`）；Email 與 /DailyReport 頁讀同一份快照，SectionFlags 顯示端過濾
 - **資料庫自動建立與備份**：DB 不存在時啟動安全網自建（無權限優雅降級）+ install-db.ps1 一次性安裝 + Engine 每週 BACKUP（A/B 輪替、結果寫 EventLog）
 - **資料表用途對照**：各表 Key 欄位 + 用途一覽 + SID 格式（完整定義以 DatabaseSchema.json 為準）
 - **演算法 status 協定**：LogicFlow 節點回傳結構 + per-output port 錯誤傳遞

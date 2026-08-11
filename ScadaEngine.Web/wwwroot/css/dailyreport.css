@@ -1,0 +1,27 @@
+/* 能源日報 — 瀏覽頁 + 設定頁共用樣式 */
+
+.dr-alarm-table {
+    font-size: 0.85rem;
+}
+
+.dr-alarm-table td {
+    vertical-align: middle;
+}
+
+.dr-compare-table {
+    font-size: 0.875rem;
+}
+
+.dr-insight-list {
+    list-style: none;
+    padding-left: 0.25rem;
+}
+
+.dr-insight-list li {
+    padding: 0.3rem 0;
+    border-bottom: 1px dashed #e0e0e0;
+}
+
+.dr-insight-list li:last-child {
+    border-bottom: none;
+}

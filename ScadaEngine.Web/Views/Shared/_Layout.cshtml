@@ -147,7 +147,7 @@
                                     </a>
                                 </li>
                             }
-                            @if (canAccess("/EnergyReport") || canAccess("/ElectricityCostReport") || canAccess("/RefrigerationTonReport") || canAccess("/WaterUsageReport") || canAccess("/WaterCostReport") || canAccess("/GasUsageReport") || canAccess("/GasCostReport") || canAccess("/EnergyDeclaration"))
+                            @if (canAccess("/EnergyReport") || canAccess("/ElectricityCostReport") || canAccess("/RefrigerationTonReport") || canAccess("/WaterUsageReport") || canAccess("/WaterCostReport") || canAccess("/GasUsageReport") || canAccess("/GasCostReport") || canAccess("/DailyReport") || canAccess("/EnergyDeclaration"))
                             {
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
@@ -184,6 +184,10 @@
                                             @* fa-receipt：與同一選單內的「電費報表」fa-file-invoice-dollar 區隔 *@
                                             <li><a class="dropdown-item" href="/GasCostReport"><i class="fas fa-receipt me-2"></i>@Localizer["layout.menu.gas_cost_report"]</a></li>
                                         }
+                                        @if (canAccess("/DailyReport"))
+                                        {
+                                            <li><a class="dropdown-item" href="/DailyReport"><i class="fas fa-newspaper me-2"></i>@Localizer["layout.menu.daily_report"]</a></li>
+                                        }
                                         @if (canAccess("/EnergyDeclaration"))
                                         {
                                             <li><a class="dropdown-item" href="/EnergyDeclaration"><i class="fas fa-file-signature me-2"></i>@Localizer["layout.menu.energy_declaration"]</a></li>
@@ -200,7 +204,7 @@
                                     </a>
                                 </li>
                             }
-                            @if (canAccess("/ChilledWaterSystem") || canAccess("/EnergyMeter") || canAccess("/WaterMeterSetting") || canAccess("/GasMeterSetting") || canAccess("/BillingPeriodSetting") || canAccess("/WaterBillingPeriodSetting") || canAccess("/GasBillingPeriodSetting") || canAccess("/TariffSetting") || canAccess("/WaterTariffSetting") || canAccess("/GasTariffSetting") || canAccess("/HolidaySetting") || canAccess("/EmsCardSetting"))
+                            @if (canAccess("/ChilledWaterSystem") || canAccess("/EnergyMeter") || canAccess("/WaterMeterSetting") || canAccess("/GasMeterSetting") || canAccess("/BillingPeriodSetting") || canAccess("/WaterBillingPeriodSetting") || canAccess("/GasBillingPeriodSetting") || canAccess("/TariffSetting") || canAccess("/WaterTariffSetting") || canAccess("/GasTariffSetting") || canAccess("/HolidaySetting") || canAccess("/EmsCardSetting") || canAccess("/DailyReportSetting"))
                             {
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
@@ -278,7 +282,7 @@
                                                 </ul>
                                             </li>
                                         }
-                                        @if (canAccess("/HolidaySetting") || canAccess("/EmsCardSetting"))
+                                        @if (canAccess("/HolidaySetting") || canAccess("/EmsCardSetting") || canAccess("/DailyReportSetting"))
                                         {
                                             @if (canAccess("/ChilledWaterSystem") || canAccess("/EnergyMeter") || canAccess("/BillingPeriodSetting") || canAccess("/TariffSetting") || canAccess("/WaterMeterSetting") || canAccess("/WaterBillingPeriodSetting") || canAccess("/WaterTariffSetting") || canAccess("/GasMeterSetting") || canAccess("/GasBillingPeriodSetting") || canAccess("/GasTariffSetting"))
                                             {
@@ -292,6 +296,10 @@
                                         @if (canAccess("/EmsCardSetting"))
                                         {
                                             <li><a class="dropdown-item" href="/EmsCardSetting"><i class="fas fa-th-large me-2"></i>@Localizer["layout.menu.ems_card_setting"]</a></li>
+                                        }
+                                        @if (canAccess("/DailyReportSetting"))
+                                        {
+                                            <li><a class="dropdown-item" href="/DailyReportSetting"><i class="fas fa-envelope-open-text me-2"></i>@Localizer["layout.menu.daily_report_setting"]</a></li>
                                         }
                                     </ul>
                                 </li>

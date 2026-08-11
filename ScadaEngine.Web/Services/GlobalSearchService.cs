@@ -44,6 +44,8 @@ public class GlobalSearchService
         new("/WaterCostReport",            "layout.menu.water_cost_report",          "fas fa-hand-holding-usd",    "報表 水費 帳單 water cost bill report"),
         new("/GasUsageReport",             "layout.menu.gas_usage_report",           "fas fa-fire",                "報表 用氣 天然氣 瓦斯 gas usage report"),
         new("/GasCostReport",              "layout.menu.gas_cost_report",            "fas fa-receipt",             "報表 氣費 天然氣 瓦斯 帳單 gas cost bill report"),
+        new("/DailyReport",                "layout.menu.daily_report",               "fas fa-newspaper",           "日報 能源 每日 摘要 daily report summary email"),
+        new("/DailyReportSetting",         "layout.menu.daily_report_setting",       "fas fa-cog",                 "日報 設定 寄送 收件人 daily report setting mail recipient"),
         new("/EnergyDeclaration",          "layout.menu.energy_declaration",         "fas fa-file-signature",      "能源 申報 報表 declaration"),
         new("/EnergyBaseline",             "layout.menu.energy_baseline",            "fas fa-bullseye",            "能源 基準 基線 baseline"),
         new("/ChilledWaterSystem",         "layout.menu.chilled_water",              "fas fa-tint",                "冰水 水系統 迴路 冷凍噸 chilled water"),
