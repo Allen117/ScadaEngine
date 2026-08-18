@@ -155,7 +155,7 @@
         { "Name": "Remarks",        "Type": "nvarchar",  "Length": 500,  "Nullable": true,
           "_comment": "操作人員備註" },
         { "Name": "NotifyChannel",      "Type": "nvarchar",  "Length": 10,   "Nullable": true,
-          "_comment": "通知摘要專用：'Email' | 'Line'；普通 alarm 事件為 NULL" },
+          "_comment": "通知摘要專用：'Email' | 'Line' | 'Sms'；普通 alarm 事件為 NULL" },
         { "Name": "NotifyStatus",       "Type": "tinyint",                   "Nullable": true,
           "_comment": "0=AllSent 1=PartialFailed 2=AllFailed 3=RateLimited 4=NoTarget 5=Disabled" },
         { "Name": "NotifyDetail",       "Type": "nvarchar",  "Length": 500,  "Nullable": true,
@@ -599,6 +599,24 @@
           "_comment": "接收上限：0=只收 Critical, 1=Critical+High, 2=Critical+High+Medium, 3=全收" },
         { "Name": "Language",     "Type": "nvarchar", "Length": 10,  "Nullable": false, "Default": "zh-TW",
           "_comment": "推播訊息語系：'zh-TW' 或 'en'" },
+        { "Name": "IsEnabled",    "Type": "bit",                     "Nullable": false, "Default": 1 },
+        { "Name": "CreatedAt",    "Type": "datetime",                "Nullable": false, "Default": "getdate()" },
+        { "Name": "UpdatedAt",    "Type": "datetime",                "Nullable": true }
+      ]
+    },
+    {
+      "_comment": "簡訊通知收訊號碼 — 警報觸發時經簡訊盒（序列埠 GSM/4G Modem）發送 SMS 的手機號碼清單",
+      "TableName": "SmsNotifyTargets",
+      "Columns": [
+        { "Name": "Id",           "Type": "int",      "IsPrimaryKey": true, "IsIdentity": true, "Nullable": false },
+        { "Name": "PhoneNumber",  "Type": "nvarchar", "Length": 32,  "Nullable": false,
+          "_comment": "手機號碼，國際格式（+886912345678）或本地格式（0912345678）" },
+        { "Name": "Label",        "Type": "nvarchar", "Length": 100, "Nullable": false,
+          "_comment": "顯示名稱，例如 '王主任'、'值班工程師 A'" },
+        { "Name": "MaxSeverity",  "Type": "tinyint",                 "Nullable": false, "Default": 3,
+          "_comment": "接收上限：0=只收 Critical, 1=Critical+High, 2=Critical+High+Medium, 3=全收" },
+        { "Name": "Language",     "Type": "nvarchar", "Length": 10,  "Nullable": false, "Default": "zh-TW",
+          "_comment": "簡訊語系：'zh-TW' 或 'en'" },
         { "Name": "IsEnabled",    "Type": "bit",                     "Nullable": false, "Default": 1 },
         { "Name": "CreatedAt",    "Type": "datetime",                "Nullable": false, "Default": "getdate()" },
         { "Name": "UpdatedAt",    "Type": "datetime",                "Nullable": true }

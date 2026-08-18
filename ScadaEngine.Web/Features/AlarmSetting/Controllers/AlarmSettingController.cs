@@ -21,6 +21,11 @@ public class AlarmSettingController : Controller
     private readonly EmailGroupService _emailGroupService;
     private readonly EmailSenderConfigService _emailSenderConfigService;
     private readonly EmailTestSendService _emailTestSendService;
+    private readonly SmsTargetService _smsTargetService;
+    private readonly SmsSenderConfigService _smsSenderConfigService;
+    private readonly SmsTestSendService _smsTestSendService;
+    private readonly SmsCommandPublisher _smsCommandPublisher;
+    private readonly SmsStatusCache _smsStatusCache;
     private readonly IDataRepository _dataRepository;
     private readonly ILogger<AlarmSettingController> _logger;
     private readonly IStringLocalizer<AlarmSettingController> _l;
@@ -32,6 +37,11 @@ public class AlarmSettingController : Controller
         EmailGroupService emailGroupService,
         EmailSenderConfigService emailSenderConfigService,
         EmailTestSendService emailTestSendService,
+        SmsTargetService smsTargetService,
+        SmsSenderConfigService smsSenderConfigService,
+        SmsTestSendService smsTestSendService,
+        SmsCommandPublisher smsCommandPublisher,
+        SmsStatusCache smsStatusCache,
         IDataRepository dataRepository,
         ILogger<AlarmSettingController> logger,
         IStringLocalizer<AlarmSettingController> localizer)
@@ -42,6 +52,11 @@ public class AlarmSettingController : Controller
         _emailGroupService = emailGroupService;
         _emailSenderConfigService = emailSenderConfigService;
         _emailTestSendService = emailTestSendService;
+        _smsTargetService = smsTargetService;
+        _smsSenderConfigService = smsSenderConfigService;
+        _smsTestSendService = smsTestSendService;
+        _smsCommandPublisher = smsCommandPublisher;
+        _smsStatusCache = smsStatusCache;
         _dataRepository = dataRepository;
         _logger = logger;
         _l = localizer;
@@ -111,12 +126,17 @@ public class AlarmSettingController : Controller
         var designPages = await _dataRepository.LoadPublishedDesignAsync();
         var diLabelMap = ExtractDiLabelsFromDesigns(designPages);
 
+        var smsTargets = (await _smsTargetService.GetAllAsync()).ToList();
+        var smsSenderConfig = _smsSenderConfigService.Read();
+
         ViewBag.CoordinatorList = coordinatorList;
         ViewBag.PointList = pointList;
         ViewBag.Rules = rules;
         ViewBag.LineTargets = lineTargets;
         ViewBag.EmailGroups = emailGroupBundles;
         ViewBag.EmailSenderConfig = emailSenderConfig;
+        ViewBag.SmsTargets = smsTargets;
+        ViewBag.SmsSenderConfig = smsSenderConfig;
         ViewBag.DiLabelMap = diLabelMap;
 
         return View();
@@ -404,6 +424,117 @@ public class AlarmSettingController : Controller
         var isSuccess = await _emailGroupService.SaveMappingAsync(dto);
         return isSuccess ? Ok(new { success = true, message = _l["alarm.success.saved"].Value })
                          : StatusCode(500, new { success = false, message = _l["alarm.error.save_failed"].Value });
+    }
+
+    // ── 簡訊收訊號碼 CRUD ──
+
+    [HttpGet("~/api/sms-targets")]
+    public async Task<IActionResult> GetAllSmsTargets()
+    {
+        var targets = await _smsTargetService.GetAllAsync();
+        return Ok(targets);
+    }
+
+    [HttpPost("~/api/sms-targets")]
+    public async Task<IActionResult> SaveSmsTarget([FromBody] SmsTargetSaveDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.phoneNumber))
+            return BadRequest(new { success = false, message = _l["alarm.error.phone_required"].Value });
+        if (!System.Text.RegularExpressions.Regex.IsMatch(dto.phoneNumber.Trim(), @"^\+?\d{8,15}$"))
+            return BadRequest(new { success = false, message = _l["alarm.error.phone_invalid"].Value });
+        if (string.IsNullOrWhiteSpace(dto.label))
+            return BadRequest(new { success = false, message = _l["alarm.error.label_required"].Value });
+        if (dto.maxSeverity > 3)
+            return BadRequest(new { success = false, message = _l["alarm.error.max_severity_range"].Value });
+
+        var isSuccess = await _smsTargetService.SaveAsync(dto);
+        if (isSuccess)
+            return Ok(new { success = true, message = _l["alarm.success.saved"].Value });
+        return StatusCode(500, new { success = false, message = _l["alarm.error.save_failed"].Value });
+    }
+
+    [HttpDelete("~/api/sms-targets/{id}")]
+    public async Task<IActionResult> DeleteSmsTarget(int id)
+    {
+        var isSuccess = await _smsTargetService.DeleteAsync(id);
+        if (isSuccess)
+            return Ok(new { success = true, message = _l["alarm.success.deleted"].Value });
+        return NotFound(new { success = false, message = _l["alarm.error.target_not_found"].Value });
+    }
+
+    [HttpPost("~/api/sms-targets/{id}/toggle")]
+    public async Task<IActionResult> ToggleSmsTarget(int id, [FromBody] SmsTargetToggleDto dto)
+    {
+        var isSuccess = await _smsTargetService.ToggleEnabledAsync(id, dto.isEnabled);
+        if (isSuccess)
+            return Ok(new { success = true });
+        return StatusCode(500, new { success = false, message = _l["alarm.error.toggle_failed"].Value });
+    }
+
+    [HttpPost("~/api/sms-targets/{id}/test")]
+    public async Task<IActionResult> TestSmsTarget(int id)
+    {
+        var target = await _smsTargetService.GetByIdAsync(id);
+        if (target == null)
+            return NotFound(new { success = false, message = _l["alarm.error.target_not_found"].Value });
+
+        var result = await _smsTestSendService.SendTestAsync(
+            target.szPhoneNumber, target.szLabel, target.szLanguage ?? "zh-TW");
+        if (result.isSuccess)
+            return Ok(new { success = true, message = result.szMessage });
+
+        if (result.isThrottled)
+        {
+            Response.Headers["Retry-After"] = result.nRetryAfterSeconds.ToString();
+            return StatusCode(429, new
+            {
+                success = false,
+                throttled = true,
+                retryAfter = result.nRetryAfterSeconds,
+                message = result.szMessage
+            });
+        }
+
+        return StatusCode(502, new { success = false, message = result.szMessage });
+    }
+
+    // ── 簡訊盒設定 ──
+
+    [HttpGet("~/api/sms-config")]
+    public IActionResult GetSmsConfig()
+    {
+        return Ok(_smsSenderConfigService.Read());
+    }
+
+    [HttpPost("~/api/sms-config")]
+    public IActionResult SaveSmsConfig([FromBody] SmsSenderConfigDto dto)
+    {
+        var isSuccess = _smsSenderConfigService.Save(dto);
+        if (isSuccess)
+            return Ok(new { success = true, message = _l["alarm.success.saved_restart_engine"].Value });
+        return StatusCode(500, new { success = false, message = _l["alarm.error.save_failed"].Value });
+    }
+
+    // ── 簡訊盒狀態（來自 SCADA/Sys/Sms/Status retained，Engine 每 60 秒與狀態變化時更新）──
+
+    [HttpGet("~/api/sms-status")]
+    public IActionResult GetSmsStatus()
+    {
+        var szJson = _smsStatusCache.PayloadJson;
+        if (string.IsNullOrEmpty(szJson))
+            return Ok(new { available = false });
+        return Content($"{{\"available\":true,\"receivedAt\":\"{_smsStatusCache.ReceivedAt:yyyy-MM-dd HH:mm:ss}\",\"status\":{szJson}}}",
+            "application/json");
+    }
+
+    /// <summary>重掃簡訊盒 COM port（Engine 代為執行）</summary>
+    [HttpPost("~/api/sms-rescan")]
+    public async Task<IActionResult> RescanSmsModem()
+    {
+        var isPublished = await _smsCommandPublisher.PublishRescanAsync();
+        if (isPublished)
+            return Ok(new { success = true, message = _l["alarm.success.sms_rescan_sent"].Value });
+        return StatusCode(502, new { success = false, message = _l["alarm.error.mqtt_not_connected"].Value });
     }
 
     // ── Email 測試寄送 ──

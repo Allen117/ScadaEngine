@@ -182,4 +182,48 @@
   <data name="alarm.alert.input_group_name" xml:space="preserve"><value>請填寫群組識別名稱</value></data>
   <data name="alarm.alert.input_email" xml:space="preserve"><value>請填寫 Email</value></data>
   <data name="alarm.alert.save_group_first" xml:space="preserve"><value>請先儲存群組再新增收件人</value></data>
+  <data name="alarm.tab.sms" xml:space="preserve"><value>簡訊通知</value></data>
+  <data name="alarm.button.add_sms_target" xml:space="preserve"><value>新增號碼</value></data>
+  <data name="alarm.button.sms_settings" xml:space="preserve"><value>簡訊盒設定</value></data>
+  <data name="alarm.sms.info" xml:space="preserve"><value>無網際網路也能通知：警報經序列埠簡訊盒（GSM/4G Modem + SIM 卡）直接發送簡訊。每個號碼可獨立設定接收嚴重度與語言；簡訊盒需支援標準 AT 指令（3GPP TS 27.005），不限廠牌。中文簡訊單封上限 70 字，超長自動截斷。</value></data>
+  <data name="alarm.sms.status_title" xml:space="preserve"><value>簡訊盒狀態</value></data>
+  <data name="alarm.sms.status_unknown" xml:space="preserve"><value>未知（等待 Engine 回報）</value></data>
+  <data name="alarm.sms.status_disabled" xml:space="preserve"><value>未啟用</value></data>
+  <data name="alarm.sms.status_connected" xml:space="preserve"><value>已連線</value></data>
+  <data name="alarm.sms.status_disconnected" xml:space="preserve"><value>未連線</value></data>
+  <data name="alarm.sms.status_port" xml:space="preserve"><value>連接埠</value></data>
+  <data name="alarm.sms.status_signal" xml:space="preserve"><value>訊號</value></data>
+  <data name="alarm.sms.status_today_sent" xml:space="preserve"><value>今日已發</value></data>
+  <data name="alarm.sms.status_last_test" xml:space="preserve"><value>最近測試</value></data>
+  <data name="alarm.sms.test_ok" xml:space="preserve"><value>成功</value></data>
+  <data name="alarm.sms.test_fail" xml:space="preserve"><value>失敗</value></data>
+  <data name="alarm.sms.button_rescan" xml:space="preserve"><value>重新掃描</value></data>
+  <data name="alarm.sms.button_rescanning" xml:space="preserve"><value>掃描中</value></data>
+  <data name="alarm.sms.config_restart_hint" xml:space="preserve"><value>簡訊盒設定僅在 Engine 啟動時載入，儲存後需重啟 Engine 才生效（收訊號碼的增刪改約 60 秒內自動生效，不需重啟）。</value></data>
+  <data name="alarm.col.phone_number" xml:space="preserve"><value>手機號碼</value></data>
+  <data name="alarm.empty.no_sms_targets" xml:space="preserve"><value>尚未設定簡訊號碼，點右上「新增號碼」開始</value></data>
+  <data name="alarm.sms_modal.title_add" xml:space="preserve"><value>新增簡訊號碼</value></data>
+  <data name="alarm.sms_modal.title_edit" xml:space="preserve"><value>編輯簡訊號碼</value></data>
+  <data name="alarm.sms_modal.title_config" xml:space="preserve"><value>簡訊盒設定</value></data>
+  <data name="alarm.field.sms_label" xml:space="preserve"><value>顯示名稱</value></data>
+  <data name="alarm.field.sms_label_placeholder" xml:space="preserve"><value>例：王主任、值班工程師 A</value></data>
+  <data name="alarm.field.phone_number" xml:space="preserve"><value>手機號碼</value></data>
+  <data name="alarm.field.phone_number_placeholder" xml:space="preserve"><value>例：+886912345678 或 0912345678</value></data>
+  <data name="alarm.field.phone_number_hint" xml:space="preserve"><value>建議使用國際格式（+886 開頭）；僅允許數字與開頭 +</value></data>
+  <data name="alarm.field.is_sms_enabled" xml:space="preserve"><value>啟用此號碼</value></data>
+  <data name="alarm.field.com_port" xml:space="preserve"><value>COM 連接埠</value></data>
+  <data name="alarm.field.com_port_hint" xml:space="preserve"><value>auto = 自動掃描偵測；或手動指定如 COM3</value></data>
+  <data name="alarm.field.baud_rate" xml:space="preserve"><value>Baud Rate</value></data>
+  <data name="alarm.field.baud_rate_hint" xml:space="preserve"><value>0 = 自動嘗試（115200 → 9600）</value></data>
+  <data name="alarm.field.sim_pin" xml:space="preserve"><value>SIM PIN 碼</value></data>
+  <data name="alarm.field.sim_pin_hint" xml:space="preserve"><value>SIM 未設 PIN 請留空（建議關閉 PIN）</value></data>
+  <data name="alarm.field.daily_quota" xml:space="preserve"><value>每日發送上限（封）</value></data>
+  <data name="alarm.field.daily_quota_hint" xml:space="preserve"><value>防警報風暴燒簡訊費；0 = 不限制</value></data>
+  <data name="alarm.field.send_recovery" xml:space="preserve"><value>警報恢復時也發簡訊</value></data>
+  <data name="alarm.field.send_recovery_hint" xml:space="preserve"><value>簡訊按封計費，關閉可省約一半費用</value></data>
+  <data name="alarm.field.enable_sms_notification" xml:space="preserve"><value>啟用簡訊通知</value></data>
+  <data name="alarm.alert.input_phone" xml:space="preserve"><value>請填寫手機號碼</value></data>
+  <data name="alarm.alert.phone_invalid" xml:space="preserve"><value>手機號碼格式不正確（僅數字與開頭 +，8~15 碼）</value></data>
+  <data name="alarm.confirm.delete_sms_target" xml:space="preserve"><value>確定要刪除此簡訊號碼？</value></data>
+  <data name="alarm.toast.saved" xml:space="preserve"><value>已儲存</value></data>
 </root>

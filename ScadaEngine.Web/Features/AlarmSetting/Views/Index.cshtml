@@ -43,6 +43,19 @@
     var emailGroups = ViewBag.EmailGroups as List<object> ?? new List<object>();
     var emailGroupsJson = System.Text.Json.JsonSerializer.Serialize(emailGroups);
     var emailSenderConfigJson = System.Text.Json.JsonSerializer.Serialize(ViewBag.EmailSenderConfig);
+    var smsTargets = ViewBag.SmsTargets as List<ScadaEngine.Common.Data.Models.SmsNotifyTargetModel>;
+    var smsTargetsJson = System.Text.Json.JsonSerializer.Serialize(
+        (smsTargets ?? new List<ScadaEngine.Common.Data.Models.SmsNotifyTargetModel>())
+            .Select(s => new {
+                id = s.nId,
+                phoneNumber = s.szPhoneNumber,
+                label = s.szLabel,
+                maxSeverity = (int)s.nMaxSeverity,
+                language = s.szLanguage ?? "zh-TW",
+                isEnabled = s.isEnabled
+            })
+    );
+    var smsSenderConfigJson = System.Text.Json.JsonSerializer.Serialize(ViewBag.SmsSenderConfig);
     var alarmRulesForRoutingJson = System.Text.Json.JsonSerializer.Serialize(
         rules!.Select(r => new { id = r.nId, sid = r.szSID, pointName = r.szPointName ?? r.szSID })
     );
@@ -68,6 +81,12 @@
             <button class="btn btn-outline-secondary d-none" id="btnEmailConfig" onclick="window._alarmEmail.showConfigModal()">
                 <i class="fas fa-cog me-1"></i>@Localizer["alarm.button.email_smtp_settings"]
             </button>
+            <button class="btn btn-primary d-none" id="btnAddSmsTarget" onclick="window._alarmSms.showAddModal()">
+                <i class="fas fa-plus me-1"></i>@Localizer["alarm.button.add_sms_target"]
+            </button>
+            <button class="btn btn-outline-secondary d-none" id="btnSmsConfig" onclick="window._alarmSms.showConfigModal()">
+                <i class="fas fa-cog me-1"></i>@Localizer["alarm.button.sms_settings"]
+            </button>
         </div>
     </div>
 
@@ -89,6 +108,12 @@
             <button class="nav-link" id="tab-email-btn" data-bs-toggle="tab"
                     data-bs-target="#tab-email" type="button" role="tab">
                 <i class="fas fa-envelope me-1"></i>@Localizer["alarm.tab.email"]
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-sms-btn" data-bs-toggle="tab"
+                    data-bs-target="#tab-sms" type="button" role="tab">
+                <i class="fas fa-sms me-1"></i>@Localizer["alarm.tab.sms"]
             </button>
         </li>
     </ul>
@@ -181,6 +206,55 @@
                     <div id="emailEmptyMsg" class="text-center text-muted py-4 d-none">
                         <i class="fas fa-envelope fa-2x mb-2 d-block"></i>
                         @Localizer["alarm.empty.no_email_groups"]
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── 簡訊通知設定 Tab ── -->
+        <div class="tab-pane fade" id="tab-sms" role="tabpanel">
+            <div class="alert alert-info py-2 mb-3 d-flex align-items-center">
+                <i class="fas fa-info-circle me-2"></i>
+                <div class="small">@Localizer["alarm.sms.info"]</div>
+            </div>
+
+            <!-- 簡訊盒即時狀態卡 -->
+            <div class="card mb-3">
+                <div class="card-body py-2 d-flex flex-wrap align-items-center gap-3" id="smsStatusCard">
+                    <span class="fw-semibold"><i class="fas fa-broadcast-tower me-1"></i>@Localizer["alarm.sms.status_title"]</span>
+                    <span id="smsStatusBadge" class="badge bg-secondary">@Localizer["alarm.sms.status_unknown"]</span>
+                    <span class="text-muted small" id="smsStatusPort"></span>
+                    <span class="text-muted small" id="smsStatusSignal"></span>
+                    <span class="text-muted small" id="smsStatusSim"></span>
+                    <span class="text-muted small" id="smsStatusQuota"></span>
+                    <span class="text-muted small" id="smsStatusLastTest"></span>
+                    <button class="btn btn-sm btn-outline-secondary ms-auto" id="btnSmsRescan"
+                            onclick="window._alarmSms.rescan(this)">
+                        <i class="fas fa-sync-alt me-1"></i>@Localizer["alarm.sms.button_rescan"]
+                    </button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="smsTargetsTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th style="width:50px">@Localizer["alarm.col.enabled"]</th>
+                                    <th>@Localizer["alarm.col.label"]</th>
+                                    <th>@Localizer["alarm.col.phone_number"]</th>
+                                    <th style="width:120px">@Localizer["alarm.col.language"]</th>
+                                    <th style="width:160px">@Localizer["alarm.col.max_severity"]</th>
+                                    <th style="width:240px">@Localizer["alarm.col.actions"]</th>
+                                </tr>
+                            </thead>
+                            <tbody id="smsTargetsBody"></tbody>
+                        </table>
+                    </div>
+                    <div id="smsEmptyMsg" class="text-center text-muted py-4 d-none">
+                        <i class="fas fa-sms fa-2x mb-2 d-block"></i>
+                        @Localizer["alarm.empty.no_sms_targets"]
                     </div>
                 </div>
             </div>
@@ -613,6 +687,135 @@
     </div>
 </div>
 
+<!-- 簡訊號碼新增/編輯 Modal -->
+<div class="modal fade" id="smsTargetModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="smsTargetModalTitle">@Localizer["alarm.sms_modal.title_add"]</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="smsTargetEditId" />
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold"><i class="fas fa-tag me-1"></i>@Localizer["alarm.field.sms_label"]</label>
+                    <input type="text" class="form-control" id="txtSmsLabel"
+                           maxlength="100" placeholder="@Localizer["alarm.field.sms_label_placeholder"]" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold"><i class="fas fa-mobile-alt me-1"></i>@Localizer["alarm.field.phone_number"]</label>
+                    <input type="text" class="form-control" id="txtSmsPhone"
+                           maxlength="32" placeholder="@Localizer["alarm.field.phone_number_placeholder"]" />
+                    <div class="form-text">@Localizer["alarm.field.phone_number_hint"]</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold"><i class="fas fa-filter me-1"></i>@Localizer["alarm.field.max_severity"]</label>
+                    <select class="form-select" id="selSmsMaxSeverity">
+                        <option value="0">@Localizer["alarm.max_severity.0"]</option>
+                        <option value="1">@Localizer["alarm.max_severity.1"]</option>
+                        <option value="2">@Localizer["alarm.max_severity.2"]</option>
+                        <option value="3" selected>@Localizer["alarm.max_severity.3"]</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold"><i class="fas fa-language me-1"></i>@Localizer["alarm.field.language"]</label>
+                    <select class="form-select" id="selSmsLanguage">
+                        <option value="zh-TW" selected>繁體中文 (zh-TW)</option>
+                        <option value="en">English (en)</option>
+                    </select>
+                    <div class="form-text">@Localizer["alarm.field.language_hint"]</div>
+                </div>
+
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="chkSmsEnabled" checked />
+                    <label class="form-check-label" for="chkSmsEnabled">@Localizer["alarm.field.is_sms_enabled"]</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["alarm.button.cancel"]</button>
+                <button type="button" class="btn btn-primary" onclick="window._alarmSms.saveTarget()">
+                    <i class="fas fa-save me-1"></i>@Localizer["alarm.button.save"]
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 簡訊盒設定 Modal -->
+<div class="modal fade" id="smsConfigModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@Localizer["alarm.sms_modal.title_config"]</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning py-2">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    @Localizer["alarm.sms.config_restart_hint"]
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">@Localizer["alarm.field.com_port"]</label>
+                        <input type="text" class="form-control" id="txtSmsComPort" value="auto" />
+                        <div class="form-text">@Localizer["alarm.field.com_port_hint"]</div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">@Localizer["alarm.field.baud_rate"]</label>
+                        <input type="number" class="form-control" id="txtSmsBaudRate" value="0" min="0" />
+                        <div class="form-text">@Localizer["alarm.field.baud_rate_hint"]</div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">@Localizer["alarm.field.sim_pin"]</label>
+                        <input type="password" class="form-control" id="txtSmsSimPin" autocomplete="new-password" />
+                        <div class="form-text">@Localizer["alarm.field.sim_pin_hint"]</div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">@Localizer["alarm.field.rate_per_minute"]</label>
+                        <input type="number" class="form-control" id="txtSmsRatePerMinute" value="10" min="1" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">@Localizer["alarm.field.daily_quota"]</label>
+                        <input type="number" class="form-control" id="txtSmsDailyQuota" value="100" min="0" />
+                        <div class="form-text">@Localizer["alarm.field.daily_quota_hint"]</div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">@Localizer["alarm.field.test_throttle_seconds"]</label>
+                        <input type="number" class="form-control" id="txtSmsTestThrottle" value="10" min="1" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" id="chkSmsSendRecovery" checked />
+                            <label class="form-check-label" for="chkSmsSendRecovery">@Localizer["alarm.field.send_recovery"]</label>
+                        </div>
+                        <div class="form-text">@Localizer["alarm.field.send_recovery_hint"]</div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" id="chkSmsEnableNotification" />
+                            <label class="form-check-label" for="chkSmsEnableNotification">@Localizer["alarm.field.enable_sms_notification"]</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["alarm.button.cancel"]</button>
+                <button type="button" class="btn btn-primary" onclick="window._alarmSms.saveConfig()">
+                    <i class="fas fa-save me-1"></i>@Localizer["alarm.button.save"]
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         window._alarmInitData = {
@@ -622,6 +825,8 @@
             lineTargets: @Html.Raw(lineTargetsJson),
             emailGroups: @Html.Raw(emailGroupsJson),
             emailSenderConfig: @Html.Raw(emailSenderConfigJson),
+            smsTargets: @Html.Raw(smsTargetsJson),
+            smsSenderConfig: @Html.Raw(smsSenderConfigJson),
             alarmRulesForRouting: @Html.Raw(alarmRulesForRoutingJson),
             diLabels: @Html.Raw(diLabelMapJson)
         };

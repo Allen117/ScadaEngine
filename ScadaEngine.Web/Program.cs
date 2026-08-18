@@ -168,6 +168,7 @@ builder.Services.AddScoped<ScadaEngine.Web.Services.AccountSettingService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.CalcPointService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.ScheduleSettingService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.LineTargetService>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.SmsTargetService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.EmailGroupService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyCircuitService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.WaterCircuitService>();
@@ -250,6 +251,10 @@ builder.Services.AddSingleton<ScadaEngine.Web.Services.LineTestSendService>();
 builder.Services.AddSingleton<ScadaEngine.Web.Services.EmailSenderConfigService>();
 builder.Services.AddSingleton<ScadaEngine.Web.Services.EmailTestSendService>();
 
+// 簡訊設定檔讀寫 + 測試發送（Singleton：throttle 字典需跨請求保留；實際發送由 Engine 經 MQTT 代執行）
+builder.Services.AddSingleton<ScadaEngine.Web.Services.SmsSenderConfigService>();
+builder.Services.AddSingleton<ScadaEngine.Web.Services.SmsTestSendService>();
+
 // 註冊 C# 演算法服務（供 LogicFlow 前端預覽用）
 builder.Services.AddSingleton<ScadaEngine.Engine.Services.CSharpAlgorithmService>();
 
@@ -268,6 +273,9 @@ builder.Services.AddScoped<ScadaEngine.Web.Services.ControlEventLogger>();
 // 授權狀態快取（Singleton — 由 MqttRealtimeSubscriberService 更新，Controller/Layout 讀取）
 builder.Services.AddSingleton<ScadaEngine.Web.Services.LicenseStatusCache>();
 
+// 簡訊盒狀態快取（Singleton — 由 MqttRealtimeSubscriberService 訂閱 SCADA/Sys/Sms/Status 更新）
+builder.Services.AddSingleton<ScadaEngine.Web.Services.SmsStatusCache>();
+
 // 註冊即時監控 MQTT 訂閱服務
 builder.Services.AddSingleton<ScadaEngine.Web.Services.MqttRealtimeSubscriberService>();
 builder.Services.AddHostedService<ScadaEngine.Web.Services.MqttRealtimeSubscriberService>(provider =>
@@ -282,6 +290,11 @@ builder.Services.AddHostedService<ScadaEngine.Web.Services.MqttAlarmSubscriberSe
 builder.Services.AddSingleton<ScadaEngine.Web.Services.AlarmRuleReloadPublisher>();
 builder.Services.AddHostedService<ScadaEngine.Web.Services.AlarmRuleReloadPublisher>(provider =>
     provider.GetRequiredService<ScadaEngine.Web.Services.AlarmRuleReloadPublisher>());
+
+// 註冊簡訊命令發布者（雙註冊：Singleton 供 Controller / SmsTestSendService 注入呼叫 + HostedService 啟動時連 broker）
+builder.Services.AddSingleton<ScadaEngine.Web.Services.SmsCommandPublisher>();
+builder.Services.AddHostedService<ScadaEngine.Web.Services.SmsCommandPublisher>(provider =>
+    provider.GetRequiredService<ScadaEngine.Web.Services.SmsCommandPublisher>());
 
 // 註冊 DB 來源 Reload 發布者（雙註冊：Singleton 供 Controller 注入呼叫 + HostedService 啟動時連 broker）
 builder.Services.AddSingleton<ScadaEngine.Web.Services.DbCoordinatorReloadPublisher>();

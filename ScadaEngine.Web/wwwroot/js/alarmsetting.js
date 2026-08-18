@@ -10,6 +10,8 @@
     var _diLabels = window._alarmInitData.diLabels || {};
     var _emailGroups = window._alarmInitData.emailGroups || [];
     var _emailSenderConfig = window._alarmInitData.emailSenderConfig || {};
+    var _smsTargets = window._alarmInitData.smsTargets || [];
+    var _smsSenderConfig = window._alarmInitData.smsSenderConfig || {};
     var _alarmRulesForRouting = window._alarmInitData.alarmRulesForRouting || [];
 
     // 由 Designer 設定取得 SID 對應的 DI ON/OFF 標籤；找不到則回傳預設 ON/OFF
@@ -43,6 +45,9 @@
     var _emailRecipientModal = null;
     var _emailConfigModal = null;
     var _emailRulesModal = null;
+    var _smsModal = null;
+    var _smsConfigModal = null;
+    var _smsStatusTimer = null;
     var _currentEmailGroupRecipients = [];  // 編輯群組 modal 時的暫存收件人清單
 
     var CALC_DEVICE_ID = -999;
@@ -147,6 +152,8 @@
         _emailRecipientModal = new bootstrap.Modal(document.getElementById('emailRecipientModal'));
         _emailConfigModal = new bootstrap.Modal(document.getElementById('emailConfigModal'));
         _emailRulesModal = new bootstrap.Modal(document.getElementById('emailRulesModal'));
+        _smsModal = new bootstrap.Modal(document.getElementById('smsTargetModal'));
+        _smsConfigModal = new bootstrap.Modal(document.getElementById('smsConfigModal'));
 
         if (window.i18n && window.i18n.ready) {
             window.i18n.ready(function () {
@@ -154,12 +161,14 @@
                 renderTable();
                 renderLineTable();
                 renderEmailTable();
+                renderSmsTable();
             });
         } else {
             populateCoordinators();
             renderTable();
             renderLineTable();
             renderEmailTable();
+            renderSmsTable();
         }
 
         toggleSection('high');
@@ -170,20 +179,28 @@
         var rulesTabBtn = document.getElementById('tab-rules-btn');
         var lineTabBtn = document.getElementById('tab-line-btn');
         var emailTabBtn = document.getElementById('tab-email-btn');
+        var smsTabBtn = document.getElementById('tab-sms-btn');
         var btnAddRule = document.getElementById('btnAddRule');
         var btnAddLine = document.getElementById('btnAddLineTarget');
         var btnAddEmail = document.getElementById('btnAddEmailGroup');
         var btnEmailConfig = document.getElementById('btnEmailConfig');
+        var btnAddSms = document.getElementById('btnAddSmsTarget');
+        var btnSmsConfig = document.getElementById('btnSmsConfig');
 
         function setActiveButtons(tab) {
             btnAddRule.classList.toggle('d-none', tab !== 'rules');
             btnAddLine.classList.toggle('d-none', tab !== 'line');
             btnAddEmail.classList.toggle('d-none', tab !== 'email');
             btnEmailConfig.classList.toggle('d-none', tab !== 'email');
+            btnAddSms.classList.toggle('d-none', tab !== 'sms');
+            btnSmsConfig.classList.toggle('d-none', tab !== 'sms');
+            // 簡訊 tab 顯示時輪詢狀態（10 秒），離開即停止
+            if (tab === 'sms') startSmsStatusPolling();
+            else stopSmsStatusPolling();
         }
 
         // 用 URL hash 記住當前 tab，重整後（saveGroup / saveConfig 等都會 location.reload）才不會跳回預設的「警報規則」
-        var TAB_HASHES = { '#tab-line': lineTabBtn, '#tab-email': emailTabBtn, '#tab-rules': rulesTabBtn };
+        var TAB_HASHES = { '#tab-line': lineTabBtn, '#tab-email': emailTabBtn, '#tab-rules': rulesTabBtn, '#tab-sms': smsTabBtn };
         function updateHash(hash) {
             if (window.history && window.history.replaceState) {
                 window.history.replaceState(null, '', window.location.pathname + window.location.search + hash);
@@ -194,6 +211,7 @@
         if (rulesTabBtn) rulesTabBtn.addEventListener('shown.bs.tab', function () { setActiveButtons('rules'); updateHash('#tab-rules'); });
         if (lineTabBtn) lineTabBtn.addEventListener('shown.bs.tab', function () { setActiveButtons('line'); updateHash('#tab-line'); });
         if (emailTabBtn) emailTabBtn.addEventListener('shown.bs.tab', function () { setActiveButtons('email'); updateHash('#tab-email'); });
+        if (smsTabBtn) smsTabBtn.addEventListener('shown.bs.tab', function () { setActiveButtons('sms'); updateHash('#tab-sms'); });
 
         var targetBtn = TAB_HASHES[window.location.hash];
         if (targetBtn) {
@@ -1053,6 +1071,290 @@
         });
     }
 
+    // ── 簡訊通知設定 Tab ──
+
+    function renderSmsTable() {
+        var tbody = document.getElementById('smsTargetsBody');
+        var emptyMsg = document.getElementById('smsEmptyMsg');
+        if (!tbody) return;
+
+        if (_smsTargets.length === 0) {
+            tbody.innerHTML = '';
+            emptyMsg.classList.remove('d-none');
+            return;
+        }
+        emptyMsg.classList.add('d-none');
+
+        var html = '';
+        _smsTargets.forEach(function (s) {
+            var pillText = maxSeverityPillLabel(s.maxSeverity);
+            html += '<tr' + (s.isEnabled ? '' : ' class="table-secondary"') + '>'
+                + '<td><input type="checkbox" class="form-check-input"'
+                + (s.isEnabled ? ' checked' : '')
+                + ' onchange="window._alarmSms.toggleEnabled(' + s.id + ', this.checked)" /></td>'
+                + '<td>' + escHtml(s.label) + '</td>'
+                + '<td><span class="group-id-cell">' + escHtml(s.phoneNumber) + '</span></td>'
+                + '<td>' + escHtml(s.language || 'zh-TW') + '</td>'
+                + '<td><span class="line-severity-pill">' + escHtml(pillText) + '</span></td>'
+                + '<td>'
+                + '<button class="btn btn-sm btn-outline-success me-1" onclick="window._alarmSms.testSend(' + s.id + ', this)">'
+                + '<i class="fas fa-paper-plane me-1"></i>' + t('alarm.button.test_send') + '</button>'
+                + '<button class="btn btn-sm btn-outline-primary me-1" onclick="window._alarmSms.editTarget(' + s.id + ')"><i class="fas fa-pen"></i></button>'
+                + '<button class="btn btn-sm btn-outline-danger" onclick="window._alarmSms.deleteTarget(' + s.id + ')"><i class="fas fa-trash"></i></button>'
+                + '</td></tr>';
+        });
+        tbody.innerHTML = html;
+    }
+
+    function showAddSmsModal() {
+        document.getElementById('smsTargetModalTitle').textContent = t('alarm.sms_modal.title_add');
+        document.getElementById('smsTargetEditId').value = '';
+        document.getElementById('txtSmsLabel').value = '';
+        document.getElementById('txtSmsPhone').value = '';
+        document.getElementById('selSmsMaxSeverity').value = '3';
+        document.getElementById('selSmsLanguage').value = 'zh-TW';
+        document.getElementById('chkSmsEnabled').checked = true;
+        _smsModal.show();
+    }
+
+    function editSmsTarget(id) {
+        var target = _smsTargets.find(function (x) { return x.id === id; });
+        if (!target) return;
+        document.getElementById('smsTargetModalTitle').textContent = t('alarm.sms_modal.title_edit');
+        document.getElementById('smsTargetEditId').value = target.id;
+        document.getElementById('txtSmsLabel').value = target.label;
+        document.getElementById('txtSmsPhone').value = target.phoneNumber;
+        document.getElementById('selSmsMaxSeverity').value = String(target.maxSeverity);
+        document.getElementById('selSmsLanguage').value = target.language || 'zh-TW';
+        document.getElementById('chkSmsEnabled').checked = target.isEnabled;
+        _smsModal.show();
+    }
+
+    function saveSmsTarget() {
+        var label = document.getElementById('txtSmsLabel').value.trim();
+        var phone = document.getElementById('txtSmsPhone').value.trim();
+        if (!label) { alert(t('alarm.alert.input_label')); return; }
+        if (!phone) { alert(t('alarm.alert.input_phone')); return; }
+        if (!/^\+?\d{8,15}$/.test(phone)) { alert(t('alarm.alert.phone_invalid')); return; }
+
+        var editId = document.getElementById('smsTargetEditId').value;
+        var dto = {
+            id: editId ? parseInt(editId) : null,
+            label: label,
+            phoneNumber: phone,
+            maxSeverity: parseInt(document.getElementById('selSmsMaxSeverity').value),
+            language: document.getElementById('selSmsLanguage').value,
+            isEnabled: document.getElementById('chkSmsEnabled').checked
+        };
+
+        fetch('/api/sms-targets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dto)
+        })
+        .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
+        .then(function (res) {
+            if (res.ok && res.body.success) {
+                _smsModal.hide();
+                location.reload();
+            } else {
+                alert(res.body.message || t('alarm.alert.save_failed'));
+            }
+        })
+        .catch(function (e) { alert(t('alarm.alert.save_failed') + ': ' + e.message); });
+    }
+
+    function deleteSmsTarget(id) {
+        if (!confirm(t('alarm.confirm.delete_sms_target'))) return;
+        fetch('/api/sms-targets/' + id, { method: 'DELETE' })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+            if (res.success) location.reload();
+            else alert(res.message || t('alarm.alert.delete_failed'));
+        })
+        .catch(function (e) { alert(t('alarm.alert.delete_failed') + ': ' + e.message); });
+    }
+
+    function toggleSmsEnabled(id, isEnabled) {
+        fetch('/api/sms-targets/' + id + '/toggle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ isEnabled: isEnabled })
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+            if (res.success) {
+                var target = _smsTargets.find(function (x) { return x.id === id; });
+                if (target) target.isEnabled = isEnabled;
+                renderSmsTable();
+            } else {
+                alert(res.message || t('alarm.alert.toggle_failed'));
+                location.reload();
+            }
+        });
+    }
+
+    function testSmsSend(id, btn) {
+        if (btn) {
+            btn.disabled = true;
+            btn.dataset.origHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>' + t('alarm.button.sending');
+        }
+        fetch('/api/sms-targets/' + id + '/test', { method: 'POST' })
+        .then(function (r) {
+            return r.json().then(function (b) { return { status: r.status, body: b }; });
+        })
+        .then(function (res) {
+            if (res.status === 200 && res.body.success) {
+                showToastSafe(res.body.message || t('alarm.toast.test_sent'), 'success');
+            } else if (res.status === 429) {
+                alert(res.body.message || t('alarm.alert.retry_later'));
+            } else {
+                alert(t('alarm.alert.send_failed_with_msg', { message: (res.body.message || res.status) }));
+            }
+        })
+        .catch(function (e) { alert(t('alarm.alert.send_failed') + ': ' + e.message); })
+        .finally(function () {
+            if (btn) {
+                btn.disabled = false;
+                if (btn.dataset.origHtml) btn.innerHTML = btn.dataset.origHtml;
+            }
+        });
+    }
+
+    function showSmsConfigModal() {
+        var c = _smsSenderConfig || {};
+        document.getElementById('txtSmsComPort').value = c.comPort || 'auto';
+        document.getElementById('txtSmsBaudRate').value = c.baudRate || 0;
+        document.getElementById('txtSmsSimPin').value = c.simPin || '';
+        document.getElementById('txtSmsRatePerMinute').value = c.ratePerMinute || 10;
+        document.getElementById('txtSmsDailyQuota').value = (c.dailyQuota != null ? c.dailyQuota : 100);
+        document.getElementById('txtSmsTestThrottle').value = c.testSendThrottleSeconds || 10;
+        document.getElementById('chkSmsSendRecovery').checked = c.sendRecovery !== false;
+        document.getElementById('chkSmsEnableNotification').checked = !!c.enableNotification;
+        _smsConfigModal.show();
+    }
+
+    function saveSmsConfig() {
+        var dto = {
+            enableNotification: document.getElementById('chkSmsEnableNotification').checked,
+            comPort: document.getElementById('txtSmsComPort').value.trim() || 'auto',
+            baudRate: parseInt(document.getElementById('txtSmsBaudRate').value) || 0,
+            simPin: document.getElementById('txtSmsSimPin').value,
+            ratePerMinute: parseInt(document.getElementById('txtSmsRatePerMinute').value) || 10,
+            dailyQuota: parseInt(document.getElementById('txtSmsDailyQuota').value) || 0,
+            sendRecovery: document.getElementById('chkSmsSendRecovery').checked,
+            testSendThrottleSeconds: parseInt(document.getElementById('txtSmsTestThrottle').value) || 10
+        };
+        fetch('/api/sms-config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dto)
+        })
+        .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
+        .then(function (res) {
+            if (res.ok && res.body.success) {
+                _smsConfigModal.hide();
+                showToastSafe(res.body.message || t('alarm.toast.saved'), 'success');
+                _smsSenderConfig = dto;
+            } else {
+                alert(res.body.message || t('alarm.alert.save_failed'));
+            }
+        })
+        .catch(function (e) { alert(t('alarm.alert.save_failed') + ': ' + e.message); });
+    }
+
+    // ── 簡訊盒狀態卡（輪詢 /api/sms-status，來源 = Engine MQTT retained）──
+
+    function startSmsStatusPolling() {
+        refreshSmsStatus();
+        if (!_smsStatusTimer)
+            _smsStatusTimer = setInterval(refreshSmsStatus, 10000);
+    }
+
+    function stopSmsStatusPolling() {
+        if (_smsStatusTimer) {
+            clearInterval(_smsStatusTimer);
+            _smsStatusTimer = null;
+        }
+    }
+
+    function refreshSmsStatus() {
+        fetch('/api/sms-status')
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+            var badge = document.getElementById('smsStatusBadge');
+            var elPort = document.getElementById('smsStatusPort');
+            var elSignal = document.getElementById('smsStatusSignal');
+            var elSim = document.getElementById('smsStatusSim');
+            var elQuota = document.getElementById('smsStatusQuota');
+            var elLastTest = document.getElementById('smsStatusLastTest');
+            if (!badge) return;
+
+            if (!res.available || !res.status) {
+                badge.className = 'badge bg-secondary';
+                badge.textContent = t('alarm.sms.status_unknown');
+                elPort.textContent = '';
+                elSignal.textContent = '';
+                elSim.textContent = '';
+                elQuota.textContent = '';
+                elLastTest.textContent = '';
+                return;
+            }
+
+            var s = res.status;
+            if (!s.enabled) {
+                badge.className = 'badge bg-secondary';
+                badge.textContent = t('alarm.sms.status_disabled');
+            } else if (s.connected) {
+                badge.className = 'badge bg-success';
+                badge.textContent = t('alarm.sms.status_connected');
+            } else {
+                badge.className = 'badge bg-danger';
+                badge.textContent = t('alarm.sms.status_disconnected');
+            }
+            elPort.textContent = s.port ? (t('alarm.sms.status_port') + ': ' + s.port + (s.baudRate ? ' @ ' + s.baudRate : '')) : '';
+            elSignal.textContent = (s.csq != null && s.csq >= 0) ? (t('alarm.sms.status_signal') + ': ' + s.csq + '/31') : '';
+            elSim.textContent = s.simStatus ? ('SIM: ' + s.simStatus) : '';
+            elQuota.textContent = (s.dailyQuota != null)
+                ? (t('alarm.sms.status_today_sent') + ': ' + s.sentToday + (s.dailyQuota > 0 ? '/' + s.dailyQuota : ''))
+                : '';
+            if (s.lastTest) {
+                elLastTest.textContent = t('alarm.sms.status_last_test') + ': '
+                    + s.lastTest.phoneNumber + ' '
+                    + (s.lastTest.success ? t('alarm.sms.test_ok') : (t('alarm.sms.test_fail') + '(' + (s.lastTest.error || '') + ')'))
+                    + ' @ ' + s.lastTest.time;
+            } else {
+                elLastTest.textContent = '';
+            }
+        })
+        .catch(function () { /* 輪詢失敗靜默，下輪重試 */ });
+    }
+
+    function rescanSmsModem(btn) {
+        if (btn) {
+            btn.disabled = true;
+            btn.dataset.origHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>' + t('alarm.sms.button_rescanning');
+        }
+        fetch('/api/sms-rescan', { method: 'POST' })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+            if (res.success) showToastSafe(res.message, 'success');
+            else alert(res.message || t('alarm.alert.send_failed'));
+        })
+        .catch(function (e) { alert(e.message); })
+        .finally(function () {
+            if (btn) {
+                setTimeout(function () {
+                    btn.disabled = false;
+                    if (btn.dataset.origHtml) btn.innerHTML = btn.dataset.origHtml;
+                    refreshSmsStatus();
+                }, 3000);
+            }
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', init);
 
     window._alarm = {
@@ -1074,6 +1376,18 @@
         deleteLineTarget: deleteLineTarget,
         toggleLineEnabled: toggleLineEnabled,
         testLineSend: testLineSend
+    };
+
+    window._alarmSms = {
+        showAddModal: showAddSmsModal,
+        editTarget: editSmsTarget,
+        saveTarget: saveSmsTarget,
+        deleteTarget: deleteSmsTarget,
+        toggleEnabled: toggleSmsEnabled,
+        testSend: testSmsSend,
+        showConfigModal: showSmsConfigModal,
+        saveConfig: saveSmsConfig,
+        rescan: rescanSmsModem
     };
 
     window._alarmEmail = {

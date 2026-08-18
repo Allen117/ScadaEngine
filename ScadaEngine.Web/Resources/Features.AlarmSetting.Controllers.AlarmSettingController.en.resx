@@ -64,4 +64,10 @@
   <data name="alarm.error.email_required" xml:space="preserve"><value>Email cannot be empty</value></data>
   <data name="alarm.error.group_required" xml:space="preserve"><value>Group not specified</value></data>
   <data name="alarm.error.recipient_not_found" xml:space="preserve"><value>Recipient not found</value></data>
+  <data name="alarm.error.phone_required" xml:space="preserve"><value>Phone number cannot be empty</value></data>
+  <data name="alarm.error.phone_invalid" xml:space="preserve"><value>Invalid phone number (digits with optional leading +, 8-15 digits)</value></data>
+  <data name="alarm.error.target_not_found" xml:space="preserve"><value>Number not found</value></data>
+  <data name="alarm.error.mqtt_not_connected" xml:space="preserve"><value>MQTT not connected; command cannot reach Engine</value></data>
+  <data name="alarm.success.saved_restart_engine" xml:space="preserve"><value>Saved. Restart Engine to take effect.</value></data>
+  <data name="alarm.success.sms_rescan_sent" xml:space="preserve"><value>Rescan command sent; check the status card shortly.</value></data>
 </root>

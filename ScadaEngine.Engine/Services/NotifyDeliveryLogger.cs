@@ -5,14 +5,14 @@ using ScadaEngine.Common.Data.Services;
 namespace ScadaEngine.Engine.Services;
 
 /// <summary>
-/// 通知寄送結果統一摘要寫入器 — Line / Email 共用
-/// 一次警報觸發 + Email 送 N 群組 M 收件人 + Line 送 K 群組 → EventLog 寫 3 筆：
-///   1 筆 alarm (EventType=0)，1 筆 Email 摘要 (EventType=3)，1 筆 Line 摘要 (EventType=3)
+/// 通知寄送結果統一摘要寫入器 — Line / Email / Sms 共用
+/// 一次警報觸發 + Email 送 N 群組 M 收件人 + Line 送 K 群組 → EventLog 各通道寫 1 筆摘要：
+///   1 筆 alarm (EventType=0)，各通道 1 筆摘要 (EventType=3)
 /// 個別收件人失敗的明細走 Serilog（不展開到 EventLog 避免高頻警報下表脹太快）
 /// </summary>
 public class NotifyDeliveryLogger
 {
-    public enum Channel { Email, Line }
+    public enum Channel { Email, Line, Sms }
 
     public enum Status : byte
     {
@@ -38,11 +38,11 @@ public class NotifyDeliveryLogger
     /// 寫入一筆通知摘要 EventLog（EventType=3 資訊、Severity=3 低）。
     /// </summary>
     /// <param name="szSID">關聯到的點位 SID（沿用觸發警報的 SID 便於查詢）</param>
-    /// <param name="channel">通道：Email / Line</param>
+    /// <param name="channel">通道：Email / Line / Sms</param>
     /// <param name="status">寄送狀態</param>
     /// <param name="szDetail">人類可讀摘要，例如 "群組 2 個 / 收件人 6 個，成功 5、失敗 1"</param>
     /// <param name="nRelatedEventId">關聯回觸發的 alarm EventLog.Id；非 alarm 觸發（測試寄送等）填 null</param>
-    public async Task LogAsync(string szSID, Channel channel, Status status, string szDetail, long? nRelatedEventId = null)
+    public virtual async Task LogAsync(string szSID, Channel channel, Status status, string szDetail, long? nRelatedEventId = null)
     {
         try
         {

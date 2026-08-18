@@ -1,0 +1,15 @@
+{
+  "_comment": "簡訊通知設定 — 複製為 SmsSetting.json 後修改。簡訊盒需支援 3GPP TS 27.005 標準 AT 指令（不綁廠牌）",
+  "_comment_ComPort": "\"auto\" = 啟動自動掃描所有 COM port 找 modem；或手動指定如 \"COM3\"",
+  "_comment_BaudRate": "0 = 自動嘗試 115200 → 9600；或手動指定",
+  "_comment_SimPin": "SIM PIN 碼，未設 PIN 留空字串（建議現場直接關 PIN）",
+  "_comment_DailyQuota": "每日發送總上限（防警報風暴燒簡訊費），0 = 不限制",
+  "EnableNotification": true,
+  "ComPort": "auto",
+  "BaudRate": 0,
+  "SimPin": "",
+  "RatePerMinute": 10,
+  "DailyQuota": 100,
+  "SendRecovery": true,
+  "TestSendThrottleSeconds": 10
+}

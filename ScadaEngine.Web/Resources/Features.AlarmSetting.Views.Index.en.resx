@@ -182,4 +182,48 @@
   <data name="alarm.alert.input_group_name" xml:space="preserve"><value>Please enter a group identifier</value></data>
   <data name="alarm.alert.input_email" xml:space="preserve"><value>Please enter an email address</value></data>
   <data name="alarm.alert.save_group_first" xml:space="preserve"><value>Save the group before adding recipients.</value></data>
+  <data name="alarm.tab.sms" xml:space="preserve"><value>SMS</value></data>
+  <data name="alarm.button.add_sms_target" xml:space="preserve"><value>Add Number</value></data>
+  <data name="alarm.button.sms_settings" xml:space="preserve"><value>SMS Modem Settings</value></data>
+  <data name="alarm.sms.info" xml:space="preserve"><value>Works without internet: alarms are sent as SMS via a serial GSM/4G modem with a SIM card. Each number has its own severity filter and language. Any modem supporting standard AT commands (3GPP TS 27.005) works — no vendor lock-in. Chinese SMS is limited to 70 chars per message; longer texts are truncated.</value></data>
+  <data name="alarm.sms.status_title" xml:space="preserve"><value>SMS Modem Status</value></data>
+  <data name="alarm.sms.status_unknown" xml:space="preserve"><value>Unknown (waiting for Engine)</value></data>
+  <data name="alarm.sms.status_disabled" xml:space="preserve"><value>Disabled</value></data>
+  <data name="alarm.sms.status_connected" xml:space="preserve"><value>Connected</value></data>
+  <data name="alarm.sms.status_disconnected" xml:space="preserve"><value>Disconnected</value></data>
+  <data name="alarm.sms.status_port" xml:space="preserve"><value>Port</value></data>
+  <data name="alarm.sms.status_signal" xml:space="preserve"><value>Signal</value></data>
+  <data name="alarm.sms.status_today_sent" xml:space="preserve"><value>Sent today</value></data>
+  <data name="alarm.sms.status_last_test" xml:space="preserve"><value>Last test</value></data>
+  <data name="alarm.sms.test_ok" xml:space="preserve"><value>OK</value></data>
+  <data name="alarm.sms.test_fail" xml:space="preserve"><value>Failed</value></data>
+  <data name="alarm.sms.button_rescan" xml:space="preserve"><value>Rescan</value></data>
+  <data name="alarm.sms.button_rescanning" xml:space="preserve"><value>Scanning</value></data>
+  <data name="alarm.sms.config_restart_hint" xml:space="preserve"><value>Modem settings are loaded only at Engine startup — restart Engine after saving. (Number changes take effect automatically within ~60 seconds, no restart needed.)</value></data>
+  <data name="alarm.col.phone_number" xml:space="preserve"><value>Phone Number</value></data>
+  <data name="alarm.empty.no_sms_targets" xml:space="preserve"><value>No SMS numbers yet. Click "Add Number" to start.</value></data>
+  <data name="alarm.sms_modal.title_add" xml:space="preserve"><value>Add SMS Number</value></data>
+  <data name="alarm.sms_modal.title_edit" xml:space="preserve"><value>Edit SMS Number</value></data>
+  <data name="alarm.sms_modal.title_config" xml:space="preserve"><value>SMS Modem Settings</value></data>
+  <data name="alarm.field.sms_label" xml:space="preserve"><value>Display Name</value></data>
+  <data name="alarm.field.sms_label_placeholder" xml:space="preserve"><value>e.g. Duty Engineer A</value></data>
+  <data name="alarm.field.phone_number" xml:space="preserve"><value>Phone Number</value></data>
+  <data name="alarm.field.phone_number_placeholder" xml:space="preserve"><value>e.g. +886912345678 or 0912345678</value></data>
+  <data name="alarm.field.phone_number_hint" xml:space="preserve"><value>International format recommended (+886...). Digits and a leading + only.</value></data>
+  <data name="alarm.field.is_sms_enabled" xml:space="preserve"><value>Enable this number</value></data>
+  <data name="alarm.field.com_port" xml:space="preserve"><value>COM Port</value></data>
+  <data name="alarm.field.com_port_hint" xml:space="preserve"><value>auto = scan automatically; or specify e.g. COM3</value></data>
+  <data name="alarm.field.baud_rate" xml:space="preserve"><value>Baud Rate</value></data>
+  <data name="alarm.field.baud_rate_hint" xml:space="preserve"><value>0 = auto try (115200 then 9600)</value></data>
+  <data name="alarm.field.sim_pin" xml:space="preserve"><value>SIM PIN</value></data>
+  <data name="alarm.field.sim_pin_hint" xml:space="preserve"><value>Leave empty if SIM has no PIN (recommended)</value></data>
+  <data name="alarm.field.daily_quota" xml:space="preserve"><value>Daily Quota (messages)</value></data>
+  <data name="alarm.field.daily_quota_hint" xml:space="preserve"><value>Guards against alarm-storm SMS costs; 0 = unlimited</value></data>
+  <data name="alarm.field.send_recovery" xml:space="preserve"><value>Send SMS on alarm recovery</value></data>
+  <data name="alarm.field.send_recovery_hint" xml:space="preserve"><value>SMS is billed per message; disabling roughly halves the cost</value></data>
+  <data name="alarm.field.enable_sms_notification" xml:space="preserve"><value>Enable SMS notification</value></data>
+  <data name="alarm.alert.input_phone" xml:space="preserve"><value>Please enter a phone number</value></data>
+  <data name="alarm.alert.phone_invalid" xml:space="preserve"><value>Invalid phone number (digits with optional leading +, 8-15 digits)</value></data>
+  <data name="alarm.confirm.delete_sms_target" xml:space="preserve"><value>Delete this SMS number?</value></data>
+  <data name="alarm.toast.saved" xml:space="preserve"><value>Saved</value></data>
 </root>

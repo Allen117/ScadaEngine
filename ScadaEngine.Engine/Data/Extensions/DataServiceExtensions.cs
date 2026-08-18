@@ -220,6 +220,12 @@ public static class DataServiceExtensions
         services.AddSingleton<EmailSenderClient>();
         services.AddSingleton<EmailNotificationService>();
 
+        // 註冊簡訊通知相關服務為單例（序列埠簡訊盒，ISmsTransport 抽象供未來 HTTP 閘道替換）
+        services.AddSingleton<SmsTargetRepository>();
+        services.AddSingleton<SmsModemClient>();
+        services.AddSingleton<ISmsTransport>(provider => provider.GetRequiredService<SmsModemClient>());
+        services.AddSingleton<SmsNotificationService>();
+
         // 註冊 LogicFlow 資料存取服務為單例
         services.AddSingleton<LogicFlowRepository>();
 
@@ -309,6 +315,11 @@ public static class DataServiceExtensions
             var emailSetting = LoadEmailSetting(logger);
             await emailService.InitializeAsync(emailSetting);
 
+            // 5c. 初始化簡訊通知服務（讀取 SmsSetting.json；含簡訊盒 COM port 自動偵測）
+            var smsService = serviceProvider.GetRequiredService<SmsNotificationService>();
+            var smsSetting = LoadSmsSetting(logger);
+            await smsService.InitializeAsync(smsSetting);
+
             // 6. 初始化計算點位服務（載入公式設定）
             var calculatedPointService = serviceProvider.GetRequiredService<CalculatedPointService>();
             await calculatedPointService.InitializeAsync();
@@ -358,6 +369,43 @@ public static class DataServiceExtensions
         {
             logger.LogError(ex, "解析 LineSetting.json 失敗，Line 通知功能將停用");
             return new ScadaEngine.Common.Data.Models.LineSettingModel { EnableNotification = false };
+        }
+    }
+
+    /// <summary>
+    /// 載入 SmsSetting.json — 路徑偵測與 LineSetting 同邏輯
+    /// 檔案不存在或解析失敗時回傳預設物件（EnableNotification=false）
+    /// </summary>
+    private static ScadaEngine.Common.Data.Models.SmsSettingModel LoadSmsSetting(ILogger logger)
+    {
+        var szBasePath = AppDomain.CurrentDomain.BaseDirectory;
+        var szPath = Path.Combine(szBasePath, "Setting", "SmsSetting.json");
+
+        if (!File.Exists(szPath))
+        {
+            var szFallback1 = Path.Combine(Directory.GetCurrentDirectory(), "Setting", "SmsSetting.json");
+            if (File.Exists(szFallback1)) szPath = szFallback1;
+        }
+
+        if (!File.Exists(szPath))
+        {
+            logger.LogWarning("找不到 SmsSetting.json，簡訊通知功能將停用 (路徑: {Path})", szPath);
+            return new ScadaEngine.Common.Data.Models.SmsSettingModel { EnableNotification = false };
+        }
+
+        try
+        {
+            var szJson = File.ReadAllText(szPath);
+            var setting = System.Text.Json.JsonSerializer.Deserialize<ScadaEngine.Common.Data.Models.SmsSettingModel>(
+                szJson,
+                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            logger.LogInformation("SmsSetting.json 已載入: {Path}", szPath);
+            return setting ?? new ScadaEngine.Common.Data.Models.SmsSettingModel { EnableNotification = false };
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "解析 SmsSetting.json 失敗，簡訊通知功能將停用");
+            return new ScadaEngine.Common.Data.Models.SmsSettingModel { EnableNotification = false };
         }
     }
 

@@ -86,6 +86,7 @@
     <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" />
+    <PackageReference Include="System.IO.Ports" Version="8.0.0" />
   </ItemGroup>
   
   <ItemGroup>
@@ -103,6 +104,12 @@
     <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
   </None>
     <None Update="Setting\EmailSetting.json">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </None>
+    <None Update="Setting\SmsSetting.json">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </None>
+    <None Update="Setting\SmsSetting.example.json">
     <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
   </None>
     <None Update="Setting\EmailSetting.example.json">

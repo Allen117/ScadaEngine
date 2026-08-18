@@ -27,6 +27,7 @@ public class MqttRealtimeSubscriberService : BackgroundService, IDisposable
     private readonly ConcurrentDictionary<string, TimerStateItem> _timerStateCache = new();
 
     private readonly LicenseStatusCache _licenseStatusCache;
+    private readonly SmsStatusCache _smsStatusCache;
 
     // 手動/自動模式快取 (key: SID/CID, value: isAuto)
     // 來源：ManualControlValue 表，由 RefreshManualAutoMapAsync 同步
@@ -40,6 +41,7 @@ public class MqttRealtimeSubscriberService : BackgroundService, IDisposable
     private const string REALTIME_TOPIC = "SCADA/Realtime/+/+";
     private const string TIMER_STATE_TOPIC = "SCADA/LogicFlow/TimerState";
     private const string LICENSE_STATUS_TOPIC = "SCADA/Sys/License/Status";
+    private const string SMS_STATUS_TOPIC = "SCADA/Sys/Sms/Status";
 
     // 資料更新事件
     public event Action<RealtimeDataItemModel>? DataUpdated;
@@ -49,12 +51,14 @@ public class MqttRealtimeSubscriberService : BackgroundService, IDisposable
         ILogger<MqttRealtimeSubscriberService> logger,
         MqttConfigService mqttConfigService,
         IServiceProvider serviceProvider,
-        LicenseStatusCache licenseStatusCache)
+        LicenseStatusCache licenseStatusCache,
+        SmsStatusCache smsStatusCache)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _mqttConfigService = mqttConfigService ?? throw new ArgumentNullException(nameof(mqttConfigService));
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         _licenseStatusCache = licenseStatusCache ?? throw new ArgumentNullException(nameof(licenseStatusCache));
+        _smsStatusCache = smsStatusCache ?? throw new ArgumentNullException(nameof(smsStatusCache));
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -149,9 +153,10 @@ public class MqttRealtimeSubscriberService : BackgroundService, IDisposable
             await _mqttClient!.SubscribeAsync(REALTIME_TOPIC);
             await _mqttClient!.SubscribeAsync(TIMER_STATE_TOPIC);
             await _mqttClient!.SubscribeAsync(LICENSE_STATUS_TOPIC);
+            await _mqttClient!.SubscribeAsync(SMS_STATUS_TOPIC);
             _isConnected = true;
-            _logger.LogInformation("已訂閱即時資料主題: {Topic}, {TimerTopic}, {LicenseTopic}",
-                REALTIME_TOPIC, TIMER_STATE_TOPIC, LICENSE_STATUS_TOPIC);
+            _logger.LogInformation("已訂閱即時資料主題: {Topic}, {TimerTopic}, {LicenseTopic}, {SmsTopic}",
+                REALTIME_TOPIC, TIMER_STATE_TOPIC, LICENSE_STATUS_TOPIC, SMS_STATUS_TOPIC);
         }
         catch (Exception ex)
         {
@@ -187,6 +192,13 @@ public class MqttRealtimeSubscriberService : BackgroundService, IDisposable
             if (szTopic == LICENSE_STATUS_TOPIC)
             {
                 ParseLicenseStatusMessage(szPayload);
+                return;
+            }
+
+            // 簡訊盒狀態（retained JSON 原樣快取，controller 直接透傳前端）
+            if (szTopic == SMS_STATUS_TOPIC)
+            {
+                _smsStatusCache.Update(szPayload);
                 return;
             }
 

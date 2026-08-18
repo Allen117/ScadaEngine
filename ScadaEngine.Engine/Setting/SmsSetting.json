@@ -1,0 +1,10 @@
+{
+  "EnableNotification": false,
+  "ComPort": "auto",
+  "BaudRate": 0,
+  "SimPin": "",
+  "RatePerMinute": 10,
+  "DailyQuota": 100,
+  "SendRecovery": true,
+  "TestSendThrottleSeconds": 10
+}

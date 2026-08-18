@@ -14,6 +14,7 @@ public class AlarmMonitorService
     private readonly AlarmEventLogRepository _repository;
     private readonly LineNotificationService _lineService;
     private readonly EmailNotificationService _emailService;
+    private readonly SmsNotificationService _smsService;
     private readonly AlarmMqttPublisher _mqttPublisher;
     private readonly IDataRepository _dataRepository;
 
@@ -37,6 +38,7 @@ public class AlarmMonitorService
         AlarmEventLogRepository repository,
         LineNotificationService lineService,
         EmailNotificationService emailService,
+        SmsNotificationService smsService,
         AlarmMqttPublisher mqttPublisher,
         IDataRepository dataRepository)
     {
@@ -44,6 +46,7 @@ public class AlarmMonitorService
         _repository = repository;
         _lineService = lineService;
         _emailService = emailService;
+        _smsService = smsService;
         _mqttPublisher = mqttPublisher;
         _dataRepository = dataRepository;
 
@@ -468,6 +471,10 @@ public class AlarmMonitorService
             // Email 通知（失敗不影響警報流程）
             try { await _emailService.NotifyAsync(ctx); }
             catch (Exception ex) { _logger.LogError(ex, "Email 通知派送失敗但警報流程繼續: SID={SID}", szSID); }
+
+            // 簡訊通知（進背景佇列，失敗不影響警報流程）
+            try { await _smsService.NotifyAsync(ctx); }
+            catch (Exception ex) { _logger.LogError(ex, "簡訊通知派送失敗但警報流程繼續: SID={SID}", szSID); }
         }
         else if (!isTriggered && wasActive)
         {
@@ -509,6 +516,8 @@ public class AlarmMonitorService
             catch (Exception ex) { _logger.LogError(ex, "Line 恢復通知派送失敗: SID={SID}", szSID); }
             try { await _emailService.NotifyClearedAsync(ctx); }
             catch (Exception ex) { _logger.LogError(ex, "Email 恢復通知派送失敗: SID={SID}", szSID); }
+            try { await _smsService.NotifyClearedAsync(ctx); }
+            catch (Exception ex) { _logger.LogError(ex, "簡訊恢復通知派送失敗: SID={SID}", szSID); }
         }
     }
 

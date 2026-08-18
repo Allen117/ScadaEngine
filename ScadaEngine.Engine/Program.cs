@@ -84,6 +84,9 @@ try
     // 註冊警報規則 Reload 訂閱服務（聽 Web 端規則異動 MQTT 通知）
     builder.Services.AddHostedService<AlarmRuleReloadSubscriber>();
 
+    // 註冊簡訊盒 MQTT 橋接服務（發布狀態 + 代 Web 執行測試發送/重掃 port）
+    builder.Services.AddHostedService<SmsMqttBridge>();
+
     // 註冊 DB 來源通訊服務（雙註冊：Singleton 供 ReloadSubscriber 注入呼叫 + HostedService 啟動 polling）
     builder.Services.AddHostedService<DbCommunicationService>(provider =>
         provider.GetRequiredService<DbCommunicationService>());
