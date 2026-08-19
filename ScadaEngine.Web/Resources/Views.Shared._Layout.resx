@@ -98,6 +98,9 @@
   <data name="layout.menu.daily_report" xml:space="preserve"><value>能源日報</value></data>
   <data name="layout.menu.daily_report_setting" xml:space="preserve"><value>日報設定</value></data>
   <data name="layout.menu.circuit_info" xml:space="preserve"><value>迴路資訊</value></data>
+  <data name="layout.menu.electricity_circuit_info" xml:space="preserve"><value>電力</value></data>
+  <data name="layout.menu.water_circuit_info" xml:space="preserve"><value>水</value></data>
+  <data name="layout.menu.gas_circuit_info" xml:space="preserve"><value>氣</value></data>
 
   <data name="layout.menu.system" xml:space="preserve"><value>系統設定</value></data>
   <data name="layout.menu.engineer_mode" xml:space="preserve"><value>工程師模式</value></data>

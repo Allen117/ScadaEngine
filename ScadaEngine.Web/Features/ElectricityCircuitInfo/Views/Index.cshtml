@@ -1,9 +1,10 @@
 @{
-    ViewData["Title"] = "迴路資訊";
+    ViewData["Title"] = "電力迴路資訊";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="ems-circuit-page">
+@* data-kind 決定 ems-circuit.js 走哪組 API / 單位 / 色系 *@
+<div class="ems-circuit-page" data-kind="electricity">
     <div class="ems-circuit-layout">
 
         <!-- 左欄：迴路階層樹 -->

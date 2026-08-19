@@ -138,13 +138,27 @@
                     <ul class="navbar-nav me-auto">
                         @if (isEmsMode)
                         {
-                            @if (canAccess("/CircuitInfo"))
+                            @if (canAccess("/ElectricityCircuitInfo") || canAccess("/WaterCircuitInfo") || canAccess("/GasCircuitInfo"))
                             {
-                                <li class="nav-item">
-                                    <a class="nav-link" href="/CircuitInfo">
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                                         <i class="fas fa-plug me-1"></i>
                                         @Localizer["layout.menu.circuit_info"]
                                     </a>
+                                    <ul class="dropdown-menu">
+                                        @if (canAccess("/ElectricityCircuitInfo"))
+                                        {
+                                            <li><a class="dropdown-item" href="/ElectricityCircuitInfo"><i class="fas fa-bolt me-2"></i>@Localizer["layout.menu.electricity_circuit_info"]</a></li>
+                                        }
+                                        @if (canAccess("/WaterCircuitInfo"))
+                                        {
+                                            <li><a class="dropdown-item" href="/WaterCircuitInfo"><i class="fas fa-water me-2"></i>@Localizer["layout.menu.water_circuit_info"]</a></li>
+                                        }
+                                        @if (canAccess("/GasCircuitInfo"))
+                                        {
+                                            <li><a class="dropdown-item" href="/GasCircuitInfo"><i class="fas fa-fire me-2"></i>@Localizer["layout.menu.gas_circuit_info"]</a></li>
+                                        }
+                                    </ul>
                                 </li>
                             }
                             @if (canAccess("/EnergyReport") || canAccess("/ElectricityCostReport") || canAccess("/RefrigerationTonReport") || canAccess("/WaterUsageReport") || canAccess("/WaterCostReport") || canAccess("/GasUsageReport") || canAccess("/GasCostReport") || canAccess("/DailyReport") || canAccess("/EnergyDeclaration"))

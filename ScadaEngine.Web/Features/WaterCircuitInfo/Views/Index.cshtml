@@ -1,0 +1,85 @@
+@{
+    ViewData["Title"] = "水迴路資訊";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@* data-kind 決定 ems-circuit.js 走哪組 API / 單位 / 色系 *@
+<div class="ems-circuit-page" data-kind="water">
+    <div class="ems-circuit-layout">
+
+        <!-- 左欄：水表迴路階層樹 -->
+        <div class="ems-circuit-tree-panel">
+            <div id="circuitTree"></div>
+        </div>
+
+        <!-- 右欄：三張圖表卡片 -->
+        <div class="ems-circuit-chart-panel">
+            <h6 id="selectedCircuitName" class="ems-circuit-title text-muted">
+                請選擇左側迴路
+            </h6>
+
+            <!-- 年 / 月份 -->
+            <div class="card ems-chart-card">
+                <div class="card-header d-flex justify-content-between align-items-center py-1 px-2">
+                    <span class="fw-semibold small">
+                        <i class="fas fa-calendar-alt me-1 text-success"></i>年用水量（各月 m³）
+                    </span>
+                    <input type="number" id="yearPicker" min="2000" max="2100"
+                           class="form-control form-control-sm ems-picker" />
+                </div>
+                <div class="card-body p-2">
+                    <div class="ems-chart-wrap">
+                        <canvas id="chartMonth"></canvas>
+                    </div>
+                    <div class="ems-circuit-warn small text-warning" data-warn="month" style="display:none;">
+                        部分時段水表資料不完整（可能斷線）
+                    </div>
+                </div>
+            </div>
+
+            <!-- 月 / 各日 -->
+            <div class="card ems-chart-card">
+                <div class="card-header d-flex justify-content-between align-items-center py-1 px-2">
+                    <span class="fw-semibold small">
+                        <i class="fas fa-calendar-day me-1 text-success"></i>月用水量（各日 m³）
+                    </span>
+                    <input type="month" id="monthPicker"
+                           class="form-control form-control-sm ems-picker" />
+                </div>
+                <div class="card-body p-2">
+                    <div class="ems-chart-wrap">
+                        <canvas id="chartDay"></canvas>
+                    </div>
+                    <div class="ems-circuit-warn small text-warning" data-warn="day" style="display:none;">
+                        部分時段水表資料不完整（可能斷線）
+                    </div>
+                </div>
+            </div>
+
+            <!-- 日 / 各時 -->
+            <div class="card ems-chart-card">
+                <div class="card-header d-flex justify-content-between align-items-center py-1 px-2">
+                    <span class="fw-semibold small">
+                        <i class="fas fa-clock me-1 text-success"></i>日用水量（各時 m³，60s 自動刷新）
+                    </span>
+                    <input type="date" id="datePicker"
+                           class="form-control form-control-sm ems-picker" />
+                </div>
+                <div class="card-body p-2">
+                    <div class="ems-chart-wrap">
+                        <canvas id="chartHour"></canvas>
+                    </div>
+                    <div class="ems-circuit-warn small text-warning" data-warn="hour" style="display:none;">
+                        部分時段水表資料不完整（可能斷線）
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/chartjs/chart.umd.min.js"></script>
+    <script src="~/js/ems-circuit.js"></script>
+}

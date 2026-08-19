@@ -1,7 +1,36 @@
 (function () {
     'use strict';
 
+    // ── 能源別設定 ────────────────────────────────────────────────────────────
+    // 三頁（電力 / 水 / 氣）共用本檔，差異只有 endpoint、單位與色系 —
+    // 後端三組 API 回傳契約一致（labels[] / values[]），期別語意已各自在後端 Parse*PivotAsync 吸收。
+    // View 只需在 .ems-circuit-page 上標 data-kind，其餘由此表決定。
+    var CONFIG = {
+        electricity: {
+            treeUrl:  '/EMS/api/circuit-tree',
+            usageUrl: '/EMS/api/circuit-energy',
+            unit:     'kWh',
+            fill:     'rgba(67,160,71,0.55)',
+            border:   '#2e7d32'
+        },
+        water: {
+            treeUrl:  '/EMS/api/water-circuit-tree',
+            usageUrl: '/EMS/api/water-usage',
+            unit:     'm³',
+            fill:     'rgba(2,136,209,0.55)',
+            border:   '#0277bd'
+        },
+        gas: {
+            treeUrl:  '/EMS/api/gas-circuit-tree',
+            usageUrl: '/EMS/api/gas-usage',
+            unit:     'm³',
+            fill:     'rgba(230,81,0,0.55)',
+            border:   '#e65100'
+        }
+    };
+
     var POLL_MS = 60000;
+    var _cfg = CONFIG.electricity;
     var _circuitId = null;
     var _pollTimer = null;
     var _charts = { month: null, day: null, hour: null };
@@ -37,6 +66,10 @@
 
     // ── 初始化 ────────────────────────────────────────────────────────────────
     function init() {
+        var page = document.querySelector('.ems-circuit-page');
+        var kind = page && page.dataset.kind;
+        if (kind && CONFIG[kind]) _cfg = CONFIG[kind];
+
         fitPageHeight();
         window.addEventListener('resize', fitPageHeight);
 
@@ -62,7 +95,7 @@
 
     // ── 迴路樹 ────────────────────────────────────────────────────────────────
     function loadTree() {
-        fetch('/EMS/api/circuit-tree')
+        fetch(_cfg.treeUrl)
             .then(function (r) { return r.json(); })
             .then(function (nodes) { renderTree(nodes); })
             .catch(function (e) { console.error('[ems-circuit] 載入迴路樹失敗', e); });
@@ -160,14 +193,25 @@
 
     function fetchAndRender(granularity, pivot) {
         if (_circuitId === null) return;
-        var url = '/EMS/api/circuit-energy?circuitId=' + encodeURIComponent(_circuitId) +
+        var url = _cfg.usageUrl + '?circuitId=' + encodeURIComponent(_circuitId) +
                   '&granularity=' + encodeURIComponent(granularity) +
                   '&pivot='       + encodeURIComponent(pivot);
 
         fetch(url)
             .then(function (r) { return r.json(); })
-            .then(function (data) { renderBar(granularity, data.labels, data.values); })
+            .then(function (data) {
+                renderBar(granularity, data.labels, data.values);
+                // 水 / 氣 API 才有 hasWarning（區間內有時段資料缺漏）；電力頁無對應元素 → no-op
+                setWarn(granularity, data.hasWarning === true);
+            })
             .catch(function (e) { console.error('[ems-circuit] fetch 失敗', granularity, e); });
+    }
+
+    // ── 資料缺漏警示（水 / 氣）────────────────────────────────────────────────
+    function setWarn(granularity, isWarn) {
+        var el = document.querySelector('.ems-circuit-warn[data-warn="' + granularity + '"]');
+        if (!el) return;
+        el.style.display = isWarn ? '' : 'none';
     }
 
     // ── 長條圖渲染 ────────────────────────────────────────────────────────────
@@ -189,8 +233,8 @@
                 labels: labels,
                 datasets: [{
                     data: values,
-                    backgroundColor: 'rgba(67,160,71,0.55)',
-                    borderColor: '#2e7d32',
+                    backgroundColor: _cfg.fill,
+                    borderColor: _cfg.border,
                     borderWidth: 1,
                     borderRadius: 3
                 }]
@@ -204,7 +248,7 @@
                         callbacks: {
                             label: function (ctx) {
                                 var v = ctx.parsed.y;
-                                return (v != null ? v.toFixed(1) : '0') + ' kWh';
+                                return (v != null ? v.toFixed(1) : '0') + ' ' + _cfg.unit;
                             }
                         }
                     }

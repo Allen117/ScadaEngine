@@ -26,6 +26,10 @@
 | 趨勢圖 | Trend | `/History/Trend` |
 | 事件記錄 | Event Log | `/EventLog` |
 | 能源管理 | Energy Management | top-level menu |
+| 迴路資訊 | Circuit Info | EMS navbar dropdown 群組標題 |
+| 電力迴路資訊 | Electricity Circuit Info | `/ElectricityCircuitInfo`；選單內縮寫為「電力 / Electricity」 |
+| 水迴路資訊 | Water Circuit Info | `/WaterCircuitInfo`；選單內縮寫為「水 / Water」 |
+| 氣迴路資訊 | Gas Circuit Info | `/GasCircuitInfo`；選單內縮寫為「氣 / Gas」 |
 | 用電報表 | Energy Report | `/EnergyReport` |
 | 電費報表 | Electricity Cost Report | `/ElectricityCostReport` |
 | 冷凍噸報表 | Refrigeration Ton Report | `/RefrigerationTonReport` |

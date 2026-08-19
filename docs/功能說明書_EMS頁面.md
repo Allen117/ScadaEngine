@@ -6,7 +6,9 @@
 
 | 子頁 | 路由 |
 |------|------|
-| 迴路資訊 | `/CircuitInfo` |
+| 電力迴路資訊 | `/ElectricityCircuitInfo` |
+| 水迴路資訊 | `/WaterCircuitInfo` |
+| 氣迴路資訊 | `/GasCircuitInfo` |
 | 水系統迴路設定 | `/ChilledWaterSystem` |
 | 電表/迴路設定 | `/EnergyMeter` |
 | 用電報表 | `/EnergyReport` |
@@ -67,7 +69,9 @@ public static readonly string[] EmsRoutes =
 [
     "/EMS",
     "/ChilledWaterSystem",
-    "/CircuitInfo",
+    "/ElectricityCircuitInfo",
+    "/WaterCircuitInfo",
+    "/GasCircuitInfo",
     "/EnergyMeter",
     "/EnergyReport",
     "/ElectricityCostReport",
@@ -89,7 +93,7 @@ EmsMode 開關控制五件事：
 1. `<body>` 加 `ems-mode` class，吃 `ems.css` 樣式覆蓋（navbar + footer）
 2. `<nav>` class 從 `navbar-dark bg-primary` 換成 `navbar-light`
 3. brand href 從 `/ScadaPage` 換成 `/EMS`、icon 從 `fa-industry` 換成 `fa-leaf`、字串走 `layout.brand.ems` 而非 `layout.brand`
-4. navbar 主選單清單從「ScadaPage/RealTime/控制邏輯/歷史資料/能源管理/系統設定」整個改成 EMS 子頁選單（迴路資訊 + 報表/EMS 設定/歷史 dropdown），每項依 `canAccess()` 過濾
+4. navbar 主選單清單從「ScadaPage/RealTime/控制邏輯/歷史資料/能源管理/系統設定」整個改成 EMS 子頁選單（迴路資訊 dropdown（電力/水/氣）+ 報表/EMS 設定/歷史 dropdown），每項依 `canAccess()` 過濾
 5. navbar 右側「語系」左邊加上「← 回 SCADA」連結（`layout.ems.back_scada`，直連 `/ScadaPage`），讓使用者隨時跳回主模組
 
 footer 在 EmsMode 下背景換成 `linear-gradient(135deg, #66bb6a → #43a047)` 配白字；語系切換 / 使用者選單 / 登出 modal / 版本資訊完全共用。
@@ -154,9 +158,9 @@ JS 內部同時以「根元素是否存在」防呆（雙保險），詳見 §9�
 
 ### 7.1 主要電表用電長條圖卡片
 
-- 「主要電表」= `EnergyCircuit.IsMainMeter = 1`（全系統唯一，於 /EnergyMeter 頁勾選）。前端先打 `GET /EMS/api/main-meter` 拿 id，再走既有 `GET /EMS/api/circuit-energy` 取資料 — 與 /CircuitInfo 三張長條圖同一計算核心，數字完全一致
+- 「主要電表」= `EnergyCircuit.IsMainMeter = 1`（全系統唯一，於 /EnergyMeter 頁勾選）。前端先打 `GET /EMS/api/main-meter` 拿 id，再走既有 `GET /EMS/api/circuit-energy` 取資料 — 與 /ElectricityCircuitInfo 三張長條圖同一計算核心，數字完全一致
 - header 內「日 / 月 / 年」切換鈕（**預設「日」**）+ 對應 pivot 選擇器：日→`<input type="date">`、月→`<input type="month">`、年→年份數字。UI 粒度對應後端 granularity：日→`hour`、月→`day`、年→`month`
-- 「日」模式且選的是今天時，每 60 秒自動刷新（比照 /CircuitInfo 日卡片）；其他模式/日期不輪詢
+- 「日」模式且選的是今天時，每 60 秒自動刷新（比照 /ElectricityCircuitInfo 日卡片）；其他模式/日期不輪詢
 
 ### 7.2 子迴路用電圓餅圖卡片
 
@@ -209,7 +213,7 @@ granularity / pivot 協定同 `/EMS/api/circuit-energy`（`hour`→`yyyy-MM-dd`�
 > 刻意拆成兩支函式而非加 `bool isWater` 參數：呼叫點若用錯，前者是編譯期選錯函式（改動時看得見），
 > 後者是漏傳參數後**靜默走錯期別**，數字錯了也查不出來。
 
-> ⚠️ 已知限制：主要電表綁 SID 且掛有子迴路時，計算核心 `GetLeavesUnderAsync` 會把主錶自身 + 子孫葉子一併加總（/CircuitInfo、/EnergyReport 亦同此行為）。目前線上僅單一主錶無子迴路，尚未觸發；未來在主錶下掛分錶時需另案處理「主錶量測 vs 分錶加總」的語意。
+> ⚠️ 已知限制：主要電表綁 SID 且掛有子迴路時，計算核心 `GetLeavesUnderAsync` 會把主錶自身 + 子孫葉子一併加總（/ElectricityCircuitInfo、/EnergyReport 亦同此行為）。目前線上僅單一主錶無子迴路，尚未觸發；未來在主錶下掛分錶時需另案處理「主錶量測 vs 分錶加總」的語意。
 
 ### 7.6 電費狀態卡（2026-07 新增）
 
