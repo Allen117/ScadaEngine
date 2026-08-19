@@ -36,7 +36,9 @@ public class GlobalSearchService
 
         // ── EMS 體系 ──
         new("/EMS",                        "layout.brand.ems",                       "fas fa-leaf",                "能源 管理 首頁 ems energy hub"),
-        new("/CircuitInfo",                "layout.menu.circuit_info",               "fas fa-plug",                "迴路 資訊 circuit"),
+        new("/ElectricityCircuitInfo",     "layout.menu.electricity_circuit_info",   "fas fa-bolt",                "迴路 資訊 電力 用電 kwh circuit electricity power"),
+        new("/WaterCircuitInfo",           "layout.menu.water_circuit_info",         "fas fa-water",               "迴路 資訊 水 用水 水量 circuit water"),
+        new("/GasCircuitInfo",             "layout.menu.gas_circuit_info",           "fas fa-fire",                "迴路 資訊 氣 用氣 天然氣 瓦斯 circuit gas"),
         new("/EnergyReport",               "layout.menu.energy_report",              "fas fa-chart-bar",           "報表 用電 電力 度數 kwh power electricity usage report"),
         new("/ElectricityCostReport",      "layout.menu.electricity_cost_report",    "fas fa-file-invoice-dollar", "報表 電費 帳單 金額 bill cost report"),
         new("/RefrigerationTonReport",     "layout.menu.refrigeration_ton_report",   "fas fa-snowflake",           "報表 冷凍噸 冰水 空調 rt ton report"),
