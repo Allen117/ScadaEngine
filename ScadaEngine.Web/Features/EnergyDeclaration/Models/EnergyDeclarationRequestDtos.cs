@@ -23,3 +23,16 @@ public class EnergyDeclarationQueryDto
     /// <summary>申報年度（該年 1/1 ~ 12/31，每月 1 號切界）</summary>
     public int year { get; set; }
 }
+
+/// <summary>智慧助理「區間效率分析」請求 — 選一份申報項目 + 任意日期區間（日粒度）</summary>
+public class IntervalAnalysisDto
+{
+    /// <summary>申報報表設定 Id</summary>
+    public int reportId { get; set; }
+
+    /// <summary>起始日（yyyy-MM-dd，含）</summary>
+    public string? start { get; set; }
+
+    /// <summary>結束日（yyyy-MM-dd，含；區間 = [起始日 00:00, 結束日次日 00:00)）</summary>
+    public string? end { get; set; }
+}

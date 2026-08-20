@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <!-- 視窗外框 / 通用 -->
+  <data name="assistant.title" xml:space="preserve"><value>AI智慧幫手</value></data>
+  <data name="assistant.subtitle" xml:space="preserve"><value>智慧能耗分析</value></data>
+  <data name="assistant.bubble_tooltip" xml:space="preserve"><value>開啟 AI 智慧幫手</value></data>
+  <data name="assistant.status_online" xml:space="preserve"><value>線上</value></data>
+  <data name="assistant.minimize" xml:space="preserve"><value>縮小</value></data>
+  <data name="assistant.typing_aria" xml:space="preserve"><value>助理輸入中</value></data>
+  <data name="assistant.btn_restart" xml:space="preserve"><value>重新開始</value></data>
+  <data name="assistant.btn_back_menu" xml:space="preserve"><value>回主選單</value></data>
+
+  <!-- 主選單 -->
+  <data name="assistant.greeting" xml:space="preserve"><value>您好！我是 AI 智慧幫手 🤖，可以協助您快速分析能耗效率。請選擇功能：</value></data>
+  <data name="assistant.menu.interval_efficiency" xml:space="preserve"><value>區間效率分析</value></data>
+  <data name="assistant.menu.coming_soon" xml:space="preserve"><value>敬請期待</value></data>
+  <data name="assistant.menu.placeholder_anomaly" xml:space="preserve"><value>能耗異常偵測</value></data>
+  <data name="assistant.menu.placeholder_advice" xml:space="preserve"><value>節能建議</value></data>
+
+  <!-- 區間效率分析流程 -->
+  <data name="assistant.interval.intro" xml:space="preserve"><value>好的，我來幫您分析區間能耗效率 📊</value></data>
+  <data name="assistant.interval.pick_report" xml:space="preserve"><value>請選擇要分析的申報項目：</value></data>
+  <data name="assistant.interval.loading_reports" xml:space="preserve"><value>正在讀取申報項目清單…</value></data>
+  <data name="assistant.interval.no_reports" xml:space="preserve"><value>目前尚未設定任何能源申報項目，請先到「能源申報」頁面建立成對的用電 / 冷凍噸迴路。</value></data>
+  <data name="assistant.interval.pick_range" xml:space="preserve"><value>已選擇「{name}」。請設定要分析的日期區間：</value></data>
+  <data name="assistant.interval.label_start" xml:space="preserve"><value>起始日</value></data>
+  <data name="assistant.interval.label_end" xml:space="preserve"><value>結束日</value></data>
+  <data name="assistant.interval.btn_analyze" xml:space="preserve"><value>開始分析</value></data>
+  <data name="assistant.interval.analyzing" xml:space="preserve"><value>正在為您計算「{name}」的區間能耗，請稍候…</value></data>
+
+  <!-- 結果逐句 -->
+  <data name="assistant.result.range" xml:space="preserve"><value>分析區間：{start} ～ {end}</value></data>
+  <data name="assistant.result.total_kwh" xml:space="preserve"><value>總用電量：{value} kWh</value></data>
+  <data name="assistant.result.total_rth" xml:space="preserve"><value>總冷凍噸數：{value} RT·h</value></data>
+  <data name="assistant.result.efficiency" xml:space="preserve"><value>平均效率：{value} kWh/RT·h（值越低越省電）</value></data>
+  <data name="assistant.result.efficiency_na" xml:space="preserve"><value>平均效率：冷凍噸數為 0，無法計算效率。</value></data>
+  <data name="assistant.result.stale_warning" xml:space="preserve"><value>⚠ 提醒：此區間部分時段資料覆蓋率不足，以上數字僅供參考。</value></data>
+
+  <!-- 規則式評語 -->
+  <data name="assistant.verdict.good" xml:space="preserve"><value>效率表現優異 👍 這條迴路運轉相當節能，請保持。</value></data>
+  <data name="assistant.verdict.normal" xml:space="preserve"><value>效率屬正常範圍，仍有一些優化空間可以留意。</value></data>
+  <data name="assistant.verdict.poor" xml:space="preserve"><value>效率偏高 ⚠ 建議檢查冰機運轉狀況或負載配置，可能有節能機會。</value></data>
+  <data name="assistant.verdict.insufficient" xml:space="preserve"><value>此區間資料不足，暫時無法給出效率評語。</value></data>
+
+  <!-- 錯誤 / 收尾 -->
+  <data name="assistant.error.circuit_deleted" xml:space="preserve"><value>這份申報項目綁定的迴路已被刪除，請先到「能源申報」頁面重新設定後再試。</value></data>
+  <data name="assistant.error.generic" xml:space="preserve"><value>分析時發生錯誤，請稍後再試。</value></data>
+  <data name="assistant.error.date_range" xml:space="preserve"><value>結束日不可早於起始日，請重新設定。</value></data>
+  <data name="assistant.restart_prompt" xml:space="preserve"><value>還需要我幫您分析其他項目嗎？</value></data>
+</root>

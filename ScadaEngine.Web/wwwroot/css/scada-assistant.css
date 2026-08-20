@@ -1,0 +1,334 @@
+/*
+ * 右下角智慧助理對話窗（AI智慧幫手）
+ * 全站 widget：折疊氣泡 + 展開對話窗 + 打字動畫。
+ * z-index 1040：高於一般內容、低於 Bootstrap modal(1050+/1055) 與右鍵選單(9999)，
+ * 不遮擋 Ctrl+K 命令面板、登出 modal、dropdown。
+ */
+
+:root {
+    --sa-z: 1040;
+    --sa-header-grad: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+    --sa-accent: #2563eb;
+    --sa-bot-bg: #f1f5f9;
+    --sa-bot-text: #1e293b;
+    --sa-panel-w: 360px;
+    --sa-panel-h: 520px;
+}
+
+/* EMS 淡綠主題下換用綠色系（與全站雙主題一致） */
+.ems-mode {
+    --sa-header-grad: linear-gradient(135deg, #166534 0%, #16a34a 100%);
+    --sa-accent: #16a34a;
+}
+
+#scadaAssistantRoot {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: var(--sa-z);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ---------- 折疊氣泡 ---------- */
+.sa-bubble {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    border: none;
+    background: var(--sa-header-grad);
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.sa-bubble:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.55);
+}
+/* 氣泡呼吸提示點 */
+.sa-bubble::after {
+    content: '';
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #22c55e;
+    border: 2px solid #fff;
+}
+
+/* ---------- 展開面板 ---------- */
+.sa-panel {
+    width: var(--sa-panel-w);
+    max-width: calc(100vw - 32px);
+    height: var(--sa-panel-h);
+    max-height: calc(100vh - 100px);
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 12px 40px rgba(15, 23, 42, 0.28);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform-origin: bottom right;
+    animation: sa-pop 0.22s cubic-bezier(0.2, 0.8, 0.3, 1.2);
+}
+
+@keyframes sa-pop {
+    from { opacity: 0; transform: translateY(16px) scale(0.9); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* 隱藏工具 */
+[hidden] { display: none !important; }
+
+/* ---------- Header ---------- */
+.sa-header {
+    background: var(--sa-header-grad);
+    color: #fff;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+.sa-header .sa-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+.sa-header .sa-h-text {
+    flex: 1;
+    min-width: 0;
+    line-height: 1.25;
+}
+.sa-header .sa-h-title {
+    font-weight: 600;
+    font-size: 15px;
+}
+.sa-header .sa-h-sub {
+    font-size: 11px;
+    opacity: 0.85;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.sa-header .sa-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #22c55e;
+    display: inline-block;
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
+    animation: sa-pulse 2s infinite;
+}
+@keyframes sa-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6); }
+    70%  { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+.sa-header .sa-btn-min {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    opacity: 0.85;
+    padding: 4px 6px;
+    border-radius: 8px;
+}
+.sa-header .sa-btn-min:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* ---------- 訊息區 ---------- */
+.sa-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px;
+    background: #fbfcfe;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    scroll-behavior: smooth;
+}
+.sa-body::-webkit-scrollbar { width: 7px; }
+.sa-body::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+/* 訊息列（含頭像 + 氣泡） */
+.sa-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    animation: sa-fade-up 0.28s ease both;
+}
+.sa-row.sa-row-user { flex-direction: row-reverse; }
+@keyframes sa-fade-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.sa-row .sa-mini-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--sa-header-grad);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+.sa-msg {
+    max-width: 78%;
+    padding: 9px 12px;
+    border-radius: 14px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    word-break: break-word;
+    white-space: pre-wrap;
+}
+.sa-msg-bot {
+    background: var(--sa-bot-bg);
+    color: var(--sa-bot-text);
+    border-bottom-left-radius: 4px;
+}
+.sa-msg-user {
+    background: var(--sa-accent);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+}
+
+/* 打字指示器 */
+.sa-typing {
+    display: inline-flex;
+    gap: 4px;
+    padding: 11px 14px;
+    align-items: center;
+}
+.sa-typing span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #94a3b8;
+    animation: sa-blink 1.2s infinite ease-in-out;
+}
+.sa-typing span:nth-child(2) { animation-delay: 0.2s; }
+.sa-typing span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes sa-blink {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+    40%           { transform: scale(1);   opacity: 1; }
+}
+
+/* ---------- 動作區（選項 / 控制項） ---------- */
+.sa-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 4px 2px 2px;
+    animation: sa-fade-up 0.28s ease both;
+}
+.sa-opt {
+    text-align: left;
+    background: #fff;
+    border: 1.5px solid var(--sa-accent);
+    color: var(--sa-accent);
+    border-radius: 12px;
+    padding: 9px 12px;
+    font-size: 13.5px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.sa-opt:hover:not(:disabled) {
+    background: var(--sa-accent);
+    color: #fff;
+}
+.sa-opt:disabled {
+    border-color: #e2e8f0;
+    color: #94a3b8;
+    cursor: not-allowed;
+    background: #f8fafc;
+    justify-content: space-between;
+}
+.sa-opt .sa-badge {
+    font-size: 10.5px;
+    background: #e2e8f0;
+    color: #64748b;
+    border-radius: 8px;
+    padding: 1px 7px;
+}
+
+/* 日期區間輸入卡 */
+.sa-range-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.sa-range-field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+.sa-range-field label {
+    font-size: 13px;
+    color: #475569;
+    margin: 0;
+    white-space: nowrap;
+}
+.sa-range-field input[type="date"] {
+    flex: 1;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 6px 9px;
+    font-size: 13px;
+    color: #1e293b;
+}
+.sa-btn-primary {
+    background: var(--sa-header-grad);
+    border: none;
+    color: #fff;
+    border-radius: 12px;
+    padding: 9px 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter 0.15s ease;
+}
+.sa-btn-primary:hover { filter: brightness(1.08); }
+.sa-btn-ghost {
+    background: transparent;
+    border: none;
+    color: var(--sa-accent);
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: underline;
+    align-self: center;
+    padding: 4px;
+}
+
+/* 響應式：窄螢幕滿版寬 */
+@media (max-width: 480px) {
+    #scadaAssistantRoot { right: 12px; bottom: 12px; }
+    .sa-panel { height: calc(100vh - 88px); }
+}

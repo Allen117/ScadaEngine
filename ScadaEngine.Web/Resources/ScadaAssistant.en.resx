@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <!-- Widget chrome / common -->
+  <data name="assistant.title" xml:space="preserve"><value>AI Assistant</value></data>
+  <data name="assistant.subtitle" xml:space="preserve"><value>Smart Energy Analysis</value></data>
+  <data name="assistant.bubble_tooltip" xml:space="preserve"><value>Open AI Assistant</value></data>
+  <data name="assistant.status_online" xml:space="preserve"><value>Online</value></data>
+  <data name="assistant.minimize" xml:space="preserve"><value>Minimize</value></data>
+  <data name="assistant.typing_aria" xml:space="preserve"><value>Assistant is typing</value></data>
+  <data name="assistant.btn_restart" xml:space="preserve"><value>Start over</value></data>
+  <data name="assistant.btn_back_menu" xml:space="preserve"><value>Back to menu</value></data>
+
+  <!-- Main menu -->
+  <data name="assistant.greeting" xml:space="preserve"><value>Hi! I'm your AI Assistant 🤖. I can help you quickly analyze energy efficiency. Please choose a function:</value></data>
+  <data name="assistant.menu.interval_efficiency" xml:space="preserve"><value>Interval Efficiency Analysis</value></data>
+  <data name="assistant.menu.coming_soon" xml:space="preserve"><value>Coming soon</value></data>
+  <data name="assistant.menu.placeholder_anomaly" xml:space="preserve"><value>Anomaly Detection</value></data>
+  <data name="assistant.menu.placeholder_advice" xml:space="preserve"><value>Saving Suggestions</value></data>
+
+  <!-- Interval efficiency flow -->
+  <data name="assistant.interval.intro" xml:space="preserve"><value>Sure, let me analyze interval energy efficiency for you 📊</value></data>
+  <data name="assistant.interval.pick_report" xml:space="preserve"><value>Please select a declaration item to analyze:</value></data>
+  <data name="assistant.interval.loading_reports" xml:space="preserve"><value>Loading declaration items…</value></data>
+  <data name="assistant.interval.no_reports" xml:space="preserve"><value>No energy declaration items configured yet. Please create paired energy / refrigeration-ton circuits on the Energy Declaration page first.</value></data>
+  <data name="assistant.interval.pick_range" xml:space="preserve"><value>Selected "{name}". Please set the date range to analyze:</value></data>
+  <data name="assistant.interval.label_start" xml:space="preserve"><value>Start date</value></data>
+  <data name="assistant.interval.label_end" xml:space="preserve"><value>End date</value></data>
+  <data name="assistant.interval.btn_analyze" xml:space="preserve"><value>Start Analysis</value></data>
+  <data name="assistant.interval.analyzing" xml:space="preserve"><value>Calculating interval energy for "{name}", please wait…</value></data>
+
+  <!-- Result sentences -->
+  <data name="assistant.result.range" xml:space="preserve"><value>Range: {start} – {end}</value></data>
+  <data name="assistant.result.total_kwh" xml:space="preserve"><value>Total energy: {value} kWh</value></data>
+  <data name="assistant.result.total_rth" xml:space="preserve"><value>Total cooling: {value} RT·h</value></data>
+  <data name="assistant.result.efficiency" xml:space="preserve"><value>Average efficiency: {value} kWh/RT·h (lower is better)</value></data>
+  <data name="assistant.result.efficiency_na" xml:space="preserve"><value>Average efficiency: cooling is 0, efficiency cannot be calculated.</value></data>
+  <data name="assistant.result.stale_warning" xml:space="preserve"><value>⚠ Note: some periods in this range have incomplete data; the figures above are for reference only.</value></data>
+
+  <!-- Rule-based verdict -->
+  <data name="assistant.verdict.good" xml:space="preserve"><value>Excellent efficiency 👍 This circuit runs very efficiently — keep it up.</value></data>
+  <data name="assistant.verdict.normal" xml:space="preserve"><value>Efficiency is within the normal range, with some room for optimization.</value></data>
+  <data name="assistant.verdict.poor" xml:space="preserve"><value>Efficiency is on the high side ⚠ Consider checking chiller operation or load allocation — there may be saving opportunities.</value></data>
+  <data name="assistant.verdict.insufficient" xml:space="preserve"><value>Insufficient data for this range; no efficiency assessment available yet.</value></data>
+
+  <!-- Errors / wrap-up -->
+  <data name="assistant.error.circuit_deleted" xml:space="preserve"><value>The circuit bound to this item has been deleted. Please reconfigure it on the Energy Declaration page and try again.</value></data>
+  <data name="assistant.error.generic" xml:space="preserve"><value>An error occurred during analysis. Please try again later.</value></data>
+  <data name="assistant.error.date_range" xml:space="preserve"><value>End date cannot be earlier than start date. Please adjust.</value></data>
+  <data name="assistant.restart_prompt" xml:space="preserve"><value>Would you like me to analyze anything else?</value></data>
+</root>

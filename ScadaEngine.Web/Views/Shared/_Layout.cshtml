@@ -34,6 +34,12 @@
     <!-- 全站搜尋（Ctrl+K） -->
     <link rel="stylesheet" href="~/css/global-search.css">
 
+    @* 右下角智慧助理（AI智慧幫手）— 需登入且有能源申報權限 *@
+    @if (User.Identity?.IsAuthenticated == true && canAccess("/EnergyDeclaration"))
+    {
+        <link rel="stylesheet" href="~/css/scada-assistant.css">
+    }
+
     @if (isEmsMode)
     {
         <link rel="stylesheet" href="~/css/ems.css">
@@ -624,6 +630,12 @@
         </form>
     }
 
+    <!-- 右下角智慧助理（AI智慧幫手）掛載點 — DOM 由 scada-assistant.js 建立 -->
+    @if (User.Identity?.IsAuthenticated == true && canAccess("/EnergyDeclaration"))
+    {
+        <div id="scadaAssistantRoot"></div>
+    }
+
     <!-- Bootstrap JavaScript Bundle (本機) -->
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -634,6 +646,12 @@
     {
         <!-- 全站搜尋（Ctrl+K） -->
         <script src="~/js/global-search.js"></script>
+    }
+
+    @* 右下角智慧助理（AI智慧幫手）— i18n.js 之後載入，字串走 window.i18n.t *@
+    @if (User.Identity?.IsAuthenticated == true && canAccess("/EnergyDeclaration"))
+    {
+        <script src="~/js/scada-assistant.js"></script>
     }
 
     <script>

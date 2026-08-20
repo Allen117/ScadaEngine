@@ -153,6 +153,33 @@ public class EnergyDeclarationController : Controller
         }
     }
 
+    // ---------- 智慧助理：任意區間效率分析 ----------
+
+    /// <summary>
+    /// 右下角智慧助理「區間效率分析」— 某份申報項目在任意日期區間的總 kWh / 總 RT·h / 平均效率 + 規則式分級碼。
+    /// 沿用 EnergyDeclaration 路由與 [Authorize]（頁面權限 = 對話窗顯示條件，見 _Layout 守衛）。
+    /// </summary>
+    [HttpPost("api/interval-analysis")]
+    public async Task<IActionResult> IntervalAnalysis([FromBody] IntervalAnalysisDto dto)
+    {
+        if (!DateTime.TryParse(dto.start, out var dtStart) || !DateTime.TryParse(dto.end, out var dtEnd))
+            return BadRequest(new { message = "起始 / 結束日期格式錯誤" });
+        if (dtEnd.Date < dtStart.Date)
+            return BadRequest(new { message = "結束日期不可早於起始日期" });
+
+        try
+        {
+            var result = await _declarationService.GetIntervalEfficiencyAsync(dto.reportId, dtStart, dtEnd);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "區間效率分析失敗 reportId={ReportId} start={Start} end={End}",
+                dto.reportId, dto.start, dto.end);
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     [HttpPost("api/export")]
     public async Task<IActionResult> Export([FromBody] EnergyDeclarationQueryDto dto)
     {

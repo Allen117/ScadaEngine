@@ -192,4 +192,73 @@ public class EnergyDeclarationService
             : null;
         return result;
     }
+
+    // ---------- 智慧助理：任意區間效率分析 ----------
+
+    /// <summary>
+    /// 智慧助理「區間效率分析」— 某份申報項目在任意 [dtStart 起始日, dtEnd 結束日] 的
+    /// 總 kWh / 總 RT·h / 平均效率（kWh÷RT·h）+ 規則式分級碼。
+    /// 刻意不重用 <see cref="GetDeclarationReportAsync"/>（固定整年 12 曆月），改直接以 day 粒度
+    /// 重用底層 <see cref="EnergyReportService.GetReportAsync"/> / <see cref="RefrigerationTonReportService.GetReportAsync"/>，
+    /// 區間 = [起始日 00:00, 結束日次日 00:00)（由兩支 Service 的 day 粒度邊界決定），取其總量相除。
+    /// 綁定迴路已被刪除 → 回傳 szErrorCode="circuit_deleted"（不擲例外，讓對話窗給友善提示）。
+    /// RT·h ≤ 0 → dEfficiency=null、szVerdictCode="insufficient"。
+    /// </summary>
+    public async Task<IntervalEfficiencyResult> GetIntervalEfficiencyAsync(
+        int nReportId, DateTime dtStart, DateTime dtEnd)
+    {
+        var report = await GetByIdAsync(nReportId);
+        if (report == null)
+            throw new InvalidOperationException($"申報報表 Id={nReportId} 不存在");
+
+        var result = new IntervalEfficiencyResult
+        {
+            nReportId = report.nId,
+            szReportName = report.szName,
+        };
+
+        EnergyReportResult kwhResult;
+        RefrigerationTonReportResult rtResult;
+        try
+        {
+            kwhResult = await _energyReportService.GetReportAsync(
+                report.nEnergyCircuitId, "day", dtStart, dtEnd);
+            rtResult = await _rtReportService.GetReportAsync(
+                report.nWaterCircuitId, "day", dtStart, dtEnd);
+        }
+        catch (InvalidOperationException ex)
+        {
+            // 綁定的用電 / 冷凍噸迴路已被刪除（底層 GetByIdAsync 回 null → 擲此例外）
+            _logger.LogWarning(ex, "區間效率分析：迴路不存在 reportId={ReportId}", nReportId);
+            result.szErrorCode = "circuit_deleted";
+            return result;
+        }
+
+        result.szEnergyCircuitName = kwhResult.szCircuitName;
+        result.szWaterCircuitName = rtResult.szCircuitName;
+        result.dtStart = kwhResult.dtStart;
+        result.dtEnd = kwhResult.dtEnd;
+        result.dTotalKwh = Math.Round(kwhResult.dTotalKwh, 3);
+        result.dTotalRtHour = Math.Round(rtResult.dTotalRtHour, 3);
+        result.isStaleWarning = kwhResult.isHasWarning || rtResult.isHasWarning;
+
+        result.dEfficiency = rtResult.dTotalRtHour > 0
+            ? Math.Round(kwhResult.dTotalKwh / rtResult.dTotalRtHour, 3)
+            : null;
+        result.szVerdictCode = ClassifyEfficiency(result.dEfficiency);
+        return result;
+    }
+
+    /// <summary>
+    /// 規則式效率分級（純函式，供單元測試）。門檻寫死（見 plan：kWh/RT·h ≈ 平均 kW/RT）：
+    /// good ≤ 0.85、0.85 &lt; normal ≤ 1.10、poor &gt; 1.10；null 或 ≤ 0 → insufficient。
+    /// 值越低越省電；此判斷若被默默改壞會讓對話窗給錯評語且不易察覺，故抽出可測。
+    /// </summary>
+    public static string ClassifyEfficiency(double? dEfficiency)
+    {
+        if (dEfficiency == null || dEfficiency <= 0) return "insufficient";
+        if (dEfficiency <= 0.85) return "good";
+        if (dEfficiency <= 1.10) return "normal";
+        return "poor";
+    }
 }
