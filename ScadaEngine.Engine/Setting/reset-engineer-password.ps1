@@ -4,7 +4,7 @@
 
 .DESCRIPTION
     以 dbSetting.json 的應用程式帳號（db_owner）連線 SQL Server，console 互動輸入新密碼
-    （遮罩、兩次核對、至少 12 碼）後直接覆蓋 Users 表 engineer 帳號的 PasswordHash，
+    （遮罩、兩次核對、至少 8 碼）後直接覆蓋 Users 表 engineer 帳號的 PasswordHash，
     並確保 Role=Engineer、IsActive=1 — 舊密碼立即失效。
 
     engineer 帳號不存在時自動建立（既有站點補建第一顆 Engineer 帳號也走本腳本）。
@@ -24,7 +24,7 @@ param(
     [string]$DatabaseName,     # 預設讀 dbSetting.json 的 DataBaseName
     [string]$AppLogin,         # 預設讀 dbSetting.json 的 DataBaseAccount
     [string]$AppPassword,      # 預設讀 dbSetting.json 的 DataBasePassword
-    [string]$NewPassword       # engineer 新密碼（至少 12 碼）；不給則 console 互動輸入
+    [string]$NewPassword       # engineer 新密碼（至少 8 碼）；不給則 console 互動輸入
 )
 
 $ErrorActionPreference = 'Stop'
@@ -64,17 +64,17 @@ Write-Host ""
 # ─── 2. 取得新密碼 ──────────────────────────────────────────────────────
 $szPlainPwd = $null
 if ($NewPassword) {
-    if ($NewPassword.Length -lt 12) {
-        Write-Host "錯誤: -NewPassword 少於 12 碼" -ForegroundColor Red
+    if ($NewPassword.Length -lt 8) {
+        Write-Host "錯誤: -NewPassword 少於 8 碼" -ForegroundColor Red
         exit 1
     }
     $szPlainPwd = $NewPassword
 } else {
     for ($nTry = 1; $nTry -le 3 -and -not $szPlainPwd; $nTry++) {
-        $sec1 = Read-Host "請輸入 engineer 新密碼（至少 12 碼）" -AsSecureString
+        $sec1 = Read-Host "請輸入 engineer 新密碼（至少 8 碼）" -AsSecureString
         $p1 = [Runtime.InteropServices.Marshal]::PtrToStringBSTR([Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec1))
         # 長度不足立即提醒重輸，不浪費一次「確認密碼」輸入
-        if ($p1.Length -lt 12)  { Write-Host "密碼少於 12 碼，請重新輸入" -ForegroundColor Yellow; continue }
+        if ($p1.Length -lt 8)   { Write-Host "密碼少於 8 碼，請重新輸入" -ForegroundColor Yellow; continue }
         $sec2 = Read-Host "再輸入一次確認" -AsSecureString
         $p2 = [Runtime.InteropServices.Marshal]::PtrToStringBSTR([Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec2))
         if ($p1 -cne $p2)       { Write-Host "兩次輸入不一致，請重新輸入" -ForegroundColor Yellow; continue }

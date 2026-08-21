@@ -12,7 +12,7 @@
          資料庫已存在 → 跳過建立；若復原模式為 FULL 印出警告（不自動更改既有 DB 狀態）
       3. 建立應用程式 SQL login（讀 dbSetting.json 的帳密）並授予目標 DB 的 db_owner
       4. 建立工程師模式 bootstrap 帳號 engineer（無任何 Engineer 角色帳號時）：
-         密碼由 -EngineerPassword 參數或 console 互動輸入（遮罩、兩次核對、至少 12 碼），
+         密碼由 -EngineerPassword 參數或 console 互動輸入（遮罩、兩次核對、至少 8 碼），
          非互動且未帶參數時跳過並警告。忘記密碼用 Release 包根目錄的 reset-engineer-password.ps1
          重設（工程師隨身工具，不落地伺服器）。
 
@@ -30,7 +30,7 @@ param(
     [string]$AppPassword,      # 預設讀 dbSetting.json 的 DataBasePassword
     [string]$DataFolder,       # 預設讀 DbMaintenanceSetting.json 的 DataFileFolder
     [string]$BackupFolder,     # 預設讀 DbMaintenanceSetting.json 的 BackupFolder
-    [string]$EngineerPassword  # 工程師模式 bootstrap 帳號 engineer 的密碼（至少 12 碼）；不給則 console 互動輸入
+    [string]$EngineerPassword  # 工程師模式 bootstrap 帳號 engineer 的密碼（至少 8 碼）；不給則 console 互動輸入
 )
 
 $ErrorActionPreference = 'Stop'
@@ -200,8 +200,8 @@ CREATE TABLE [Users] (
     } else {
         $szPlainPwd = $null
         if ($EngineerPassword) {
-            if ($EngineerPassword.Length -lt 12) {
-                Write-Host "警告: -EngineerPassword 少於 12 碼，拒絕使用 — 跳過 engineer 帳號建立" -ForegroundColor Yellow
+            if ($EngineerPassword.Length -lt 8) {
+                Write-Host "警告: -EngineerPassword 少於 8 碼，拒絕使用 — 跳過 engineer 帳號建立" -ForegroundColor Yellow
             } else {
                 $szPlainPwd = $EngineerPassword
             }
@@ -214,14 +214,14 @@ CREATE TABLE [Users] (
                 Write-Host "── 設定工程師模式 bootstrap 帳號（帳號名固定: engineer）──" -ForegroundColor Cyan
                 for ($nTry = 1; $nTry -le 3 -and -not $szPlainPwd; $nTry++) {
                     try {
-                        $sec1 = Read-Host "請自訂 engineer 密碼（至少 12 碼）" -AsSecureString
+                        $sec1 = Read-Host "請自訂 engineer 密碼（至少 8 碼）" -AsSecureString
                     } catch {
                         Write-Host "警告: 無法互動輸入 — 跳過 engineer 帳號建立，之後可執行 reset-engineer-password.ps1 建立" -ForegroundColor Yellow
                         break
                     }
                     $p1 = [Runtime.InteropServices.Marshal]::PtrToStringBSTR([Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec1))
                     # 長度不足立即提醒重輸，不浪費一次「確認密碼」輸入
-                    if ($p1.Length -lt 12)  { Write-Host "密碼少於 12 碼，請重新輸入" -ForegroundColor Yellow; continue }
+                    if ($p1.Length -lt 8)   { Write-Host "密碼少於 8 碼，請重新輸入" -ForegroundColor Yellow; continue }
                     try {
                         $sec2 = Read-Host "再輸入一次確認" -AsSecureString
                     } catch {
