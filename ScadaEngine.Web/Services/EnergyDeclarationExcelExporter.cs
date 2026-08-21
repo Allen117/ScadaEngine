@@ -89,7 +89,7 @@ public class EnergyDeclarationExcelExporter
             ws.Cell(row, 2).Value = bucket.dKwh;
             ws.Cell(row, 2).Style.NumberFormat.Format = "#,##0.000";
             ws.Cell(row, 3).Value = bucket.dRtHour;
-            ws.Cell(row, 3).Style.NumberFormat.Format = "#,##0.000";
+            ws.Cell(row, 3).Style.NumberFormat.Format = "#,##0.0";
             if (bucket.dKwhPerRtHour.HasValue)
             {
                 ws.Cell(row, 4).Value = bucket.dKwhPerRtHour.Value;
@@ -108,7 +108,7 @@ public class EnergyDeclarationExcelExporter
         ws.Cell(sumRow, 2).Value = result.dTotalKwh;
         ws.Cell(sumRow, 2).Style.NumberFormat.Format = "#,##0.000";
         ws.Cell(sumRow, 3).Value = result.dTotalRtHour;
-        ws.Cell(sumRow, 3).Style.NumberFormat.Format = "#,##0.000";
+        ws.Cell(sumRow, 3).Style.NumberFormat.Format = "#,##0.0";
         if (result.dTotalKwhPerRtHour.HasValue)
         {
             ws.Cell(sumRow, 4).Value = result.dTotalKwhPerRtHour.Value;

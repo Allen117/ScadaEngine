@@ -255,19 +255,19 @@
                 <tr>
                     <td>${escapeHtml(b.szLabel)}</td>
                     <td class="text-end"${b.isKwhStale ? ` title="${staleTip}"` : ''}>${b.dKwh.toFixed(3)}${mark}</td>
-                    <td class="text-end">${b.dRtHour.toFixed(3)}</td>
+                    <td class="text-end">${b.dRtHour.toFixed(1)}</td>
                     <td class="text-end">${fmtEff(b.dKwhPerRtHour)}</td>
                 </tr>`;
             }).join('') +
                 `<tr class="ed-total">
                     <td>${totalLabel}</td>
                     <td class="text-end">${data.dTotalKwh.toFixed(3)}</td>
-                    <td class="text-end">${data.dTotalRtHour.toFixed(3)}</td>
+                    <td class="text-end">${data.dTotalRtHour.toFixed(1)}</td>
                     <td class="text-end">${fmtEff(data.dTotalKwhPerRtHour)}</td>
                 </tr>`;
         }
         document.getElementById('edTotalKwh').textContent = data.dTotalKwh.toFixed(3);
-        document.getElementById('edTotalRt').textContent = data.dTotalRtHour.toFixed(3);
+        document.getElementById('edTotalRt').textContent = data.dTotalRtHour.toFixed(1);
         document.getElementById('edTotalEff').textContent = fmtEff(data.dTotalKwhPerRtHour);
 
         const warns = [];

@@ -44,7 +44,7 @@ public class RefrigerationTonReportExcelExporter
         ws.Cell(7, 2).Value = szOperator;
         ws.Cell(8, 1).Value = _l["excel.label.total_rt_hour"].Value;
         ws.Cell(8, 2).Value = result.dTotalRtHour;
-        ws.Cell(8, 2).Style.NumberFormat.Format = "#,##0.000";
+        ws.Cell(8, 2).Style.NumberFormat.Format = "#,##0.0";
 
         if (bHasChildren)
         {
@@ -90,14 +90,14 @@ public class RefrigerationTonReportExcelExporter
             var row = nDataStartRow + 1 + i;
             ws.Cell(row, 1).Value = result.buckets[i].szLabel;
             ws.Cell(row, 2).Value = result.buckets[i].dRtHour;
-            ws.Cell(row, 2).Style.NumberFormat.Format = "#,##0.000";
+            ws.Cell(row, 2).Style.NumberFormat.Format = "#,##0.0";
             if (bHasChildren)
             {
                 for (var c = 0; c < result.children.Count; c++)
                 {
                     var dVal = i < result.children[c].dRtHourPerBucket.Count ? result.children[c].dRtHourPerBucket[i] : 0;
                     ws.Cell(row, 3 + c).Value = dVal;
-                    ws.Cell(row, 3 + c).Style.NumberFormat.Format = "#,##0.000";
+                    ws.Cell(row, 3 + c).Style.NumberFormat.Format = "#,##0.0";
                 }
             }
         }
@@ -106,13 +106,13 @@ public class RefrigerationTonReportExcelExporter
         var sumRow = nDataStartRow + 1 + result.buckets.Count;
         ws.Cell(sumRow, 1).Value = _l["excel.row.total"].Value;
         ws.Cell(sumRow, 2).Value = result.dTotalRtHour;
-        ws.Cell(sumRow, 2).Style.NumberFormat.Format = "#,##0.000";
+        ws.Cell(sumRow, 2).Style.NumberFormat.Format = "#,##0.0";
         if (bHasChildren)
         {
             for (var c = 0; c < result.children.Count; c++)
             {
                 ws.Cell(sumRow, 3 + c).Value = result.children[c].dTotalRtHour;
-                ws.Cell(sumRow, 3 + c).Style.NumberFormat.Format = "#,##0.000";
+                ws.Cell(sumRow, 3 + c).Style.NumberFormat.Format = "#,##0.0";
             }
         }
         ws.Range(sumRow, 1, sumRow, nLastCol).Style.Font.Bold = true;

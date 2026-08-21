@@ -170,11 +170,11 @@
             tbody.innerHTML = data.buckets.map(b => `
                 <tr>
                     <td>${escapeHtml(b.szLabel)}</td>
-                    <td class="text-end">${b.dRtHour.toFixed(3)}</td>
+                    <td class="text-end">${b.dRtHour.toFixed(1)}</td>
                 </tr>`).join('') +
-                `<tr class="rt-total"><td>${totalLabel}</td><td class="text-end">${data.dTotalRtHour.toFixed(3)}</td></tr>`;
+                `<tr class="rt-total"><td>${totalLabel}</td><td class="text-end">${data.dTotalRtHour.toFixed(1)}</td></tr>`;
         }
-        document.getElementById('rtTotal').textContent = data.dTotalRtHour.toFixed(3);
+        document.getElementById('rtTotal').textContent = data.dTotalRtHour.toFixed(1);
         document.getElementById('rtWarnText').textContent = data.isHasWarning
             ? t('refrigerationtonreport.warning.data_incomplete') : '';
     }
@@ -228,12 +228,12 @@
             tooltipCallbacks = {
                 label: function (ctx) {
                     const v = ctx.parsed.y;
-                    return `${ctx.dataset.label}: ${(v == null ? 0 : v).toFixed(3)} RT·h`;
+                    return `${ctx.dataset.label}: ${(v == null ? 0 : v).toFixed(1)} RT·h`;
                 },
                 footer: function (items) {
                     let sum = 0;
                     items.forEach(it => { if (it.parsed && it.parsed.y != null) sum += it.parsed.y; });
-                    return t('refrigerationtonreport.chart.breakdown_total_label', { 0: sum.toFixed(3) });
+                    return t('refrigerationtonreport.chart.breakdown_total_label', { 0: sum.toFixed(1) });
                 }
             };
         } else {

@@ -162,7 +162,7 @@ public class DailyReportHtmlBuilder
         {
             var nHeight = dMax > 1e-9 ? Math.Max(1, (int)Math.Round(section.dHourly[i] / dMax * 60)) : 1;
             var szBarColor = section.isHourlyStale.Count > i && section.isHourlyStale[i] ? COLOR_BORDER : COLOR_PRIMARY;
-            sb.Append($"<td style=\"vertical-align:bottom;height:64px;padding:0 1px;\" title=\"{i:00}:00 = {section.dHourly[i]:0.##}\">");
+            sb.Append($"<td style=\"vertical-align:bottom;height:64px;padding:0 1px;\" title=\"{i:00}:00 = {FormatEnergy(section.dHourly[i], szEnergyKey)}\">");
             sb.Append($"<div style=\"background:{szBarColor};height:{nHeight}px;font-size:0;line-height:0;\">&nbsp;</div></td>");
         }
         sb.Append("</tr><tr>");
@@ -176,9 +176,9 @@ public class DailyReportHtmlBuilder
         var nPeakHour = 0;
         for (var i = 1; i < section.dHourly.Count; i++)
             if (section.dHourly[i] > section.dHourly[nPeakHour]) nPeakHour = i;
-        sb.Append($"<div style=\"font-size:13px;margin-top:4px;\">{H(_l["mail.total"].Value)}: <b>{section.dTotal:#,0.##}</b> {H(section.szUnit)}");
+        sb.Append($"<div style=\"font-size:13px;margin-top:4px;\">{H(_l["mail.total"].Value)}: <b>{FormatEnergy(section.dTotal, szEnergyKey)}</b> {H(section.szUnit)}");
         if (dMax > 1e-9)
-            sb.Append($" &nbsp;|&nbsp; {H(_l["mail.peak_hour"].Value)}: {nPeakHour:00}:00 ({section.dHourly[nPeakHour]:#,0.##})");
+            sb.Append($" &nbsp;|&nbsp; {H(_l["mail.peak_hour"].Value)}: {nPeakHour:00}:00 ({FormatEnergy(section.dHourly[nPeakHour], szEnergyKey)})");
         sb.Append("</div>");
     }
 
@@ -194,10 +194,10 @@ public class DailyReportHtmlBuilder
         {
             sb.Append("<tr>");
             sb.Append($"<td style=\"border:1px solid {COLOR_BORDER};padding:4px 8px;\">{H(_l[$"mail.energy.{row.szEnergy}"].Value)} ({H(row.szUnit)})</td>");
-            sb.Append($"<td style=\"border:1px solid {COLOR_BORDER};padding:4px 8px;text-align:right;\"><b>{row.dDay:#,0.##}</b></td>");
-            sb.Append($"<td style=\"border:1px solid {COLOR_BORDER};padding:4px 8px;text-align:right;\">{row.dPrevDay:#,0.##}</td>");
+            sb.Append($"<td style=\"border:1px solid {COLOR_BORDER};padding:4px 8px;text-align:right;\"><b>{FormatEnergy(row.dDay, row.szEnergy)}</b></td>");
+            sb.Append($"<td style=\"border:1px solid {COLOR_BORDER};padding:4px 8px;text-align:right;\">{FormatEnergy(row.dPrevDay, row.szEnergy)}</td>");
             sb.Append($"<td style=\"border:1px solid {COLOR_BORDER};padding:4px 8px;text-align:right;\">{FormatDiff(row.dDiffPrevPct)}</td>");
-            sb.Append($"<td style=\"border:1px solid {COLOR_BORDER};padding:4px 8px;text-align:right;\">{row.dLastWeek:#,0.##}</td>");
+            sb.Append($"<td style=\"border:1px solid {COLOR_BORDER};padding:4px 8px;text-align:right;\">{FormatEnergy(row.dLastWeek, row.szEnergy)}</td>");
             sb.Append($"<td style=\"border:1px solid {COLOR_BORDER};padding:4px 8px;text-align:right;\">{FormatDiff(row.dDiffLastWeekPct)}</td>");
             sb.Append("</tr>");
         }
@@ -242,8 +242,8 @@ public class DailyReportHtmlBuilder
         {
             sb.Append("<tr>");
             sb.Append($"<td style=\"border:1px solid {COLOR_BORDER};padding:4px 8px;\">{H(_l[$"mail.energy.{row.szEnergy}"].Value)} ({H(row.szUnit)})</td>");
-            sb.Append($"<td style=\"border:1px solid {COLOR_BORDER};padding:4px 8px;text-align:right;\"><b>{row.dCurrent:#,0.##}</b></td>");
-            sb.Append($"<td style=\"border:1px solid {COLOR_BORDER};padding:4px 8px;text-align:right;\">{row.dLastYear:#,0.##}</td>");
+            sb.Append($"<td style=\"border:1px solid {COLOR_BORDER};padding:4px 8px;text-align:right;\"><b>{FormatEnergy(row.dCurrent, row.szEnergy)}</b></td>");
+            sb.Append($"<td style=\"border:1px solid {COLOR_BORDER};padding:4px 8px;text-align:right;\">{FormatEnergy(row.dLastYear, row.szEnergy)}</td>");
             sb.Append($"<td style=\"border:1px solid {COLOR_BORDER};padding:4px 8px;text-align:right;\">{FormatDiff(row.dDiffPct)}</td>");
             sb.Append("</tr>");
         }
@@ -270,6 +270,13 @@ public class DailyReportHtmlBuilder
     }
 
     private static string FormatNullable(double? d) => d.HasValue ? d.Value.ToString("#,0.##") : "—";
+
+    /// <summary>
+    /// 能源別數值格式 — RT·h 一律一位小數（與 /RefrigerationTonReport、/EnergyDeclaration 一致），
+    /// 其餘（kWh / m³）維持「最多兩位」。效率比值 kWh/RTh 不走此路徑（沿用 FormatNullable）。
+    /// </summary>
+    private static string FormatEnergy(double d, string szEnergy) =>
+        d.ToString(szEnergy == "rth" ? "#,0.0" : "#,0.##");
 
     /// <summary>HTML encode（防止警報訊息 / 迴路名含標籤字元）</summary>
     private static string H(string? sz) => System.Net.WebUtility.HtmlEncode(sz ?? "");

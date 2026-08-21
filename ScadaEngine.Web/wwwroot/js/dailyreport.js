@@ -147,7 +147,7 @@
         if (!isShow) return;
 
         $('drName' + cap(key)).textContent = section.szCircuitName || '';
-        $('drTotal' + cap(key)).textContent = fmtNum(section.dTotal);
+        $('drTotal' + cap(key)).textContent = fmtNum(section.dTotal, digitsOf(key));
 
         var labels = [];
         for (var i = 0; i < 24; i++) labels.push(String(i).padStart(2, '0') + ':00');
@@ -178,7 +178,7 @@
                         callbacks: {
                             label: function (c) {
                                 var szStale = (section.isHourlyStale && section.isHourlyStale[c.dataIndex]) ? '（資料缺漏）' : '';
-                                return fmtNum(c.parsed.y) + ' ' + section.szUnit + szStale;
+                                return fmtNum(c.parsed.y, digitsOf(key)) + ' ' + section.szUnit + szStale;
                             }
                         }
                     }
@@ -201,10 +201,10 @@
         data.dayComparisons.forEach(function (row) {
             html += '<tr>' +
                 '<td>' + energyName(row.szEnergy) + '（' + row.szUnit + '）</td>' +
-                '<td class="text-end fw-bold">' + fmtNum(row.dDay) + '</td>' +
-                '<td class="text-end">' + fmtNum(row.dPrevDay) + '</td>' +
+                '<td class="text-end fw-bold">' + fmtNum(row.dDay, digitsOf(row.szEnergy)) + '</td>' +
+                '<td class="text-end">' + fmtNum(row.dPrevDay, digitsOf(row.szEnergy)) + '</td>' +
                 '<td class="text-end">' + fmtDiff(row.dDiffPrevPct) + '</td>' +
-                '<td class="text-end">' + fmtNum(row.dLastWeek) + '</td>' +
+                '<td class="text-end">' + fmtNum(row.dLastWeek, digitsOf(row.szEnergy)) + '</td>' +
                 '<td class="text-end">' + fmtDiff(row.dDiffLastWeekPct) + '</td>' +
                 '</tr>';
         });
@@ -241,8 +241,8 @@
         data.mtdComparisons.forEach(function (row) {
             html += '<tr>' +
                 '<td>' + energyName(row.szEnergy) + '（' + row.szUnit + '）</td>' +
-                '<td class="text-end fw-bold">' + fmtNum(row.dCurrent) + '</td>' +
-                '<td class="text-end">' + fmtNum(row.dLastYear) + '</td>' +
+                '<td class="text-end fw-bold">' + fmtNum(row.dCurrent, digitsOf(row.szEnergy)) + '</td>' +
+                '<td class="text-end">' + fmtNum(row.dLastYear, digitsOf(row.szEnergy)) + '</td>' +
                 '<td class="text-end">' + fmtDiff(row.dDiffPct) + '</td>' +
                 '</tr>';
         });
@@ -272,10 +272,18 @@
     function energyName(key) {
         return { electricity: '用電', water: '用水', gas: '用氣', rth: '冷凍噸' }[key] || key;
     }
-    function fmtNum(d) {
+    // nDigits 給定時固定顯示該位數（RT·h 一律 1 位，與冷凍噸報表／能源申報一致）；
+    // 未給定 → 沿用各能源別原本的「最多 2 位」
+    function fmtNum(d, nDigits) {
         if (d == null) return '—';
-        return Number(d).toLocaleString('en-US', { maximumFractionDigits: 2 });
+        if (nDigits == null) return Number(d).toLocaleString('en-US', { maximumFractionDigits: 2 });
+        return Number(d).toLocaleString('en-US', {
+            minimumFractionDigits: nDigits,
+            maximumFractionDigits: nDigits
+        });
     }
+    /// 能源別 → 顯示位數（RT·h 1 位；其餘 null = 預設）
+    function digitsOf(szEnergy) { return szEnergy === 'rth' ? 1 : null; }
     function fmtNullable(d) { return d == null ? '—' : fmtNum(d); }
     function fmtDiff(d) {
         if (d == null) return '<span class="text-muted">—</span>';
