@@ -395,10 +395,21 @@
         } else {
             aLines.push(t('assistant.result.efficiency', { value: fmtNum(data.dEfficiency, 3) }));
         }
-        if (data.isStaleWarning) {
+        // 覆蓋率低於門檻時給帶數字的提示（幾 % / 低於幾 % / 缺幾小時），
+        // 泛泛的 stale_warning 只留給其他資料警告（例如電表累積值倒退）
+        if (data.isLowCoverage) {
+            aLines.push(t('assistant.result.low_coverage', {
+                percent: fmtNum(data.dCoveragePercent, 1),
+                threshold: data.nCoverageThresholdPercent,
+                leaf: data.szCoverageWorstLeafName,
+                hours: data.nCoverageMissingHours
+            }));
+        } else if (data.isStaleWarning) {
             aLines.push(t('assistant.result.stale_warning'));
         }
-        aLines.push(t('assistant.verdict.' + (data.szVerdictCode || 'insufficient')));
+        aLines.push(t('assistant.verdict.' + (data.szVerdictCode || 'insufficient'), {
+            threshold: data.nCoverageThresholdPercent
+        }));
 
         botSay(aLines, function () {
             botSay([t('assistant.restart_prompt')], showRestartActions);

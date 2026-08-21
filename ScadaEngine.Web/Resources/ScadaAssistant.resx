@@ -86,11 +86,13 @@
   <data name="assistant.result.efficiency" xml:space="preserve"><value>平均效率：{value} kWh/RT·h（值越低越省電）</value></data>
   <data name="assistant.result.efficiency_na" xml:space="preserve"><value>平均效率：冷凍噸數為 0，無法計算效率。</value></data>
   <data name="assistant.result.stale_warning" xml:space="preserve"><value>⚠ 提醒：此區間部分時段資料覆蓋率不足，以上數字僅供參考。</value></data>
+  <data name="assistant.result.low_coverage" xml:space="preserve"><value>⚠ 冷凍噸資料覆蓋率僅 {percent}%（低於 {threshold}% 門檻），「{leaf}」共缺 {hours} 小時，以上數字僅供參考。</value></data>
 
   <!-- 規則式評語 -->
   <data name="assistant.verdict.good" xml:space="preserve"><value>效率表現優異 👍 這條迴路運轉相當節能，請保持。</value></data>
   <data name="assistant.verdict.normal" xml:space="preserve"><value>效率屬正常範圍，仍有一些優化空間可以留意。</value></data>
   <data name="assistant.verdict.poor" xml:space="preserve"><value>效率偏高 ⚠ 建議檢查冰機運轉狀況或負載配置，可能有節能機會。</value></data>
+  <data name="assistant.verdict.low_coverage" xml:space="preserve"><value>因冷凍噸資料覆蓋率低於 {threshold}% 門檻，此區間暫不給出效率評語，建議先確認該點位的資料上傳狀況。</value></data>
   <data name="assistant.verdict.insufficient" xml:space="preserve"><value>此區間資料不足，暫時無法給出效率評語。</value></data>
 
   <!-- 錯誤 / 收尾 -->

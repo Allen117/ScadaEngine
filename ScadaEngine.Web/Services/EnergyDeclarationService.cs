@@ -245,7 +245,19 @@ public class EnergyDeclarationService
         result.dEfficiency = rtResult.dTotalRtHour > 0
             ? Math.Round(kwhResult.dTotalKwh / rtResult.dTotalRtHour, 3)
             : null;
-        result.szVerdictCode = ClassifyEfficiency(result.dEfficiency);
+
+        // 覆蓋率明細 — 讓「資料不足」講得出實際數字與門檻，而非只丟一句模糊警語
+        var cov = rtResult.coverage;
+        result.isLowCoverage = cov.isBelowThreshold;
+        result.dCoveragePercent = cov.dCoveragePercent;
+        result.nCoverageThresholdPercent = cov.nThresholdPercent;
+        result.nCoverageMissingHours = cov.nMissingHours;
+        result.szCoverageWorstLeafName = cov.szWorstLeafName;
+
+        // 冷量資料本身不完整 → 效率值照樣給（判斷權留給人），但不下 good/normal/poor 評語
+        result.szVerdictCode = result.isLowCoverage
+            ? "low_coverage"
+            : ClassifyEfficiency(result.dEfficiency);
         return result;
     }
 

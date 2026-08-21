@@ -86,11 +86,13 @@
   <data name="assistant.result.efficiency" xml:space="preserve"><value>Average efficiency: {value} kWh/RT·h (lower is better)</value></data>
   <data name="assistant.result.efficiency_na" xml:space="preserve"><value>Average efficiency: cooling is 0, efficiency cannot be calculated.</value></data>
   <data name="assistant.result.stale_warning" xml:space="preserve"><value>⚠ Note: some periods in this range have incomplete data; the figures above are for reference only.</value></data>
+  <data name="assistant.result.low_coverage" xml:space="preserve"><value>⚠ Cooling data coverage is only {percent}% (below the {threshold}% threshold); "{leaf}" is missing {hours} hours. The figures above are for reference only.</value></data>
 
   <!-- Rule-based verdict -->
   <data name="assistant.verdict.good" xml:space="preserve"><value>Excellent efficiency 👍 This circuit runs very efficiently — keep it up.</value></data>
   <data name="assistant.verdict.normal" xml:space="preserve"><value>Efficiency is within the normal range, with some room for optimization.</value></data>
   <data name="assistant.verdict.poor" xml:space="preserve"><value>Efficiency is on the high side ⚠ Consider checking chiller operation or load allocation — there may be saving opportunities.</value></data>
+  <data name="assistant.verdict.low_coverage" xml:space="preserve"><value>Cooling data coverage is below the {threshold}% threshold, so no efficiency assessment is given for this range. Please check the data upload status of that point first.</value></data>
   <data name="assistant.verdict.insufficient" xml:space="preserve"><value>Insufficient data for this range; no efficiency assessment available yet.</value></data>
 
   <!-- Errors / wrap-up -->

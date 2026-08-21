@@ -24,16 +24,21 @@ public class RefrigerationTonReportService
     private readonly ILogger<RefrigerationTonReportService> _logger;
     private readonly DatabaseConfigService _configService;
     private readonly WaterCircuitService _circuitService;
+    private readonly int _nMinCoveragePercent;
     private string _szConnectionString = string.Empty;
 
     public RefrigerationTonReportService(
         ILogger<RefrigerationTonReportService> logger,
         DatabaseConfigService configService,
-        WaterCircuitService circuitService)
+        WaterCircuitService circuitService,
+        IConfiguration configuration)
     {
         _logger = logger;
         _configService = configService;
         _circuitService = circuitService;
+        // 葉子在區間內的 hourly 覆蓋率低於此百分比 → 視為資料不全（isHasWarning）。
+        // 對標 EnergyAggregation:MaxStalenessHours 的作法，門檻外露可調而非埋在演算法裡。
+        _nMinCoveragePercent = configuration.GetValue<int?>("RefrigerationTonAggregation:MinCoveragePercent") ?? 90;
     }
 
     private async Task<SqlConnection> GetConnectionAsync()
@@ -64,10 +69,11 @@ public class RefrigerationTonReportService
         };
 
         using var conn = await GetConnectionAsync();
-        var (bucketSums, bHasWarning) = await ComputeBucketSumsForCircuitAsync(nCircuitId, ranges, conn);
+        var (bucketSums, bHasWarning, coverage) = await ComputeBucketSumsForCircuitAsync(nCircuitId, ranges, conn);
 
         FillBucketsAndTotal(result, ranges, labels, bucketSums);
         result.isHasWarning = bHasWarning;
+        result.coverage = coverage;
         return result;
     }
 
@@ -91,9 +97,10 @@ public class RefrigerationTonReportService
         };
 
         using var conn = await GetConnectionAsync();
-        var (bucketSums, bHasWarning) = await ComputeBucketSumsForCircuitAsync(nCircuitId, ranges, conn);
+        var (bucketSums, bHasWarning, coverage) = await ComputeBucketSumsForCircuitAsync(nCircuitId, ranges, conn);
         FillBucketsAndTotal(result, ranges, labels, bucketSums);
         result.isHasWarning = bHasWarning;
+        result.coverage = coverage;
 
         // 自己就是葉子 → 不展開子層
         if (!string.IsNullOrEmpty(circuit.szSID))
@@ -102,7 +109,8 @@ public class RefrigerationTonReportService
         var children = await _circuitService.GetDirectChildrenAsync(nCircuitId);
         foreach (var child in children)
         {
-            var (childSums, childWarning) = await ComputeBucketSumsForCircuitAsync(child.nId, ranges, conn);
+            // 子迴路的葉子已全數含在父層 coverage 的掃描範圍內 → 只 OR warning，不覆寫 coverage
+            var (childSums, childWarning, _) = await ComputeBucketSumsForCircuitAsync(child.nId, ranges, conn);
             var series = new RefrigerationTonReportChildSeries
             {
                 nCircuitId = child.nId,
@@ -160,9 +168,10 @@ public class RefrigerationTonReportService
         };
 
         using var conn = await GetConnectionAsync();
-        var (bucketSums, bHasWarning) = await ComputeBucketSumsForCircuitAsync(nCircuitId, ranges, conn);
+        var (bucketSums, bHasWarning, coverage) = await ComputeBucketSumsForCircuitAsync(nCircuitId, ranges, conn);
         FillBucketsAndTotal(result, ranges, labels, bucketSums);
         result.isHasWarning = bHasWarning;
+        result.coverage = coverage;
         return result;
     }
 
@@ -171,15 +180,18 @@ public class RefrigerationTonReportService
     /// bucket 連續時（時/日/年與自然月期別）走 binary search；
     /// 期別不連續/重疊時逐 bucket 比對（重疊段依規格計入兩期、空窗段不計入任何期）。
     /// </summary>
-    private async Task<(double[] bucketSums, bool isHasWarning)> ComputeBucketSumsForCircuitAsync(
-        int nCircuitId, List<(DateTime dtStart, DateTime dtEnd)> ranges, SqlConnection conn)
+    private async Task<(double[] bucketSums, bool isHasWarning, RefrigerationTonCoverage coverage)>
+        ComputeBucketSumsForCircuitAsync(
+            int nCircuitId, List<(DateTime dtStart, DateTime dtEnd)> ranges, SqlConnection conn)
     {
         var nBuckets = ranges.Count;
         var bucketSums = new double[nBuckets];
         var bHasWarning = false;
+        var coverage = new RefrigerationTonCoverage { nThresholdPercent = _nMinCoveragePercent };
 
         var leaves = await _circuitService.GetLeavesUnderAsync(nCircuitId);
-        if (leaves.Count == 0) return (bucketSums, bHasWarning);
+        // 迴路下無葉子 = 設定問題，不是資料覆蓋率問題 → nExpectedHours 留 0 表「不適用」
+        if (leaves.Count == 0) return (bucketSums, bHasWarning, coverage);
 
         var dtRangeStart = ranges.Min(r => r.dtStart);
         var dtRangeEnd = ranges.Max(r => r.dtEnd);   // exclusive
@@ -236,11 +248,45 @@ public class RefrigerationTonReportService
                 }
             }
 
-            // 葉子在區間內覆蓋率 < 90% → 整體警告（避免使用者誤以為 total 完整）
-            if (nExpectedHoursPerLeaf > 0 && nHoursGot < nExpectedHoursPerLeaf * 0.9)
-                bHasWarning = true;
+            // 葉子在區間內覆蓋率低於門檻 → 整體警告（避免使用者誤以為 total 完整）。
+            // 同時記錄「最差的那個葉子」明細：任一葉子缺料則總量就不完整，報最好的會誤導。
+            if (nExpectedHoursPerLeaf > 0)
+            {
+                var dPercent = CalcCoveragePercent(nHoursGot, nExpectedHoursPerLeaf);
+                if (dPercent < coverage.dCoveragePercent)
+                {
+                    coverage.nExpectedHours = nExpectedHoursPerLeaf;
+                    coverage.nActualHours = nHoursGot;
+                    coverage.dCoveragePercent = Math.Round(dPercent, 1);
+                    coverage.nMissingHours = Math.Max(0, nExpectedHoursPerLeaf - nHoursGot);
+                    coverage.szWorstLeafName = leaf.szName;
+                }
+                if (dPercent < _nMinCoveragePercent) bHasWarning = true;
+            }
         }
-        return (bucketSums, bHasWarning);
+
+        coverage.isBelowThreshold = coverage.nExpectedHours > 0
+            && coverage.dCoveragePercent < _nMinCoveragePercent;
+        // 全數葉子皆 100% 時上面的 if 不會進去（100 < 100 為 false）→ 補齊分母供 UI 顯示
+        if (coverage.nExpectedHours == 0 && nExpectedHoursPerLeaf > 0)
+        {
+            coverage.nExpectedHours = nExpectedHoursPerLeaf;
+            coverage.nActualHours = nExpectedHoursPerLeaf;
+        }
+        return (bucketSums, bHasWarning, coverage);
+    }
+
+    /// <summary>
+    /// 單一葉子在區間內的 hourly 資料覆蓋率百分比（純函式，供單元測試）。
+    /// 非連續 bucket（期別重疊）時同一 hour 可能被計入多個 bucket → 實際值可能超過分母，夾到 100%。
+    /// 分母 0（區間為零長 / 全落在未來）→ 回 100，語意為「不適用」而非「全缺」，
+    /// 否則當期尚未到來的時段會誤觸資料不全警告。
+    /// </summary>
+    public static double CalcCoveragePercent(int nActualHours, int nExpectedHours)
+    {
+        if (nExpectedHours <= 0) return 100;
+        if (nActualHours <= 0) return 0;
+        return Math.Min(100.0, nActualHours * 100.0 / nExpectedHours);
     }
 
     private record LeafHourRow(DateTime dtHourStart, double dRtHour);
