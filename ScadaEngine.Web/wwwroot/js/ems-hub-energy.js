@@ -196,7 +196,7 @@
                         callbacks: {
                             label: function (ctx) {
                                 var v = ctx.parsed.y;
-                                return (v != null ? v.toFixed(1) : '0') + ' kWh';
+                                return fmtKwh(v != null ? v : 0) + ' kWh';
                             }
                         }
                     }
@@ -298,7 +298,7 @@
                             label: function (ctx) {
                                 var total = ctx.dataset.data.reduce(function (a, b) { return a + b; }, 0);
                                 var pct = total > 0 ? (ctx.parsed / total * 100).toFixed(1) : '0';
-                                return ctx.label + ': ' + ctx.parsed.toFixed(1) + ' kWh (' + pct + '%)';
+                                return ctx.label + ': ' + fmtKwh(ctx.parsed) + ' kWh (' + pct + '%)';
                             }
                         }
                     }

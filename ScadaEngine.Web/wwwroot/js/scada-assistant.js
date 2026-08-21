@@ -436,10 +436,11 @@
         return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
     }
 
+    // min = max = nDigits：位數固定才對得齊，且 0 會顯示成 0.0 而不是 0
     function fmtNum(n, nDigits) {
         if (n == null || isNaN(n)) return '--';
         return Number(n).toLocaleString(undefined, {
-            minimumFractionDigits: 0,
+            minimumFractionDigits: nDigits,
             maximumFractionDigits: nDigits
         });
     }

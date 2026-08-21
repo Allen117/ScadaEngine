@@ -92,6 +92,8 @@
   <data name="mail.col.lastweek" xml:space="preserve"><value>上週同星期</value></data>
   <data name="mail.col.diff_lastweek" xml:space="preserve"><value>vs 上週</value></data>
   <data name="mail.efficiency.label" xml:space="preserve"><value>kWh/RTh（每冷凍噸耗電）</value></data>
+  <data name="mail.lastweek_note.offday" xml:space="preserve"><value>※ 比較基準不同：報告日為上班日，上週同星期為假日，vs 上週同星期的差異僅供參考</value></data>
+  <data name="mail.lastweek_note.workday" xml:space="preserve"><value>※ 比較基準不同：報告日為假日，上週同星期為上班日，vs 上週同星期的差異僅供參考</value></data>
   <data name="mail.weather.line" xml:space="preserve"><value>外氣日均溫：報告日 {0}°C、前日 {1}°C、上週同星期 {2}°C</value></data>
   <data name="mail.section.mtd" xml:space="preserve"><value>月累計比較（本月 vs 去年同期）</value></data>
   <data name="mail.col.mtd_current" xml:space="preserve"><value>本月累計</value></data>

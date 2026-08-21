@@ -203,8 +203,9 @@
         return v.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
     }
 
+    // kWh 顯示一律小數一位（0 → 0.0），與用電報表／能源申報／日報一致
     function fmtKwh(v) {
-        return v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return v.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
     }
 
     function renderTable(data) {

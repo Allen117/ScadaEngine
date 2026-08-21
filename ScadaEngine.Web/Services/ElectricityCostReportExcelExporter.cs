@@ -12,7 +12,7 @@ namespace ScadaEngine.Web.Services;
 public class ElectricityCostReportExcelExporter
 {
     private const string CostFormat = "#,##0.0";
-    private const string KwhFormat = "#,##0.00";
+    private const string KwhFormat = "#,##0.0";
 
     private readonly IStringLocalizer<ElectricityCostReportExcelExporter> _l;
 

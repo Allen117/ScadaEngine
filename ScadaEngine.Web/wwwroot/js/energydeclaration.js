@@ -237,6 +237,14 @@
         }
     }
 
+    // kWh / RT·h 顯示一律小數一位（0 → 0.0）+ 千分位，與本頁 Excel 匯出的
+    // 「#,##0.0」對齊。計算與 API 回傳精度不變 —— 這裡只是顯示層。
+    function fmt1(v) {
+        if (v == null) return '--';
+        return Number(v).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    }
+
+    // 效率比值 kWh/RT·h 量級約 0.5～1.5，收成 1 位會失去解析度，維持 3 位
     function fmtEff(v) {
         return (v == null) ? '--' : v.toFixed(3);
     }
@@ -254,20 +262,20 @@
                 return `
                 <tr>
                     <td>${escapeHtml(b.szLabel)}</td>
-                    <td class="text-end"${b.isKwhStale ? ` title="${staleTip}"` : ''}>${b.dKwh.toFixed(3)}${mark}</td>
-                    <td class="text-end">${b.dRtHour.toFixed(1)}</td>
+                    <td class="text-end"${b.isKwhStale ? ` title="${staleTip}"` : ''}>${fmt1(b.dKwh)}${mark}</td>
+                    <td class="text-end">${fmt1(b.dRtHour)}</td>
                     <td class="text-end">${fmtEff(b.dKwhPerRtHour)}</td>
                 </tr>`;
             }).join('') +
                 `<tr class="ed-total">
                     <td>${totalLabel}</td>
-                    <td class="text-end">${data.dTotalKwh.toFixed(3)}</td>
-                    <td class="text-end">${data.dTotalRtHour.toFixed(1)}</td>
+                    <td class="text-end">${fmt1(data.dTotalKwh)}</td>
+                    <td class="text-end">${fmt1(data.dTotalRtHour)}</td>
                     <td class="text-end">${fmtEff(data.dTotalKwhPerRtHour)}</td>
                 </tr>`;
         }
-        document.getElementById('edTotalKwh').textContent = data.dTotalKwh.toFixed(3);
-        document.getElementById('edTotalRt').textContent = data.dTotalRtHour.toFixed(1);
+        document.getElementById('edTotalKwh').textContent = fmt1(data.dTotalKwh);
+        document.getElementById('edTotalRt').textContent = fmt1(data.dTotalRtHour);
         document.getElementById('edTotalEff').textContent = fmtEff(data.dTotalKwhPerRtHour);
 
         const warns = [];
@@ -342,6 +350,10 @@
                     legend: { display: true },
                     tooltip: {
                         callbacks: {
+                            // kWh / RT·h 兩條資料集都收成小數一位（Chart.js 預設會直接印出全精度）
+                            label: function (ctx) {
+                                return `${ctx.dataset.label}: ${fmt1(ctx.parsed.y)}`;
+                            },
                             // footer 顯示該時段效率
                             footer: function (items) {
                                 if (!items.length) return '';

@@ -221,6 +221,19 @@
         }
         $('drDayCompareBody').innerHTML = html;
 
+        // 報告日與上週同日一個放假、一個上班 → 「vs 上週」的比較基準已改變，明白標出來。
+        // 兩天狀態相同時不顯示（同一個星期幾本來就同為平日或同為週末，狀態不同必然來自國定假日或補班日）。
+        // 判定邏輯與後端 DailyReportInsightService.LastWeekBaselineShift 一致。
+        var noteEl = $('drLastWeekNote');
+        if (data.isReportDateHoliday !== data.isLastWeekHoliday) {
+            noteEl.innerHTML = '<i class="fas fa-info-circle me-1"></i>比較基準不同：報告日為' +
+                (data.isReportDateHoliday ? '假日' : '上班日') + '，上週同星期為' +
+                (data.isLastWeekHoliday ? '假日' : '上班日') + '，「vs 上週」的差異僅供參考。';
+            show('drLastWeekNote', true);
+        } else {
+            show('drLastWeekNote', false);
+        }
+
         var weatherLine = $('drWeatherLine');
         if (data.weather && data.weather.dAvgTempDay != null) {
             weatherLine.textContent = '外氣日均溫：報告日 ' + fmtNullable(data.weather.dAvgTempDay) + '°C、前日 ' +
@@ -282,8 +295,10 @@
             maximumFractionDigits: nDigits
         });
     }
-    /// 能源別 → 顯示位數（RT·h 1 位；其餘 null = 預設）
-    function digitsOf(szEnergy) { return szEnergy === 'rth' ? 1 : null; }
+    /// 能源別 → 顯示位數（kWh 與 RT·h 一律 1 位，0 顯示為 0.0；用水/用氣 null = 預設最多 2 位）
+    function digitsOf(szEnergy) {
+        return (szEnergy === 'rth' || szEnergy === 'electricity') ? 1 : null;
+    }
     function fmtNullable(d) { return d == null ? '—' : fmtNum(d); }
     function fmtDiff(d) {
         if (d == null) return '<span class="text-muted">—</span>';

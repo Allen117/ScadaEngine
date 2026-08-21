@@ -28,7 +28,7 @@ public class DailyReportInsightRuleTests
     // ── 假日 ──
 
     [Fact]
-    public void 上週同星期為假日_產出假日提示()
+    public void 報告日上班日而上週同星期放假_提示比較基準不同()
     {
         var data = Data();
         data.isLastWeekHoliday = true;
@@ -36,8 +36,61 @@ public class DailyReportInsightRuleTests
         var hits = DailyReportInsightService.EvaluateRules(data, Setting());
 
         Assert.Single(hits);
-        Assert.Equal("insight.holiday.lastweek", hits[0].szKey);
+        Assert.Equal("insight.holiday.lastweek_offday", hits[0].szKey);
         Assert.Equal("holiday", hits[0].szCategory);
+    }
+
+    [Fact]
+    public void 報告日放假而上週同星期上班_提示比較基準不同()
+    {
+        var data = Data();
+        data.isReportDateHoliday = true;
+        data.isLastWeekHoliday = false;
+
+        var hits = DailyReportInsightService.EvaluateRules(data, Setting());
+
+        // 報告日假日提示 + 上週基準不同提示
+        Assert.Equal(2, hits.Count);
+        Assert.Contains(hits, h => h.szKey == "insight.holiday.report_day");
+        Assert.Contains(hits, h => h.szKey == "insight.holiday.lastweek_workday");
+    }
+
+    [Fact]
+    public void 報告日與上週同星期都放假_不提示上週基準不同()
+    {
+        var data = Data();
+        data.isReportDateHoliday = true;
+        data.isLastWeekHoliday = true;
+
+        var hits = DailyReportInsightService.EvaluateRules(data, Setting());
+
+        // 連假期間兩天同為假日 → 比較基準一致，只留報告日假日提示
+        var single = Assert.Single(hits);
+        Assert.Equal("insight.holiday.report_day", single.szKey);
+    }
+
+    [Fact]
+    public void 報告日與上週同星期都上班_不提示上週基準不同()
+    {
+        var data = Data();
+
+        var hits = DailyReportInsightService.EvaluateRules(data, Setting());
+
+        Assert.DoesNotContain(hits, h => h.szKey.StartsWith("insight.holiday.lastweek"));
+    }
+
+    [Theory]
+    [InlineData(false, false, null)]
+    [InlineData(true, true, null)]
+    [InlineData(false, true, "offday")]
+    [InlineData(true, false, "workday")]
+    public void 上週比較基準判定(bool isReportDateHoliday, bool isLastWeekHoliday, string? szExpected)
+    {
+        var data = Data();
+        data.isReportDateHoliday = isReportDateHoliday;
+        data.isLastWeekHoliday = isLastWeekHoliday;
+
+        Assert.Equal(szExpected, DailyReportInsightService.LastWeekBaselineShift(data));
     }
 
     [Fact]

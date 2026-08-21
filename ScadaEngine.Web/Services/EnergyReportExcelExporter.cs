@@ -11,6 +11,9 @@ namespace ScadaEngine.Web.Services;
 /// </summary>
 public class EnergyReportExcelExporter
 {
+    /// <summary>kWh 儲存格格式 — 顯示小數一位（0 → 0.0），與頁面/日報/能源申報一致。儲存格內的值仍是全精度。</summary>
+    private const string KwhFormat = "#,##0.0";
+
     private readonly IStringLocalizer<EnergyReportExcelExporter> _l;
 
     public EnergyReportExcelExporter(IStringLocalizer<EnergyReportExcelExporter> localizer)
@@ -46,7 +49,7 @@ public class EnergyReportExcelExporter
         ws.Cell(7, 2).Value = szOperator;
         ws.Cell(8, 1).Value = _l["excel.label.total_kwh"].Value;
         ws.Cell(8, 2).Value = result.dTotalKwh;
-        ws.Cell(8, 2).Style.NumberFormat.Format = "#,##0.000";
+        ws.Cell(8, 2).Style.NumberFormat.Format = KwhFormat;
 
         if (bHasChildren)
         {
@@ -94,14 +97,14 @@ public class EnergyReportExcelExporter
             var row = nDataStartRow + 1 + i;
             ws.Cell(row, 1).Value = result.buckets[i].szLabel;
             ws.Cell(row, 2).Value = result.buckets[i].dKwh;
-            ws.Cell(row, 2).Style.NumberFormat.Format = "#,##0.000";
+            ws.Cell(row, 2).Style.NumberFormat.Format = KwhFormat;
             if (bHasChildren)
             {
                 for (var c = 0; c < result.children.Count; c++)
                 {
                     var dVal = i < result.children[c].dKwhPerBucket.Count ? result.children[c].dKwhPerBucket[i] : 0;
                     ws.Cell(row, 3 + c).Value = dVal;
-                    ws.Cell(row, 3 + c).Style.NumberFormat.Format = "#,##0.000";
+                    ws.Cell(row, 3 + c).Style.NumberFormat.Format = KwhFormat;
                 }
             }
         }
@@ -110,13 +113,13 @@ public class EnergyReportExcelExporter
         var sumRow = nDataStartRow + 1 + result.buckets.Count;
         ws.Cell(sumRow, 1).Value = _l["excel.row.total"].Value;
         ws.Cell(sumRow, 2).Value = result.dTotalKwh;
-        ws.Cell(sumRow, 2).Style.NumberFormat.Format = "#,##0.000";
+        ws.Cell(sumRow, 2).Style.NumberFormat.Format = KwhFormat;
         if (bHasChildren)
         {
             for (var c = 0; c < result.children.Count; c++)
             {
                 ws.Cell(sumRow, 3 + c).Value = result.children[c].dTotalKwh;
-                ws.Cell(sumRow, 3 + c).Style.NumberFormat.Format = "#,##0.000";
+                ws.Cell(sumRow, 3 + c).Style.NumberFormat.Format = KwhFormat;
             }
         }
         ws.Range(sumRow, 1, sumRow, nLastCol).Style.Font.Bold = true;

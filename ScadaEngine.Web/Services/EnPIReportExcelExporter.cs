@@ -48,14 +48,11 @@ public class EnPIReportExcelExporter
 
         // 摘要
         ws.Cell(9, 1).Value = _l["excel.label.total_actual"].Value;
-        ws.Cell(9, 2).Value = result.dTotalActual;
-        ws.Cell(9, 2).Style.NumberFormat.Format = "#,##0.000";
+        SetEnergyNum(ws.Cell(9, 2), result.dTotalActual, result.szTargetUnit);
         ws.Cell(10, 1).Value = _l["excel.label.total_predicted"].Value;
-        ws.Cell(10, 2).Value = result.dTotalPredicted;
-        ws.Cell(10, 2).Style.NumberFormat.Format = "#,##0.000";
+        SetEnergyNum(ws.Cell(10, 2), result.dTotalPredicted, result.szTargetUnit);
         ws.Cell(11, 1).Value = _l["excel.label.total_savings"].Value;
-        ws.Cell(11, 2).Value = result.dTotalSavings;
-        ws.Cell(11, 2).Style.NumberFormat.Format = "#,##0.000";
+        SetEnergyNum(ws.Cell(11, 2), result.dTotalSavings, result.szTargetUnit);
         ws.Cell(12, 1).Value = _l["excel.label.overall_enpi"].Value;
         if (result.dOverallEnpi != null)
         {
@@ -101,10 +98,10 @@ public class EnPIReportExcelExporter
             }
             else
             {
-                SetNum(ws.Cell(nRow, 2), b.dActual);
-                SetNum(ws.Cell(nRow, 3), b.dPredicted);
-                SetNum(ws.Cell(nRow, 4), b.dSavings);
-                SetNum(ws.Cell(nRow, 5), b.dCumulativeSavings);
+                SetEnergyNum(ws.Cell(nRow, 2), b.dActual, result.szTargetUnit);
+                SetEnergyNum(ws.Cell(nRow, 3), b.dPredicted, result.szTargetUnit);
+                SetEnergyNum(ws.Cell(nRow, 4), b.dSavings, result.szTargetUnit);
+                SetEnergyNum(ws.Cell(nRow, 5), b.dCumulativeSavings, result.szTargetUnit);
                 if (b.dEnpi != null)
                 {
                     ws.Cell(nRow, 6).Value = b.dEnpi.Value;
@@ -119,9 +116,9 @@ public class EnPIReportExcelExporter
         // 合計列
         ws.Cell(nRow, 1).Value = _l["excel.row.total"].Value;
         ws.Cell(nRow, 1).Style.Font.Bold = true;
-        SetNum(ws.Cell(nRow, 2), result.dTotalActual);
-        SetNum(ws.Cell(nRow, 3), result.dTotalPredicted);
-        SetNum(ws.Cell(nRow, 4), result.dTotalSavings);
+        SetEnergyNum(ws.Cell(nRow, 2), result.dTotalActual, result.szTargetUnit);
+        SetEnergyNum(ws.Cell(nRow, 3), result.dTotalPredicted, result.szTargetUnit);
+        SetEnergyNum(ws.Cell(nRow, 4), result.dTotalSavings, result.szTargetUnit);
         if (result.dOverallEnpi != null)
         {
             ws.Cell(nRow, 6).Value = result.dOverallEnpi.Value;
@@ -145,5 +142,17 @@ public class EnPIReportExcelExporter
         if (dValue == null) return;
         cell.Value = dValue.Value;
         cell.Style.NumberFormat.Format = "#,##0.000";
+    }
+
+    /// <summary>
+    /// 目標變數欄（實績／預測／節能量／累計節能量）。單位為 kWh 時收成小數一位，
+    /// 與用電報表／能源申報／日報一致；點位基線的目標可能是 m³ / °C 等，維持三位。
+    /// 自變數 X 欄不走這裡（單位任意），沿用 <see cref="SetNum"/>。
+    /// </summary>
+    private static void SetEnergyNum(IXLCell cell, double? dValue, string? szTargetUnit)
+    {
+        if (dValue == null) return;
+        cell.Value = dValue.Value;
+        cell.Style.NumberFormat.Format = szTargetUnit == "kWh" ? "#,##0.0" : "#,##0.000";
     }
 }

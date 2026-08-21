@@ -136,7 +136,7 @@ public class DailyReportInsight
 public class DailyReportInsightHit
 {
     public string szCategory { get; set; } = "";
-    /// <summary>resx key，如 insight.holiday.lastweek</summary>
+    /// <summary>resx key，如 insight.holiday.lastweek_offday</summary>
     public string szKey { get; set; } = "";
     /// <summary>能源別 key（electricity/…）；有值時渲染端將其顯示名插入 args[0]</summary>
     public string? szEnergyKey { get; set; }

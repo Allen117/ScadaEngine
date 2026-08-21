@@ -25,16 +25,26 @@
     right: 100%;
 }
 
-/* 父項箭頭改為指向右側 */
+/* 父項箭頭改為指向右側。
+
+   刻意用絕對定位而非 float:right —— float 的箭頭仍是流內元素，
+   當「圖示＋標籤」剛好把 content box 佔滿時（中文標籤 5 字 + fa-fw 圖示
+   就已逼近 Bootstrap 預設的 10rem 選單寬），箭頭會整個掉到下一行，
+   看起來就像箭頭疊在文字底下。絕對定位讓箭頭永遠貼齊右緣，
+   選單寬度只影響美觀、不再影響版面正確性（切英文長標籤亦然）。 */
 .dropdown-submenu > .dropdown-toggle::after {
-    float: right;
-    margin-top: 0.5em;
-    margin-left: 0.5rem;
-    transform: rotate(-90deg);
+    position: absolute;
+    top: 50%;
+    right: 1rem;
+    float: none;
+    margin-top: 0;
+    margin-left: 0;
+    transform: translateY(-50%) rotate(-90deg);
 }
 
-/* 父項本身不是連結，避免點擊後跳頁 */
+/* 父項本身不是連結，避免點擊後跳頁；position 供上面的箭頭定位 */
 .dropdown-submenu > .dropdown-toggle {
+    position: relative;
     cursor: default;
 }
 
@@ -66,6 +76,14 @@
     padding-right: 2.25rem;
 }
 
+/* 選單整體拉寬：Bootstrap 預設 min-width 10rem，中文標籤（如「空調水系統」
+   「卡片顯示設定」）加上固定寬圖示後幾乎貼滿，各列擠成一團。
+   放寬到 13rem 讓文字與右側箭頭之間留有呼吸空間；比 13rem 更長的標籤
+   仍會撐開（.dropdown-item 本身 white-space: nowrap）。 */
+.navbar .dropdown-menu {
+    min-width: 13rem;
+}
+
 /* 小螢幕（navbar 收合成漢堡選單）改為內嵌縮排展開，不做橫向 flyout */
 @media (max-width: 991.98px) {
     .dropdown-submenu > .dropdown-menu {
@@ -83,7 +101,8 @@
         right: auto;
     }
 
+    /* 內嵌展開時箭頭改回朝下（僅去掉旋轉，垂直置中的 translateY 要留著） */
     .dropdown-submenu > .dropdown-toggle::after {
-        transform: none;
+        transform: translateY(-50%);
     }
 }

@@ -56,7 +56,8 @@
   <data name="insight.energy.gas" xml:space="preserve"><value>用氣</value></data>
   <data name="insight.energy.rth" xml:space="preserve"><value>冷凍噸</value></data>
   <data name="insight.holiday.report_day" xml:space="preserve"><value>報告日為假日，能耗型態與工作日不同屬正常</value></data>
-  <data name="insight.holiday.lastweek" xml:space="preserve"><value>上週同星期為假日，比較僅供參考</value></data>
+  <data name="insight.holiday.lastweek_offday" xml:space="preserve"><value>比較基準不同：報告日為上班日、上週同星期為假日，vs 上週同星期比較僅供參考</value></data>
+  <data name="insight.holiday.lastweek_workday" xml:space="preserve"><value>比較基準不同：報告日為假日、上週同星期為上班日，vs 上週同星期比較僅供參考</value></data>
   <data name="insight.holiday.prevday" xml:space="preserve"><value>前日為假日，vs 前日比較僅供參考</value></data>
   <data name="insight.weather.higher_lastweek" xml:space="preserve"><value>報告日均溫 {0}°C，較上週同星期高 {1}°C，空調負載增加為可能原因</value></data>
   <data name="insight.weather.lower_lastweek" xml:space="preserve"><value>報告日均溫 {0}°C，較上週同星期低 {1}°C，空調負載減少為可能原因</value></data>

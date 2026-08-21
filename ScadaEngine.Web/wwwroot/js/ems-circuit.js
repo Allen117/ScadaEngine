@@ -256,7 +256,10 @@
                         callbacks: {
                             label: function (ctx) {
                                 var v = ctx.parsed.y;
-                                return (v != null ? v.toFixed(1) : '0') + ' ' + _cfg.unit;
+                                // 固定小數一位（0 → 0.0）+ 千分位，與 EMS 卡片／各報表的數值顯示一致
+                                return Number(v != null ? v : 0).toLocaleString('en-US', {
+                                    minimumFractionDigits: 1, maximumFractionDigits: 1
+                                }) + ' ' + _cfg.unit;
                             }
                         }
                     }

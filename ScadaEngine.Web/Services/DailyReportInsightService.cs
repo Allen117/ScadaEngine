@@ -61,8 +61,14 @@ public class DailyReportInsightService
         {
             if (data.isReportDateHoliday)
                 hits.Add(new DailyReportInsightHit { szCategory = "holiday", szKey = "insight.holiday.report_day" });
-            if (data.isLastWeekHoliday)
-                hits.Add(new DailyReportInsightHit { szCategory = "holiday", szKey = "insight.holiday.lastweek" });
+
+            // vs 上週同星期：只在「報告日與上週同日的假日/上班日狀態不同」時提示。
+            // 兩天狀態相同（例如連假期間兩天都放假）代表比較基準一致，提示只會變成噪音。
+            // 同一個星期幾本來就同為平日或同為週末，故狀態不同必然來自國定假日或補班日。
+            var szShift = LastWeekBaselineShift(data);
+            if (szShift != null)
+                hits.Add(new DailyReportInsightHit { szCategory = "holiday", szKey = $"insight.holiday.lastweek_{szShift}" });
+
             if (data.isPrevDayHoliday)
                 hits.Add(new DailyReportInsightHit { szCategory = "holiday", szKey = "insight.holiday.prevday" });
         }
@@ -140,6 +146,20 @@ public class DailyReportInsightService
             hits.Add(new DailyReportInsightHit { szCategory = "none", szKey = "insight.none" });
 
         return hits;
+    }
+
+    /// <summary>
+    /// 「vs 上週同星期」比較基準是否改變 —— 報告日與上週同日的假日/上班日狀態**不同**時才回傳，
+    /// 相同（都放假或都上班）回傳 null。
+    ///
+    /// 智慧提示、日報 Email、/DailyReport 頁面三處都要這個判定，集中在這裡才不會各寫一份而漂移；
+    /// 回傳的是「情境代碼」而非完整 resx key，各處自行接上own 命名空間的前綴。
+    /// </summary>
+    /// <returns>"offday"（報告日上班、上週同日放假）／"workday"（報告日放假、上週同日上班）／null（不需備註）</returns>
+    public static string? LastWeekBaselineShift(DailyReportData data)
+    {
+        if (data.isReportDateHoliday == data.isLastWeekHoliday) return null;
+        return data.isReportDateHoliday ? "workday" : "offday";
     }
 
     /// <summary>數值一律 invariant 格式化再進模板（避免 culture 小數點差異）；兩位小數足夠涵蓋比值精度</summary>

@@ -895,9 +895,9 @@
         document.getElementById('enpiResultArea').style.display = '';
         var szUnit = r.szTargetUnit || '';
         var cards = [
-            { label: t('enb.enpi.total_actual'), value: nf(r.dTotalActual, 2) + ' ' + szUnit, cls: '' },
-            { label: t('enb.enpi.total_predicted'), value: nf(r.dTotalPredicted, 2) + ' ' + szUnit, cls: '' },
-            { label: t('enb.enpi.total_savings'), value: nf(r.dTotalSavings, 2) + ' ' + szUnit, cls: r.dTotalSavings >= 0 ? 'enb-stat-good' : 'enb-stat-bad' },
+            { label: t('enb.enpi.total_actual'), value: nfEnergy(r.dTotalActual, 2, szUnit) + ' ' + szUnit, cls: '' },
+            { label: t('enb.enpi.total_predicted'), value: nfEnergy(r.dTotalPredicted, 2, szUnit) + ' ' + szUnit, cls: '' },
+            { label: t('enb.enpi.total_savings'), value: nfEnergy(r.dTotalSavings, 2, szUnit) + ' ' + szUnit, cls: r.dTotalSavings >= 0 ? 'enb-stat-good' : 'enb-stat-bad' },
             { label: t('enb.enpi.overall'), value: r.dOverallEnpi != null ? r.dOverallEnpi.toFixed(4) : '—', cls: (r.dOverallEnpi != null && r.dOverallEnpi <= 1) ? 'enb-stat-good' : 'enb-stat-bad' }
         ];
         document.getElementById('enpiSummaryCards').innerHTML = cards.map(function (c) {
@@ -946,10 +946,10 @@
             }
             var szSavCls = (b.dSavings != null && b.dSavings < 0) ? ' text-danger' : '';
             return '<tr><td>' + escapeHtml(b.szLabel) + '</td>'
-                + '<td class="text-end">' + nf(b.dActual, 3) + '</td>'
-                + '<td class="text-end">' + nf(b.dPredicted, 3) + '</td>'
-                + '<td class="text-end' + szSavCls + '">' + nf(b.dSavings, 3) + '</td>'
-                + '<td class="text-end">' + nf(b.dCumulativeSavings, 3) + '</td>'
+                + '<td class="text-end">' + nfEnergy(b.dActual, 3, szUnit) + '</td>'
+                + '<td class="text-end">' + nfEnergy(b.dPredicted, 3, szUnit) + '</td>'
+                + '<td class="text-end' + szSavCls + '">' + nfEnergy(b.dSavings, 3, szUnit) + '</td>'
+                + '<td class="text-end">' + nfEnergy(b.dCumulativeSavings, 3, szUnit) + '</td>'
                 + '<td class="text-end">' + (b.dEnpi != null ? b.dEnpi.toFixed(4) : '—') + '</td></tr>';
         }).join('');
     }
@@ -969,7 +969,7 @@
         if (!r.hasSource) { alert(t('enb.seu.no_source')); return; }
         document.getElementById('seuResultArea').style.display = '';
         document.getElementById('seuChartTitle').textContent =
-            t('enb.seu.title', { name: r.sourceName || t('enb.seu.all_roots'), total: nf(r.totalKwh, 0) });
+            t('enb.seu.title', { name: r.sourceName || t('enb.seu.all_roots'), total: nfEnergy(r.totalKwh, 0, 'kWh') });
 
         var labels = r.items.map(function (it) { return it.name; });
         if (g_seuChart) { g_seuChart.destroy(); g_seuChart = null; }
@@ -1006,7 +1006,7 @@
             return '<tr' + (it.isSeu ? ' class="table-success"' : '') + '>'
                 + '<td>' + (i + 1) + '</td>'
                 + '<td>' + escapeHtml(it.name) + '</td>'
-                + '<td class="text-end">' + nf(it.kwh, 2) + '</td>'
+                + '<td class="text-end">' + nfEnergy(it.kwh, 2, 'kWh') + '</td>'
                 + '<td class="text-end">' + it.pct.toFixed(2) + '%</td>'
                 + '<td class="text-end">' + it.cumPct.toFixed(2) + '%</td>'
                 + '<td class="text-center">' + (it.isSeu ? '<span class="badge bg-success">SEU</span>' : '') + '</td></tr>';
@@ -1035,6 +1035,15 @@
     function nf(dValue, nDigits) {
         if (dValue == null || isNaN(dValue)) return '—';
         return Number(dValue).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: nDigits });
+    }
+
+    // 目標變數是 kWh 時，實績／預測／節能量一律小數一位（0 → 0.0），與全站 kWh 一致；
+    // 點位基線的目標可能是 m³ / °C 等其他單位，那些沿用原本位數。
+    // 迴歸統計量（R²／p-value／係數／CV(RMSE)／EnPI 比值）不走這裡，維持高位數。
+    function nfEnergy(dValue, nDigits, szUnit) {
+        if (szUnit !== 'kWh') return nf(dValue, nDigits);
+        if (dValue == null || isNaN(dValue)) return '—';
+        return Number(dValue).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
     }
 
     function escapeHtml(szText) {

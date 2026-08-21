@@ -56,7 +56,8 @@
   <data name="insight.energy.gas" xml:space="preserve"><value>Gas</value></data>
   <data name="insight.energy.rth" xml:space="preserve"><value>Refrigeration ton</value></data>
   <data name="insight.holiday.report_day" xml:space="preserve"><value>The report day is a holiday; a different consumption pattern from workdays is expected</value></data>
-  <data name="insight.holiday.lastweek" xml:space="preserve"><value>The same weekday last week was a holiday; the comparison is for reference only</value></data>
+  <data name="insight.holiday.lastweek_offday" xml:space="preserve"><value>Different baseline: the report day was a working day while the same weekday last week was a holiday; the week-over-week comparison is for reference only</value></data>
+  <data name="insight.holiday.lastweek_workday" xml:space="preserve"><value>Different baseline: the report day was a holiday while the same weekday last week was a working day; the week-over-week comparison is for reference only</value></data>
   <data name="insight.holiday.prevday" xml:space="preserve"><value>The previous day was a holiday; the day-over-day comparison is for reference only</value></data>
   <data name="insight.weather.higher_lastweek" xml:space="preserve"><value>Average temperature on the report day was {0}°C, {1}°C higher than the same weekday last week; increased HVAC load is a possible cause</value></data>
   <data name="insight.weather.lower_lastweek" xml:space="preserve"><value>Average temperature on the report day was {0}°C, {1}°C lower than the same weekday last week; reduced HVAC load is a possible cause</value></data>

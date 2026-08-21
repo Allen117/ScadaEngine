@@ -207,6 +207,13 @@
         }
     }
 
+    // kWh 顯示一律小數一位（0 → 0.0，整欄右對齊才切齊），千分位保留。
+    // 計算與 API 回傳精度不變 —— 這裡只是顯示層。
+    function fmtKwh(v) {
+        if (v == null) return '--';
+        return Number(v).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    }
+
     function renderTable(data) {
         const tbody = document.getElementById('erTableBody');
         if (!data.buckets || data.buckets.length === 0) {
@@ -221,12 +228,12 @@
                 return `
                 <tr${rowAttr}>
                     <td>${escapeHtml(b.szLabel)}${mark}</td>
-                    <td class="text-end">${b.dKwh.toFixed(3)}</td>
+                    <td class="text-end">${fmtKwh(b.dKwh)}</td>
                 </tr>`;
             }).join('') +
-                `<tr class="er-total"><td>${totalLabel}</td><td class="text-end">${data.dTotalKwh.toFixed(3)}</td></tr>`;
+                `<tr class="er-total"><td>${totalLabel}</td><td class="text-end">${fmtKwh(data.dTotalKwh)}</td></tr>`;
         }
-        document.getElementById('erTotal').textContent = data.dTotalKwh.toFixed(3);
+        document.getElementById('erTotal').textContent = fmtKwh(data.dTotalKwh);
         document.getElementById('erWarnText').textContent = data.isHasWarning
             ? t('energyreport.warning.kwh_overflow') : '';
     }
@@ -291,13 +298,13 @@
                 // 每根 bar 顯示「子名稱: 值 kWh」
                 label: function (ctx) {
                     const v = ctx.parsed.y;
-                    return `${ctx.dataset.label}: ${(v == null ? 0 : v).toFixed(3)} kWh`;
+                    return `${ctx.dataset.label}: ${fmtKwh(v == null ? 0 : v)} kWh`;
                 },
                 // footer 顯示該 bucket 的合計
                 footer: function (items) {
                     let sum = 0;
                     items.forEach(it => { if (it.parsed && it.parsed.y != null) sum += it.parsed.y; });
-                    return t('energyreport.chart.breakdown_total_label', { 0: sum.toFixed(3) });
+                    return t('energyreport.chart.breakdown_total_label', { 0: fmtKwh(sum) });
                 },
                 afterBody: staleAfterBody
             };

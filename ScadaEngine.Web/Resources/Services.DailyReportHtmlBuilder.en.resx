@@ -92,6 +92,8 @@
   <data name="mail.col.lastweek" xml:space="preserve"><value>Same weekday last week</value></data>
   <data name="mail.col.diff_lastweek" xml:space="preserve"><value>vs last week</value></data>
   <data name="mail.efficiency.label" xml:space="preserve"><value>kWh/RTh (power per refrigeration ton)</value></data>
+  <data name="mail.lastweek_note.offday" xml:space="preserve"><value>* Different baseline: the report day was a working day but the same weekday last week was a holiday — treat the week-over-week difference as reference only</value></data>
+  <data name="mail.lastweek_note.workday" xml:space="preserve"><value>* Different baseline: the report day was a holiday but the same weekday last week was a working day — treat the week-over-week difference as reference only</value></data>
   <data name="mail.weather.line" xml:space="preserve"><value>Outdoor avg temp: report day {0}°C, prev. day {1}°C, same weekday last week {2}°C</value></data>
   <data name="mail.section.mtd" xml:space="preserve"><value>Month-to-Date vs Last Year</value></data>
   <data name="mail.col.mtd_current" xml:space="preserve"><value>This month</value></data>

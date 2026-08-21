@@ -87,7 +87,8 @@ public class EnergyDeclarationExcelExporter
             var bucket = result.buckets[i];
             ws.Cell(row, 1).Value = bucket.szLabel;
             ws.Cell(row, 2).Value = bucket.dKwh;
-            ws.Cell(row, 2).Style.NumberFormat.Format = "#,##0.000";
+            // kWh 顯示小數一位（與頁面一致）；效率比值 kWh/RT·h 量級小，維持三位
+            ws.Cell(row, 2).Style.NumberFormat.Format = "#,##0.0";
             ws.Cell(row, 3).Value = bucket.dRtHour;
             ws.Cell(row, 3).Style.NumberFormat.Format = "#,##0.0";
             if (bucket.dKwhPerRtHour.HasValue)
@@ -106,7 +107,7 @@ public class EnergyDeclarationExcelExporter
         var sumRow = nDataStartRow + 1 + result.buckets.Count;
         ws.Cell(sumRow, 1).Value = _l["excel.row.total"].Value;
         ws.Cell(sumRow, 2).Value = result.dTotalKwh;
-        ws.Cell(sumRow, 2).Style.NumberFormat.Format = "#,##0.000";
+        ws.Cell(sumRow, 2).Style.NumberFormat.Format = "#,##0.0";
         ws.Cell(sumRow, 3).Value = result.dTotalRtHour;
         ws.Cell(sumRow, 3).Style.NumberFormat.Format = "#,##0.0";
         if (result.dTotalKwhPerRtHour.HasValue)

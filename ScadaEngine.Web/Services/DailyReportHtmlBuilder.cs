@@ -216,6 +216,14 @@ public class DailyReportHtmlBuilder
         }
         sb.Append("</table>");
 
+        // 報告日與上週同日的假日/上班日狀態不同 → 標明「vs 上週同星期」的比較基準已改變
+        var szShift = DailyReportInsightService.LastWeekBaselineShift(data);
+        if (szShift != null)
+        {
+            sb.Append($"<div style=\"color:{COLOR_MUTED};font-size:12px;margin-top:4px;\">"
+                + $"{H(_l[$"mail.lastweek_note.{szShift}"].Value)}</div>");
+        }
+
         if (data.weather?.dAvgTempDay != null)
         {
             sb.Append($"<div style=\"color:{COLOR_MUTED};font-size:12px;margin-top:4px;\">{H(_l["mail.weather.line",
@@ -272,11 +280,13 @@ public class DailyReportHtmlBuilder
     private static string FormatNullable(double? d) => d.HasValue ? d.Value.ToString("#,0.##") : "—";
 
     /// <summary>
-    /// 能源別數值格式 — RT·h 一律一位小數（與 /RefrigerationTonReport、/EnergyDeclaration 一致），
-    /// 其餘（kWh / m³）維持「最多兩位」。效率比值 kWh/RTh 不走此路徑（沿用 FormatNullable）。
+    /// 能源別數值格式 — kWh 與 RT·h 一律一位小數（0 顯示為 0.0，與 /EnergyReport、
+    /// /RefrigerationTonReport、/EnergyDeclaration、/DailyReport 頁面一致），
+    /// 用水 / 用氣（m³、度）維持「最多兩位」。
+    /// 效率比值 kWh/RTh 不走此路徑（沿用 FormatNullable，量級小需保留位數）。
     /// </summary>
     private static string FormatEnergy(double d, string szEnergy) =>
-        d.ToString(szEnergy == "rth" ? "#,0.0" : "#,0.##");
+        d.ToString(szEnergy is "rth" or "electricity" ? "#,0.0" : "#,0.##");
 
     /// <summary>HTML encode（防止警報訊息 / 迴路名含標籤字元）</summary>
     private static string H(string? sz) => System.Net.WebUtility.HtmlEncode(sz ?? "");
