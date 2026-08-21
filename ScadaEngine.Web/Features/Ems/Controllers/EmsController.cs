@@ -29,6 +29,8 @@ public class EmsController : Controller
     private readonly GasMeterCircuitService _gasCircuitService;
     private readonly GasUsageReportService _gasReportService;
     private readonly GasCostService _gasCostService;
+    private readonly WaterCircuitService _chilledWaterCircuitService;
+    private readonly RefrigerationTonReportService _rtReportService;
 
     public EmsController(
         IDataRepository repo,
@@ -45,7 +47,9 @@ public class EmsController : Controller
         GasBillingPeriodService gasBillingPeriodService,
         GasMeterCircuitService gasCircuitService,
         GasUsageReportService gasReportService,
-        GasCostService gasCostService)
+        GasCostService gasCostService,
+        WaterCircuitService chilledWaterCircuitService,
+        RefrigerationTonReportService rtReportService)
     {
         _repo                 = repo;
         _circuitService       = circuitService;
@@ -62,6 +66,8 @@ public class EmsController : Controller
         _gasCircuitService    = gasCircuitService;
         _gasReportService     = gasReportService;
         _gasCostService       = gasCostService;
+        _chilledWaterCircuitService = chilledWaterCircuitService;
+        _rtReportService      = rtReportService;
     }
 
     [HttpGet("/EMS")]
@@ -688,14 +694,57 @@ public class EmsController : Controller
         return Ok(await _gasCostService.GetStatusAsync(circuitId));
     }
 
+    // ─────────────────── 空調水系統（冷凍噸）迴路資訊 API ───────────────────
+
+    /// <summary>取得空調水系統迴路完整階層（flat 清單，前端組樹）</summary>
+    [HttpGet("/EMS/api/chilled-water-circuit-tree")]
+    public async Task<IActionResult> GetChilledWaterCircuitTree()
+    {
+        var nodes = await _chilledWaterCircuitService.GetAllAsync();
+        return Ok(nodes.Select(n => new
+        {
+            id        = n.nId,
+            name      = n.szName,
+            parentId  = n.nParentId,
+            sortOrder = n.nSortOrder
+        }));
+    }
+
+    /// <summary>取得指定空調水系統迴路的冷量 RT·h（長條圖用）</summary>
+    /// <param name="circuitId">迴路 ID</param>
+    /// <param name="granularity">month / day / hour（同 circuit-energy）</param>
+    /// <param name="pivot">month=年份(2026)；day=年月(2026-06)；hour=日期(2026-06-29)</param>
+    [HttpGet("/EMS/api/chilled-water-rth")]
+    public async Task<IActionResult> GetChilledWaterRth(
+        [FromQuery] int? circuitId,
+        [FromQuery] string? granularity,
+        [FromQuery] string? pivot)
+    {
+        if (circuitId == null || string.IsNullOrWhiteSpace(granularity) || string.IsNullOrWhiteSpace(pivot))
+            return BadRequest(new { error = "circuitId, granularity, pivot 皆為必填" });
+
+        DateTime dtStart, dtEnd;
+        try { (dtStart, dtEnd) = ParseCalendarPivot(granularity, pivot); }
+        catch { return BadRequest(new { error = "pivot 格式不正確" }); }
+
+        var result = await _rtReportService.GetReportAsync(circuitId.Value, granularity, dtStart, dtEnd);
+        return Ok(new EmsChilledWaterRthDto
+        {
+            labels     = result.buckets.Select(b => b.szLabel).ToList(),
+            values     = result.buckets.Select(b => b.dRtHour).ToList(),
+            hasWarning = result.isHasWarning
+        });
+    }
+
     /// <summary>
     /// pivot → 報表服務的 (dtStart, dtEnd)，**電費期別**版（用電長條/圓餅/去年同期/電費卡）。
     /// month（年檢視）：pivot=年份 → 期別 1~12 月（報表月粒度語意 = 含頭尾期別）；
     /// day（月檢視）：pivot=YYYY-MM → 該期別的實際起訖日（日粒度 dtEnd 為含訖日）；
     /// hour（日檢視）：pivot=YYYY-MM-DD → 該日（維持自然日，不受期別影響）。
     ///
-    /// ⚠️ 水表卡片請用 <see cref="ParseWaterPivotAsync"/>、氣表卡片請用 <see cref="ParseGasPivotAsync"/> —
-    /// 三者刻意拆成三支而非加參數，讓「呼叫錯期別」變成編譯期選錯函式（看得見），
+    /// ⚠️ 水表卡片請用 <see cref="ParseWaterPivotAsync"/>、氣表卡片請用 <see cref="ParseGasPivotAsync"/>、
+    /// 空調水系統（冷凍噸）請用 <see cref="ParseCalendarPivot"/>（不走期別）—
+    /// 刻意拆成四支而非加參數，讓「呼叫錯期別」變成編譯期選錯函式（看得見），
     /// 而不是靜默走錯期別（查不出來）。
     /// </summary>
     private Task<(DateTime Start, DateTime End)> ParsePivotAsync(string granularity, string pivot)
@@ -714,6 +763,38 @@ public class EmsController : Controller
     /// </summary>
     private Task<(DateTime Start, DateTime End)> ParseGasPivotAsync(string granularity, string pivot)
         => ParsePivotCoreAsync(granularity, pivot, PeriodKind.Gas);
+
+    /// <summary>
+    /// pivot → (dtStart, dtEnd)，**曆制**版（空調水系統冷凍噸卡）。**刻意不吃任何月結期別** —
+    /// <see cref="RefrigerationTonReportService"/> 月粒度已固定走曆月（綁能源申報、且冷凍噸不是算錢的報表），
+    /// 這裡若套上水費／電費期別，同一迴路在本頁與 /RefrigerationTonReport 會出現不同數字。
+    /// 無期別查詢 → 同步方法即可，不需 async。
+    /// </summary>
+    private static (DateTime Start, DateTime End) ParseCalendarPivot(string granularity, string pivot)
+    {
+        var ci = System.Globalization.CultureInfo.InvariantCulture;
+        switch (granularity)
+        {
+            case "month":
+                {
+                    var nYear = int.Parse(pivot);
+                    return (new DateTime(nYear, 1, 1), new DateTime(nYear, 12, 1));
+                }
+            case "day":
+                {
+                    var dtYM = DateTime.ParseExact(pivot + "-01", "yyyy-MM-dd", ci);
+                    // dtEnd 採「含訖」語意 = 最後一格 bucket 的起點（該曆月最後一天）
+                    return (dtYM, dtYM.AddMonths(1).AddDays(-1));
+                }
+            case "hour":
+                {
+                    var dtDay = DateTime.ParseExact(pivot, "yyyy-MM-dd", ci);
+                    return (dtDay, dtDay.AddHours(23));
+                }
+            default:
+                throw new ArgumentException("不支援的 granularity");
+        }
+    }
 
     /// <summary>期別來源三選一 — 電費 / 水費 / 氣費各自獨立設定</summary>
     private enum PeriodKind { Electricity, Water, Gas }

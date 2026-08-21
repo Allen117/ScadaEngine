@@ -144,7 +144,7 @@
                     <ul class="navbar-nav me-auto">
                         @if (isEmsMode)
                         {
-                            @if (canAccess("/ElectricityCircuitInfo") || canAccess("/WaterCircuitInfo") || canAccess("/GasCircuitInfo"))
+                            @if (canAccess("/ChilledWaterCircuitInfo") || canAccess("/ElectricityCircuitInfo") || canAccess("/WaterCircuitInfo") || canAccess("/GasCircuitInfo"))
                             {
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
@@ -152,6 +152,10 @@
                                         @Localizer["layout.menu.circuit_info"]
                                     </a>
                                     <ul class="dropdown-menu">
+                                        @if (canAccess("/ChilledWaterCircuitInfo"))
+                                        {
+                                            <li><a class="dropdown-item" href="/ChilledWaterCircuitInfo"><i class="fas fa-snowflake me-2"></i>@Localizer["layout.menu.chilled_water_circuit_info"]</a></li>
+                                        }
                                         @if (canAccess("/ElectricityCircuitInfo"))
                                         {
                                             <li><a class="dropdown-item" href="/ElectricityCircuitInfo"><i class="fas fa-bolt me-2"></i>@Localizer["layout.menu.electricity_circuit_info"]</a></li>

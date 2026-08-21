@@ -98,8 +98,9 @@
   <data name="layout.menu.daily_report" xml:space="preserve"><value>Daily Energy Report</value></data>
   <data name="layout.menu.daily_report_setting" xml:space="preserve"><value>Daily Report Settings</value></data>
   <data name="layout.menu.circuit_info" xml:space="preserve"><value>Circuit Info</value></data>
+  <data name="layout.menu.chilled_water_circuit_info" xml:space="preserve"><value>Chilled Water Circuit</value></data>
   <data name="layout.menu.electricity_circuit_info" xml:space="preserve"><value>Electricity Circuit Info</value></data>
-  <data name="layout.menu.water_circuit_info" xml:space="preserve"><value>Water Circuit Info</value></data>
+  <data name="layout.menu.water_circuit_info" xml:space="preserve"><value>Water Meter Circuit Info</value></data>
   <data name="layout.menu.gas_circuit_info" xml:space="preserve"><value>Gas Circuit Info</value></data>
 
   <data name="layout.menu.system" xml:space="preserve"><value>System Settings</value></data>

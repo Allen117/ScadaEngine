@@ -2,10 +2,18 @@
     'use strict';
 
     // ── 能源別設定 ────────────────────────────────────────────────────────────
-    // 三頁（電力 / 水 / 氣）共用本檔，差異只有 endpoint、單位與色系 —
-    // 後端三組 API 回傳契約一致（labels[] / values[]），期別語意已各自在後端 Parse*PivotAsync 吸收。
+    // 四頁（空調水系統 / 電力 / 自來水 / 氣）共用本檔，差異只有 endpoint、單位與色系 —
+    // 後端四組 API 回傳契約一致（labels[] / values[]），期別語意已各自在後端 Parse*Pivot* 吸收
+    // （空調水系統走曆制 ParseCalendarPivot，刻意不吃月結期別）。
     // View 只需在 .ems-circuit-page 上標 data-kind，其餘由此表決定。
     var CONFIG = {
+        chilledwater: {
+            treeUrl:  '/EMS/api/chilled-water-circuit-tree',
+            usageUrl: '/EMS/api/chilled-water-rth',
+            unit:     'RT·h',
+            fill:     'rgba(0,131,143,0.55)',
+            border:   '#00838f'
+        },
         electricity: {
             treeUrl:  '/EMS/api/circuit-tree',
             usageUrl: '/EMS/api/circuit-energy',
