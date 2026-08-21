@@ -55,7 +55,7 @@
   <data name="refrigerationtonreport.breadcrumb.energy" xml:space="preserve"><value>Energy Management</value></data>
 
   <data name="refrigerationtonreport.filter.title" xml:space="preserve"><value>Query Conditions</value></data>
-  <data name="refrigerationtonreport.filter.circuit" xml:space="preserve"><value>Water Circuit</value></data>
+  <data name="refrigerationtonreport.filter.circuit" xml:space="preserve"><value>Chilled Water Circuit</value></data>
   <data name="refrigerationtonreport.filter.granularity" xml:space="preserve"><value>Granularity</value></data>
   <data name="refrigerationtonreport.filter.hour_start" xml:space="preserve"><value>From Hour</value></data>
   <data name="refrigerationtonreport.filter.hour_end" xml:space="preserve"><value>To Hour</value></data>
@@ -95,10 +95,10 @@
   <data name="refrigerationtonreport.warning.data_incomplete" xml:space="preserve"><value>⚠ Some hours have insufficient samples (&lt; 30/hour); those segments are treated as missing</value></data>
 
   <data name="refrigerationtonreport.select.loading" xml:space="preserve"><value>-- Loading --</value></data>
-  <data name="refrigerationtonreport.select.placeholder" xml:space="preserve"><value>-- Select Water Circuit --</value></data>
-  <data name="refrigerationtonreport.select.empty" xml:space="preserve"><value>No water circuits configured</value></data>
+  <data name="refrigerationtonreport.select.placeholder" xml:space="preserve"><value>-- Select Chilled Water Circuit --</value></data>
+  <data name="refrigerationtonreport.select.empty" xml:space="preserve"><value>No chilled water circuits configured</value></data>
 
-  <data name="refrigerationtonreport.alert.select_circuit" xml:space="preserve"><value>Please select a water circuit</value></data>
+  <data name="refrigerationtonreport.alert.select_circuit" xml:space="preserve"><value>Please select a chilled water circuit</value></data>
   <data name="refrigerationtonreport.alert.month_order" xml:space="preserve"><value>End month must not be earlier than start month</value></data>
   <data name="refrigerationtonreport.alert.day_order" xml:space="preserve"><value>End date must not be earlier than start date</value></data>
   <data name="refrigerationtonreport.alert.hour_order" xml:space="preserve"><value>End hour must not be earlier than start hour</value></data>

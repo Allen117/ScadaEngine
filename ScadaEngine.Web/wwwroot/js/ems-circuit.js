@@ -209,13 +209,13 @@
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 renderBar(granularity, data.labels, data.values);
-                // 水 / 氣 API 才有 hasWarning（區間內有時段資料缺漏）；電力頁無對應元素 → no-op
+                // 空調水系統 / 自來水 / 氣 API 才有 hasWarning（區間內有時段資料缺漏）；電力頁無對應元素 → no-op
                 setWarn(granularity, data.hasWarning === true);
             })
             .catch(function (e) { console.error('[ems-circuit] fetch 失敗', granularity, e); });
     }
 
-    // ── 資料缺漏警示（水 / 氣）────────────────────────────────────────────────
+    // ── 資料缺漏警示（空調水系統 / 自來水 / 氣）───────────────────────────────
     function setWarn(granularity, isWarn) {
         var el = document.querySelector('.ems-circuit-warn[data-warn="' + granularity + '"]');
         if (!el) return;

@@ -1,8 +1,8 @@
 namespace ScadaEngine.Common.Data.Models;
 
 /// <summary>
-/// 水表迴路階層 — 對應 WaterMeterCircuit 資料表（累積式水表 m³/L）。
-/// 與 WaterCircuitModel（冰水系統冷凍噸 RT）無關。
+/// 自來水表迴路階層 — 對應 WaterMeterCircuit 資料表（累積式水表 m³/L）。
+/// 與 WaterCircuitModel（空調水系統冷凍噸 RT）無關。
 /// </summary>
 public class WaterMeterCircuitModel
 {

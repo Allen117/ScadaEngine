@@ -7,7 +7,7 @@ namespace ScadaEngine.Web.Services;
 
 /// <summary>
 /// 氣表/迴路階層 CRUD — 自參照樹結構，葉子綁 SID（累積式天然氣表 m³/Nm³/度）。
-/// 與 WaterMeterCircuit（水表）、WaterCircuit（冰水系統冷凍噸）皆無關，三套平行樹各自獨立。
+/// 與 WaterMeterCircuit（水表）、WaterCircuit（空調水系統冷凍噸）皆無關，三套平行樹各自獨立。
 /// </summary>
 public class GasMeterCircuitService
 {

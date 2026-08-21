@@ -469,7 +469,7 @@ public class EmsController : Controller
 
     // ────────────────────────── 水表三卡 API ──────────────────────────
 
-    /// <summary>取得水表迴路完整階層（flat 清單，前端組樹；用水量卡根迴路名 + 水費卡下拉用）</summary>
+    /// <summary>取得自來水表迴路完整階層（flat 清單，前端組樹；用水量卡根迴路名 + 水費卡下拉用）</summary>
     [HttpGet("/EMS/api/water-circuit-tree")]
     public async Task<IActionResult> GetWaterCircuitTree()
     {
@@ -483,7 +483,7 @@ public class EmsController : Controller
         }));
     }
 
-    /// <summary>取得指定水表迴路的用水量（長條圖用）；circuitId 空 = 根迴路（全廠）</summary>
+    /// <summary>取得指定自來水表迴路的用水量（長條圖用）；circuitId 空 = 根迴路（全廠）</summary>
     /// <param name="granularity">month / day / hour（同 circuit-energy）</param>
     /// <param name="pivot">month=年份(2026)；day=年月(2026-06)；hour=日期(2026-06-29)</param>
     [HttpGet("/EMS/api/water-usage")]
@@ -573,7 +573,7 @@ public class EmsController : Controller
         return Ok(dto);
     }
 
-    /// <summary>水費狀態卡 — 指定水表迴路（未指定 = 根迴路）本期累計 m³ 與級距水費</summary>
+    /// <summary>水費狀態卡 — 指定自來水表迴路（未指定 = 根迴路）本期累計 m³ 與級距水費</summary>
     [HttpGet("/EMS/api/water-cost")]
     public async Task<IActionResult> GetWaterCost([FromQuery] int? circuitId)
     {

@@ -50,7 +50,7 @@ public class RefrigerationTonReportService
     {
         var circuit = await _circuitService.GetByIdAsync(nCircuitId);
         if (circuit == null)
-            throw new InvalidOperationException($"水系統迴路 Id={nCircuitId} 不存在");
+            throw new InvalidOperationException($"空調水系統迴路 Id={nCircuitId} 不存在");
 
         var (ranges, labels) = BuildBucketRanges(szGranularity, dtStart, dtEnd);
 
@@ -77,7 +77,7 @@ public class RefrigerationTonReportService
     {
         var circuit = await _circuitService.GetByIdAsync(nCircuitId);
         if (circuit == null)
-            throw new InvalidOperationException($"水系統迴路 Id={nCircuitId} 不存在");
+            throw new InvalidOperationException($"空調水系統迴路 Id={nCircuitId} 不存在");
 
         var (ranges, labels) = BuildBucketRanges(szGranularity, dtStart, dtEnd);
 
@@ -146,7 +146,7 @@ public class RefrigerationTonReportService
     {
         var circuit = await _circuitService.GetByIdAsync(nCircuitId);
         if (circuit == null)
-            throw new InvalidOperationException($"水系統迴路 Id={nCircuitId} 不存在");
+            throw new InvalidOperationException($"空調水系統迴路 Id={nCircuitId} 不存在");
 
         var (ranges, labels) = EnergyReportService.BuildCalendarMonthRanges(nYear);
 

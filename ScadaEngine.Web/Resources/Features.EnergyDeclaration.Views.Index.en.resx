@@ -107,7 +107,7 @@
   <data name="energydeclaration.modal.title_edit" xml:space="preserve"><value>Edit Declaration Report</value></data>
   <data name="energydeclaration.modal.name" xml:space="preserve"><value>Report Name</value></data>
   <data name="energydeclaration.modal.energy_circuit" xml:space="preserve"><value>Energy Source (Energy Circuit)</value></data>
-  <data name="energydeclaration.modal.water_circuit" xml:space="preserve"><value>Refrigeration Source (Water Circuit)</value></data>
+  <data name="energydeclaration.modal.water_circuit" xml:space="preserve"><value>Refrigeration Source (Chilled Water Circuit)</value></data>
   <data name="energydeclaration.modal.description" xml:space="preserve"><value>Description</value></data>
   <data name="energydeclaration.modal.select_circuit" xml:space="preserve"><value>-- Select circuit --</value></data>
   <data name="energydeclaration.modal.cancel" xml:space="preserve"><value>Cancel</value></data>
@@ -115,7 +115,7 @@
 
   <data name="energydeclaration.alert.name_required" xml:space="preserve"><value>Please enter a report name</value></data>
   <data name="energydeclaration.alert.energy_required" xml:space="preserve"><value>Please select an energy circuit</value></data>
-  <data name="energydeclaration.alert.water_required" xml:space="preserve"><value>Please select a refrigeration (water) circuit</value></data>
+  <data name="energydeclaration.alert.water_required" xml:space="preserve"><value>Please select a chilled water circuit</value></data>
   <data name="energydeclaration.alert.save_failed" xml:space="preserve"><value>Save failed: {0}</value></data>
   <data name="energydeclaration.alert.delete_failed" xml:space="preserve"><value>Delete failed: {0}</value></data>
   <data name="energydeclaration.alert.select_report" xml:space="preserve"><value>Please select a declaration report</value></data>

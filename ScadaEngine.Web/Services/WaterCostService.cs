@@ -6,7 +6,7 @@ namespace ScadaEngine.Web.Services;
 /// <summary>
 /// 水費計算 — 對「該迴路自身期別總用水量」套台水分段累進級距（1 度 = 1 m³）。
 /// 每迴路獨立套級距（不做占比分攤 — 與電費 progressive 的根迴路分攤不同，
-/// 水表迴路彼此獨立計量，各自就是一只錶）。
+/// 自來水表迴路彼此獨立計量，各自就是一只錶）。
 /// 方案版本依「期別起日」選用（WaterTariffService.SelectPlanForDate）；
 /// 計費週期走**水費**期別（WaterBillingPeriodService，與電費期別各自獨立）；
 /// 用水量來源 WaterUsageReportService（isHasWarning → isStale 註記）。
@@ -130,7 +130,7 @@ public class WaterCostService
         int nCircuitId, int nFromYear, int nFromMonth, int nToYear, int nToMonth)
     {
         var circuit = await _circuitService.GetByIdAsync(nCircuitId)
-            ?? throw new InvalidOperationException($"水表迴路 Id={nCircuitId} 不存在");
+            ?? throw new InvalidOperationException($"自來水表迴路 Id={nCircuitId} 不存在");
 
         var periods = await _billingPeriodService.GetPeriodRangesAsync(
             new DateTime(nFromYear, nFromMonth, 1), new DateTime(nToYear, nToMonth, 1));

@@ -6,8 +6,8 @@ using ScadaEngine.Common.Data.Services;
 namespace ScadaEngine.Web.Services;
 
 /// <summary>
-/// 水系統迴路階層 CRUD — 自參照樹結構，葉子綁 RT 系列點位 SID。
-/// 與 EnergyCircuitService 同 pattern，但無 Sign / MaxKwh（水系統為瞬時值）。
+/// 空調水系統迴路階層 CRUD — 自參照樹結構，葉子綁 RT 系列點位 SID。
+/// 與 EnergyCircuitService 同 pattern，但無 Sign / MaxKwh（空調水系統為瞬時值）。
 /// </summary>
 public class WaterCircuitService
 {
@@ -185,7 +185,7 @@ public class WaterCircuitService
 
     /// <summary>
     /// 展開指定迴路下的所有葉子（綁 SID 的節點）— 供冷凍噸報表 on-demand 階層加總使用。
-    /// 自參照遞迴 CTE。水系統無 sign，純正向加總。
+    /// 自參照遞迴 CTE。空調水系統無 sign，純正向加總。
     /// </summary>
     public async Task<List<WaterCircuitModel>> GetLeavesUnderAsync(int nCircuitId)
     {

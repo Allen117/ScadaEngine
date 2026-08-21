@@ -1,11 +1,11 @@
 namespace ScadaEngine.Common.Data.Models;
 
 /// <summary>
-/// 冷凍噸報表查詢結果 — 對應某水系統迴路在某粒度下的 N 個 bucket。
+/// 冷凍噸報表查詢結果 — 對應某空調水系統迴路在某粒度下的 N 個 bucket。
 /// 純資料結構，由 RefrigerationTonReportService 產出，View / Excel 匯出使用。
 /// 對標 <see cref="EnergyReportResult"/>，差異：
 ///   - 數值欄位 dKwh / dTotalKwh → dRtHour / dTotalRtHour（冷量 RT·h）
-///   - 無 sign：水系統 WaterCircuit 表本身無 Sign 欄位，階層加總純正向
+///   - 無 sign：空調水系統 WaterCircuit 表本身無 Sign 欄位，階層加總純正向
 /// </summary>
 public class RefrigerationTonReportResult
 {

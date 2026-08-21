@@ -2,7 +2,7 @@ namespace ScadaEngine.Common.Data.Models;
 
 /// <summary>
 /// 能源申報報表設定 — 對應 EnergyDeclarationReport 資料表。
-/// 一列 = 一份申報報表，成對綁定用電迴路（EnergyCircuit）與水系統迴路（WaterCircuit）。
+/// 一列 = 一份申報報表，成對綁定用電迴路（EnergyCircuit）與空調水系統迴路（WaterCircuit）。
 /// </summary>
 public class EnergyDeclarationModel
 {

@@ -1,7 +1,7 @@
 namespace ScadaEngine.Web.Features.WaterMeterSetting.Models;
 
 /// <summary>
-/// 水表迴路樹狀節點 — 給前端組樹用的 DTO（camelCase 無 Hungarian 前綴，直接 JSON 序列化）
+/// 自來水表迴路樹狀節點 — 給前端組樹用的 DTO（camelCase 無 Hungarian 前綴，直接 JSON 序列化）
 /// </summary>
 public class WaterMeterCircuitNodeViewModel
 {

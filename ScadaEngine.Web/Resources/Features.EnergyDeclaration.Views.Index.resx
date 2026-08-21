@@ -107,7 +107,7 @@
   <data name="energydeclaration.modal.title_edit" xml:space="preserve"><value>編輯申報報表</value></data>
   <data name="energydeclaration.modal.name" xml:space="preserve"><value>報表名稱</value></data>
   <data name="energydeclaration.modal.energy_circuit" xml:space="preserve"><value>用電度數來源（用電迴路）</value></data>
-  <data name="energydeclaration.modal.water_circuit" xml:space="preserve"><value>冷凍噸數來源（水系統迴路）</value></data>
+  <data name="energydeclaration.modal.water_circuit" xml:space="preserve"><value>冷凍噸數來源（空調水系統迴路）</value></data>
   <data name="energydeclaration.modal.description" xml:space="preserve"><value>描述</value></data>
   <data name="energydeclaration.modal.select_circuit" xml:space="preserve"><value>-- 請選擇迴路 --</value></data>
   <data name="energydeclaration.modal.cancel" xml:space="preserve"><value>取消</value></data>
@@ -115,7 +115,7 @@
 
   <data name="energydeclaration.alert.name_required" xml:space="preserve"><value>請輸入報表名稱</value></data>
   <data name="energydeclaration.alert.energy_required" xml:space="preserve"><value>請選擇用電迴路</value></data>
-  <data name="energydeclaration.alert.water_required" xml:space="preserve"><value>請選擇冷凍噸（水系統）迴路</value></data>
+  <data name="energydeclaration.alert.water_required" xml:space="preserve"><value>請選擇空調水系統迴路</value></data>
   <data name="energydeclaration.alert.save_failed" xml:space="preserve"><value>儲存失敗：{0}</value></data>
   <data name="energydeclaration.alert.delete_failed" xml:space="preserve"><value>刪除失敗：{0}</value></data>
   <data name="energydeclaration.alert.select_report" xml:space="preserve"><value>請選擇申報報表</value></data>

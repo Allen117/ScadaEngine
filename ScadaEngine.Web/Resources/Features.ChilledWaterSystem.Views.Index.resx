@@ -47,7 +47,7 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
-  <data name="chilledwater.title" xml:space="preserve"><value>水系統迴路設定</value></data>
+  <data name="chilledwater.title" xml:space="preserve"><value>空調水系統迴路設定</value></data>
   <data name="chilledwater.subtitle" xml:space="preserve"><value>能源管理</value></data>
   <data name="chilledwater.tree.header" xml:space="preserve"><value>迴路階層</value></data>
   <data name="chilledwater.tree.loading" xml:space="preserve"><value>載入中...</value></data>
@@ -65,7 +65,7 @@
   <data name="chilledwater.modal.title_create_child" xml:space="preserve"><value>新增子節點</value></data>
   <data name="chilledwater.modal.title_edit" xml:space="preserve"><value>編輯</value></data>
   <data name="chilledwater.modal.name_label" xml:space="preserve"><value>名稱</value></data>
-  <data name="chilledwater.modal.name_placeholder" xml:space="preserve"><value>例如：冰水系統 / 冰機 1</value></data>
+  <data name="chilledwater.modal.name_placeholder" xml:space="preserve"><value>例如：空調水系統 / 冰機 1</value></data>
   <data name="chilledwater.modal.type_label" xml:space="preserve"><value>節點類型</value></data>
   <data name="chilledwater.modal.type_virtual" xml:space="preserve"><value>虛擬迴路</value></data>
   <data name="chilledwater.modal.type_point" xml:space="preserve"><value>實體點位</value></data>

@@ -71,7 +71,7 @@
   <data name="ems.cost.exclude_base" xml:space="preserve"><value>不含基本電費</value></data>
   <data name="ems.cost.data_until" xml:space="preserve"><value>資料計算至 {0}</value></data>
 
-  <data name="ems.water.no_root" xml:space="preserve"><value>尚未建立水表迴路，請先至「水表/迴路設定」建立</value></data>
+  <data name="ems.water.no_root" xml:space="preserve"><value>尚未建立自來水表迴路，請先至「自來水表/迴路設定」建立</value></data>
   <data name="ems.water.no_data" xml:space="preserve"><value>期間內無用水資料</value></data>
   <data name="ems.water.neg_excluded" xml:space="preserve"><value>{0}：{1} m³（未列入占比）</value></data>
   <data name="ems.water.stale_note" xml:space="preserve"><value>部分時段水表資料不完整（可能斷線）</value></data>

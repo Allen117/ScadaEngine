@@ -7,7 +7,7 @@ using ScadaEngine.Web.Services;
 namespace ScadaEngine.Web.Features.WaterCostReport.Controllers;
 
 /// <summary>
-/// 水費報表 — 水表迴路 × 月結期別區間 → 每期用水量（m³）套台水分段累進之水費。
+/// 水費報表 — 自來水表迴路 × 月結期別區間 → 每期用水量（m³）套台水分段累進之水費。
 /// 資料源 WaterUsageReportService（用水量）+ WaterTariffService（費率選版），計算核心在 WaterCostService。
 /// </summary>
 [Authorize]
@@ -37,7 +37,7 @@ public class WaterCostReportController : Controller
         return View(new WaterCostReportViewModel());
     }
 
-    /// <summary>取得水表迴路樹（給左側下拉用）</summary>
+    /// <summary>取得自來水表迴路樹（給左側下拉用）</summary>
     [HttpGet("api/circuits")]
     public async Task<IActionResult> GetCircuits()
     {
@@ -84,7 +84,7 @@ public class WaterCostReportController : Controller
         {
             var circuit = await _circuitService.GetByIdAsync(dto.circuitId);
             if (circuit == null)
-                return BadRequest(new { message = $"水表迴路 Id={dto.circuitId} 不存在" });
+                return BadRequest(new { message = $"自來水表迴路 Id={dto.circuitId} 不存在" });
 
             var rows = await _costService.GetPeriodCostsAsync(
                 dto.circuitId, dtFrom.Year, dtFrom.Month, dtTo.Year, dtTo.Month);

@@ -54,14 +54,14 @@
   <data name="watercostreport.title" xml:space="preserve"><value>水費報表</value></data>
   <data name="watercostreport.breadcrumb.energy" xml:space="preserve"><value>能源管理</value></data>
   <data name="watercostreport.filter.title" xml:space="preserve"><value>查詢條件</value></data>
-  <data name="watercostreport.filter.circuit" xml:space="preserve"><value>水表迴路</value></data>
+  <data name="watercostreport.filter.circuit" xml:space="preserve"><value>自來水表迴路</value></data>
   <data name="watercostreport.filter.month_start" xml:space="preserve"><value>起始期別</value></data>
   <data name="watercostreport.filter.month_end" xml:space="preserve"><value>結束期別</value></data>
   <data name="watercostreport.button.query" xml:space="preserve"><value>查詢</value></data>
   <data name="watercostreport.button.export" xml:space="preserve"><value>匯出 Excel</value></data>
   <data name="watercostreport.select.loading" xml:space="preserve"><value>載入中...</value></data>
   <data name="watercostreport.select.placeholder" xml:space="preserve"><value>請選擇迴路</value></data>
-  <data name="watercostreport.select.empty" xml:space="preserve"><value>無水表迴路資料</value></data>
+  <data name="watercostreport.select.empty" xml:space="preserve"><value>無自來水表迴路資料</value></data>
   <data name="watercostreport.period.hint" xml:space="preserve"><value>期別區間：{0} ~ {1}</value></data>
   <data name="watercostreport.chart.title" xml:space="preserve"><value>各期水費</value></data>
   <data name="watercostreport.chart.dataset_label" xml:space="preserve"><value>{0} 水費</value></data>

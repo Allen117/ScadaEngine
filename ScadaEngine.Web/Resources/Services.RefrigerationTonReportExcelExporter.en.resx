@@ -53,7 +53,7 @@
 
   <data name="excel.sheet_name" xml:space="preserve"><value>Refrigeration Ton Report</value></data>
   <data name="excel.title" xml:space="preserve"><value>Refrigeration Ton Report</value></data>
-  <data name="excel.label.circuit" xml:space="preserve"><value>Water Circuit</value></data>
+  <data name="excel.label.circuit" xml:space="preserve"><value>Chilled Water Circuit</value></data>
   <data name="excel.label.granularity" xml:space="preserve"><value>Granularity</value></data>
   <data name="excel.label.range" xml:space="preserve"><value>Query Range</value></data>
   <data name="excel.label.query_time" xml:space="preserve"><value>Query Time</value></data>

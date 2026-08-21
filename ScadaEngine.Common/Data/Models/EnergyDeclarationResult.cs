@@ -17,7 +17,7 @@ public class EnergyDeclarationResult
     /// <summary>用電迴路名稱（顯示用）</summary>
     public string szEnergyCircuitName { get; set; } = string.Empty;
 
-    /// <summary>水系統迴路名稱（顯示用）</summary>
+    /// <summary>空調水系統迴路名稱（顯示用）</summary>
     public string szWaterCircuitName { get; set; } = string.Empty;
 
     /// <summary>申報年度</summary>

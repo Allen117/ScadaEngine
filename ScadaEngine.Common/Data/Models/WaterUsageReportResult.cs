@@ -1,7 +1,7 @@
 namespace ScadaEngine.Common.Data.Models;
 
 /// <summary>
-/// 用水報表查詢結果 — 對應某水表迴路在某粒度下的 N 個 bucket。
+/// 用水報表查詢結果 — 對應某自來水表迴路在某粒度下的 N 個 bucket。
 /// 純資料結構，由 WaterUsageReportService 產出，View / Excel 匯出使用。
 /// </summary>
 public class WaterUsageReportResult

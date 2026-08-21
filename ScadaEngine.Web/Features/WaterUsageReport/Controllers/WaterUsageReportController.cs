@@ -33,7 +33,7 @@ public class WaterUsageReportController : Controller
         return View(new WaterUsageReportViewModel());
     }
 
-    /// <summary>取得水表迴路樹（給左側下拉用）</summary>
+    /// <summary>取得自來水表迴路樹（給左側下拉用）</summary>
     [HttpGet("api/circuits")]
     public async Task<IActionResult> GetCircuits()
     {

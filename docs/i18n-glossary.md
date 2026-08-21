@@ -28,14 +28,15 @@
 | 能源管理 | Energy Management | top-level menu |
 | 迴路資訊 | Circuit Info | EMS navbar dropdown 群組標題 |
 | 電力迴路資訊 | Electricity Circuit Info | `/ElectricityCircuitInfo`；navbar dropdown 與 Ctrl+K 搜尋共用同一 key |
-| 水迴路資訊 | Water Circuit Info | `/WaterCircuitInfo` |
+| 自來水迴路資訊 | Water Meter Circuit Info | `/WaterCircuitInfo` |
+| 空調水系統迴路 | Chilled Water Circuit | `/ChilledWaterCircuitInfo`（冷凍噸 RT·h 迴路資訊頁）|
 | 氣迴路資訊 | Gas Circuit Info | `/GasCircuitInfo` |
 | 用電報表 | Energy Report | `/EnergyReport` |
 | 電費報表 | Electricity Cost Report | `/ElectricityCostReport` |
 | 冷凍噸報表 | Refrigeration Ton Report | `/RefrigerationTonReport` |
 | 能源申報 | Energy Declaration | `/EnergyDeclaration` |
 | 電表/迴路設定 | Energy Meter / Circuit | `/EnergyMeter` |
-| 水表/迴路設定 | Water Meter / Circuit | `/WaterMeterSetting`（累積式水表，非冰水系統） |
+| 自來水表/迴路設定 | Water Meter / Circuit | `/WaterMeterSetting`（累積式水表，非空調水系統） |
 | 用水報表 | Water Usage Report | `/WaterUsageReport` |
 | 水費設定 | Water Tariff Settings | `/WaterTariffSetting` |
 | 水費報表 | Water Cost Report | `/WaterCostReport` |
@@ -45,7 +46,7 @@
 | 氣費設定 | Gas Tariff Settings | `/GasTariffSetting` |
 | 氣費報表 | Gas Cost Report | `/GasCostReport` |
 | 氣費月結週期 | Gas Billing Cycle | `/GasBillingPeriodSetting` |
-| 水系統迴路設定 | Chilled Water Circuit Settings | `/ChilledWaterSystem` |
+| 空調水系統迴路設定 | Chilled Water Circuit Settings | `/ChilledWaterSystem` |
 | 月結週期設定 | Billing Cycle Settings | `/BillingPeriodSetting` |
 | 電費設定 | Tariff Settings | `/TariffSetting` |
 | 國定假日設定 | National Holidays / National Holiday Settings | `/HolidaySetting`（選單用短形） |
@@ -267,7 +268,9 @@
 
 | zh-TW | en | 備註 |
 |---|---|---|
-| 水表 | Water Meter | 累積式水量表（m³/L），與冰水系統（Chilled Water）區分 |
+| 水表 | Water Meter | 累積式水量表（m³/L），與空調水系統（Chilled Water）區分 |
+| 空調水系統 | Chilled Water System | 冰水主機冷量體系（`WaterCircuit` / RT·h）；顯示名一律用「空調水系統」，勿簡稱「水系統」 |
+| 自來水迴路 | Water Meter Circuit | 累積式水表迴路（`WaterMeterCircuit` / m³）；顯示名一律加「自來水」前綴以與空調水系統區隔 |
 | 用水量 | Water Usage | (m³) |
 | 用水量分布 | Water Usage | chart 標題 |
 | 流動水費 | Water Usage Charge | 台水按度計收（分段累進）；不含基本費 |

@@ -1,6 +1,6 @@
 namespace ScadaEngine.Web.Features.ChilledWaterSystem.Models;
 
-/// <summary>新增水系統迴路節點請求</summary>
+/// <summary>新增空調水系統迴路節點請求</summary>
 public class CreateWaterCircuitDto
 {
     public int? parentId { get; set; }
@@ -9,7 +9,7 @@ public class CreateWaterCircuitDto
     public string? description { get; set; }
 }
 
-/// <summary>更新水系統迴路節點請求</summary>
+/// <summary>更新空調水系統迴路節點請求</summary>
 public class UpdateWaterCircuitDto
 {
     public string name { get; set; } = string.Empty;

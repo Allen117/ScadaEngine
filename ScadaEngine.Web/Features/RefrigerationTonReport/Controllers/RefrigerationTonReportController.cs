@@ -33,7 +33,7 @@ public class RefrigerationTonReportController : Controller
         return View(new RefrigerationTonReportViewModel());
     }
 
-    /// <summary>取得水系統迴路樹（給左側下拉用）</summary>
+    /// <summary>取得空調水系統迴路樹（給左側下拉用）</summary>
     [HttpGet("api/circuits")]
     public async Task<IActionResult> GetCircuits()
     {

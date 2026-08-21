@@ -303,7 +303,7 @@
       ]
     },
     {
-      "_comment": "水系統迴路階層（自參照樹）。葉子綁 RT 系列點位的 SID，虛擬節點不綁 SID。獨立於 EnergyCircuit — 領域分離。",
+      "_comment": "空調水系統迴路階層（自參照樹）。葉子綁 RT 系列點位的 SID，虛擬節點不綁 SID。獨立於 EnergyCircuit — 領域分離。",
       "TableName": "WaterCircuit",
       "Columns": [
         { "Name": "Id",          "Type": "int",      "IsPrimaryKey": true, "IsIdentity": true, "Nullable": false },
@@ -455,7 +455,7 @@
       ]
     },
     {
-      "_comment": "用水報表 — 水表迴路階層（自參照樹）。葉子綁累積式水表點位 SID，虛擬節點不綁 SID。與 WaterCircuit（冰水系統冷凍噸）無關 — 本表為累積量水表（m³/L）。",
+      "_comment": "用水報表 — 自來水表迴路階層（自參照樹）。葉子綁累積式水表點位 SID，虛擬節點不綁 SID。與 WaterCircuit（空調水系統冷凍噸）無關 — 本表為累積量水表（m³/L）。",
       "TableName": "WaterMeterCircuit",
       "Columns": [
         { "Name": "Id",          "Type": "int",      "IsPrimaryKey": true, "IsIdentity": true, "Nullable": false },
@@ -551,7 +551,7 @@
       ]
     },
     {
-      "_comment": "能源申報 — 申報報表設定。一列 = 一份申報報表，成對綁定用電迴路（EnergyCircuit.Id）與水系統迴路（WaterCircuit.Id），由 Web /EnergyDeclaration 頁 CRUD；參照為應用層維護，無 DB FK",
+      "_comment": "能源申報 — 申報報表設定。一列 = 一份申報報表，成對綁定用電迴路（EnergyCircuit.Id）與空調水系統迴路（WaterCircuit.Id），由 Web /EnergyDeclaration 頁 CRUD；參照為應用層維護，無 DB FK",
       "TableName": "EnergyDeclarationReport",
       "Columns": [
         { "Name": "Id",              "Type": "int",      "IsPrimaryKey": true, "IsIdentity": true, "Nullable": false },

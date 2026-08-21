@@ -139,7 +139,7 @@
                 loadPie();
                 startAutoRefresh();
             })
-            .catch(function (e) { console.error('[ems-hub-water] 載入水表迴路樹失敗', e); });
+            .catch(function (e) { console.error('[ems-hub-water] 載入自來水表迴路樹失敗', e); });
     }
 
     // ── 未建立水表根迴路：長條 / 圓餅統一提示（被關閉的卡片元素不存在 → 逐一防呆跳過）──
@@ -378,7 +378,7 @@
                 sel.value = String(selectedId);
                 sel.style.display = '';
             })
-            .catch(function (e) { console.error('[ems-hub-water] 載入水表迴路清單失敗', e); });
+            .catch(function (e) { console.error('[ems-hub-water] 載入自來水表迴路清單失敗', e); });
     }
 
     function renderCost(d) {

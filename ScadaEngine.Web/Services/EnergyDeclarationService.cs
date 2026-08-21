@@ -145,7 +145,7 @@ public class EnergyDeclarationService
         catch (InvalidOperationException)
         {
             throw new InvalidOperationException(
-                $"申報報表「{report.szName}」綁定的水系統迴路 Id={report.nWaterCircuitId} 已不存在，請重新編輯設定");
+                $"申報報表「{report.szName}」綁定的空調水系統迴路 Id={report.nWaterCircuitId} 已不存在，請重新編輯設定");
         }
 
         // 兩邊皆為 12 個曆月 → bucket 數必然一致；防禦性檢查以免日後演算法分岐

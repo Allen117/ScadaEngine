@@ -1,4 +1,4 @@
-// 水費報表頁邏輯 — 水表迴路 × 月結期別區間 → 每期用水量（m³）套台水分段累進之水費。
+// 水費報表頁邏輯 — 自來水表迴路 × 月結期別區間 → 每期用水量（m³）套台水分段累進之水費。
 // 每列可展開級距明細；長條圖為每期水費。協定見 Features/WaterCostReport/Controllers/WaterCostReportController.cs。
 (function () {
     'use strict';

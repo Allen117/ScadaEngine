@@ -1,6 +1,6 @@
 namespace ScadaEngine.Web.Features.WaterMeterSetting.Models;
 
-/// <summary>新增水表迴路節點請求</summary>
+/// <summary>新增自來水表迴路節點請求</summary>
 public class CreateWaterMeterCircuitDto
 {
     public int? parentId { get; set; }
@@ -15,7 +15,7 @@ public class CreateWaterMeterCircuitDto
     public string? description { get; set; }
 }
 
-/// <summary>更新水表迴路節點請求</summary>
+/// <summary>更新自來水表迴路節點請求</summary>
 public class UpdateWaterMeterCircuitDto
 {
     public string name { get; set; } = string.Empty;

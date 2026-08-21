@@ -55,7 +55,7 @@
   <data name="refrigerationtonreport.breadcrumb.energy" xml:space="preserve"><value>能源管理</value></data>
 
   <data name="refrigerationtonreport.filter.title" xml:space="preserve"><value>查詢條件</value></data>
-  <data name="refrigerationtonreport.filter.circuit" xml:space="preserve"><value>水系統迴路</value></data>
+  <data name="refrigerationtonreport.filter.circuit" xml:space="preserve"><value>空調水系統迴路</value></data>
   <data name="refrigerationtonreport.filter.granularity" xml:space="preserve"><value>單位</value></data>
   <data name="refrigerationtonreport.filter.hour_start" xml:space="preserve"><value>起時</value></data>
   <data name="refrigerationtonreport.filter.hour_end" xml:space="preserve"><value>訖時</value></data>
@@ -95,10 +95,10 @@
   <data name="refrigerationtonreport.warning.data_incomplete" xml:space="preserve"><value>⚠ 部分時段資料不足（樣本數 &lt; 30/小時），該段視為缺資料</value></data>
 
   <data name="refrigerationtonreport.select.loading" xml:space="preserve"><value>-- 載入中 --</value></data>
-  <data name="refrigerationtonreport.select.placeholder" xml:space="preserve"><value>-- 請選擇水系統迴路 --</value></data>
-  <data name="refrigerationtonreport.select.empty" xml:space="preserve"><value>尚未設定水系統迴路</value></data>
+  <data name="refrigerationtonreport.select.placeholder" xml:space="preserve"><value>-- 請選擇空調水系統迴路 --</value></data>
+  <data name="refrigerationtonreport.select.empty" xml:space="preserve"><value>尚未設定空調水系統迴路</value></data>
 
-  <data name="refrigerationtonreport.alert.select_circuit" xml:space="preserve"><value>請選擇水系統迴路</value></data>
+  <data name="refrigerationtonreport.alert.select_circuit" xml:space="preserve"><value>請選擇空調水系統迴路</value></data>
   <data name="refrigerationtonreport.alert.month_order" xml:space="preserve"><value>訖月不可早於起月</value></data>
   <data name="refrigerationtonreport.alert.day_order" xml:space="preserve"><value>訖日不可早於起日</value></data>
   <data name="refrigerationtonreport.alert.hour_order" xml:space="preserve"><value>訖時不可早於起時</value></data>

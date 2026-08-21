@@ -7,9 +7,10 @@
 | 子頁 | 路由 |
 |------|------|
 | 電力迴路資訊 | `/ElectricityCircuitInfo` |
-| 水迴路資訊 | `/WaterCircuitInfo` |
+| 自來水迴路資訊 | `/WaterCircuitInfo` |
 | 氣迴路資訊 | `/GasCircuitInfo` |
-| 水系統迴路設定 | `/ChilledWaterSystem` |
+| 空調水系統迴路 | `/ChilledWaterCircuitInfo` |
+| 空調水系統迴路設定 | `/ChilledWaterSystem` |
 | 電表/迴路設定 | `/EnergyMeter` |
 | 用電報表 | `/EnergyReport` |
 | 電費報表 | `/ElectricityCostReport` |
@@ -137,7 +138,7 @@ else if (!isEmsMode && canAccess("/EMS"))
 |-----|-------|----|
 | `ems.title` | 能源管理 | Energy Management |
 
-主選單的「水系統/電表/用電報表/冷凍噸」字串走原本就有的 `layout.menu.*`，這次不動。
+主選單的「空調水系統/電表/用電報表/冷凍噸」字串走原本就有的 `layout.menu.*`，這次不動。
 
 ## 7. 主內容區
 

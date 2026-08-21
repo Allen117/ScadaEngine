@@ -3,7 +3,7 @@ namespace ScadaEngine.Common.Data.Models;
 /// <summary>
 /// 冷凍噸報表 — 葉子層 hourly 預聚合資料模型（對應 WaterLeafHourly 表）。
 /// 一列 = 一個葉子 SID 在某個小時的 RT·h（冷量，= AVG(RT) × 1h）。
-/// 與 EnergyLeafHourly 對稱，但語意差異：水系統 RT 是瞬時值，採 AVG × 1h 積分；
+/// 與 EnergyLeafHourly 對稱，但語意差異：空調水系統 RT 是瞬時值，採 AVG × 1h 積分；
 /// 電表 kWh 是累計值，採 boundary 相減。
 /// SampleCount &lt; 30/60 視為資料不足，整列不寫（sparse storage）；
 /// 後續 catch-up 若 sample 補滿到 30 才會 UPSERT 寫入。

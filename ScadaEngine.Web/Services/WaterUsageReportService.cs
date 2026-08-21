@@ -46,7 +46,7 @@ public class WaterUsageReportService
     /// <summary>
     /// 取得報表結果。
     /// </summary>
-    /// <param name="nCircuitId">水表迴路 Id（葉子或虛擬皆可）</param>
+    /// <param name="nCircuitId">自來水表迴路 Id（葉子或虛擬皆可）</param>
     /// <param name="szGranularity">hour / day / month / year</param>
     /// <param name="dtStart">區間起點（含），時/日粒度需精確到天，月需精確到月，年需精確到年</param>
     /// <param name="dtEnd">區間終點（含），同上</param>
@@ -162,7 +162,7 @@ public class WaterUsageReportService
         var all = await _circuitService.GetAllAsync();
         var circuit = all.FirstOrDefault(c => c.nId == nCircuitId);
         if (circuit == null)
-            throw new InvalidOperationException($"水表迴路 Id={nCircuitId} 不存在");
+            throw new InvalidOperationException($"自來水表迴路 Id={nCircuitId} 不存在");
         return circuit;
     }
 

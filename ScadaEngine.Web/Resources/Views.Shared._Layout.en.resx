@@ -69,7 +69,7 @@
   <data name="layout.menu.eventlog" xml:space="preserve"><value>Event Log</value></data>
 
   <data name="layout.menu.ems_settings" xml:space="preserve"><value>EMS Settings</value></data>
-  <data name="layout.menu.group_water_system" xml:space="preserve"><value>Water System</value></data>
+  <data name="layout.menu.group_water_system" xml:space="preserve"><value>Chilled Water System</value></data>
   <data name="layout.menu.group_power_meter" xml:space="preserve"><value>Power Meter</value></data>
   <data name="layout.menu.group_water_meter" xml:space="preserve"><value>Water Meter</value></data>
   <data name="layout.menu.reports" xml:space="preserve"><value>Reports</value></data>

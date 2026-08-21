@@ -53,7 +53,7 @@
 
   <data name="excel.sheet_name" xml:space="preserve"><value>冷凍噸報表</value></data>
   <data name="excel.title" xml:space="preserve"><value>冷凍噸報表</value></data>
-  <data name="excel.label.circuit" xml:space="preserve"><value>水系統迴路</value></data>
+  <data name="excel.label.circuit" xml:space="preserve"><value>空調水系統迴路</value></data>
   <data name="excel.label.granularity" xml:space="preserve"><value>粒度</value></data>
   <data name="excel.label.range" xml:space="preserve"><value>查詢區間</value></data>
   <data name="excel.label.query_time" xml:space="preserve"><value>查詢時間</value></data>

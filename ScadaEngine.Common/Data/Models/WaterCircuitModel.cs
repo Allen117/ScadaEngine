@@ -1,7 +1,7 @@
 namespace ScadaEngine.Common.Data.Models;
 
 /// <summary>
-/// 水系統迴路階層 — 對應 WaterCircuit 資料表（獨立於 EnergyCircuit）
+/// 空調水系統迴路階層 — 對應 WaterCircuit 資料表（獨立於 EnergyCircuit）
 /// </summary>
 public class WaterCircuitModel
 {

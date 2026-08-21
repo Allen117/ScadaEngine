@@ -100,7 +100,7 @@ public class EnergyDeclarationController : Controller
         if (await _energyCircuitService.GetByIdAsync(dto.energyCircuitId) == null)
             return $"用電迴路 Id={dto.energyCircuitId} 不存在";
         if (await _waterCircuitService.GetByIdAsync(dto.waterCircuitId) == null)
-            return $"水系統迴路 Id={dto.waterCircuitId} 不存在";
+            return $"空調水系統迴路 Id={dto.waterCircuitId} 不存在";
         return null;
     }
 
@@ -121,7 +121,7 @@ public class EnergyDeclarationController : Controller
         }));
     }
 
-    /// <summary>水系統迴路樹（扁平清單，前端組縮排）</summary>
+    /// <summary>空調水系統迴路樹（扁平清單，前端組縮排）</summary>
     [HttpGet("api/watercircuits")]
     public async Task<IActionResult> GetWaterCircuits()
     {

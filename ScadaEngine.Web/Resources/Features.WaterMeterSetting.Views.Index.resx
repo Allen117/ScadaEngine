@@ -52,12 +52,12 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
   <!-- 頁面 -->
-  <data name="watermeter.title" xml:space="preserve"><value>水表/迴路設定</value></data>
+  <data name="watermeter.title" xml:space="preserve"><value>自來水表/迴路設定</value></data>
   <data name="watermeter.subtitle" xml:space="preserve"><value>用水管理</value></data>
 
   <!-- 樹狀清單 -->
   <data name="watermeter.tree.header" xml:space="preserve"><value>迴路階層</value></data>
-  <data name="watermeter.tree.add_root" xml:space="preserve"><value>新增水表/迴路</value></data>
+  <data name="watermeter.tree.add_root" xml:space="preserve"><value>新增自來水表/迴路</value></data>
   <data name="watermeter.tree.loading" xml:space="preserve"><value>載入中...</value></data>
   <data name="watermeter.tree.empty" xml:space="preserve"><value>尚無迴路，請點右上角新增</value></data>
   <data name="watermeter.tree.load_failed" xml:space="preserve"><value>載入失敗</value></data>
@@ -111,7 +111,7 @@
   <data name="watermeter.btn.delete" xml:space="preserve"><value>刪除</value></data>
 
   <!-- Modal 標題 -->
-  <data name="watermeter.modal.create_title" xml:space="preserve"><value>新增水表/迴路</value></data>
+  <data name="watermeter.modal.create_title" xml:space="preserve"><value>新增自來水表/迴路</value></data>
   <data name="watermeter.modal.create_child_title" xml:space="preserve"><value>新增子節點</value></data>
   <data name="watermeter.modal.edit_title" xml:space="preserve"><value>編輯：{name}</value></data>
 

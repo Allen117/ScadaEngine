@@ -90,7 +90,7 @@ public class WaterLeafAggregationService : BackgroundService
         var leaves = await _repository.GetAllLeafSidsAsync();
         if (leaves.Count == 0)
         {
-            _logger.LogInformation("冷凍噸葉子層聚合 catch-up: 無葉子節點可聚合（水系統迴路尚未綁定 RT 點位）");
+            _logger.LogInformation("冷凍噸葉子層聚合 catch-up: 無葉子節點可聚合（空調水系統迴路尚未綁定 RT 點位）");
             return;
         }
 

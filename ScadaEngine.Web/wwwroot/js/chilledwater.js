@@ -1,4 +1,4 @@
-// 水系統迴路設定頁邏輯（IIFE 封裝，對外掛在 window._cw）
+// 空調水系統迴路設定頁邏輯（IIFE 封裝，對外掛在 window._cw）
 // 結構仿 energymeter.js，差別：無 sign / maxKwh，SID 下拉走 /ChilledWaterSystem/api/sids（後端僅列 RT 系列單位）
 (function () {
     'use strict';
