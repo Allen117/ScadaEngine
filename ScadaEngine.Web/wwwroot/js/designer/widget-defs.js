@@ -906,7 +906,7 @@ function buildPumpHtml(props, szState) {
 // ============================================================
 // 冷卻水塔 / 空調箱風扇 / 冰機 — Designer 預覽（共用 MotorEquip 模組）
 // ============================================================
-// 三者執行期渲染在 scadapage.js，Designer 預覽與其共用同一份 SVG（plan 決策 3-A）。
+// 三者執行期渲染在 scadapage/widget-motor.js，Designer 預覽與其共用同一份 SVG（plan 決策 3-A）。
 // 冰機額外於右下角顯示「設定溫度」文字（Designer 為靜態預覽，執行期才可雙擊編輯）。
 function buildCoolingTowerHtml(props, szState) {
     return MotorEquip.build({

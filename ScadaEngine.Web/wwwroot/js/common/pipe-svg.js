@@ -1,7 +1,7 @@
 // ============================================================
 // 共用：管路（正交折線）SVG 產生器
 // ============================================================
-// Designer 預覽（widget-defs.js）與 ScadaPage 執行期（scadapage.js）共用
+// Designer 預覽（widget-defs.js）與 ScadaPage 執行期（scadapage/widget-pipe.js）共用
 // 同一份圖形，避免兩處各畫一次而走樣（同 motor-equip-svg.js 前例）。
 //
 // 資料模型（plan 2026-07-23 決策 1）：

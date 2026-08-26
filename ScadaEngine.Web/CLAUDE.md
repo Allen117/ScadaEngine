@@ -36,6 +36,7 @@ wwwroot/
 - `.cshtml` 只保留 HTML/Razor 結構、`<link>` 引用 CSS、`@section Scripts { <script src> }` 引用 JS
 - JS 中如有 HTML 實體（`&le;`、`&times;` 等），須轉換為 Unicode 跳脫（`\u2264`、`\u00d7`）
 - JS 使用 IIFE `(function(){ ... })();` 封裝，對外介面掛在 `window._xx` 供 `onclick` 等屬性呼叫
+- **多檔模組群豁免 IIFE**：`js/designer/`、`js/scadapage/`、logicflow 等拆分模組群走 global scope + `state.js` 集中共享狀態（無打包工具下跨檔共享閉包不可行）；載入順序約束 state 最先、index 最後，頂層執行副作用僅限 state / index（例外：僅註冊 listener 不呼叫跨檔函數者可留原檔）
 
 ## 時間輸入一律 24 小時制 — 用 flatpickr
 

@@ -1,7 +1,7 @@
 // ============================================================
 // 共用：馬達型設備 SVG 產生器（冰機 / 冷卻水塔 / 空調箱風扇）
 // ============================================================
-// Designer 預覽（widget-defs.js）與 ScadaPage 執行期（scadapage.js）共用
+// Designer 預覽（widget-defs.js）與 ScadaPage 執行期（scadapage/widget-motor.js）共用
 // 同一份圖形，避免兩處各畫一次而走樣（plan 決策 3-A）。
 //
 // 對外：window.MotorEquip.build(opts) → 回傳 widget 內層 HTML 字串
@@ -19,7 +19,7 @@
 //   }
 //
 // 頻率條沿用 pump 既有 class（pump-gauge-fill / pump-gauge-text /
-// pump-gauge-handle），故 scadapage.js 的頻率拖曳與更新邏輯可直接共用。
+// pump-gauge-handle），故 scadapage/widget-pump.js 的頻率拖曳與更新邏輯可直接共用。
 // ============================================================
 (function () {
     'use strict';

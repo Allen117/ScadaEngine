@@ -50,7 +50,19 @@ Views/Shared/
 
 wwwroot/
 ├── css/scadapage.css             ← 元件互動樣式（hover 標籤、警報脈動、泵旋轉、按鈕 3D 效果）
-└── js/scadapage.js               ← 核心渲染引擎（IIFE，~1700 行）
+└── js/scadapage/                 ← 核心渲染引擎模組群（2026-08 由單體 scadapage.js 拆分）
+    ├── state.js                  ← 共享狀態 + 跨模組 helper（最先載入）
+    ├── widget-points.js          ← 控制鈕/即時值/DI/AO/DO/半圓儀表 builder
+    ├── widget-pump.js            ← 水泵 SVG + Linear Gauge 拖拽
+    ├── widget-pipe.js            ← 管路流動元件（圖形共用 common/pipe-svg.js）
+    ├── widget-motor.js           ← 馬達型設備（冷卻塔/風扇/冰機）
+    ├── widget-table.js           ← Table Widget
+    ├── ctx-menus-points.js       ← 趨勢/AO/DO 右鍵選單與控制寫入
+    ├── ctx-menus-equip.js        ← 泵浦/馬達右鍵選單與控制寫入
+    ├── circuit-metric.js         ← 30 秒慢輪詢（SID 累積量 + 迴路指標）
+    ├── tree.js                   ← 頁面樹/切頁/畫布縮放
+    ├── render.js                 ← 渲染分派器 + 1 秒輪詢更新
+    └── index.js                  ← 初始化進入點（最後載入）
 ```
 
 ---
@@ -150,9 +162,9 @@ Web POST /api/control/write
 
 ---
 
-## 7. 前端渲染引擎 (scadapage.js)
+## 7. 前端渲染引擎 (js/scadapage/ 模組群)
 
-以 IIFE 封裝，總計約 1700 行，不對外暴露 `window._xx`（所有互動透過 DOM 事件處理）。
+原單體 `scadapage.js`（IIFE，2,700 行）於 2026-08 純搬移拆分為 `js/scadapage/` 12 個模組：**去 IIFE、global scope、state.js 集中共享狀態**，與 `js/designer/` 拆分同模式；載入順序僅約束 state.js 最先、index.js 最後。不對外暴露 `window._xx`（所有互動透過 DOM 事件處理）。
 
 ### 7.1 初始化流程
 
@@ -466,7 +478,7 @@ props 命名沿用 pump 慣例（`szSidXxx` + `szXxxName` 成對）：共同 `sz
 
 > **冰機圖形**為**水冷式雙筒身前視圖**（2026-07 依現場照片重繪，Artifact 預覽 v4 定稿）：上筒＝冷凝器、下筒＝蒸發器；**不畫接管**（2026-07-23 拿掉原本左右四支法蘭接管——管路 pipe 元件由使用者自由決定對接位置）；後方帶螺旋壓縮機輪廓與殼間連通管，左前控制箱含固定深色 HMI 螢幕（不變色）、指示燈、壓力錶。**顏色職責**與其他馬達型設備不同：**機身雙筒＝狀態色**（運轉綠/停機灰/故障紅，頂部小警示燈同色）；`szSidMode` 對冰機語意為**遠端/現場**（1=遠端→控制箱面板灰、0=現場→面板深黃 `szManualColor`，預設 `#c79100`，屬性面板標籤「現場面板顏色」，自動色不適用）。負載% 為**底部水平橫條**（軌道 x10 寬66、% 文字置中條內，`viewBox 0 0 120 124`；無條時 `0 0 120 110`），右下角為設定溫度覆蓋層——**設定溫度切手動時值前顯示小 M**（吃 `szCidSetTemp` 的 isAuto，掛 `scada-mode-badge` class 由既有 `_toggleModeBadge` 輪詢驅動），與右上角「開關手動 M」（`szCidStartStop`）各自獨立。Designer 元件庫縮圖為同構簡化版。
 
-**執行期行為**（`scadapage.js`，class = `.scada-motor`，`dataset.motorType` 區分）：
+**執行期行為**（`js/scadapage/widget-motor.js` + `ctx-menus-equip.js`，class = `.scada-motor`，`dataset.motorType` 區分）：
 - 狀態判定同 pump：故障 > 運轉 > 停止，運轉時風扇 `pump-spin` 旋轉（冰機不轉）
 - 手動模式顯示 M 角標（`szCidStartStop`＝開關手動，右上；VFD 型另有 `szCidFreqSet`；冰機另有**設定溫度手動 M**顯示於右下設定值旁，吃 `szCidSetTemp` 的 isAuto）
 - **右鍵選單**：啟動停止（子選單）+ VFD 頻率設定（子選單）/ 冰機設定溫度（項目）+ 監控點位趨勢圖
@@ -512,7 +524,7 @@ props：`szBindMode / szSid / szPointName / fThreshold / szCompare('gt'|'gte') /
 - 斷線（Bad quality）→ 以 `szBadColor` 靜止顯示、不流動，tooltip 顯示「斷線」
 - 未綁定 → 純裝飾，固定流動
 - hover 管身顯示「標題 — 狀態（流動 / 靜止 / 斷線）— 數值(類比)」tooltip；右鍵管身開趨勢圖照舊
-- 圖形共用 `wwwroot/js/common/pipe-svg.js`（`window.PipeSvg.build`）：Designer `buildPipeHtml`（widget-defs.js）與 ScadaPage `buildPipeViewHtml`（scadapage.js）皆為薄包裝，同 `motor-equip-svg.js` 單一真相模式；樣式 `.pipe-svg / .pipe-svg-track / .pipe-svg-flow / .pipe-svg-hit`（舊 `.pipe-h / .pipe-v` CSS 保留一版防未升級快取頁面）
+- 圖形共用 `wwwroot/js/common/pipe-svg.js`（`window.PipeSvg.build`）：Designer `buildPipeHtml`（widget-defs.js）與 ScadaPage `buildPipeViewHtml`（js/scadapage/widget-pipe.js）皆為薄包裝，同 `motor-equip-svg.js` 單一真相模式；樣式 `.pipe-svg / .pipe-svg-track / .pipe-svg-flow / .pipe-svg-hit`（舊 `.pipe-h / .pipe-v` CSS 保留一版防未升級快取頁面）
 
 > **元件庫分類（Designer）**：元件庫改為三類 — 顯示元件（表格 / 儀錶板 / 文字）、點位與控制（控制按鈕 / AI / DI / AO / DO）、設備與動畫（水泵 / 管路 / 冷卻水塔 / 空調箱風扇 / 冰機）。各類獨立捲動（`.widget-cat-items` overflow-y:auto），`.designer-outer` 釘視窗高使面板本身不捲，避免 100% 時多餘的整體捲軸。
 
@@ -603,7 +615,7 @@ props：`szBindMode / szSid / szPointName / fThreshold / szCompare('gt'|'gte') /
 | `MessageArgs` | JSON `{ username, name, value? }` |
 | `Message` | 寫入時 culture 預先格式化的字串（fallback） |
 
-顯示時 EventLog 頁面透過 `AlarmMessageLocalizer` 依使用者當下 culture 翻譯。前端 `scadapage.js` 9 處 `/api/control/write` 呼叫各自帶 `actionType` 與 `displayName`（取 `el.dataset.szDisplayName || szTitle`），後端 `ControlController` 解析後委派 `ControlEventLogger.LogAsync` 寫入。
+顯示時 EventLog 頁面透過 `AlarmMessageLocalizer` 依使用者當下 culture 翻譯。前端 `js/scadapage/ctx-menus-*.js` 9 處 `/api/control/write` 呼叫各自帶 `actionType` 與 `displayName`（取 `el.dataset.szDisplayName || szTitle`），後端 `ControlController` 解析後委派 `ControlEventLogger.LogAsync` 寫入。
 
 **不會寫入的情境**：
 - MQTT 發送失敗（503）

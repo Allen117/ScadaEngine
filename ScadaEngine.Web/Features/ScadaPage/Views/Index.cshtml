@@ -76,6 +76,18 @@
     <script src="~/js/common/schedule-eval.js" asp-append-version="true"></script>
     <script src="~/js/common/motor-equip-svg.js" asp-append-version="true"></script>
     <script src="~/js/common/pipe-svg.js" asp-append-version="true"></script>
-    <script src="~/js/scadapage.js" asp-append-version="true"></script>
+    @* js/scadapage/ 模組群（原單體 scadapage.js 拆分）：state 必須最先、index 必須最後，中間順序不敏感 *@
+    <script src="~/js/scadapage/state.js" asp-append-version="true"></script>
+    <script src="~/js/scadapage/widget-points.js" asp-append-version="true"></script>
+    <script src="~/js/scadapage/widget-pump.js" asp-append-version="true"></script>
+    <script src="~/js/scadapage/widget-pipe.js" asp-append-version="true"></script>
+    <script src="~/js/scadapage/widget-motor.js" asp-append-version="true"></script>
+    <script src="~/js/scadapage/widget-table.js" asp-append-version="true"></script>
+    <script src="~/js/scadapage/ctx-menus-points.js" asp-append-version="true"></script>
+    <script src="~/js/scadapage/ctx-menus-equip.js" asp-append-version="true"></script>
+    <script src="~/js/scadapage/circuit-metric.js" asp-append-version="true"></script>
+    <script src="~/js/scadapage/tree.js" asp-append-version="true"></script>
+    <script src="~/js/scadapage/render.js" asp-append-version="true"></script>
+    <script src="~/js/scadapage/index.js" asp-append-version="true"></script>
     <script src="~/js/active-alarm-panel.js" asp-append-version="true"></script>
 }
