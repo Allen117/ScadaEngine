@@ -579,9 +579,7 @@ private List<RealtimeDataModel> ReadBatchGroup(ModbusBatchGroup batchGroup, byte
         RecordConnectionFailure();
         // 🔥 關鍵：檢查是否超過延遲時間才產生 Bad Quality
         bool isTimeout = IsConnectionFailureTimeout();
-        _logger.LogDebug("[DEBUG] 檢查超時狀態: IsTimeout={IsTimeout}, FirstFailure={FirstFailure}, Now={Now}, Delay={Delay}ms", 
-                             isTimeout, _dtFirstConnectionFailure, DateTime.Now, ReconnectDelay.TotalMilliseconds);
-        
+
         if (isTimeout)
         {
             _logger.LogWarning("連線失敗超過延遲時間 {Delay}ms，產生 Bad Quality 資料", ReconnectDelay.TotalMilliseconds);
@@ -768,9 +766,7 @@ private List<RealtimeDataModel> ReadBatchGroup(ModbusBatchGroup batchGroup, byte
             
             // 🔥 關鍵：檢查是否超過延遲時間
             bool isTimeout = IsConnectionFailureTimeout();
-            _logger.LogDebug("[DEBUG] Catch 區塊檢查超時: IsTimeout={IsTimeout}, FirstFailure={FirstFailure}, Delay={Delay}ms", 
-                                isTimeout, _dtFirstConnectionFailure, ReconnectDelay.TotalMilliseconds);
-            
+
             if (isTimeout)
             {
                 _logger.LogWarning("連線失敗超過延遲時間，標記為 Bad 品質");

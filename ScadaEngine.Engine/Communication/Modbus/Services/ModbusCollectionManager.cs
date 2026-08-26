@@ -393,29 +393,6 @@ public class ModbusCollectionManager : IDisposable
     }
 
     /// <summary>
-    /// 取得所有設備狀態
-    /// </summary>
-    /// <returns>設備狀態字典</returns>
-    public Dictionary<string, object> GetAllDeviceStatus()
-    {
-        var statusDict = new Dictionary<string, object>();
-
-        foreach (var kvp in _communicationServices)
-        {
-            try
-            {
-                statusDict[kvp.Key] = kvp.Value.GetDeviceStatus();
-            }
-            catch (Exception ex)
-            {
-                statusDict[kvp.Key] = new { Error = ex.Message };
-            }
-        }
-
-        return statusDict;
-    }
-
-    /// <summary>
     /// 產生設備唯一鍵值
     /// </summary>
     /// <param name="deviceConfig">設備配置</param>

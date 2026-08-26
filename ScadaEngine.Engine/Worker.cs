@@ -58,14 +58,11 @@ public class Worker : BackgroundService
 
             _logger.LogInformation("Modbus 採集管理器已啟動");
 
-            // 主迴圈：監控系統狀態
+            // 主迴圈：維持服務存活，等待停止信號
             while (!stoppingToken.IsCancellationRequested)
             {
                 try
                 {
-                    // 每分鐘記錄一次系統狀態
-                    LogSystemStatus();
-
                     // 等待 60 秒或直到收到停止信號
                     await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
                 }
@@ -155,28 +152,6 @@ public class Worker : BackgroundService
         catch (Exception ex)
         {
             _logger.LogError(ex, "處理 Modbus 設備狀態變更事件時發生錯誤");
-        }
-    }
-
-    /// <summary>
-    /// 記錄系統狀態
-    /// </summary>
-    private void LogSystemStatus()
-    {
-        try
-        {
-            var deviceStatusDict = _modbusCollectionManager.GetAllDeviceStatus();
-
-            _logger.LogInformation("系統狀態報告 - 管理設備數量: {DeviceCount}", deviceStatusDict.Count);
-
-            foreach (var kvp in deviceStatusDict)
-            {
-                _logger.LogDebug("設備 {DeviceKey} 狀態: {@Status}", kvp.Key, kvp.Value);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "記錄系統狀態時發生錯誤");
         }
     }
 

@@ -99,11 +99,6 @@ public class MqttControlSubscribeService : BackgroundService, IDisposable
                     // 在定期監控中也檢查清理（備用機制）
                     await CheckAndCleanupCommandListAsync();
 
-                    // 每 30 秒記錄一次狀態
-                    _logger.LogInformation("MQTT 控制訂閱服務運行中，已收到 {Count} 個控制指令，連線狀態: {IsConnected}", 
-                                         _controlCommandList.Count, 
-                                         _mqttClient?.IsConnected == true ? "已連線" : "未連線");
-
                     await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
                 }
                 catch (OperationCanceledException)
@@ -158,8 +153,6 @@ public class MqttControlSubscribeService : BackgroundService, IDisposable
             _mqttClient.ConnectedAsync += OnConnectedAsync;
             _mqttClient.DisconnectedAsync += OnDisconnectedAsync;
             _mqttClient.ApplicationMessageReceivedAsync += OnMessageReceivedAsync;
-
-            _logger.LogInformation("[DEBUG] 事件處理器已設定");
 
             // 執行連線
             var result = await _mqttClient.ConnectAsync(options);
@@ -287,8 +280,6 @@ public class MqttControlSubscribeService : BackgroundService, IDisposable
     /// </summary>
     private async Task OnMessageReceivedAsync(MqttApplicationMessageReceivedEventArgs e)
     {
-        _logger.LogInformation("[DEBUG] 收到 MQTT 訊息，開始處理");
-        
         try
         {
             var szTopic = e.ApplicationMessage.Topic;
@@ -994,8 +985,6 @@ public class MqttControlSubscribeService : BackgroundService, IDisposable
                 .Build();
 
             await _mqttClient.PublishAsync(message);
-            
-            _logger.LogInformation("[TEST] 已發送測試控制訊息到主題: {Topic}, 內容: {Payload}", testTopic, testPayload);
         }
         catch (Exception ex)
         {
