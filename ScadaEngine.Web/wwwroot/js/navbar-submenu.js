@@ -36,7 +36,19 @@
             if (!toggle) { return; }
 
             item.addEventListener('mouseenter', function () {
+                if (isMobile()) { return; }
+                // 滑到別的父項時，先收掉上一個被「點」開的（.show 不會自己消失）
+                closeAll(item);
                 adjustPosition(item);
+            });
+
+            // 桌機：點開後滑鼠移開就收。
+            // 沒有這段的話，click 掛上的 .show 會一路留著，滑到同一張選單的其他項
+            // （或另一個子選單群組）時，舊的子選單仍展開並疊在新的上面。
+            // 子選單是 item 的子元素，滑進子選單不會觸發 mouseleave，不影響操作。
+            item.addEventListener('mouseleave', function () {
+                if (isMobile()) { return; }
+                item.classList.remove('show');
             });
 
             toggle.addEventListener('click', function (e) {
