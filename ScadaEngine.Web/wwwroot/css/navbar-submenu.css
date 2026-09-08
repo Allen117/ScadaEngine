@@ -25,9 +25,12 @@
     right: 100%;
 }
 
-/* 父項箭頭改為指向右側。
+/* 父項箭頭：形狀沿用 Bootstrap 預設的向下 caret，不旋轉 ——
+   與上方主列的下拉箭頭方向一致，一眼就是「這一項還能展開」。
+   （子選單實際是橫向 flyout，且右側不足時會翻向左，箭頭若跟著轉向
+   反而會出現同一張清單裡各指各的方向。）
 
-   刻意用絕對定位而非 float:right —— float 的箭頭仍是流內元素，
+   位置刻意用絕對定位而非 float:right —— float 的箭頭仍是流內元素，
    當「圖示＋標籤」剛好把 content box 佔滿時（中文標籤 5 字 + fa-fw 圖示
    就已逼近 Bootstrap 預設的 10rem 選單寬），箭頭會整個掉到下一行，
    看起來就像箭頭疊在文字底下。絕對定位讓箭頭永遠貼齊右緣，
@@ -39,7 +42,7 @@
     float: none;
     margin-top: 0;
     margin-left: 0;
-    transform: translateY(-50%) rotate(-90deg);
+    transform: translateY(-50%);
 }
 
 /* 父項本身不是連結，避免點擊後跳頁；position 供上面的箭頭定位 */
@@ -99,10 +102,5 @@
     .dropdown-submenu > .dropdown-menu.submenu-flip {
         left: auto;
         right: auto;
-    }
-
-    /* 內嵌展開時箭頭改回朝下（僅去掉旋轉，垂直置中的 translateY 要留著） */
-    .dropdown-submenu > .dropdown-toggle::after {
-        transform: translateY(-50%);
     }
 }

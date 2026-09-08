@@ -18,7 +18,7 @@
         });
     }
 
-    // 右側空間不足時，把子選單翻到左邊展開
+    // 右側空間不足時，把子選單翻到左邊展開（只影響展開位置，箭頭一律朝下不跟著轉）
     function adjustPosition(item) {
         var menu = item.querySelector(':scope > .dropdown-menu');
         if (!menu || isMobile()) { return; }

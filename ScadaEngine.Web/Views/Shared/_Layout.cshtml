@@ -99,30 +99,9 @@
             color: #007bff !important;
         }
 
-        /* 多層下拉選單（系統設定 → 點位設定） */
-        .dropdown-submenu {
-            position: relative;
-        }
-        .dropdown-submenu > .dropdown-menu {
-            top: 0;
-            left: 100%;
-            margin-top: -0.25rem;
-            margin-left: 0;
-            display: none;
-        }
-        .dropdown-submenu:hover > .dropdown-menu,
-        .dropdown-submenu.show > .dropdown-menu {
-            display: block;
-        }
-        .dropdown-submenu > a.dropdown-toggle::after {
-            border-top: 0.3em solid transparent;
-            border-bottom: 0.3em solid transparent;
-            border-left: 0.3em solid;
-            border-right: 0;
-            float: right;
-            margin-top: 0.55em;
-            margin-right: -0.25rem;
-        }
+        @* 多層下拉選單樣式一律在 wwwroot/css/navbar-submenu.css，此處不得再寫一份：
+           曾有一份 inline 複本排在該檔之後、且選擇器多一個 a（特異性較高），
+           把外部檔的箭頭形狀蓋掉，造成「改了 css 卻沒生效」與箭頭朝上。 *@
     </style>
 </head>
 <body class="@szBodyClass">
@@ -696,28 +675,8 @@
             }
         }
 
-        // 多層下拉選單：點擊父項時 toggle 子選單，避免關閉外層 dropdown
-        (function () {
-            document.querySelectorAll('.dropdown-submenu > .dropdown-toggle').forEach(function (el) {
-                el.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    var li = this.parentElement;
-                    li.parentElement.querySelectorAll(':scope > .dropdown-submenu.show').forEach(function (other) {
-                        if (other !== li) other.classList.remove('show');
-                    });
-                    li.classList.toggle('show');
-                });
-            });
-            // 父層 dropdown 關閉時，連帶清掉子選單 show 狀態
-            document.querySelectorAll('.nav-item.dropdown').forEach(function (parent) {
-                parent.addEventListener('hidden.bs.dropdown', function () {
-                    this.querySelectorAll('.dropdown-submenu.show').forEach(function (sub) {
-                        sub.classList.remove('show');
-                    });
-                });
-            });
-        })();
+        // 多層下拉選單的展開行為一律在 wwwroot/js/navbar-submenu.js，此處不得再寫一份：
+        // 兩份都掛 click 監聽會各 toggle 一次 show，互相抵銷，點擊便展不開子選單。
     </script>
 
     <!-- 導覽列子選單 -->
