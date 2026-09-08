@@ -10,6 +10,7 @@
 
     // ── 初始化 ──
     document.addEventListener('DOMContentLoaded', async function () {
+        _initScadaLayout();
         await initScadaViewer();
         await _loadAlarmRules();
         await _loadManualControlValues();

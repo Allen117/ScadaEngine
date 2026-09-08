@@ -55,6 +55,8 @@
 
   <data name="scadapage.tree.dblclick_expand" xml:space="preserve"><value>Double-click to expand ({0})</value></data>
   <data name="scadapage.tree.dblclick_collapse" xml:space="preserve"><value>Double-click to collapse</value></data>
+  <data name="scadapage.tree.collapse" xml:space="preserve"><value>Collapse system overview</value></data>
+  <data name="scadapage.tree.expand" xml:space="preserve"><value>Expand system overview</value></data>
 
   <data name="scadapage.alarm.title" xml:space="preserve"><value>Active Alarms</value></data>
   <data name="scadapage.alarm.toggle_title" xml:space="preserve"><value>Click to collapse/expand</value></data>

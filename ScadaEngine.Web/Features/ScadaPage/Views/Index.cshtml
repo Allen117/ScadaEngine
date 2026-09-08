@@ -12,14 +12,20 @@
     <!-- 主體：頁面樹側欄 + 畫布區（高度由 .scada-canvas-viewport 決定，不在這裡用 min-height 兜底） -->
     <div class="d-flex gap-3">
 
-        <!-- 頁面樹側欄 -->
-        <div style="width:160px;flex-shrink:0;background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:8px;overflow-y:auto;">
-            <div style="font-size:16px;color:#6c757d;letter-spacing:1px;margin-bottom:8px;padding:0 4px;">
-                <i class="fas fa-sitemap me-1"></i>@Localizer["scadapage.tree.title"]
+        <!-- 頁面樹側欄（右緣中央小按鈕可摺疊；狀態存 localStorage） -->
+        <div id="scadaTreeSide" class="scada-tree-side">
+            <div class="scada-tree-panel">
+                <div class="scada-tree-panel-title">
+                    <i class="fas fa-sitemap me-1"></i>@Localizer["scadapage.tree.title"]
+                </div>
+                <div id="scadaPageTree">
+                    <p style="font-size:16px;color:#6c757d;text-align:center;margin-top:24px;">@Localizer["scadapage.tree.loading"]</p>
+                </div>
             </div>
-            <div id="scadaPageTree">
-                <p style="font-size:16px;color:#6c757d;text-align:center;margin-top:24px;">@Localizer["scadapage.tree.loading"]</p>
-            </div>
+            <button type="button" id="scadaTreeToggle" class="scada-tree-toggle"
+                    title="@Localizer["scadapage.tree.collapse"]" aria-expanded="true" aria-controls="scadaPageTree">
+                <i class="fas fa-chevron-left"></i>
+            </button>
         </div>
 
         <!-- 畫布區（深色工作區，畫布以 transform: scale 等比 fit 並置中） -->

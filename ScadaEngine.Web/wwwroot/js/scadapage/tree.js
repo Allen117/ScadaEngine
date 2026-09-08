@@ -1,5 +1,5 @@
 // ============================================================
-// scadapage/tree.js — 頁面樹渲染 / 切頁 / 畫布渲染與等比縮放
+// scadapage/tree.js — 頁面樹渲染 / 切頁 / 畫布渲染與等比縮放 / 側欄摺疊
 // ============================================================
 // 純搬移自 scadapage.js（plan 2026-08-06-scadapage-js-split）。
 // 不包 IIFE、global scope，與 js/designer/ 拆分同模式；
@@ -117,6 +117,32 @@
         _applyCanvasScale();
     }
 
+    // ── 畫布工作區高度：把「畫面剩下的高度」全給畫布，警報面板永遠貼著螢幕底 ──
+    // 原本寫死 calc(100vh - 240px)，警報面板收合後空出的高度沒人接手，
+    // 面板就懸在畫面中間、下方留一段空白。改成量測實際面板高度反推畫布高度：
+    // 面板收合 → 畫布長高、面板跟著貼底；面板展開 → 畫布縮回，兩種狀態都不會出現空白帶。
+    var VIEWPORT_BOTTOM_GAP = 8;   // 面板與 footer 之間留白
+    var ALARM_PANEL_MARGIN  = 16;  // .active-alarm-panel 的 margin-top: 1rem
+
+    function _applyCanvasViewportHeight() {
+        var viewport = document.querySelector('.scada-canvas-viewport');
+        if (!viewport) return;
+
+        var panel  = document.getElementById('activeAlarmPanel');
+        var footer = document.querySelector('footer.footer');
+
+        // 文件座標的 top：畫布上方的內容不受畫布自身高度影響，故無循環依賴
+        var nTop     = viewport.getBoundingClientRect().top + window.scrollY;
+        var nPanelH  = panel  ? panel.offsetHeight + ALARM_PANEL_MARGIN : 0;
+        var nFooterH = footer ? footer.offsetHeight : 0;
+        var nTargetH = window.innerHeight - nTop - nPanelH - nFooterH - VIEWPORT_BOTTOM_GAP;
+        if (!isFinite(nTargetH) || nTargetH <= 0) return;   // 極端視窗尺寸交給 CSS min-height 兜底
+
+        // 差異 < 1px 不重設，避免 ResizeObserver 反覆互相觸發
+        if (Math.abs(viewport.getBoundingClientRect().height - nTargetH) < 1) return;
+        viewport.style.height = nTargetH + 'px';
+    }
+
     // ── 畫布等比縮放 ──
     function _applyCanvasScale() {
         var wrap = document.getElementById('scadaCanvasWrap');
@@ -124,6 +150,8 @@
         if (!wrap || !canvas) return;
         var parent = wrap.parentElement;
         if (!parent) return;
+
+        _applyCanvasViewportHeight();
 
         var nCanvasW = parseInt(canvas.style.width)  || 1200;
         var nCanvasH = parseInt(canvas.style.height) || 800;
@@ -146,3 +174,60 @@
     }
 
     window.addEventListener('resize', _applyCanvasScale);
+
+    // ── 左側「系統總覽」側欄摺疊（狀態持久化於 localStorage）──
+    var TREE_SIDE_KEY = 'scadaPage_sideCollapsed_v1';
+
+    function _isTreeSideCollapsed() {
+        try { return localStorage.getItem(TREE_SIDE_KEY) === '1'; } catch (_) { return false; }
+    }
+
+    function _setTreeToggleTitle(btn, isCollapsed) {
+        var szKey = isCollapsed ? 'scadapage.tree.expand' : 'scadapage.tree.collapse';
+        // i18n 字典是 DOMContentLoaded 後才 fetch，未 ready 時 t() 只會回傳 key，故延後套用
+        var apply = function () { btn.title = t(szKey); };
+        if (window.i18n && window.i18n.ready) window.i18n.ready(apply);
+        else apply();
+    }
+
+    function _applyTreeSideState(isCollapsed, isAnimate) {
+        var side = document.getElementById('scadaTreeSide');
+        var btn  = document.getElementById('scadaTreeToggle');
+        if (!side) return;
+        if (!isAnimate) side.classList.add('notrans');
+        side.classList.toggle('collapsed', isCollapsed);
+        if (btn) {
+            _setTreeToggleTitle(btn, isCollapsed);
+            btn.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
+        }
+        if (!isAnimate) {
+            // 還原初始狀態不做動畫；下一影格才開回 transition，之後點按鈕才有滑動效果
+            requestAnimationFrame(function () { side.classList.remove('notrans'); });
+        }
+    }
+
+    // ── 版面初始化：側欄摺疊狀態還原 + 尺寸變化觀察（由 index.js 於 DOMContentLoaded 呼叫）──
+    function _initScadaLayout() {
+        var btn = document.getElementById('scadaTreeToggle');
+        if (btn) {
+            _applyTreeSideState(_isTreeSideCollapsed(), false);
+            btn.addEventListener('click', function () {
+                var isCollapsed = !_isTreeSideCollapsed();
+                try { localStorage.setItem(TREE_SIDE_KEY, isCollapsed ? '1' : '0'); } catch (_) {}
+                _applyTreeSideState(isCollapsed, true);
+            });
+        }
+
+        _applyCanvasViewportHeight();
+
+        // 側欄摺疊（寬度 .2s）與警報面板摺疊（高度 .3s）都是動畫，
+        // 用 ResizeObserver 隨每一影格重算，比 transitionend 一次性重算平順。
+        // canvasWrap 是 absolute，不影響 viewport 尺寸，不會遞迴觸發。
+        if (window.ResizeObserver) {
+            var ro = new ResizeObserver(function () { _applyCanvasScale(); });
+            var viewport = document.querySelector('.scada-canvas-viewport');
+            var panel    = document.getElementById('activeAlarmPanel');
+            if (viewport) ro.observe(viewport);
+            if (panel)    ro.observe(panel);   // 面板高度變 → 畫布高度補上，面板維持貼底
+        }
+    }

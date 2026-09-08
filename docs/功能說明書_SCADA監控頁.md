@@ -60,7 +60,7 @@ wwwroot/
     ├── ctx-menus-points.js       ← 趨勢/AO/DO 右鍵選單與控制寫入
     ├── ctx-menus-equip.js        ← 泵浦/馬達右鍵選單與控制寫入
     ├── circuit-metric.js         ← 30 秒慢輪詢（SID 累積量 + 迴路指標）
-    ├── tree.js                   ← 頁面樹/切頁/畫布縮放
+    ├── tree.js                   ← 頁面樹/切頁/畫布縮放/側欄收合
     ├── render.js                 ← 渲染分派器 + 1 秒輪詢更新
     └── index.js                  ← 初始化進入點（最後載入）
 ```
@@ -170,6 +170,7 @@ Web POST /api/control/write
 
 ```
 DOMContentLoaded
+    → _initScadaLayout()      ← 還原側欄收合狀態、算畫布工作區高度、掛 ResizeObserver
     → initScadaViewer()       ← 載入設計、建構頁面樹、渲染首頁
     → _loadAlarmRules()       ← 載入警報規則快取
     → _loadManualControlValues() ← 載入手動控制值快取
@@ -199,6 +200,16 @@ DOMContentLoaded
 - `user-select:none` 防止雙擊選字
 - 摺疊狀態以 localStorage key `scadaPage_collapsed_v1` 持久化（陣列形式存所有摺疊節點 ID），跨重新整理保留
 
+### 側欄整體收合（Sidebar Toggle）
+
+上述「頁面樹摺疊」是**節點層級**；側欄本身另有**整體收合**，用於把畫布放到最大：
+
+- 側欄右緣**垂直置中**有一顆 22×44 px 小按鈕（`#scadaTreeToggle`），單擊即收合／展開
+- 收合時側欄寬度 160px → 0（.2s 動畫），面板淡出，按鈕內 chevron 旋轉 180°；按鈕本身跨在邊界上（`right:-11px`），收合後仍露在畫布左緣可再展開
+- 狀態以 localStorage key `scadaPage_sideCollapsed_v1`（`'1'` / `'0'`）持久化；還原初始狀態時暫加 `.notrans` 關閉動畫，避免進頁面看到側欄滑動
+- 收合改變畫布工作區寬度，以 `ResizeObserver` 監看 `.scada-canvas-viewport` 逐影格重算 `_applyCanvasScale()`，畫布跟著平順放大／縮小
+- i18n key：`scadapage.tree.collapse` / `scadapage.tree.expand`（按鈕 title，隨狀態切換）
+
 ### 頁面節點屬性
 
 | 屬性 | 說明 |
@@ -217,7 +228,15 @@ DOMContentLoaded
 - 設定畫布寬高與背景圖
 - 遍歷 `arrWidgetState` 逐一渲染 Widget
 - 套用等比縮放（`_applyCanvasScale`）讓畫布自適應容器大小
-- 監聽 `window.resize` 事件自動重算縮放
+- 監聽 `window.resize` 事件自動重算縮放；另以 `ResizeObserver` 監看畫布工作區（側欄收合／展開改變寬度）與未恢復警報面板（收合／展開改變高度）
+
+#### 畫布工作區高度（警報面板貼底）
+
+- `.scada-canvas-viewport` 的 CSS `height: calc(100vh - 240px)` 只是 JS 執行前的估計值
+- 實際高度由 `_applyCanvasViewportHeight()` 反推：`視窗高 − 工作區 top − (警報面板高 + 16px margin) − footer 高 − 8px 留白`
+- 效果：未恢復警報面板收合時空出的高度由畫布接手，面板永遠貼在螢幕底部，中間不留空白帶；面板展開時畫布自動縮回
+- 差異 < 1px 不重設高度，避免與 `ResizeObserver` 互相反覆觸發
+- `min-height` 由 480px 降為 320px — 警報面板全滿（body 上限 280px）時仍要讓面板貼得到底
 
 ### 7.4 Widget 類型
 

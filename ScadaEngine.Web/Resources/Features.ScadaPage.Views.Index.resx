@@ -55,6 +55,8 @@
 
   <data name="scadapage.tree.dblclick_expand" xml:space="preserve"><value>雙擊展開子項 ({0})</value></data>
   <data name="scadapage.tree.dblclick_collapse" xml:space="preserve"><value>雙擊摺疊</value></data>
+  <data name="scadapage.tree.collapse" xml:space="preserve"><value>收合系統總覽</value></data>
+  <data name="scadapage.tree.expand" xml:space="preserve"><value>展開系統總覽</value></data>
 
   <data name="scadapage.alarm.title" xml:space="preserve"><value>未恢復警報</value></data>
   <data name="scadapage.alarm.toggle_title" xml:space="preserve"><value>點擊折疊/展開</value></data>
