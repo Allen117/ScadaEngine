@@ -21,7 +21,12 @@
                     inputsRepeat: a.inputsRepeat || [],
                     inputsFixed: a.inputsFixed || [],
                     outputsRepeat: a.outputsRepeat || [],
-                    outputsFixed: a.outputsFixed || []
+                    outputsFixed: a.outputsFixed || [],
+                    // auto 注入輸入（@inputs_auto_repeat）：不渲染成 UI port，
+                    // 模擬 eval 時由前端解析下游 output 節點的 fMin/fMax 帶入
+                    inputsAutoRepeat: a.inputsAutoRepeat || [],
+                    // tuning 預設值（@inputs_default）：拖入節點時自動生成常數方塊
+                    inputDefaults: a.inputDefaults || {}
                 };
             });
             buildAlgoSubmenu();

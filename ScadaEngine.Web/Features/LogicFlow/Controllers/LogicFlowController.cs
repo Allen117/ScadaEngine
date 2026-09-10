@@ -235,6 +235,36 @@ public class LogicFlowController : Controller
         return list;
     }
 
+    /// <summary>解析 'key:port:field, ...' 為 [{key, port, field}]（@inputs_auto_repeat 用）；格式不足三段的項目略過</summary>
+    private static List<object> ParseAutoRepeatList(string raw)
+    {
+        var list = new List<object>();
+        foreach (var seg in raw.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+        {
+            var parts = seg.Split(':', StringSplitOptions.TrimEntries);
+            if (parts.Length < 3 || parts.Take(3).Any(string.IsNullOrEmpty)) continue;
+            list.Add(new { key = parts[0], port = parts[1], field = parts[2] });
+        }
+        return list;
+    }
+
+    /// <summary>解析 'key=1.5, key2=0.3' 為 {key: 1.5}（@inputs_default 用）；非數值項目略過</summary>
+    private static Dictionary<string, double> ParseDefaultsMap(string raw)
+    {
+        var map = new Dictionary<string, double>();
+        foreach (var seg in raw.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+        {
+            var idx = seg.IndexOf('=');
+            if (idx <= 0) continue;
+            var k = seg[..idx].Trim();
+            if (double.TryParse(seg[(idx + 1)..].Trim(),
+                    System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture, out var v))
+                map[k] = v;
+        }
+        return map;
+    }
+
     /// <summary>通用 metadata 解析：支援 # (Python) 和 // (C#) 前綴。第一版 .cs 不支援 variadic（忽略並 log warning）。</summary>
     private static object ParseAlgorithmMetadata(string szFilePath, string szAlgoDir, string szPrefix, string szLanguage, ILogger logger)
     {
@@ -248,6 +278,8 @@ public class LogicFlowController : Controller
         var inputsFixed = new List<object>();
         var outputsRepeat = new List<object>();
         var outputsFixed = new List<object>();
+        var inputsAutoRepeat = new List<object>();
+        var inputDefaults = new Dictionary<string, double>();
 
         var szRelDir = Path.GetDirectoryName(szFilePath)!;
         var szGroup = szRelDir == szAlgoDir ? "" : Path.GetFileName(szRelDir);
@@ -262,12 +294,18 @@ public class LogicFlowController : Controller
         var szInFixed = $"{szPrefix} @inputs_fixed:";
         var szOutRepeat = $"{szPrefix} @outputs_repeat:";
         var szOutFixed = $"{szPrefix} @outputs_fixed:";
+        var szInAutoRepeat = $"{szPrefix} @inputs_auto_repeat:";
+        var szInDefault = $"{szPrefix} @inputs_default:";
 
         foreach (var line in lines)
         {
             var trimmed = line.Trim();
             if (trimmed.StartsWith(szAlgo))
                 szLabel = trimmed[szAlgo.Length..].Trim();
+            else if (trimmed.StartsWith(szInAutoRepeat))
+                inputsAutoRepeat = ParseAutoRepeatList(trimmed[szInAutoRepeat.Length..]);
+            else if (trimmed.StartsWith(szInDefault))
+                inputDefaults = ParseDefaultsMap(trimmed[szInDefault.Length..]);
             else if (trimmed.StartsWith(szInRepeat))
                 inputsRepeat = ParseKeyLabelList(trimmed[szInRepeat.Length..]);
             else if (trimmed.StartsWith(szInFixed))
@@ -300,6 +338,7 @@ public class LogicFlowController : Controller
             inputsFixed = new List<object>();
             outputsRepeat = new List<object>();
             outputsFixed = new List<object>();
+            inputsAutoRepeat = new List<object>();
         }
 
         return new
@@ -316,6 +355,8 @@ public class LogicFlowController : Controller
             inputsFixed,
             outputsRepeat,
             outputsFixed,
+            inputsAutoRepeat,
+            inputDefaults,
         };
     }
 

@@ -66,6 +66,15 @@ public class LogicFlowExecutionService : BackgroundService
     private readonly ConcurrentDictionary<string, AlgoStatusSnapshot> _algoLastStatus = new();
     private static readonly TimeSpan ALGO_GRACE_PERIOD = TimeSpan.FromSeconds(5);
 
+    // 演算法 auto 注入 metadata 快取（@inputs_auto_repeat，來自 Python /algorithms；只存有宣告的演算法）
+    private Dictionary<string, List<AlgoAutoInputHelper.AutoRepeatDef>> _algoAutoMetaCache = new();
+    private DateTime _dtLastAlgoMetaReload = DateTime.MinValue;
+    // 點位 Min/Max 快取（auto 注入用）：key = SID
+    private Dictionary<string, (float? fMin, float? fMax)> _pointMinMaxCache = new();
+    private DateTime _dtLastPointMinMaxReload = DateTime.MinValue;
+    private static readonly TimeSpan ALGO_META_RELOAD_INTERVAL = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan POINT_MINMAX_RELOAD_INTERVAL = TimeSpan.FromMinutes(10);
+
     private static readonly TimeSpan DIAGRAM_RELOAD_INTERVAL = TimeSpan.FromSeconds(15);
     private static readonly TimeSpan DEVICE_CONFIG_RELOAD_INTERVAL = TimeSpan.FromMinutes(10);
     private static readonly TimeSpan MANUAL_CONTROL_RELOAD_INTERVAL = TimeSpan.FromSeconds(3);
@@ -305,6 +314,24 @@ public class LogicFlowExecutionService : BackgroundService
                 await RefreshHistoryCacheAsync();
                 _dtLastHistoryReload = DateTime.Now;
             }
+
+            // 演算法 auto 注入 metadata：畫布上有演算法節點才需要，每 5 分鐘刷新
+            var hasAlgoNodes = _diagrams.Values.Any(c => c.Nodes.Any(n => n.Type == "algorithm"));
+            if (hasAlgoNodes && DateTime.Now - _dtLastAlgoMetaReload >= ALGO_META_RELOAD_INTERVAL)
+            {
+                await ReloadAlgoAutoMetaAsync();
+                _dtLastAlgoMetaReload = DateTime.Now;
+            }
+
+            // 點位 Min/Max 快取：只有存在需要 auto 注入的演算法時才查
+            if (_algoAutoMetaCache.Count > 0 && DateTime.Now - _dtLastPointMinMaxReload >= POINT_MINMAX_RELOAD_INTERVAL)
+            {
+                using var scope = _serviceProvider.CreateScope();
+                var repo = scope.ServiceProvider.GetRequiredService<IDataRepository>();
+                var points = await repo.GetAllModbusPointsAsync();
+                _pointMinMaxCache = points.ToDictionary(p => p.szSID, p => (p.fMin, p.fMax)); // snapshot swap
+                _dtLastPointMinMaxReload = DateTime.Now;
+            }
         }
         catch (Exception ex)
         {
@@ -355,6 +382,45 @@ public class LogicFlowExecutionService : BackgroundService
         catch (Exception ex)
         {
             _logger.LogError(ex, "LogicFlow 刷新歷史值快取失敗");
+        }
+    }
+
+    /// <summary>從 Python /algorithms 載入各演算法的 @inputs_auto_repeat 宣告（只存有宣告者）。
+    /// Python 服務未啟動 → 保留舊快取（注入缺漏時 Python 呼叫本來也會失敗，行為一致）。</summary>
+    private async Task ReloadAlgoAutoMetaAsync()
+    {
+        try
+        {
+            var json = await _algoHttpClient.GetStringAsync("/algorithms");
+            using var doc = JsonDocument.Parse(json);
+            var newCache = new Dictionary<string, List<AlgoAutoInputHelper.AutoRepeatDef>>();
+            foreach (var algo in doc.RootElement.EnumerateArray())
+            {
+                if (!algo.TryGetProperty("name", out var nameEl)) continue;
+                var szName = nameEl.GetString();
+                if (string.IsNullOrEmpty(szName)) continue;
+                if (!algo.TryGetProperty("inputsAutoRepeat", out var autoEl)
+                    || autoEl.ValueKind != JsonValueKind.Array) continue;
+
+                var defs = new List<AlgoAutoInputHelper.AutoRepeatDef>();
+                foreach (var item in autoEl.EnumerateArray())
+                {
+                    var szKey = item.TryGetProperty("key", out var k) ? k.GetString() : null;
+                    var szPort = item.TryGetProperty("port", out var p) ? p.GetString() : null;
+                    var szField = item.TryGetProperty("field", out var f) ? f.GetString() : null;
+                    if (string.IsNullOrEmpty(szKey) || string.IsNullOrEmpty(szPort) || string.IsNullOrEmpty(szField))
+                        continue;
+                    defs.Add(new AlgoAutoInputHelper.AutoRepeatDef(szKey, szPort, szField));
+                }
+                if (defs.Count > 0) newCache[szName] = defs;
+            }
+            _algoAutoMetaCache = newCache; // snapshot swap
+            if (newCache.Count > 0)
+                _logger.LogDebug("LogicFlow 演算法 auto 注入 metadata 已載入: {Count} 個演算法", newCache.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "LogicFlow 載入演算法 auto 注入 metadata 失敗（Python 服務未就緒？）");
         }
     }
 
@@ -1116,6 +1182,20 @@ public class LogicFlowExecutionService : BackgroundService
         return true;
     }
 
+    /// <summary>per-port 變體：只從指定輸出 port 出發往下游找第一個 output 節點 SID
+    /// （auto 注入用；variadic 演算法同節點不同輸出 port 各自對應不同下游點位）</summary>
+    private static string? FindDownstreamOutputSidFromPort(DiagramContext ctx, int nStartNodeId, string szSourcePort)
+    {
+        return AlgoAutoInputHelper.FindDownstreamOutputSid(
+            ctx.Edges.Select(e => (e.Source, e.SourcePort, e.Target)),
+            id =>
+            {
+                var n = ctx.Nodes.Find(x => x.Id == id);
+                return (n?.Type == "output" && !string.IsNullOrEmpty(n.Sid), n?.Sid);
+            },
+            nStartNodeId, szSourcePort);
+    }
+
     /// <summary>從指定節點往下游遍歷，找到第一個 output 節點的 SID</summary>
     private string? FindDownstreamOutputSid(DiagramContext ctx, int nStartNodeId)
     {
@@ -1265,6 +1345,18 @@ public class LogicFlowExecutionService : BackgroundService
             var v = GetInputValue(ctx, nd.Id, portName);
             if (!v.HasValue) return false;  // 任一輸入尚未就緒
             inputDict[portName] = v.Value;
+        }
+
+        // ── auto 注入輸入（@inputs_auto_repeat）：對每組 i 循輸出 port {port}{i} 下游找
+        //    output 節點 SID → 查點位 Min/Max 塞進 inputDict（freq_min{i} / freq_max{i}）。
+        //    缺漏（沒接 output / 點位無 Min/Max）不注入 → Python 框架自然回 INPUT_MISSING（決策 6）。
+        //    注入值參與 input hash：點位設定變更 → hash 變 → 重新評估。
+        if (nd.InputCount.HasValue && _algoAutoMetaCache.TryGetValue(nd.Operator, out var autoDefs))
+        {
+            AlgoAutoInputHelper.InjectAutoInputs(
+                inputDict, autoDefs, nd.InputCount.Value,
+                port => FindDownstreamOutputSidFromPort(ctx, nd.Id, port),
+                sid => _pointMinMaxCache.TryGetValue(sid, out var mm) ? mm : null);
         }
 
         // ★ 優先嘗試 C# 演算法（同步 in-process，零延遲；第一版 .cs 不支援 variadic，所以不會帶 n）

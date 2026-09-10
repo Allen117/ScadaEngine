@@ -403,6 +403,24 @@
             }
             const algoH = computeAlgoNodeHeight(node);
             if (algoH != null) node.height = algoH;
+            S.canvasNodes.push(node);
+            // tuning 預設值（@inputs_default）：對每個有預設值的輸入 port 自動生成
+            // 常數節點 + 接線（仿舊版 math 遷移模式），置於演算法節點左側垂直排開。
+            // 僅「從調色盤拖入」時生成；右鍵切換節點型別不生成（決策 7 範圍界定）。
+            if (algo && algo.inputDefaults && node.algoInputs) {
+                const defKeys = node.algoInputs.filter(k => algo.inputDefaults[k] != null);
+                defKeys.forEach((k, idx) => {
+                    const cNode = {
+                        id: S.nextNodeId++, type: 'constant',
+                        x: Math.max(0, x - 200), y: y + idx * 60,
+                        constValue: algo.inputDefaults[k]
+                    };
+                    S.canvasNodes.push(cNode);
+                    S.canvasEdges.push({ id: S.nextEdgeId++, source: cNode.id, sourcePort: 'out', target: node.id, targetPort: k });
+                });
+            }
+            S.renderCanvasNodes();
+            return;
         }
         S.canvasNodes.push(node);
         S.renderCanvasNodes();

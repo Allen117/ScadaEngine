@@ -2,7 +2,7 @@
 
 > 此檔給 skill 自己讀，列出三種演算法型態（固定/變參/混合）的完整範例，方便 skill 組正確的 meta 結構。
 
-## 全部 9 種 metadata 標記
+## 全部 11 種 metadata 標記
 
 | 標記 | 型態 | 用途 | 範例 |
 |---|---|---|---|
@@ -15,8 +15,10 @@
 | `@inputs_fixed` | comma list of `key:label` | 變參模式下**不**加 suffix 的輸入 | `# @inputs_fixed: setpoint:設定值` |
 | `@outputs_repeat` | comma list of `key:label` | 變參會加 suffix 的輸出 | `# @outputs_repeat: cop:COP` |
 | `@outputs_fixed` | comma list of `key:label` | 變參不加 suffix 的輸出 | `# @outputs_fixed: total:總和` |
+| `@inputs_auto_repeat` | comma list of `key:port:field` | 變參**自動注入輸入**：不列為 UI port，由 Engine 依「輸出 port `{port}{i}` 下游 output 節點點位的 `{field}` 欄（Min/Max）」查值注入 `{key}{i}`；查不到不注入 → 框架回 INPUT_MISSING | `# @inputs_auto_repeat: freq_min:freq:Min, freq_max:freq:Max` |
+| `@inputs_default` | comma list of `key=value` | 輸入預設值：Web 從調色盤拖入該演算法節點時，對每個有預設值的輸入自動生成常數節點 + 接線（右鍵切換型別不生成） | `# @inputs_default: e_scale=3, deadband=0.3` |
 
-> C# 同名標記，把 `#` 換成 `//`。
+> C# 同名標記，把 `#` 換成 `//`。`@inputs_auto_repeat` 僅 Python 變參演算法支援（C# 第一版不支援 variadic）。
 
 ## 型態 A：固定輸入輸出（非變參）
 
@@ -79,6 +81,25 @@ def evaluate_one(actual, setpoint):
 ```
 
 執行期：`setpoint` 在每次迭代取相同值，`actual` 依 `actual1`, `actual2`, ... 取。
+
+## 型態 C 進階：自動注入輸入 + 預設值（dt_fuzzy_pump_freq 範例）
+
+```python
+# @algorithm: 溫差Fuzzy水泵頻率
+# @variadic: true
+# @inputs_fixed: t_out:出水溫, t_in:入水溫, dt_target:溫差目標, e_scale:誤差範圍, de_scale:變化範圍, step_max:單步最大Hz, deadband:不動作帶
+# @inputs_repeat: run:運轉狀態, freq_fb:目前頻率
+# @inputs_auto_repeat: freq_min:freq:Min, freq_max:freq:Max
+# @inputs_default: e_scale=3, de_scale=1, step_max=2, deadband=0.3
+# @outputs_repeat: freq:頻率輸出
+
+def evaluate_one(t_out, t_in, dt_target, e_scale, de_scale, step_max, deadband,
+                 run, freq_fb, freq_min, freq_max):
+    ...
+```
+
+- `freq_min` / `freq_max` **不出現在畫布 port**，但**必須列在 `evaluate_one` 參數中**；框架視同 repeat input 取 `freq_min1`, `freq_min2`, ...
+- Engine 依輸出 port `freq{i}` 的下游 output 節點點位查 `ModbusPoints.Min/Max` 注入；模擬（Web eval）以下游 output 節點的 fMin/fMax 帶入
 
 ## 關鍵規則
 

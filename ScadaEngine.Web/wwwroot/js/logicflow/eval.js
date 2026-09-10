@@ -293,6 +293,26 @@
         return getNodeOutputValue(edge.source, edge.sourcePort);
     }
 
+    // ── auto 注入輸入（@inputs_auto_repeat）：從指定輸出 port 往下游找第一個 output 節點 ──
+    // 與 Engine 的 per-port FindDownstreamOutputSidFromPort 對應（起始邊只走 sourcePort 相符者）
+    function findDownstreamOutputNodeFromPort(startNodeId, sourcePort) {
+        var visited = new Set([startNodeId]);
+        var queue = [];
+        S.canvasEdges
+            .filter(function (e) { return e.source === startNodeId && e.sourcePort === sourcePort; })
+            .forEach(function (e) { queue.push(e.target); });
+        while (queue.length > 0) {
+            var nid = queue.shift();
+            if (visited.has(nid)) continue;
+            visited.add(nid);
+            var target = S.canvasNodes.find(function (n) { return n.id === nid; });
+            if (!target) continue;
+            if (target.type === 'output' && target.sid) return target;
+            S.canvasEdges.filter(function (e) { return e.source === nid; }).forEach(function (e) { queue.push(e.target); });
+        }
+        return null;
+    }
+
     // ── TPR 回饋偵測：從指定節點往下游找 output 節點，讀取其即時值 ──
     function getTprFeedbackValue(startNodeId) {
         var visited = new Set([startNodeId]);
@@ -847,6 +867,17 @@
                         groupVals[rkey] = rv;
                     }
                     if (groupOK) {
+                        // auto 注入輸入（@inputs_auto_repeat）：模擬端以下游 output 節點的
+                        // fMin/fMax（點位 Min/Max 快照）帶入；找不到下游 output → 不注入，
+                        // Python 框架回該組 INPUT_MISSING（與 Engine 行為一致）
+                        (algo.inputsAutoRepeat || []).forEach(function (def) {
+                            var outNd = findDownstreamOutputNodeFromPort(nd.id, def.port + g);
+                            if (!outNd) return;
+                            var v = def.field === 'Min' ? (outNd.fMin != null ? outNd.fMin : 0)
+                                  : def.field === 'Max' ? (outNd.fMax != null ? outNd.fMax : 100)
+                                  : null;
+                            if (v != null) groupVals[def.key + g] = v;
+                        });
                         Object.assign(inputValues, groupVals);
                         anyGroupReady = true;
                     } else {

@@ -63,6 +63,38 @@ def _parse_kv_list(raw: str) -> list[dict]:
     return items
 
 
+def _parse_auto_repeat_list(raw: str) -> list[dict]:
+    """解析 'key:port:field, key2:port2:field2' 為 [{key, port, field}, ...]。
+    語意：per 組自動注入輸入 — 值由框架（Engine）依「輸出 port {port}{i} 下游點位的 {field} 欄」查得，
+    不對外列為 UI port；格式不足三段的項目直接略過。"""
+    items = []
+    for seg in raw.split(","):
+        seg = seg.strip()
+        if not seg:
+            continue
+        parts = [p.strip() for p in seg.split(":")]
+        if len(parts) < 3 or not all(parts[:3]):
+            print(f"[WARN] @inputs_auto_repeat 格式錯誤（需 key:port:field）: '{seg}'，已略過")
+            continue
+        items.append({"key": parts[0], "port": parts[1], "field": parts[2]})
+    return items
+
+
+def _parse_defaults(raw: str) -> dict:
+    """解析 'key=1.5, key2=0.3' 為 {key: 1.5, ...}；非數值項目略過。"""
+    defaults = {}
+    for seg in raw.split(","):
+        seg = seg.strip()
+        if not seg or "=" not in seg:
+            continue
+        k, v = seg.split("=", 1)
+        try:
+            defaults[k.strip()] = float(v.strip())
+        except ValueError:
+            print(f"[WARN] @inputs_default 數值解析失敗: '{seg}'，已略過")
+    return defaults
+
+
 def _parse_metadata(filepath: str) -> dict:
     """解析 .py 前 15 行的 @metadata comment（含 variadic 標記）"""
     meta = {
@@ -75,6 +107,8 @@ def _parse_metadata(filepath: str) -> dict:
         "inputs_fixed": [],    # [{key, label}, ...]
         "outputs_repeat": [],
         "outputs_fixed": [],
+        "inputs_auto_repeat": [],  # [{key, port, field}, ...] 框架自動注入，不列為 UI port
+        "inputs_default": {},      # {key: 預設值} 供 Web 拖入節點時自動生成常數方塊
     }
     with open(filepath, encoding="utf-8") as f:
         for i, line in enumerate(f):
@@ -100,6 +134,10 @@ def _parse_metadata(filepath: str) -> dict:
                 meta["outputs_repeat"] = _parse_kv_list(line[len("# @outputs_repeat:"):])
             elif line.startswith("# @outputs_fixed:"):
                 meta["outputs_fixed"] = _parse_kv_list(line[len("# @outputs_fixed:"):])
+            elif line.startswith("# @inputs_auto_repeat:"):
+                meta["inputs_auto_repeat"] = _parse_auto_repeat_list(line[len("# @inputs_auto_repeat:"):])
+            elif line.startswith("# @inputs_default:"):
+                meta["inputs_default"] = _parse_defaults(line[len("# @inputs_default:"):])
     return meta
 
 
@@ -138,6 +176,8 @@ def _discover_algorithms():
                 "inputs_fixed": meta["inputs_fixed"],
                 "outputs_repeat": meta["outputs_repeat"],
                 "outputs_fixed": meta["outputs_fixed"],
+                "inputs_auto_repeat": meta["inputs_auto_repeat"],
+                "inputs_default": meta["inputs_default"],
             }
         except Exception as e:
             print(f"[WARN] 載入演算法 {name} 失敗: {e}")
@@ -168,6 +208,8 @@ def list_algorithms():
             "inputsFixed": info["inputs_fixed"],
             "outputsRepeat": info["outputs_repeat"],
             "outputsFixed": info["outputs_fixed"],
+            "inputsAutoRepeat": info["inputs_auto_repeat"],
+            "inputDefaults": info["inputs_default"],
         }
         for name, info in _registry.items()
     ]
@@ -289,7 +331,9 @@ def evaluate(name: str, req: EvalRequest):
 
         if info["variadic"]:
             n = req.n if req.n is not None else 1
-            repeat_input_keys = {item["key"] for item in info["inputs_repeat"]}
+            # auto 注入輸入視同 repeat input 取 suffix（freq_min → freq_min1, freq_min2, ...）
+            repeat_input_keys = {item["key"] for item in info["inputs_repeat"]} \
+                              | {item["key"] for item in info["inputs_auto_repeat"]}
             repeat_output_keys = {item["key"] for item in info["outputs_repeat"]}
             merged_result: dict = {}
             merged_status = make_status(AlgoStatus.OK)
