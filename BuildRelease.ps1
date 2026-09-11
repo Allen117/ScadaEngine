@@ -23,7 +23,7 @@ New-Item -ItemType Directory -Path $ReleasePath -Force | Out-Null
 # ──────────────────────────────────────
 # 1. Build Engine
 # ──────────────────────────────────────
-Write-Host "[1/4] Building Engine (self-contained)..." -ForegroundColor Yellow
+Write-Host "[1/5] Building Engine (self-contained)..." -ForegroundColor Yellow
 $engineProject = Join-Path $RootPath "ScadaEngine.Engine"
 dotnet publish $engineProject -c Release --self-contained true --runtime win-x64 -o "$ReleasePath\Engine\App" --nologo -v quiet
 if ($LASTEXITCODE -ne 0) { Write-Host "Engine build FAILED" -ForegroundColor Red; exit 1 }
@@ -77,7 +77,7 @@ Write-Host "  Engine OK" -ForegroundColor Green
 # ──────────────────────────────────────
 # 2. Build Web
 # ──────────────────────────────────────
-Write-Host "[2/4] Building Web (self-contained)..." -ForegroundColor Yellow
+Write-Host "[2/5] Building Web (self-contained)..." -ForegroundColor Yellow
 $webProject = Join-Path $RootPath "ScadaEngine.Web"
 dotnet publish $webProject -c Release --self-contained true --runtime win-x64 -o "$ReleasePath\Web\App" --nologo -v quiet
 if ($LASTEXITCODE -ne 0) { Write-Host "Web build FAILED" -ForegroundColor Red; exit 1 }
@@ -133,9 +133,33 @@ Remove-Item "$ReleasePath\Engine\App\Setting\reset-engineer-password.ps1", "$Rel
 Write-Host "  reset-engineer-password.ps1 moved to package root (engineer tool, not installed on server)" -ForegroundColor Gray
 
 # ──────────────────────────────────────
-# 3. Create install script for on-site
+# 3. Build ModbusServer (optional gateway, NOT installed by main Install.bat)
 # ──────────────────────────────────────
-Write-Host "[3/4] Creating install scripts..." -ForegroundColor Yellow
+Write-Host "[3/5] Building ModbusServer gateway (self-contained)..." -ForegroundColor Yellow
+$modbusProject = Join-Path $RootPath "ScadaEngine.ModbusServer"
+dotnet publish $modbusProject -c Release --self-contained true --runtime win-x64 -o "$ReleasePath\ModbusServer\App" --nologo -v quiet
+if ($LASTEXITCODE -ne 0) { Write-Host "ModbusServer build FAILED" -ForegroundColor Red; exit 1 }
+
+# Copy ModbusServer configs (publish already carries them, copy again to be explicit like Engine)
+foreach ($dir in @("Setting", "MqttSetting", "Web")) {
+    $src = Join-Path $modbusProject $dir
+    if (Test-Path $src) {
+        $dst = "$ReleasePath\ModbusServer\App\$dir"
+        if (-not (Test-Path $dst)) { New-Item -ItemType Directory -Path $dst -Force | Out-Null }
+        Copy-Item -Path "$src\*" -Destination $dst -Recurse -Force
+    }
+}
+
+# Copy ModbusServer scripts
+Copy-Item -Path (Join-Path $modbusProject "Scripts\DeployModbusServer.ps1") -Destination "$ReleasePath\ModbusServer\" -Force
+Copy-Item -Path (Join-Path $modbusProject "Scripts\QuickDeploy.bat") -Destination "$ReleasePath\ModbusServer\" -Force
+
+Write-Host "  ModbusServer OK" -ForegroundColor Green
+
+# ──────────────────────────────────────
+# 4. Create install script for on-site
+# ──────────────────────────────────────
+Write-Host "[4/5] Creating install scripts..." -ForegroundColor Yellow
 
 # On-site install script (simplified, no build needed)
 @"
@@ -290,10 +314,143 @@ pause
 
 Write-Host "  Install.bat created" -ForegroundColor Green
 
+# ModbusServer standalone installer — deliberately NOT part of Install.bat（安裝解耦，見 docs/plans）
+# 單引號 herestring：內容含 PowerShell 變數（$c/$p/$j），不可被 build 腳本插值；bat 內容須全 ASCII（Set-Content -Encoding ASCII）
+@'
+@echo off
+setlocal
+echo ========================================
+echo   SCADA Modbus Gateway Installer
+echo   (standalone - NOT installed by Install.bat)
+echo ========================================
+echo.
+
+net session >nul 2>&1
+if %errorLevel% NEQ 0 (
+    echo [ERROR] Please run as Administrator
+    pause
+    exit /b 1
+)
+
+set "_APP=C:\SCADA\ModbusServer\App"
+set "_BACKUP=C:\SCADA\_ModbusGatewayBackup"
+set "_SVC=ScadaModbusGatewayService"
+set "_IS_UPGRADE=0"
+
+:: -- Detect upgrade: backup site config + AddressMap.json (address assignments must survive) --
+if exist "%_APP%\Setting" (
+    set "_IS_UPGRADE=1"
+    echo [INFO] Detected existing installation - preserving site config + AddressMap.json...
+    if not exist "%_BACKUP%" mkdir "%_BACKUP%"
+    xcopy /E /I /Y "%_APP%\Setting"     "%_BACKUP%\Setting"     >nul
+    xcopy /E /I /Y "%_APP%\MqttSetting" "%_BACKUP%\MqttSetting" >nul
+    if exist "%_APP%\AddressMap.json" copy /Y "%_APP%\AddressMap.json" "%_BACKUP%\AddressMap.json" >nul
+)
+
+echo [1/6] Stopping existing service (if any)...
+net stop %_SVC% >nul 2>&1
+
+echo [2/6] Copying files...
+xcopy /E /I /Y "%~dp0ModbusServer\App" "%_APP%" >nul
+
+:: -- Restore site config --
+if "%_IS_UPGRADE%"=="1" (
+    echo [INFO] Restoring site config...
+    xcopy /E /I /Y "%_BACKUP%\Setting"     "%_APP%\Setting"     >nul
+    xcopy /E /I /Y "%_BACKUP%\MqttSetting" "%_APP%\MqttSetting" >nul
+    if exist "%_BACKUP%\AddressMap.json" copy /Y "%_BACKUP%\AddressMap.json" "%_APP%\AddressMap.json" >nul
+    rmdir /S /Q "%_BACKUP%"
+)
+
+:: -- Read configured ports from the (site) setting file --
+for /f "usebackq" %%p in (`powershell -NoProfile -Command "(Get-Content '%_APP%\Setting\ModbusServerSetting.json' -Raw | ConvertFrom-Json).ModbusListenPort"`) do set MODBUS_PORT=%%p
+for /f "usebackq" %%p in (`powershell -NoProfile -Command "(Get-Content '%_APP%\Setting\ModbusServerSetting.json' -Raw | ConvertFrom-Json).WebPort"`) do set WEB_PORT=%%p
+if "%MODBUS_PORT%"=="" set MODBUS_PORT=502
+if "%WEB_PORT%"=="" set WEB_PORT=5041
+
+echo [3/6] Checking port availability (Modbus %MODBUS_PORT% / Web %WEB_PORT%)...
+
+:CHECK_MODBUS
+call :PORTCHECK %MODBUS_PORT%
+if "%PORT_FREE%"=="1" goto MODBUS_OK
+echo.
+echo [WARN] Modbus TCP port %MODBUS_PORT% is already in use by: %PORT_OWNER%
+set "NEWPORT="
+set /p NEWPORT="Enter alternative Modbus port (suggest 1502, Enter = re-test %MODBUS_PORT%): "
+if not "%NEWPORT%"=="" set MODBUS_PORT=%NEWPORT%
+goto CHECK_MODBUS
+:MODBUS_OK
+echo   Modbus port %MODBUS_PORT% OK
+
+:CHECK_WEB
+call :PORTCHECK %WEB_PORT%
+if "%PORT_FREE%"=="1" goto WEB_OK
+echo.
+echo [WARN] Web port %WEB_PORT% is already in use by: %PORT_OWNER%
+set "NEWPORT="
+set /p NEWPORT="Enter alternative Web port (suggest 5042, Enter = re-test %WEB_PORT%): "
+if not "%NEWPORT%"=="" set WEB_PORT=%NEWPORT%
+goto CHECK_WEB
+:WEB_OK
+echo   Web port %WEB_PORT% OK
+
+:: -- Persist selected ports into ModbusServerSetting.json --
+powershell -NoProfile -Command "$f='%_APP%\Setting\ModbusServerSetting.json'; $j=Get-Content $f -Raw | ConvertFrom-Json; $j.ModbusListenPort=[int]%MODBUS_PORT%; $j.WebPort=[int]%WEB_PORT%; $j | ConvertTo-Json -Depth 10 | Set-Content $f -Encoding UTF8"
+
+echo [4/6] Registering Windows service...
+sc query %_SVC% >nul 2>&1
+if %errorLevel% NEQ 0 (
+    sc create %_SVC% binPath= "\"%_APP%\ScadaEngine.ModbusServer.exe\"" DisplayName= "\"SCADA Modbus Gateway Service\"" start= auto
+    sc description %_SVC% "SCADA realtime data Modbus TCP gateway (FC4 input registers, float32)"
+    sc failure %_SVC% reset= 86400 actions= restart/5000/restart/10000/restart/30000
+)
+
+echo [5/6] Opening firewall for ports %MODBUS_PORT% (Modbus) and %WEB_PORT% (Web)...
+netsh advfirewall firewall delete rule name="SCADA Modbus Gateway TCP" >nul 2>&1
+netsh advfirewall firewall delete rule name="SCADA Modbus Gateway Web" >nul 2>&1
+netsh advfirewall firewall add rule name="SCADA Modbus Gateway TCP" dir=in action=allow protocol=TCP localport=%MODBUS_PORT%
+netsh advfirewall firewall add rule name="SCADA Modbus Gateway Web" dir=in action=allow protocol=TCP localport=%WEB_PORT%
+
+echo [6/6] Starting service...
+net start %_SVC%
+echo.
+echo ========================================
+echo   Modbus Gateway installed!
+echo   Modbus TCP : port %MODBUS_PORT% (FC4, float32)
+echo   Address map: http://localhost:%WEB_PORT%
+echo ========================================
+echo.
+if "%_IS_UPGRADE%"=="1" (
+    echo [OK] Site config + AddressMap.json were PRESERVED.
+) else (
+    echo [NOTE] First install - edit config as needed:
+    echo   %_APP%\Setting\ModbusServerSetting.json  ^(ports / word order / segments^)
+    echo   %_APP%\Setting\dbSetting.json            ^(SQL connection^)
+    echo   %_APP%\MqttSetting\MqttSetting.json      ^(MQTT broker^)
+)
+echo.
+pause
+exit /b 0
+
+:: -- Subroutine: check if TCP port %1 is free --
+:: Occupation by our own service (ScadaEngine.ModbusServer) is treated as free
+:: (upgrade scenario - the service was just stopped / will restart with the same port)
+:PORTCHECK
+set PORT_FREE=1
+set "PORT_OWNER="
+for /f "usebackq tokens=*" %%o in (`powershell -NoProfile -Command "$c=Get-NetTCPConnection -State Listen -LocalPort %1 -ErrorAction SilentlyContinue | Select-Object -First 1; if($c){$p=Get-Process -Id $c.OwningProcess -ErrorAction SilentlyContinue; if($p -and $p.ProcessName -ne 'ScadaEngine.ModbusServer'){Write-Output ($p.ProcessName + ' (PID ' + $c.OwningProcess + ')')} elseif(-not $p){Write-Output ('PID ' + $c.OwningProcess)}}"`) do (
+    set PORT_FREE=0
+    set "PORT_OWNER=%%o"
+)
+exit /b
+'@ | Set-Content -Path "$ReleasePath\InstallModbusServer.bat" -Encoding ASCII
+
+Write-Host "  InstallModbusServer.bat created (standalone gateway installer)" -ForegroundColor Green
+
 # ──────────────────────────────────────
-# 4. Summary
+# 5. Summary
 # ──────────────────────────────────────
-Write-Host "[4/4] Calculating size..." -ForegroundColor Yellow
+Write-Host "[5/5] Calculating size..." -ForegroundColor Yellow
 $totalSize = [math]::Round(((Get-ChildItem $ReleasePath -Recurse | Measure-Object -Property Length -Sum).Sum / 1MB), 1)
 
 Write-Host ""
@@ -306,15 +463,20 @@ Write-Host "Size:   ${totalSize} MB" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Folder structure:"
 Write-Host "  SCADA_Release_$DateTag\"
-Write-Host "  +-- Install.bat              <- On-site: right-click Run as Admin"
+Write-Host "  +-- Install.bat              <- On-site: right-click Run as Admin (Engine + Web only)"
+Write-Host "  +-- InstallModbusServer.bat  <- Optional Modbus gateway (standalone, run separately)"
 Write-Host "  +-- Engine\"
 Write-Host "  |   +-- App\                 <- Engine executable + configs"
 Write-Host "  |   +-- QuickDeploy.bat      <- Engine service manager"
 Write-Host "  |   +-- DeployService.ps1"
 Write-Host "  +-- Web\"
-Write-Host "      +-- App\                 <- Web executable + wwwroot + configs"
-Write-Host "      +-- QuickDeploy.bat      <- Web service manager"
-Write-Host "      +-- DeployWebService.ps1"
+Write-Host "  |   +-- App\                 <- Web executable + wwwroot + configs"
+Write-Host "  |   +-- QuickDeploy.bat      <- Web service manager"
+Write-Host "  |   +-- DeployWebService.ps1"
+Write-Host "  +-- ModbusServer\"
+Write-Host "      +-- App\                 <- Modbus TCP gateway (FC4 float32) + browse page"
+Write-Host "      +-- QuickDeploy.bat      <- Gateway service manager"
+Write-Host "      +-- DeployModbusServer.ps1"
 Write-Host ""
 Write-Host "On-site deployment:"
 Write-Host "  1. Copy entire folder to USB"

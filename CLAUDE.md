@@ -73,6 +73,11 @@ Engine 是背景服務，無 HTTP endpoint。
 
 > ⚠️ Razor views 是 **precompiled**，改 .cshtml 必須 `dotnet build` 才生效。
 
+### 部署到 C:\SCADA（本機 = 生產機）
+
+- **一鍵全部署**：repo 根目錄 `QuickDeployAll.bat`（系統管理員執行）＝ `BuildRelease.ps1` 打包 → 最新 Release 包 `Install.bat` 安裝 Engine + Web（升級自動備份/還原現場設定）。**不碰 Modbus Gateway** — 要裝/更新 Gateway 另跑 Release 包內 `InstallModbusServer.bat`
+- ⚠️ 各專案 `Scripts\QuickDeploy.bat` 的 Update（選 6）會用 **repo 版設定檔硬蓋** `C:\SCADA\...` 現場設定（無備份），且停服務後的進程清理用 `ScadaEngine*` 萬用字元會**誤殺另一個服務的進程**；生產機更新一律走 QuickDeployAll / Install.bat
+
 ### 卡住的 Web 進程（鎖住 bin 導致 build 失敗）
 
 ⚠️ 這台機器上**同時會有兩個 `ScadaEngine.Web` 進程**：
@@ -98,14 +103,15 @@ ScadaEngine.sln
 ├── ScadaEngine.Algorithm     — Algorithm utilities (class library, currently minimal)
 ├── ScadaEngine.Engine        — .NET 8 Worker Service (Modbus → MQTT publisher)
 ├── ScadaEngine.Web           — .NET 8 ASP.NET Core MVC (dashboard, http://localhost:5038)
-└── ScadaEngine.LicenseBridge — net48 Windows Service，HASP USB 加密狗授權驗證，靠 Named Pipe 供 Engine 呼叫
+├── ScadaEngine.LicenseBridge — net48 Windows Service，HASP USB 加密狗授權驗證，靠 Named Pipe 供 Engine 呼叫
+└── ScadaEngine.ModbusServer  — .NET 8 對外 Modbus TCP Gateway（FC4 float32 供第三方讀即時值 + :5041 對照表網頁；獨立安裝 InstallModbusServer.bat，只引用 Common）
 ```
 
 ### 跨模組設計
 
 任務牽涉以下任一主題，先讀 **[docs/架構.md](docs/架構.md)**（含 TOC）：
 
-- **資料流**：Modbus / DB 來源 / OPC UA 來源 → HistoryData / LatestData / MQTT → Web
+- **資料流**：Modbus / DB 來源 / OPC UA 來源 → HistoryData / LatestData / MQTT → Web；對外 Modbus TCP Gateway 分支（ScadaEngine.ModbusServer，append-only 位址對照 `AddressMap.json`）→ docs/功能說明書_ModbusServerGateway.md
 - **警報系統**：Alarm MQTT 推播 + 規則熱重載（Engine ↔ Web）
 - **通知系統**：Line / Email / 簡訊三通道推播（每群組/號碼可選 zh-TW / en，觸發 + 恢復皆通知；寄送結果寫 EventLog 摘要，EventType=3）。Engine 端訊息字典 `Resources/notification.{zh-TW,en}.json`，Web UI 在 `AlarmSetting` 第三 tab 管理 Email 群組與規則路由、第四 tab 管理簡訊號碼。SMTP 走 **MailKit**；簡訊走序列埠簡訊盒（**System.IO.Ports** + 標準 AT 指令、UCS2 70 字、COM 自動偵測，無網路可用；Web 測試發送/重掃經 MQTT `SCADA/Sys/Sms/Cmd|Status` 由 Engine 代執行）→ docs/功能說明書_簡訊通知.md
 - **用電報表**：On-demand 計算 + 葉子層 Hourly 預聚合 + Staleness Window
@@ -136,6 +142,7 @@ ScadaEngine.sln
 | `ScadaEngine.Engine/Setting/EmailSetting.json` | SMTP host/port/帳密 + rate limit（MailKit）|
 | `ScadaEngine.Engine/Setting/SmsSetting.json` | 簡訊盒設定（ComPort auto/手動、BaudRate、SimPin、限流、每日上限、恢復通知開關）— **僅啟動載入**，改後需重啟 Engine。細節見 docs/功能說明書_簡訊通知.md |
 | `ScadaEngine.Engine/Resources/notification.{zh-TW,en}.json` | Engine 通知訊息字典（Line + Email + 簡訊共用，依群組/號碼 Language 切換）|
+| `ScadaEngine.ModbusServer/Setting/ModbusServerSetting.json` | 對外 Modbus Gateway：監聽埠(502)/UnitId/WordOrder/NaN 或 HoldLast/網頁埠(5041，刻意避開 CDPSvc 的 5040)/位址段界 — **僅啟動載入**。同專案 `AddressMap.json`（執行期自動產生）為位址對照持久化，**升級必保留、勿刪**。細節見 docs/功能說明書_ModbusServerGateway.md |
 
 Web reads Engine's `dbSetting.json` via a relative path `../ScadaEngine.Engine/Setting/dbSetting.json` — both projects must run from their own directories.
 

@@ -23,6 +23,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScadaEngine.LicenseBridge",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScadaEngine.Tests", "ScadaEngine.Tests\ScadaEngine.Tests.csproj", "{FAF5ED32-5968-4915-A705-AE62A39C5928}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScadaEngine.ModbusServer", "ScadaEngine.ModbusServer\ScadaEngine.ModbusServer.csproj", "{3C7D51E4-9A2B-4F6C-8D15-72E0B4A6C918}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -53,6 +55,10 @@ Global
 		{FAF5ED32-5968-4915-A705-AE62A39C5928}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FAF5ED32-5968-4915-A705-AE62A39C5928}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FAF5ED32-5968-4915-A705-AE62A39C5928}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3C7D51E4-9A2B-4F6C-8D15-72E0B4A6C918}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3C7D51E4-9A2B-4F6C-8D15-72E0B4A6C918}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3C7D51E4-9A2B-4F6C-8D15-72E0B4A6C918}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3C7D51E4-9A2B-4F6C-8D15-72E0B4A6C918}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

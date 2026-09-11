@@ -1,0 +1,9 @@
+{
+  "MqttConfig": {
+    "szBrokerIp": "127.0.0.1",
+    "nPort": 1883,
+    "szClientId": "SCADA_Modbus_Gateway",
+    "szBaseTopic": "SCADA/Realtime",
+    "isRetain": true
+  }
+}

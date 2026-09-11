@@ -23,6 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\ScadaEngine.Web\ScadaEngine.Web.csproj" />
     <ProjectReference Include="..\ScadaEngine.Engine\ScadaEngine.Engine.csproj" />
+    <ProjectReference Include="..\ScadaEngine.ModbusServer\ScadaEngine.ModbusServer.csproj" />
   </ItemGroup>
 
 </Project>

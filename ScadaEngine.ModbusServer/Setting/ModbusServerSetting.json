@@ -1,0 +1,17 @@
+{
+  "ModbusListenAddress": "0.0.0.0",
+  "ModbusListenPort": 502,
+  "UnitId": 1,
+  "WordOrder": "CDAB",
+  "BadQualityMode": "NaN",
+  "WebPort": 5041,
+  "DbPollSeconds": 2,
+  "StaleSeconds": 300,
+  "RegisterSweepMs": 1000,
+  "Segments": {
+    "Modbus": { "Start": 0, "CapacityPoints": 5000 },
+    "Calc": { "Start": 10000, "CapacityPoints": 2000 },
+    "Db": { "Start": 14000, "CapacityPoints": 3000 },
+    "OpcUa": { "Start": 20000, "CapacityPoints": 3000 }
+  }
+}
