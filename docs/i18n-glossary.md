@@ -106,6 +106,9 @@
 | 批次生產時間電價 | Batch Production TOU | 高壓/特高壓生產性質限定 |
 | 表燈（住商） | Lighting (Residential & Commercial) | 台電用戶類別 |
 | 低壓 / 高壓 / 特高壓電力 | Low / High / Extra High Voltage Power | 台電用戶類別 |
+| 壓差 / 差壓 | Differential Pressure (dP) | 供回水壓差控制語境 |
+| 壓差計 | Differential Pressure Sensor | 直接量測 ΔP 的傳感器 |
+| 供水壓 / 回水壓 | Supply Pressure / Return Pressure | dp_fuzzy_pump_freq 輸入 port |
 | 計算點 / 計算點位 | Calculated Point | 同義 |
 | DB 來源 | DB Source | DBLatestData polling 系列 |
 | Modbus 來源 | Modbus Source | Modbus TCP polling 系列 |

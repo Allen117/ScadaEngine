@@ -733,6 +733,7 @@
                     const occupied = S.canvasEdges.some(e => e.target === tId && e.targetPort === tPort);
                     if (!occupied) {
                         S.canvasEdges.push({ id: S.nextEdgeId++, source: S.draggingEdge.sourceId, sourcePort: S.draggingEdge.sourcePort, target: tId, targetPort: tPort });
+                        maybeSuggestDpRetZero(S.draggingEdge.sourceId, tId, tPort);
                     }
                 }
             }
@@ -741,6 +742,29 @@
         }
         document.addEventListener('mousemove', onMove);
         document.addEventListener('mouseup', onUp);
+    }
+
+    // 壓差計直入輔助：名稱像壓差的點位接上「壓差Fuzzy水泵頻率」的供水壓 (p_sup) 時，
+    // 徵詢是否自動在回水壓 (p_ret) 接常數 0（壓差直入用法，見 dp_fuzzy_pump_freq description）。
+    // 關鍵字為啟發式判斷，confirm 制、按取消即無事；p_ret 已接線則不打擾。
+    function maybeSuggestDpRetZero(srcId, tId, tPort) {
+        if (tPort !== 'p_sup') return;
+        const tNode = S.canvasNodes.find(n => n.id === tId);
+        if (!tNode || tNode.type !== 'algorithm' || tNode.operator !== 'dp_fuzzy_pump_freq') return;
+        const sNode = S.canvasNodes.find(n => n.id === srcId);
+        if (!sNode || sNode.type !== 'input' || !/壓差|差壓|dp/i.test(sNode.pointName || '')) return;
+        if (S.canvasEdges.some(e => e.target === tId && e.targetPort === 'p_ret')) return;
+        if (!confirm(S.t('logicflow.confirm.dp_direct_pret_zero'))) return;
+        const pos = getPortPos(tId, 'p_ret');
+        const cNode = {
+            id: S.nextNodeId++, type: 'constant',
+            x: Math.max(0, tNode.x - 200),
+            y: pos ? Math.max(0, Math.round((pos.y - 20) / 20) * 20) : tNode.y + 60,
+            constValue: 0
+        };
+        S.canvasNodes.push(cNode);
+        S.canvasEdges.push({ id: S.nextEdgeId++, source: cNode.id, sourcePort: 'out', target: tId, targetPort: 'p_ret' });
+        S.renderCanvasNodes();
     }
 
     function deleteSelectedEdge() {

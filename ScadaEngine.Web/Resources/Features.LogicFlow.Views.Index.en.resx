@@ -170,6 +170,8 @@ Remove the point/schedule binding first.</value></data>
   <data name="logicflow.error.schedule_load_failed" xml:space="preserve"><value>Failed to load schedule list</value></data>
   <data name="logicflow.error.device_load_failed" xml:space="preserve"><value>Failed to load device/point list</value></data>
   <data name="logicflow.confirm.delete_item" xml:space="preserve"><value>Delete this item? (Including all sub-items)</value></data>
+  <data name="logicflow.confirm.dp_direct_pret_zero" xml:space="preserve"><value>This point looks like a differential pressure sensor. When wiring dP directly, return pressure should be a constant 0.
+Automatically connect a constant 0 to return pressure (p_ret)?</value></data>
   <data name="logicflow.success.save" xml:space="preserve"><value>Saved successfully!</value></data>
 
   <data name="logicflow.pp.title_select_source" xml:space="preserve"><value>Select Point Source</value></data>

@@ -185,6 +185,8 @@
   <data name="logicflow.error.schedule_load_failed" xml:space="preserve"><value>無法載入排程清單</value></data>
   <data name="logicflow.error.device_load_failed" xml:space="preserve"><value>無法載入設備/點位清單</value></data>
   <data name="logicflow.confirm.delete_item" xml:space="preserve"><value>確定要刪除此項目？（含所有子項目）</value></data>
+  <data name="logicflow.confirm.dp_direct_pret_zero" xml:space="preserve"><value>此點位名稱看起來是壓差計。壓差直入時回水壓應接常數 0，
+要自動在回水壓 (p_ret) 接上常數 0 嗎？</value></data>
   <data name="logicflow.success.save" xml:space="preserve"><value>儲存成功！</value></data>
 
   <!-- ============ 點位選擇 Modal ============ -->
