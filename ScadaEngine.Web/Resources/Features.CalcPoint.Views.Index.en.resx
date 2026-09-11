@@ -87,6 +87,12 @@
   <data name="calcpoint.tpl.wetbulb" xml:space="preserve"><value>Wet-Bulb Temperature (Stull)</value></data>
   <data name="calcpoint.tpl.wetbulb.point_name" xml:space="preserve"><value>Outdoor Wet-Bulb Temperature</value></data>
   <data name="calcpoint.tpl.wetbulb.hint" xml:space="preserve"><value>Derives wet-bulb temperature from dry-bulb temperature T and relative humidity RH. Valid for T 0~50°C and RH 5~100%; quality is marked Bad outside this range. Select a temperature point for variable T and a humidity point for RH (any source).</value></data>
+  <data name="calcpoint.tpl.enthalpy" xml:space="preserve"><value>Enthalpy (Moist Air)</value></data>
+  <data name="calcpoint.tpl.enthalpy.point_name" xml:space="preserve"><value>Outdoor Air Enthalpy</value></data>
+  <data name="calcpoint.tpl.enthalpy.hint" xml:space="preserve"><value>Derives moist air specific enthalpy (kJ/kg dry air, near-sea-level pressure) from dry-bulb temperature T and relative humidity RH. Valid for T 0~50°C and RH 0~100%; quality is marked Bad outside this range. Select a temperature point for variable T and a humidity point for RH (any source).</value></data>
+  <data name="calcpoint.tpl.dewpoint" xml:space="preserve"><value>Dew Point Temperature (Magnus)</value></data>
+  <data name="calcpoint.tpl.dewpoint.point_name" xml:space="preserve"><value>Outdoor Dew Point Temperature</value></data>
+  <data name="calcpoint.tpl.dewpoint.hint" xml:space="preserve"><value>Derives dew point temperature from dry-bulb temperature T and relative humidity RH. Valid for T 0~50°C and RH 1~100%; quality is marked Bad outside this range. Select a temperature point for variable T and a humidity point for RH (any source).</value></data>
 
   <data name="calcpoint.label.name" xml:space="preserve"><value>Name</value></data>
   <data name="calcpoint.label.unit" xml:space="preserve"><value>Unit</value></data>
@@ -100,7 +106,7 @@
   <data name="calcpoint.placeholder.var_name" xml:space="preserve"><value>e.g. Flow</value></data>
   <data name="calcpoint.placeholder.formula" xml:space="preserve"><value>e.g. Flow * (ReturnT - SupplyT) * 4.186 / 211</value></data>
 
-  <data name="calcpoint.tooltip.formula" xml:space="preserve"><value>&lt;b&gt;Operators&lt;/b&gt;: +, -, *, /, %&lt;br&gt;&lt;b&gt;Compare&lt;/b&gt;: &amp;gt;, &amp;lt;, &amp;gt;=, &amp;lt;=, ==, !=&lt;br&gt;&lt;b&gt;Logic&lt;/b&gt;: &amp;amp;&amp;amp;, ||, !&lt;br&gt;&lt;b&gt;Conditional&lt;/b&gt;: if(cond, true_val, false_val)&lt;br&gt;&lt;b&gt;Math&lt;/b&gt;: Pow(x,y), Sqrt(x), Abs(x), Log(x), Round(x,d), Min(x,y), Max(x,y)&lt;br&gt;&lt;b&gt;Domain&lt;/b&gt;: WetBulb(T,RH) wet-bulb temperature&lt;br&gt;&lt;b&gt;Variables&lt;/b&gt;: Use variable names defined above</value></data>
+  <data name="calcpoint.tooltip.formula" xml:space="preserve"><value>&lt;b&gt;Operators&lt;/b&gt;: +, -, *, /, %&lt;br&gt;&lt;b&gt;Compare&lt;/b&gt;: &amp;gt;, &amp;lt;, &amp;gt;=, &amp;lt;=, ==, !=&lt;br&gt;&lt;b&gt;Logic&lt;/b&gt;: &amp;amp;&amp;amp;, ||, !&lt;br&gt;&lt;b&gt;Conditional&lt;/b&gt;: if(cond, true_val, false_val)&lt;br&gt;&lt;b&gt;Math&lt;/b&gt;: Pow(x,y), Sqrt(x), Abs(x), Log(x), Round(x,d), Min(x,y), Max(x,y)&lt;br&gt;&lt;b&gt;Domain&lt;/b&gt;: WetBulb(T,RH) wet-bulb temperature, Enthalpy(T,RH) enthalpy, DewPoint(T,RH) dew point&lt;br&gt;&lt;b&gt;Variables&lt;/b&gt;: Use variable names defined above</value></data>
 
   <data name="calcpoint.status.enabled" xml:space="preserve"><value>Enabled</value></data>
   <data name="calcpoint.status.disabled" xml:space="preserve"><value>Disabled</value></data>

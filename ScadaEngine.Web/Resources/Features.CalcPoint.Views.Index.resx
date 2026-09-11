@@ -87,6 +87,12 @@
   <data name="calcpoint.tpl.wetbulb" xml:space="preserve"><value>濕球溫度（Stull 經驗式）</value></data>
   <data name="calcpoint.tpl.wetbulb.point_name" xml:space="preserve"><value>外氣濕球溫度</value></data>
   <data name="calcpoint.tpl.wetbulb.hint" xml:space="preserve"><value>由乾球溫度 T 與相對濕度 RH 推導濕球溫度。適用 T 0~50°C、RH 5~100%，超出範圍時品質標為 Bad。請為變數 T 選擇溫度點位、RH 選擇濕度點位（任何來源皆可）。</value></data>
+  <data name="calcpoint.tpl.enthalpy" xml:space="preserve"><value>焓值（濕空氣比焓）</value></data>
+  <data name="calcpoint.tpl.enthalpy.point_name" xml:space="preserve"><value>外氣焓值</value></data>
+  <data name="calcpoint.tpl.enthalpy.hint" xml:space="preserve"><value>由乾球溫度 T 與相對濕度 RH 推導濕空氣比焓（kJ/kg 乾空氣，近海平面定壓）。適用 T 0~50°C、RH 0~100%，超出範圍時品質標為 Bad。請為變數 T 選擇溫度點位、RH 選擇濕度點位（任何來源皆可）。</value></data>
+  <data name="calcpoint.tpl.dewpoint" xml:space="preserve"><value>露點溫度（Magnus 式）</value></data>
+  <data name="calcpoint.tpl.dewpoint.point_name" xml:space="preserve"><value>外氣露點溫度</value></data>
+  <data name="calcpoint.tpl.dewpoint.hint" xml:space="preserve"><value>由乾球溫度 T 與相對濕度 RH 推導露點溫度。適用 T 0~50°C、RH 1~100%，超出範圍時品質標為 Bad。請為變數 T 選擇溫度點位、RH 選擇濕度點位（任何來源皆可）。</value></data>
 
   <data name="calcpoint.label.name" xml:space="preserve"><value>名稱</value></data>
   <data name="calcpoint.label.unit" xml:space="preserve"><value>單位</value></data>
@@ -100,7 +106,7 @@
   <data name="calcpoint.placeholder.var_name" xml:space="preserve"><value>例: Flow</value></data>
   <data name="calcpoint.placeholder.formula" xml:space="preserve"><value>例: Flow * (ReturnT - SupplyT) * 4.186 / 211</value></data>
 
-  <data name="calcpoint.tooltip.formula" xml:space="preserve"><value>&lt;b&gt;運算子&lt;/b&gt;: +、-、*、/、%&lt;br&gt;&lt;b&gt;比較&lt;/b&gt;: &amp;gt;、&amp;lt;、&amp;gt;=、&amp;lt;=、==、!=&lt;br&gt;&lt;b&gt;邏輯&lt;/b&gt;: &amp;amp;&amp;amp;、||、!&lt;br&gt;&lt;b&gt;條件&lt;/b&gt;: if(條件, 真值, 假值)&lt;br&gt;&lt;b&gt;數學&lt;/b&gt;: Pow(x,y)、Sqrt(x)、Abs(x)、Log(x)、Round(x,d)、Min(x,y)、Max(x,y)&lt;br&gt;&lt;b&gt;專業&lt;/b&gt;: WetBulb(T,RH) 濕球溫度&lt;br&gt;&lt;b&gt;變數&lt;/b&gt;: 使用上方定義的變數名稱</value></data>
+  <data name="calcpoint.tooltip.formula" xml:space="preserve"><value>&lt;b&gt;運算子&lt;/b&gt;: +、-、*、/、%&lt;br&gt;&lt;b&gt;比較&lt;/b&gt;: &amp;gt;、&amp;lt;、&amp;gt;=、&amp;lt;=、==、!=&lt;br&gt;&lt;b&gt;邏輯&lt;/b&gt;: &amp;amp;&amp;amp;、||、!&lt;br&gt;&lt;b&gt;條件&lt;/b&gt;: if(條件, 真值, 假值)&lt;br&gt;&lt;b&gt;數學&lt;/b&gt;: Pow(x,y)、Sqrt(x)、Abs(x)、Log(x)、Round(x,d)、Min(x,y)、Max(x,y)&lt;br&gt;&lt;b&gt;專業&lt;/b&gt;: WetBulb(T,RH) 濕球溫度、Enthalpy(T,RH) 焓值、DewPoint(T,RH) 露點溫度&lt;br&gt;&lt;b&gt;變數&lt;/b&gt;: 使用上方定義的變數名稱</value></data>
 
   <data name="calcpoint.status.enabled" xml:space="preserve"><value>啟用</value></data>
   <data name="calcpoint.status.disabled" xml:space="preserve"><value>停用</value></data>

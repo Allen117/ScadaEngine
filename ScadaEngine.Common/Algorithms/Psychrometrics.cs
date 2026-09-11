@@ -40,4 +40,54 @@ public static class Psychrometrics
         // 擬合誤差可能微幅高估（RH≈100 時 ≤ +0.2°C），物理上濕球不可能超過乾球
         return Math.Min(dTw, dTemp);
     }
+
+    /// <summary>焓值/露點的相對濕度下限：焓值為解析式，RH=0（乾空氣）合法</summary>
+    public const double MinRhEnthalpy = 0.0;
+    /// <summary>露點的相對濕度下限：RH→0 時 ln 無定義，取 1%</summary>
+    public const double MinRhDewPoint = 1.0;
+    /// <summary>近海平面定壓 hPa（與 WetBulb 同假設）</summary>
+    private const double PressureHpa = 1013.25;
+
+    /// <summary>
+    /// 濕空氣比焓 — ASHRAE 標準式 h = 1.006T + W(2501 + 1.86T)，W 由 Magnus 飽和壓推得。
+    /// 單位 kJ/kg 乾空氣，近海平面定壓 1013.25 hPa。
+    /// 適用範圍外（含 NaN 輸入）回傳 double.NaN，由呼叫端既有的 NaN→Quality Bad 機制接手。
+    /// </summary>
+    /// <param name="dTemp">乾球溫度（°C），適用 0 ~ 50</param>
+    /// <param name="dRh">相對濕度（%），適用 0 ~ 100</param>
+    /// <returns>比焓（kJ/kg 乾空氣），範圍外回傳 NaN</returns>
+    public static double Enthalpy(double dTemp, double dRh)
+    {
+        if (double.IsNaN(dTemp) || double.IsNaN(dRh)) return double.NaN;
+        if (dRh < MinRhEnthalpy || dRh > MaxRh) return double.NaN;
+        if (dTemp < MinTemp || dTemp > MaxTemp) return double.NaN;
+
+        var dPv = dRh / 100.0 * SaturationPressureMagnus(dTemp);
+        var dW = 0.622 * dPv / (PressureHpa - dPv);
+        return 1.006 * dTemp + dW * (2501.0 + 1.86 * dTemp);
+    }
+
+    /// <summary>
+    /// 露點溫度 — Magnus 式反解：γ = ln(RH/100) + 17.62T/(243.12+T)，Td = 243.12γ/(17.62−γ)。
+    /// 適用範圍外（含 NaN 輸入）回傳 double.NaN，由呼叫端既有的 NaN→Quality Bad 機制接手。
+    /// </summary>
+    /// <param name="dTemp">乾球溫度（°C），適用 0 ~ 50</param>
+    /// <param name="dRh">相對濕度（%），適用 1 ~ 100</param>
+    /// <returns>露點溫度（°C），範圍外回傳 NaN</returns>
+    public static double DewPoint(double dTemp, double dRh)
+    {
+        if (double.IsNaN(dTemp) || double.IsNaN(dRh)) return double.NaN;
+        if (dRh < MinRhDewPoint || dRh > MaxRh) return double.NaN;
+        if (dTemp < MinTemp || dTemp > MaxTemp) return double.NaN;
+
+        var dGamma = Math.Log(dRh / 100.0) + 17.62 * dTemp / (243.12 + dTemp);
+        var dTd = 243.12 * dGamma / (17.62 - dGamma);
+
+        // 浮點誤差下 RH=100 可能微幅高於乾球，物理上露點不可能超過乾球
+        return Math.Min(dTd, dTemp);
+    }
+
+    /// <summary>Magnus 飽和水蒸氣壓（WMO 係數），單位 hPa</summary>
+    private static double SaturationPressureMagnus(double dTemp)
+        => 6.112 * Math.Exp(17.62 * dTemp / (243.12 + dTemp));
 }

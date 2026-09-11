@@ -10,7 +10,7 @@ namespace ScadaEngine.Engine.Services;
 public static class NCalcCustomFunctions
 {
     /// <summary>變數名稱保留字 — 與自訂函數同名的變數會被 WrapFormulaVariables 包成 [變數] 而破壞公式</summary>
-    public static readonly string[] ReservedNames = { "WetBulb" };
+    public static readonly string[] ReservedNames = { "WetBulb", "Enthalpy", "DewPoint" };
 
     /// <summary>是否為保留字（不分大小寫）</summary>
     public static bool IsReservedName(string szName)
@@ -29,6 +29,24 @@ public static class NCalcCustomFunctions
                 var dTemp = Convert.ToDouble(args.Parameters.Evaluate(0));
                 var dRh = Convert.ToDouble(args.Parameters.Evaluate(1));
                 args.Result = Psychrometrics.WetBulbStull(dTemp, dRh);
+            }
+            else if (string.Equals(szName, "Enthalpy", StringComparison.OrdinalIgnoreCase))
+            {
+                // Enthalpy(T, RH) — ASHRAE 濕空氣比焓 kJ/kg，範圍外回 NaN 由 NaN→Bad 機制接手
+                if (args.Parameters.Count != 2)
+                    throw new ArgumentException("Enthalpy(T, RH) 需要 2 個參數");
+                var dTemp = Convert.ToDouble(args.Parameters.Evaluate(0));
+                var dRh = Convert.ToDouble(args.Parameters.Evaluate(1));
+                args.Result = Psychrometrics.Enthalpy(dTemp, dRh);
+            }
+            else if (string.Equals(szName, "DewPoint", StringComparison.OrdinalIgnoreCase))
+            {
+                // DewPoint(T, RH) — Magnus 反解露點 °C，範圍外回 NaN 由 NaN→Bad 機制接手
+                if (args.Parameters.Count != 2)
+                    throw new ArgumentException("DewPoint(T, RH) 需要 2 個參數");
+                var dTemp = Convert.ToDouble(args.Parameters.Evaluate(0));
+                var dRh = Convert.ToDouble(args.Parameters.Evaluate(1));
+                args.Result = Psychrometrics.DewPoint(dTemp, dRh);
             }
         };
     }

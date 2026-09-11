@@ -352,7 +352,11 @@
 | 外氣溫度 | Outdoor Temperature | DB 來源 Weather S1 |
 | 外氣相對濕度 | Outdoor Relative Humidity | DB 來源 Weather S2 |
 | 外氣濕球溫度 | Outdoor Wet-Bulb Temperature | DB 來源 Weather S3（由 S1/S2 推導） |
+| 外氣焓值 | Outdoor Air Enthalpy | DB 來源 Weather S4（由 S1/S2 推導） |
+| 外氣露點溫度 | Outdoor Dew Point Temperature | DB 來源 Weather S5（由 S1/S2 推導） |
 | 濕球溫度 | Wet-Bulb Temperature | Stull (2011) 經驗式；CalcPoint 內建函數 WetBulb(T,RH) |
+| 焓值 | Enthalpy | 濕空氣比焓 kJ/kg（乾空氣基準）；CalcPoint 內建函數 Enthalpy(T,RH) |
+| 露點溫度 | Dew Point Temperature | Magnus 式反解；CalcPoint 內建函數 DewPoint(T,RH) |
 | 乾球溫度 | Dry-Bulb Temperature | 一般氣溫 |
 | 公式範本 | Formula Template | CalcPoint 建立 modal 下拉 |
 | 觀測時間 | Observation Time | CWA ObsTime |

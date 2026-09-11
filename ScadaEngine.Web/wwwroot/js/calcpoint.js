@@ -26,8 +26,23 @@
     var TEMPLATES = {
         wetbulb: {
             nameKey: 'calcpoint.tpl.wetbulb.point_name',
+            hintKey: 'calcpoint.tpl.wetbulb.hint',
             unit: '\u00b0C',
             formula: 'WetBulb(T, RH)',
+            vars: ['T', 'RH']
+        },
+        enthalpy: {
+            nameKey: 'calcpoint.tpl.enthalpy.point_name',
+            hintKey: 'calcpoint.tpl.enthalpy.hint',
+            unit: 'kJ/kg',
+            formula: 'Enthalpy(T, RH)',
+            vars: ['T', 'RH']
+        },
+        dewpoint: {
+            nameKey: 'calcpoint.tpl.dewpoint.point_name',
+            hintKey: 'calcpoint.tpl.dewpoint.hint',
+            unit: '\u00b0C',
+            formula: 'DewPoint(T, RH)',
             vars: ['T', 'RH']
         }
     };
@@ -180,7 +195,10 @@
         for (var i = 0; i < tpl.vars.length; i++) {
             addVariableRow(tpl.vars[i], '');
         }
-        if (hint) hint.style.display = '';
+        if (hint) {
+            hint.textContent = t(tpl.hintKey);
+            hint.style.display = '';
+        }
     }
 
     function _resetTemplateSelect() {

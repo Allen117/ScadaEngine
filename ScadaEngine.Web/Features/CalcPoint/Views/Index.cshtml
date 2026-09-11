@@ -62,8 +62,10 @@
                     <select id="selTemplate" class="form-select form-select-sm" onchange="window._calcPoint.applyTemplate(this.value)">
                         <option value="">@Localizer["calcpoint.tpl.custom"]</option>
                         <option value="wetbulb">@Localizer["calcpoint.tpl.wetbulb"]</option>
+                        <option value="enthalpy">@Localizer["calcpoint.tpl.enthalpy"]</option>
+                        <option value="dewpoint">@Localizer["calcpoint.tpl.dewpoint"]</option>
                     </select>
-                    <div class="form-text" id="templateHint" style="display:none;">@Localizer["calcpoint.tpl.wetbulb.hint"]</div>
+                    <div class="form-text" id="templateHint" style="display:none;"></div>
                 </div>
 
                 <div class="row g-3">

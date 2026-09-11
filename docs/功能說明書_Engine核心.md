@@ -460,6 +460,8 @@ InitializeAsync()
 | 平均溫度 | `(T1 + T2) / 2` | `{"T1":"196865-S3", "T2":"196865-S4"}` | 兩點平均 |
 | COP | `Qc / P` | `{"Qc":"CALC-S1", "P":"196865-S5"}` | 冷凍能力÷耗電 |
 | 濕球溫度 | `WetBulb(T, RH)` | `{"T":"DB1-S1", "RH":"DB1-S2"}` | 自訂函數，見 8.2.1 |
+| 焓值 | `Enthalpy(T, RH)` | `{"T":"DB1-S1", "RH":"DB1-S2"}` | 自訂函數，見 8.2.1 |
+| 露點溫度 | `DewPoint(T, RH)` | `{"T":"DB1-S1", "RH":"DB1-S2"}` | 自訂函數，見 8.2.1 |
 
 #### 8.2.1 NCalc 自訂函數（NCalcCustomFunctions）
 
@@ -469,7 +471,9 @@ Engine 實際計算（`CalculatedPointService.EvaluateFormula`）與 Web 公式�
 
 | 函數 | 說明 |
 |------|------|
-| `WetBulb(T, RH)` | 濕球溫度 — Stull (2011) 經驗式（實作在 `ScadaEngine.Common/Algorithms/Psychrometrics`，含獨立驗證）。適用 T 0~50°C、RH 5~100%，範圍外回 NaN → 既有 NaN→Bad 機制接手 |
+| `WetBulb(T, RH)` | 濕球溫度 °C — Stull (2011) 經驗式（實作在 `ScadaEngine.Common/Algorithms/Psychrometrics`，含獨立驗證）。適用 T 0~50°C、RH 5~100%，範圍外回 NaN → 既有 NaN→Bad 機制接手 |
+| `Enthalpy(T, RH)` | 濕空氣比焓 kJ/kg（乾空氣基準）— ASHRAE 標準式 h = 1.006T + W(2501+1.86T)，Magnus 飽和壓、定壓 1013.25 hPa（同上實作於 `Psychrometrics`）。適用 T 0~50°C、RH 0~100%，範圍外回 NaN |
+| `DewPoint(T, RH)` | 露點溫度 °C — Magnus 式反解 Td = 243.12γ/(17.62−γ)（同上實作於 `Psychrometrics`）。適用 T 0~50°C、RH 1~100%（RH→0 時 ln 無定義），範圍外回 NaN |
 
 - **保留字**：與自訂函數同名的**變數名稱**會被 `WrapFormulaVariables` 包成 `[變數]` 而破壞公式，
   Web 端 Create/Update 已擋（`NCalcCustomFunctions.ReservedNames`）。
