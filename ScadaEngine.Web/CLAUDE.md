@@ -89,7 +89,18 @@ Registered as both `AddSingleton` and `AddHostedService` so it can be injected i
 
 **SCADA / EMS 雙主題**（新頁面必讀）：全站依路由分兩套色系（SCADA 深藍 / EMS 淡綠）。新增頁面前先判斷歸屬 — **頁面內一律用 Bootstrap primary class（`btn-primary` / `text-primary` / `bg-primary`），不在 `.cshtml` inline 硬寫色號**，EMS 模式由 `ems.css` 自動轉綠。EMS 子頁掛載 4 步驟 SOP + 完整色票 → [docs/設計規範.md](../docs/設計規範.md) §色彩系統 §SCADA / EMS 雙主題。
 
-## i18n 規則（zh-TW + en，僅指定頁面）
+## 前端改動驗收：自動 mock-render 截圖
+
+凡改動會影響**畫面呈現**的檔案（`.cshtml`、`wwwroot/css/`、`wwwroot/js/`、`Views/Shared/` 版面），
+完成改動後**不必等使用者要求**，一律用 `mock-render` skill 走以下流程再交付：
+
+1. 塞**自洽**的模擬數字（占比合計＝總表、加總對得上，使用者會驗算）離線渲染該頁
+2. 截圖後先自行 Read 檢視（數字、版面、圖表高度）確認符合本次改動預期
+3. 回覆中附上 png 路徑給使用者驗收；改動前後版面差異大時，補一句說明看哪裡
+
+- 有現成 recipe（見 skill 的 Recipes 登錄表）→ 複製改 MOCK 即可；沒有 → 照 skill 流程做新 recipe 並存回 `recipes/`
+- **豁免**：純後端／資料邏輯、僅 resx 字串同步、JS 內部重構等無視覺表面的改動；或使用者明確說不用截圖
+- 截圖只證明**版面與前端邏輯**，不驗真實資料與後端 — 需驗後端時另走真站台流程
 
 僅以下頁面已導入 i18n，新增/修改其字串時：
 

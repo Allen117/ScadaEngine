@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<!-- EMS 模式外殼（淡綠主題）：複製本檔為 recipes/<page>.html 後，
+     ① 改 <title> ② 填 MOCK 物件 ③ 把頁面 View/partial 的 HTML 貼進 PAGE_CONTENT
+     ④ 在 PAGE_SCRIPTS 掛頁面 JS（Chart.js 已含，不用的頁面可移除該行） -->
+<html lang="zh-TW">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>頁面標題 - SCADA 監控系統</title>
+
+    <link href="{{WWWROOT}}/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{WWWROOT}}/lib/font-awesome/css/all.min.css">
+    <link rel="stylesheet" href="{{WWWROOT}}/css/navbar-submenu.css">
+    <link rel="stylesheet" href="{{WWWROOT}}/css/ems.css">
+    <!-- 頁面自己的 css 加在這裡：<link rel="stylesheet" href="{{WWWROOT}}/css/xxx.css"> -->
+
+    <!-- 與 _Layout.cshtml 同步的自訂樣式 -->
+    <style>
+        html, body { overflow-x: hidden; }
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        .navbar { box-shadow: 0 2px 4px rgba(0,0,0,.1); }
+        .navbar .nav-link { white-space: nowrap; }
+        .navbar-collapse { flex-wrap: nowrap; }
+        .footer {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 0;
+            margin-top: auto;
+        }
+        main { min-height: calc(100vh - 140px); }
+        .card {
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        .btn-primary { background: linear-gradient(45deg, #007bff, #0056b3); border: none; }
+        .text-primary { color: #007bff !important; }
+    </style>
+
+    <script>
+    // ── 模擬時鐘：固定頁面時間（要換日期/時刻改這一行） ─────────
+    (function () {
+        var RealDate = Date;
+        var target = new RealDate(2026, 8, 9, 15, 42, 10).getTime();
+        var offset = target - RealDate.now();
+        function MockDate() {
+            if (arguments.length === 0) return new RealDate(RealDate.now() + offset);
+            return new (Function.prototype.bind.apply(RealDate, [null].concat([].slice.call(arguments))))();
+        }
+        MockDate.prototype = RealDate.prototype;
+        MockDate.now = function () { return RealDate.now() + offset; };
+        MockDate.parse = RealDate.parse;
+        MockDate.UTC = RealDate.UTC;
+        window.Date = MockDate;
+    })();
+
+    // ── 模擬 API：攔截 fetch，key = 去掉 query string 的路徑 ──────
+    (function () {
+        var MOCK = {
+            // '/Xxx/api/yyy': function () { return { ... }; },
+        };
+        var realFetch = window.fetch;
+        window.fetch = function (url, opts) {
+            var path = String(url).split('?')[0];
+            if (MOCK[path]) {
+                return Promise.resolve(new Response(JSON.stringify(MOCK[path]()), {
+                    status: 200,
+                    headers: { 'Content-Type': 'application/json' }
+                }));
+            }
+            return realFetch.apply(this, arguments);
+        };
+    })();
+    </script>
+</head>
+<body class="d-flex flex-column ems-mode">
+    <!-- 導覽列（EMS 模式） -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-leaf me-2"></i>
+                EMS 能源管理
+            </a>
+            <div class="collapse navbar-collapse show" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button"><i class="fas fa-plug me-1"></i>迴路資訊</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button"><i class="fas fa-file-alt me-1"></i>報表查詢</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-newspaper me-1"></i>能源日報</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-bullseye me-1"></i>能源基準</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button"><i class="fas fa-cog me-1"></i>能管設定</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button"><i class="fas fa-chart-line me-1"></i>歷史資料</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav flex-shrink-0 ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-arrow-left me-1"></i>回 SCADA</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-search me-1"></i><span class="d-none d-lg-inline">搜尋</span>
+                            <span class="gs-nav-kbd d-none d-xl-inline ms-1"><kbd>Ctrl</kbd> <kbd>K</kbd></span>
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button"><i class="fas fa-globe me-1"></i><span>台灣</span></a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button"><i class="fas fa-user me-1"></i>admin</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要內容 -->
+    <main role="main" class="flex-grow-1">
+        <!-- ═══════════ PAGE_CONTENT：把頁面 View/partial 的 HTML 貼在這裡 ═══════════ -->
+
+        <!-- ═══════════ PAGE_CONTENT 結束 ═══════════ -->
+    </main>
+
+    <!-- 頁腳（伺服器時間依需求隱藏；要顯示可加回 <span id="serverClock"> 與更新 script） -->
+    <footer class="footer mt-auto">
+        <div class="container-fluid">
+            <div class="d-flex flex-wrap justify-content-between align-items-center">
+                <span class="me-3"><i class="fas fa-industry me-1"></i>SCADA 智慧能源管理平台</span>
+                <span class="me-3 d-inline-flex align-items-center">
+                    <i class="fas fa-code me-1"></i>版本 2.2.3
+                    <img src="{{WWWROOT}}/images/itri-logo.svg" alt="ITRI" style="height:18px;vertical-align:middle;" class="ms-2" />
+                </span>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{{WWWROOT}}/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{WWWROOT}}/lib/chartjs/chart.umd.min.js"></script>
+    <script>if (window.Chart) { Chart.defaults.animation = false; }</script>
+    <!-- ═══════════ PAGE_SCRIPTS：頁面 JS 掛在這裡（順序照該頁 @section Scripts） ═══════════ -->
+
+    <!-- ═══════════ PAGE_SCRIPTS 結束 ═══════════ -->
+</body>
+</html>
