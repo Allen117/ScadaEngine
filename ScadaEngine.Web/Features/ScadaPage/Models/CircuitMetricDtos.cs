@@ -16,7 +16,7 @@ public class CircuitMetricQueryItem
     /// <summary>EnergyCircuit.Id（虛擬迴路亦可）</summary>
     public int nCircuitId { get; set; }
 
-    /// <summary>指標：day_kwh（本日度數，曆日）| month_kwh（本月度數，曆月）| period_kwh（本月電度，期別）| period_cost（本月電費，期別）</summary>
+    /// <summary>指標：day_kwh（本日度數，曆日）| month_kwh（本月度數，曆月）| period_kwh（本月電度，期別）| period_cost（本月電費，期別）| demand_kw（即時需量，kW）</summary>
     public string szMetric { get; set; } = "day_kwh";
 }
 
@@ -35,7 +35,7 @@ public class CircuitMetricResultDto
     /// <summary>ok | no_data（迴路不存在/無葉子/邊界值缺）| stale（部分 bucket 斷線）| no_plan（電費指標無有效方案）</summary>
     public string szStatus { get; set; } = "ok";
 
-    /// <summary>單位：kWh 指標固定 kWh；電費指標為空字串（貨幣單位由前端 i18n 決定）</summary>
+    /// <summary>單位：kWh 指標固定 kWh；demand_kw 固定 kW；電費指標為空字串（貨幣單位由前端 i18n 決定）</summary>
     public string szUnit { get; set; } = string.Empty;
 
     /// <summary>period_cost 專用：金額是否為子迴路占比分攤估算（同 EMS 電費卡 isEstimated）</summary>

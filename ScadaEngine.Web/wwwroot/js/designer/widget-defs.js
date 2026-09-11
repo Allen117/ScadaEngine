@@ -652,6 +652,13 @@ function buildControlBtnHtml(props) {
 // ============================================================
 // AI 點位 HTML（Designer 預覽）
 // ============================================================
+// 迴路指標模式的單位顯示（電費=元、需量=kW、其餘 kWh）
+function _cmetricUnitShown(szMetric) {
+    if (szMetric === 'period_cost') return t('designer.metric.unit_cost');
+    if (szMetric === 'demand_kw') return 'kW';
+    return 'kWh';
+}
+
 function buildRealtimeValueHtml(props) {
     const bCircuitBound = props.nCircuitId != null;
     const szSidLabel = (props.szPointName || bCircuitBound)
@@ -679,9 +686,9 @@ function buildRealtimeValueHtml(props) {
                ${escHtml(t(szValueMode === 'day' ? 'designer.widget.acc_day_badge' : 'designer.widget.acc_month_badge'))}
            </div>`;
     }
-    // 單位：迴路指標依指標決定（電費=元、其餘 kWh）；SID 累積模式自訂累積單位優先，空則沿用即時單位
+    // 單位：迴路指標依指標決定（電費=元、需量=kW、其餘 kWh）；SID 累積模式自訂累積單位優先，空則沿用即時單位
     const szUnitShown = bCircuitBound
-        ? ((props.szMetric || 'day_kwh') === 'period_cost' ? t('designer.metric.unit_cost') : 'kWh')
+        ? _cmetricUnitShown(props.szMetric || 'day_kwh')
         : ((szValueMode !== 'realtime' && props.szAccUnit) ? props.szAccUnit : (props.szUnit || ''));
 
     let szBorder = '';

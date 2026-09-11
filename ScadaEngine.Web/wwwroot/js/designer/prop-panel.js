@@ -1309,7 +1309,7 @@ function renderTableCellPropPanel(el, nRow, nCol) {
     if (!isHeader && cell.nCircuitId != null) {
         // ─ 迴路指標 cell（plan 2026-07-23）：迴路名 + 指標下拉 + 解除綁定 ─
         const szMetric = cell.szMetric || 'day_kwh';
-        const szMetricOptions = ['day_kwh', 'month_kwh', 'period_kwh', 'period_cost'].map(m =>
+        const szMetricOptions = ['day_kwh', 'month_kwh', 'period_kwh', 'period_cost', 'demand_kw'].map(m =>
             `<option value="${m}" ${szMetric === m ? 'selected' : ''}>${escHtml(t('designer.metric.' + m))}</option>`
         ).join('');
         szHtml += `
@@ -1886,7 +1886,7 @@ function buildRtCircuitMetricHtml(props) {
     const szMetric = props.szMetric || 'day_kwh';
     const szSelStyle = `style="width:100%;background:#3c3c3c;border:1px solid #555;color:#d4d4d4;
                                padding:4px 6px;font-size:12px;border-radius:3px;"`;
-    const szOptions = ['day_kwh', 'month_kwh', 'period_kwh', 'period_cost'].map(m =>
+    const szOptions = ['day_kwh', 'month_kwh', 'period_kwh', 'period_cost', 'demand_kw'].map(m =>
         `<option value="${m}" ${szMetric === m ? 'selected' : ''}>${escHtml(t('designer.metric.' + m))}</option>`
     ).join('');
     return `

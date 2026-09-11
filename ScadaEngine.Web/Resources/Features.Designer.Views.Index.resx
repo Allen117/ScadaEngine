@@ -480,10 +480,12 @@
   <data name="designer.metric.month_kwh" xml:space="preserve"><value>本月度數（曆月）</value></data>
   <data name="designer.metric.period_kwh" xml:space="preserve"><value>本月電度（期別）</value></data>
   <data name="designer.metric.period_cost" xml:space="preserve"><value>本月電費（期別）</value></data>
+  <data name="designer.metric.demand_kw" xml:space="preserve"><value>即時需量</value></data>
   <data name="designer.metric.badge.day_kwh" xml:space="preserve"><value>日度</value></data>
   <data name="designer.metric.badge.month_kwh" xml:space="preserve"><value>月度</value></data>
   <data name="designer.metric.badge.period_kwh" xml:space="preserve"><value>期度</value></data>
   <data name="designer.metric.badge.period_cost" xml:space="preserve"><value>期費</value></data>
+  <data name="designer.metric.badge.demand_kw" xml:space="preserve"><value>需量</value></data>
   <data name="designer.metric.unit_cost" xml:space="preserve"><value>元</value></data>
   <data name="designer.cmetric.autofill_toast" xml:space="preserve"><value>已依表頭帶入 {count} 個即時點位</value></data>
   <data name="designer.cmetric.autofill_toast_metrics" xml:space="preserve"><value>已帶入 {count} 個迴路指標欄</value></data>

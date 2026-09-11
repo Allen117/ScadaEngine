@@ -1,23 +1,30 @@
+using ScadaEngine.Engine.Data.Interfaces;
+using ScadaEngine.Engine.Models;
 using ScadaEngine.Web.Features.ScadaPage.Models;
 
 namespace ScadaEngine.Web.Services;
 
 /// <summary>
-/// ScadaPage 迴路指標元件計算核心（Scoped）。四指標與 EMS 完全同源（plan 決策 1 / 5）：
+/// ScadaPage 迴路指標元件計算核心（Scoped）。五指標與 EMS 完全同源（plan 決策 1 / 5）：
 ///   day_kwh    — 本日度數（曆日 [今日 00:00, 明日)）→ EnergyReportService.GetBucketKwhForRangesAsync
 ///   month_kwh  — 本月度數（曆月 [1 號 00:00, 次月)）→ 同上
 ///   period_kwh — 本月電度（月結期別）→ ElectricityCostService.GetStatusAsync().totalKwh（EMS 電費卡同一支）
 ///   period_cost— 本月電費（月結期別）→ ElectricityCostService.GetStatusAsync().totalCost（零重算，逐字同 EMS）
+///   demand_kw  — 即時需量（kW）→ IDataRepository.GetTodayDemandByCircuitIdAsync（EMS 需量卡同一支）
 /// 結果進 WidgetCircuitMetricCache（TTL 60s + per-key 鎖防 stampede）。
 /// </summary>
 public class WidgetCircuitMetricService
 {
-    public static readonly HashSet<string> ValidMetrics = new() { "day_kwh", "month_kwh", "period_kwh", "period_cost" };
+    public static readonly HashSet<string> ValidMetrics = new() { "day_kwh", "month_kwh", "period_kwh", "period_cost", "demand_kw" };
+
+    /// <summary>需量 stale 門檻：Engine 正常每分鐘一筆，最新一筆距今超過此值視為停擺</summary>
+    public const int DemandStaleMinutes = 5;
 
     private readonly ILogger<WidgetCircuitMetricService> _logger;
     private readonly EnergyCircuitService _circuitService;
     private readonly EnergyReportService _reportService;
     private readonly ElectricityCostService _costService;
+    private readonly IDataRepository _dataRepository;
     private readonly WidgetCircuitMetricCache _cache;
     private readonly int _nResultCacheSeconds;
 
@@ -26,6 +33,7 @@ public class WidgetCircuitMetricService
         EnergyCircuitService circuitService,
         EnergyReportService reportService,
         ElectricityCostService costService,
+        IDataRepository dataRepository,
         WidgetCircuitMetricCache cache,
         IConfiguration configuration)
     {
@@ -33,6 +41,7 @@ public class WidgetCircuitMetricService
         _circuitService = circuitService;
         _reportService = reportService;
         _costService = costService;
+        _dataRepository = dataRepository;
         _cache = cache;
         _nResultCacheSeconds = configuration.GetValue<int?>("ScadaPageCircuitMetric:ResultCacheSeconds") ?? 60;
     }
@@ -114,8 +123,31 @@ public class WidgetCircuitMetricService
             case "period_cost":
                 await ComputePeriodMetricAsync(dto, item);
                 break;
+            case "demand_kw":
+                var demand = await _dataRepository.GetTodayDemandByCircuitIdAsync(item.nCircuitId);
+                var (szStatus, dValue) = MapDemandResult(demand, dtNow);
+                dto.szStatus = szStatus;
+                dto.dValue = dValue;
+                if (dValue != null) dto.szUnit = "kW";
+                break;
         }
         return dto;
+    }
+
+    /// <summary>
+    /// 需量結果 → 顯示狀態對應（純函數，plan 決策 2）：
+    ///   查無資料 / 值缺 → no_data；Quality=0（資料不足，DemandKW 固定 0）→ no_data 不回傳誤導性的 0；
+    ///   最新一筆距今 > 5 分鐘（Engine 停擺）→ stale 但值保留；其餘 → ok。
+    /// </summary>
+    public static (string szStatus, double? dValue) MapDemandResult(TodayDemandModel? demand, DateTime dtNow)
+    {
+        if (demand == null || demand.dCurrentKW == null || demand.dtTimestamp == null)
+            return ("no_data", null);
+        if (demand.nQuality == 0)
+            return ("no_data", null);
+        if (dtNow - demand.dtTimestamp.Value > TimeSpan.FromMinutes(DemandStaleMinutes))
+            return ("stale", Math.Round(demand.dCurrentKW.Value, 2));
+        return ("ok", Math.Round(demand.dCurrentKW.Value, 2));
     }
 
     /// <summary>曆日/曆月 kWh — 與 EnergyReport 同計算核心（遞迴葉子 × EffectiveSign、staleness、溢位；當期未過完自動夾到現在）</summary>

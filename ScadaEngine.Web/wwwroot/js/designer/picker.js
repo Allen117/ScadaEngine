@@ -1232,8 +1232,8 @@ async function openCellPointPicker(nRow, nCol) {
 // ============================================================
 
 // 迴路指標合法值（day_kwh=本日度數(曆日) / month_kwh=本月度數(曆月) /
-// period_kwh=本月電度(期別) / period_cost=本月電費(期別)）
-const CIRCUIT_METRICS = ['day_kwh', 'month_kwh', 'period_kwh', 'period_cost'];
+// period_kwh=本月電度(期別) / period_cost=本月電費(期別) / demand_kw=即時需量(kW)）
+const CIRCUIT_METRICS = ['day_kwh', 'month_kwh', 'period_kwh', 'period_cost', 'demand_kw'];
 
 // 表格 cell 綁定迴路指標（與 szSid 互斥；plan 決策 3：新鍵最小化）
 function _bindCellToCircuitMetric(cell, circuit, szMetric) {

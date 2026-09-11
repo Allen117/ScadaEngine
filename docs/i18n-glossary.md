@@ -778,7 +778,8 @@
 | 本月度數 | Month kWh (calendar) | 迴路指標（曆月，1 號 00:00 起） |
 | 本月電度 | Period kWh (billing) | 迴路指標（月結期別制，同 EMS EnergyBar 月視圖） |
 | 本月電費 | Period Cost | 迴路指標（月結期別制，同 EMS 電費狀態卡） |
-| 日度 / 月度 / 期度 / 期費 | D-kWh / M-kWh / P-kWh / P-Cost | 迴路指標 badge 縮寫 |
+| 即時需量 | Real-time Demand | 迴路指標（kW，同 EMS 今日即時需量卡） |
+| 日度 / 月度 / 期度 / 期費 / 需量 | D-kWh / M-kWh / P-kWh / P-Cost / Demand | 迴路指標 badge 縮寫 |
 | （估算） | (estimated) | 子迴路電費占比分攤 tooltip 註記 |
 | 管路 | Pipe | 元件（正交折線流動管路） |
 | 折線管路 | Polyline pipe | 2026-07 改版：一條管 = 一串正交節點 |

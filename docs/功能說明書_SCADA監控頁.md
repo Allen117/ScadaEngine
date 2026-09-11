@@ -22,7 +22,7 @@ SCADA 監控頁是本系統的**核心即時視覺化操控介面**，讓使用�
 | POST | `/api/control/write` | 控制指令寫入 | 需登入 |
 | GET | `/api/control/manual-values` | 取得所有手動控制值 | 需登入 |
 | POST | `/api/scadapage/accumulation` | 累積量元件批次查詢（當日/當月累積，30 秒輪詢） | 需登入 |
-| POST | `/api/scadapage/circuit-metric` | 迴路指標元件批次查詢（四指標，30 秒輪詢，上限 50 筆/批） | 需登入 |
+| POST | `/api/scadapage/circuit-metric` | 迴路指標元件批次查詢（五指標，30 秒輪詢，上限 50 筆/批） | 需登入 |
 
 ### 依賴的外部 API
 | 方法 | 路由 | 用途 |
@@ -296,9 +296,9 @@ DOMContentLoaded
 
 **顯示模式 = 迴路指標**（plan 2026-07-23-designer-table-ems-accumulation-autofill）：
 
-AI 點位除綁單一 SID 外，也可在 picker 的「**迴路**」來源分頁直接綁 `EnergyCircuit`（含**虛擬迴路**如虛擬主要電表），依綁定型別自動切換屬性面板（SID 型顯示模式區塊 ↔ 迴路指標四選）。
+AI 點位除綁單一 SID 外，也可在 picker 的「**迴路**」來源分頁直接綁 `EnergyCircuit`（含**虛擬迴路**如虛擬主要電表），依綁定型別自動切換屬性面板（SID 型顯示模式區塊 ↔ 迴路指標五選）。
 
-四指標語意（「本月」刻意三分，曆月與期別可同表比對）：
+五指標語意（「本月」刻意三分，曆月與期別可同表比對）：
 
 | `szMetric` | 名稱 | 期界 | 計算來源 |
 |------------|------|------|---------|
@@ -306,13 +306,15 @@ AI 點位除綁單一 SID 外，也可在 picker 的「**迴路**」來源分頁
 | `month_kwh` | 本月度數 | 曆月（本月 1 號 00:00 起） | 同上 |
 | `period_kwh` | 本月電度 | 月結期別（BillingPeriods） | `ElectricityCostService.GetStatusAsync().totalKwh` — 與 EMS 電費狀態卡**同一支方法、零重算** |
 | `period_cost` | 本月電費 | 月結期別 | 同上 `.totalCost`（progressive/surcharge 子迴路為占比分攤估算 `isEstimated`，tooltip 註記「（估算）」） |
+| `demand_kw` | 即時需量 | 今日最新一筆（每分鐘一筆，kW） | `IDataRepository.GetTodayDemandByCircuitIdAsync` — 與 EMS 今日即時需量卡**同一支方法、零重算**（遞迴 `IsDemandEnabled=1` 葉子按 Timestamp SUM 聚合，虛擬迴路亦支援） |
 
 - 綁定鍵：`nCircuitId` + `szCircuitName`（快照，執行期以 id 為準）+ `szMetric`，與 `szSid` 互斥（綁迴路清 SID 鍵與 SID 型累積鍵；改綁點位時迴路鍵全 `delete`）— 未使用者 JSON 零改動
 - 執行期掛 **`scada-rt-cmetric`** class（1 秒即時迴圈與 SID 累積輪詢皆不觸碰），由獨立 **30 秒輪詢** `fetchAndUpdateCircuitMetrics()` → `POST /api/scadapage/circuit-metric`（批次、以 circuitId+metric 去重、**超過 50 筆自動分批**）更新
 - 後端 `WidgetCircuitMetricService`（Scoped）+ `WidgetCircuitMetricCache`（Singleton，結果 TTL 60 秒 + per-key 鎖防 stampede）；30s 輪詢 × 60s 快取下負載與 EMS 首頁同量級。設定：`appsettings.json` `ScadaPageCircuitMetric:ResultCacheSeconds`（預設 60）
 - 狀態呈現：`no_data`（迴路已刪除/無綁 SID 葉子）與 `no_plan`（電費指標但未選電價方案）→ 灰字 `--`；`stale`（部分邊界值缺）→ 值以灰色呈現
-- 單位自動決定：kWh 指標固定 kWh；`period_cost` 依語系顯示「元 / NT$」。hover tooltip = 迴路名 + 指標名
-- Designer 編輯期左上角綠色 badge 顯示指標縮寫（日度/月度/期度/期費）
+- `demand_kw` 狀態對應（`WidgetCircuitMetricService.MapDemandResult` 純函數）：當日查無資料或無 `IsDemandEnabled` 後裔 → `no_data`；最新一筆 `Quality=0`（資料不足，DemandKW 固定 0）→ `no_data`（不顯示誤導性的 0）；最新一筆距今 **> 5 分鐘**（Engine 停擺）→ `stale` 值保留灰色；其餘 → `ok`
+- 單位自動決定：kWh 指標固定 kWh；`demand_kw` 固定 kW；`period_cost` 依語系顯示「元 / NT$」。hover tooltip = 迴路名 + 指標名
+- Designer 編輯期左上角綠色 badge 顯示指標縮寫（日度/月度/期度/期費/需量）
 - 迴路被刪除後：執行期回 `no_data` 灰字（依 `nCircuitId` 查無迴路），Designer 顯示快照名 — 不自動清 JSON
 
 #### (3) diPoint — DI 數位輸入點位
@@ -429,9 +431,9 @@ AI 點位除綁單一 SID 外，也可在 picker 的「**迴路**」來源分頁
 - 品質 BAD 時顯示「斷線」
 - 右鍵可針對單一儲存格加入趨勢圖
 
-**迴路指標 cell**（plan 2026-07-23）：資料 cell 也可在 picker「迴路」分頁綁 `EnergyCircuit` 四指標
+**迴路指標 cell**（plan 2026-07-23）：資料 cell 也可在 picker「迴路」分頁綁 `EnergyCircuit` 五指標
 （cell 級新鍵 `nCircuitId` / `szCircuitName` / `szMetric`，與 `szSid` 互斥，解除綁定時全 `delete`）。
-四指標語意與計算來源同 realtimeValue「迴路指標模式」一節。執行期 td 掛 `scada-cmetric-cell` class 且**不帶 `data-sid`**
+五指標語意與計算來源同 realtimeValue「迴路指標模式」一節。執行期 td 掛 `scada-cmetric-cell` class 且**不帶 `data-sid`**
 → 1 秒 `td[data-sid]` 路徑不觸碰，由 30 秒 `fetchAndUpdateCircuitMetrics()` 更新；`title` 屬性 hover 顯示「迴路名＋指標名」。
 
 **表頭驅動整列自動帶入**（plan 2026-07-23 決策 2）：表格慣例 = 第 1 欄（col 0）列名、第 1 列（row 0）欄名。
@@ -523,8 +525,8 @@ props 命名沿用 pump 慣例（`szSidXxx` + `szXxxName` 成對）：共同 `sz
 
 - 選取管路 → 顯示節點手把（`.pipe-node`；端點實心、中間節點空心）
 - **拖曳節點**：自由拖（貼齊 10px 格），即時正交修正 — 只動直接鄰點：鄰點是端點→沿共用段原方向跟隨（原水平繼承 y、原垂直繼承 x）；鄰點是中間節點→修正在不破壞其外側線段的軸上（外側原水平→改鄰點 x、原垂直→改鄰點 y），任何案例（含連續共線節點）修正後全鏈仍正交、無需連鎖擴散。放開時去除拖到重合的重複節點
-- **雙擊管身**：於最近線段中點插入節點（插入當下共線，拖開即折彎）
-- **右鍵節點**：刪除；刪後前後兩點不共軸→自動補一個轉角點維持正交；少於 2 點禁刪
+- **Ctrl+點擊管身**：於滑鼠位置（投影至最近線段上）插入節點（插入當下共線，拖開即折彎）。僅在該管路**已選取**時生效；未選取時 Ctrl+點擊仍為多選切換（2026-09 由「雙擊管身於線段中點插入」改版，較直覺且可直接點在想折彎的位置）
+- **Ctrl+點擊或右鍵節點**：刪除；刪後前後兩點不共軸→自動補一個轉角點維持正交；少於 2 點禁刪
 - 右下角 **resize 鈕停用**（隱藏＋`startResize`/`setSize` 短路），大小完全由節點決定，屬性面板寬高欄唯讀；整體拖移（管身 mousedown）照舊
 - 命中只認管身加寬透明 stroke（容器 `pointer-events:none`）— bounding box 空白區不會擋到底下元件
 

@@ -80,6 +80,7 @@
   <data name="scadapage.cmetric.month_kwh" xml:space="preserve"><value>本月度數</value></data>
   <data name="scadapage.cmetric.period_kwh" xml:space="preserve"><value>本月電度</value></data>
   <data name="scadapage.cmetric.period_cost" xml:space="preserve"><value>本月電費</value></data>
+  <data name="scadapage.cmetric.demand_kw" xml:space="preserve"><value>即時需量</value></data>
   <data name="scadapage.cmetric.unit_cost" xml:space="preserve"><value>元</value></data>
   <data name="scadapage.cmetric.estimated" xml:space="preserve"><value>（估算）</value></data>
 </root>

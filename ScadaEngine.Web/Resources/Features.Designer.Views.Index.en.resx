@@ -481,10 +481,12 @@
   <data name="designer.metric.month_kwh" xml:space="preserve"><value>Month kWh (calendar)</value></data>
   <data name="designer.metric.period_kwh" xml:space="preserve"><value>Period kWh (billing)</value></data>
   <data name="designer.metric.period_cost" xml:space="preserve"><value>Period Cost (billing)</value></data>
+  <data name="designer.metric.demand_kw" xml:space="preserve"><value>Real-time Demand</value></data>
   <data name="designer.metric.badge.day_kwh" xml:space="preserve"><value>D-kWh</value></data>
   <data name="designer.metric.badge.month_kwh" xml:space="preserve"><value>M-kWh</value></data>
   <data name="designer.metric.badge.period_kwh" xml:space="preserve"><value>P-kWh</value></data>
   <data name="designer.metric.badge.period_cost" xml:space="preserve"><value>P-Cost</value></data>
+  <data name="designer.metric.badge.demand_kw" xml:space="preserve"><value>Demand</value></data>
   <data name="designer.metric.unit_cost" xml:space="preserve"><value>NT$</value></data>
   <data name="designer.cmetric.autofill_toast" xml:space="preserve"><value>Filled {count} realtime points by column headers</value></data>
   <data name="designer.cmetric.autofill_toast_metrics" xml:space="preserve"><value>Bound {count} circuit metric cells</value></data>

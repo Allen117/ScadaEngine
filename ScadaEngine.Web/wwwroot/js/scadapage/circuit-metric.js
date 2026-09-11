@@ -54,7 +54,9 @@
     var CMETRIC_MAX_BATCH = 50;
 
     function _cmetricUnit(szMetric) {
-        return szMetric === 'period_cost' ? t('scadapage.cmetric.unit_cost') : 'kWh';
+        if (szMetric === 'period_cost') return t('scadapage.cmetric.unit_cost');
+        if (szMetric === 'demand_kw') return 'kW';
+        return 'kWh';
     }
 
     // tooltip：迴路名＋指標名（＋估算註記）
