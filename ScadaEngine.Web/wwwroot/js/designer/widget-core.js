@@ -189,10 +189,16 @@ function renderWidget(el) {
     // 點選選取（支援 Ctrl 多選）
     el.addEventListener('mousedown', (ev) => onWidgetMouseDown(ev, el));
 
-    // 折線管路：雙擊管身插入節點 + 節點手把（拖曳折彎 / 右鍵刪除）
+    // 折線管路：Ctrl+點擊管身插入節點（限已選取；未選取時 Ctrl 仍走多選）
+    // + 節點手把（拖曳折彎 / Ctrl+點擊或右鍵刪除）
     if (szType === 'pipe') {
         const hit = el.querySelector('.pipe-svg-hit');
-        if (hit) hit.addEventListener('dblclick', e => onPipeBodyDblClick(e, el));
+        if (hit) hit.addEventListener('mousedown', e => {
+            if (!e.ctrlKey || selectedEl !== el) return;
+            e.preventDefault();
+            e.stopPropagation();
+            insertPipeNodeAt(e, el);
+        });
         renderPipeHandles(el);
     }
 
@@ -490,9 +496,11 @@ function renderPipeHandles(el) {
         h.style.left  = p.x + 'px';
         h.style.top   = p.y + 'px';
         h.title       = t('designer.pipe.node_tooltip');
-        h.addEventListener('mousedown',   e => startPipeNodeDrag(e, el, i));
+        h.addEventListener('mousedown', e => {
+            if (e.ctrlKey) { e.preventDefault(); e.stopPropagation(); deletePipeNode(el, i); return; }
+            startPipeNodeDrag(e, el, i);
+        });
         h.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); deletePipeNode(el, i); });
-        h.addEventListener('dblclick',    e => e.stopPropagation());
         el.appendChild(h);
     });
 }
@@ -595,10 +603,8 @@ function endPipeNodeDrag() {
     }
 }
 
-// ── 雙擊管身：於最近線段中點插入節點（插入當下共線，拖開即折彎）──
-function onPipeBodyDblClick(e, el) {
-    e.preventDefault();
-    e.stopPropagation();
+// ── Ctrl+點擊管身：於滑鼠位置（投影至最近線段上）插入節點（插入當下共線，拖開即折彎）──
+function insertPipeNodeAt(e, el) {
     const arrPts = el.widgetProps.arrPoints;
     if (!arrPts || arrPts.length < 2) return;
     const rect  = canvas.getBoundingClientRect();
@@ -606,25 +612,23 @@ function onPipeBodyDblClick(e, el) {
     const nTop  = parseInt(el.style.top)  || 0;
     const px = e.clientX - rect.left - nLeft;
     const py = e.clientY - rect.top  - nTop;
-    let nBest = 0, fBest = Infinity;
+    let nBest = 0, ptBest = null, fBest = Infinity;
     for (let i = 0; i < arrPts.length - 1; i++) {
-        const f = _distToSegment(px, py, arrPts[i], arrPts[i + 1]);
-        if (f < fBest) { fBest = f; nBest = i; }
+        const r = _projToSegment(px, py, arrPts[i], arrPts[i + 1]);
+        if (r.fDist < fBest) { fBest = r.fDist; nBest = i; ptBest = r; }
     }
-    arrPts.splice(nBest + 1, 0, {
-        x: Math.round((arrPts[nBest].x + arrPts[nBest + 1].x) / 2),
-        y: Math.round((arrPts[nBest].y + arrPts[nBest + 1].y) / 2)
-    });
+    arrPts.splice(nBest + 1, 0, { x: Math.round(ptBest.x), y: Math.round(ptBest.y) });
     renderWidget(el);
 }
 
-function _distToSegment(px, py, p1, p2) {
+// 點對線段的最近點（垂足夾在段內）與距離
+function _projToSegment(px, py, p1, p2) {
     const dx = p2.x - p1.x, dy = p2.y - p1.y;
     const fLen2 = dx * dx + dy * dy;
     let ft = fLen2 === 0 ? 0 : ((px - p1.x) * dx + (py - p1.y) * dy) / fLen2;
     ft = Math.max(0, Math.min(1, ft));
     const cx = p1.x + ft * dx, cy = p1.y + ft * dy;
-    return Math.hypot(px - cx, py - cy);
+    return { x: cx, y: cy, fDist: Math.hypot(px - cx, py - cy) };
 }
 
 // ── 右鍵節點：刪除（前後不共軸自動補轉角點；少於 2 點禁刪）──
