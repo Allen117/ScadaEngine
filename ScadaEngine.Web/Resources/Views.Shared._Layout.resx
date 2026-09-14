@@ -51,7 +51,7 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
-  <data name="layout.brand" xml:space="preserve"><value>SCADA 監控系統</value></data>
+  <data name="layout.brand" xml:space="preserve"><value>JOULARIS 監控系統</value></data>
   <data name="layout.brand.ems" xml:space="preserve"><value>EMS 能源管理</value></data>
   <data name="layout.ems.back_scada" xml:space="preserve"><value>回 SCADA</value></data>
   <data name="layout.scada.back_ems" xml:space="preserve"><value>回 EMS</value></data>
@@ -119,7 +119,7 @@
   <data name="layout.user.logout" xml:space="preserve"><value>登出</value></data>
   <data name="layout.user.login" xml:space="preserve"><value>登入</value></data>
 
-  <data name="layout.footer.platform" xml:space="preserve"><value>SCADA 智慧能源管理平台</value></data>
+  <data name="layout.footer.platform" xml:space="preserve"><value>JOULARIS 智慧能源管理平台</value></data>
   <data name="layout.footer.version" xml:space="preserve"><value>版本 {0}</value></data>
   <data name="layout.footer.server_time" xml:space="preserve"><value>伺服器時間</value></data>
 

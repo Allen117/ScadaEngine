@@ -100,5 +100,5 @@
   <data name="mail.col.mtd_lastyear" xml:space="preserve"><value>Last year</value></data>
   <data name="mail.col.diff" xml:space="preserve"><value>Diff</value></data>
   <data name="mail.section.insights" xml:space="preserve"><value>Insights</value></data>
-  <data name="mail.footer" xml:space="preserve"><value>This email was sent automatically by the SCADA system; please do not reply.</value></data>
+  <data name="mail.footer" xml:space="preserve"><value>This email was sent automatically by the JOULARIS system; please do not reply.</value></data>
 </root>

@@ -100,5 +100,5 @@
   <data name="mail.col.mtd_lastyear" xml:space="preserve"><value>去年同期</value></data>
   <data name="mail.col.diff" xml:space="preserve"><value>差異</value></data>
   <data name="mail.section.insights" xml:space="preserve"><value>智慧摘要</value></data>
-  <data name="mail.footer" xml:space="preserve"><value>本郵件由 SCADA 系統自動發送，請勿直接回覆</value></data>
+  <data name="mail.footer" xml:space="preserve"><value>本郵件由 JOULARIS 系統自動發送，請勿直接回覆</value></data>
 </root>
