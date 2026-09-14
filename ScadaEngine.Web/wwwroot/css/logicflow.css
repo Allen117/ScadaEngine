@@ -50,8 +50,10 @@
 }
 .ctx-menu-item:hover { background-color: #e9ecef; }
 .ctx-has-sub { position: relative; display: flex; align-items: center; }
+/* 子選單用 fixed：座標由 canvas.js positionSubmenu 依視窗邊界算（可往左/往上展開），
+   且不會被父選單的 overflow 裁切 */
 .ctx-has-sub > .ctx-submenu {
-    display: none; position: absolute; left: 100%; top: -4px;
+    display: none; position: fixed; left: 0; top: 0;
     min-width: 130px; background: #fff; border: 1px solid #dee2e6;
     border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,.15);
     padding: 4px 0; font-size: .85rem; z-index: 10000;

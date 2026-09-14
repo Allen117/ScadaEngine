@@ -190,19 +190,97 @@
         });
     }
 
+    // ── 右鍵選單定位（選單與子選單皆 position:fixed，座標一律以視窗為基準） ──
+    const CTX_VIEW_MARGIN = 8;   // 與視窗邊界的留白
+
     function hideCtxMenu() {
-        document.getElementById('ctxMenu').style.display = 'none';
-        document.getElementById('nodeCtxMenu').style.display = 'none';
+        ['ctxMenu', 'nodeCtxMenu'].forEach(id => {
+            const menu = document.getElementById(id);
+            if (!menu) return;
+            menu.style.display = 'none';
+            // 清掉子選單定位快取，下次開啟重新依當時視窗算
+            menu.querySelectorAll('.ctx-has-sub').forEach(host => delete host.dataset.subPlaced);
+        });
     }
 
     function showMenuAt(menu, x, y) {
+        menu.querySelectorAll('.ctx-has-sub').forEach(host => delete host.dataset.subPlaced);
+        menu.style.maxHeight = '';
+        menu.style.overflowY = '';
         menu.style.left = x + 'px';
         menu.style.top = y + 'px';
         menu.style.display = 'block';
-        requestAnimationFrame(() => {
-            const mr = menu.getBoundingClientRect();
-            if (mr.right > window.innerWidth) menu.style.left = (x - mr.width) + 'px';
-            if (mr.bottom > window.innerHeight) menu.style.top = (y - mr.height) + 'px';
+
+        const maxH = window.innerHeight - CTX_VIEW_MARGIN * 2;
+        const w = menu.offsetWidth;
+        let h = menu.offsetHeight;
+        if (h > maxH) {                                 // 比視窗還高 → 選單內部捲動
+            menu.style.maxHeight = maxH + 'px';
+            menu.style.overflowY = 'auto';
+            h = maxH;
+        }
+        // 右邊不夠 → 往左展開；下方不夠 → 往上展開；最後夾在視窗內
+        let left = (x + w > window.innerWidth - CTX_VIEW_MARGIN) ? x - w : x;
+        let top = (y + h > window.innerHeight - CTX_VIEW_MARGIN) ? y - h : y;
+        menu.style.left = Math.max(CTX_VIEW_MARGIN, left) + 'px';
+        menu.style.top = Math.max(CTX_VIEW_MARGIN, top) + 'px';
+    }
+
+    // 子選單：依 host 在視窗中的位置決定往右/往左、往下/往上，過長則內部捲動
+    function positionSubmenu(host) {
+        const sub = host.querySelector(':scope > .ctx-submenu');
+        if (!sub) return;
+
+        sub.style.maxHeight = '';
+        sub.style.overflowY = '';
+        sub.style.visibility = 'hidden';                // 量測期間先不顯示，避免閃一下
+        sub.style.display = 'block';
+        sub.style.left = '0px';
+        sub.style.top = '0px';
+
+        const hostRect = host.getBoundingClientRect();
+        const w = sub.offsetWidth;
+        const maxH = window.innerHeight - CTX_VIEW_MARGIN * 2;
+        let h = sub.offsetHeight;
+        if (h > maxH) {
+            sub.style.maxHeight = maxH + 'px';
+            sub.style.overflowY = 'auto';
+            h = maxH;
+        }
+
+        // 水平：預設貼 host 右緣；右側空間不足且左側較寬 → 改往左
+        const spaceRight = window.innerWidth - hostRect.right - CTX_VIEW_MARGIN;
+        const spaceLeft = hostRect.left - CTX_VIEW_MARGIN;
+        let left = (spaceRight < w && spaceLeft > spaceRight) ? hostRect.left - w : hostRect.right;
+        left = Math.max(CTX_VIEW_MARGIN, Math.min(left, window.innerWidth - CTX_VIEW_MARGIN - w));
+
+        // 垂直：預設與 host 齊頭（-4 抵銷選單內距），超出下緣就整塊往上推
+        let top = Math.min(hostRect.top - 4, window.innerHeight - CTX_VIEW_MARGIN - h);
+        top = Math.max(CTX_VIEW_MARGIN, top);
+
+        sub.style.left = left + 'px';
+        sub.style.top = top + 'px';
+        sub.style.display = '';                         // 交還 CSS :hover 控制顯示
+        sub.style.visibility = '';
+        host.dataset.subPlaced = '1';
+    }
+
+    // 滑入含子選單的項目時即時定位（mouseover 會冒泡，可涵蓋動態產生的演算法分類）
+    function bindSubmenuPositioning() {
+        ['ctxMenu', 'nodeCtxMenu'].forEach(id => {
+            const menu = document.getElementById(id);
+            if (!menu) return;
+            menu.addEventListener('mouseover', (e) => {
+                const host = e.target.closest('.ctx-has-sub');
+                if (host && menu.contains(host) && host.dataset.subPlaced !== '1') positionSubmenu(host);
+            });
+            // 選單過高需內部捲動時，host 會跟著移動 → 重算展開中的子選單
+            menu.addEventListener('scroll', () => {
+                menu.querySelectorAll('.ctx-has-sub').forEach(host => {
+                    delete host.dataset.subPlaced;
+                    if (host.matches(':hover')) positionSubmenu(host);
+                });
+            });
         });
     }
 
@@ -644,6 +722,10 @@
         document.addEventListener('click', (e) => {
             if (!e.target.closest('#ctxMenu') && !e.target.closest('#nodeCtxMenu')) hideCtxMenu();
         });
+
+        // 子選單方向偵測；視窗尺寸變了直接收掉選單（定位基準已失效）
+        bindSubmenuPositioning();
+        window.addEventListener('resize', hideCtxMenu);
 
         document.addEventListener('keydown', (e) => {
             const isInput = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA');
