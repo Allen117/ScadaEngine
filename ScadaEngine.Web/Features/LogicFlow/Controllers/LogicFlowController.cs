@@ -363,14 +363,19 @@ public class LogicFlowController : Controller
     /// <summary>依序探測多個候選路徑，回傳第一個存在的 Algorithms 資料夾（開發 + 部署皆適用）</summary>
     private static string? ResolveAlgorithmsDir()
     {
+        // ⚠️ 部署候選一律以 BaseDirectory（執行檔所在）為錨點，不可用 CurrentDirectory 推導：
+        // Web 以 Windows 服務執行時 sc.exe 不設工作目錄，CWD = C:\Windows\System32，
+        // 「CWD\..\..\Engine\App\Algorithms」會展開成 C:\Engine\App\Algorithms —— 一個與本站台無關的路徑，
+        // 只要機器上剛好有該殘留資料夾就會被選中，演算法清單靜默停在舊內容（2026-09-14 正式站實際踩過）。
+        var szBaseDir = AppDomain.CurrentDomain.BaseDirectory;
         var candidates = new[]
         {
-            // 開發環境：Web 與 Engine 平行放在 solution 根目錄下
+            // 開發環境：Web 與 Engine 平行放在 solution 根目錄下（改 .py 免重 build 即生效，故排第一）
             Path.Combine(Directory.GetCurrentDirectory(), "..", "ScadaEngine.Engine", "Algorithms"),
-            // 部署環境：Web 在 C:\SCADA\Web\App，Engine 在 C:\SCADA\Engine\App
-            Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "Engine", "App", "Algorithms"),
             // 部署環境（同層）：Algorithms 直接放在 Web\App\Algorithms
-            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Algorithms"),
+            Path.Combine(szBaseDir, "Algorithms"),
+            // 部署環境（分棟）：Web 在 C:\SCADA\Web\App，Engine 在 C:\SCADA\Engine\App
+            Path.Combine(szBaseDir, "..", "..", "Engine", "App", "Algorithms"),
         };
 
         foreach (var szPath in candidates)
