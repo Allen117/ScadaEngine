@@ -209,6 +209,15 @@ body.ems-mode .footer {
     color: #ffffff;
 }
 
+/* 頁尾品牌 wordmark：綠底上改用 EMS 淺綠色階（預設為 SCADA 的淺紫藍） */
+body.ems-mode .footer-logo-star {
+    fill: #e8f5e9;
+}
+
+body.ems-mode .footer-logo-spark {
+    fill: #c8e6c9;
+}
+
 /* =================================================================
    EMS 模式：把藍色系 Bootstrap class 與各頁專屬色系
    統一改成淡綠主色（適用於 ChilledWaterSystem / EnergyMeter /
