@@ -51,7 +51,7 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
-  <data name="layout.brand" xml:space="preserve"><value>JOULARIS 監控系統</value></data>
+  <data name="layout.brand" xml:space="preserve"><value>SCADA 監控系統</value></data>
   <data name="layout.brand.ems" xml:space="preserve"><value>EMS 能源管理</value></data>
   <data name="layout.ems.back_scada" xml:space="preserve"><value>回 SCADA</value></data>
   <data name="layout.scada.back_ems" xml:space="preserve"><value>回 EMS</value></data>
