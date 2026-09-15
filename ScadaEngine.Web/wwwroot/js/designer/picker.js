@@ -1357,20 +1357,19 @@ const CIRCUIT_ROLE_TO_TEMPLATE_ROLE = { v: 'V', a: 'A', kw: 'KW', pf: 'PF', kwh:
 
 // ── 同設備點位優先（v8，回應「KWH 建議到迴路設定的模擬點」）──
 // 在「剛綁定點位」的同一設備（szDeviceLabel 相同）下，用點位名稱比對找對應角色的點位。
-// 名稱比對：正規化後直接命中別名，或前綴式命名（PM-1-KWH / PM1_KWH / PM1 KWH）取最後分段命中。
+// 名稱→角色判定收斂到共用 window._roleMatch.resolveRole（整名 → 開頭 token 優先 → 尾段
+// 回退）：吃「角色在前、相別在後」命名（V_a / I_avg → V / A，V_a 不再被電流欄搶）、
+// 也吃設備前綴式（PM-1-V 開頭非角色 → 退回尾段 v）。
 function _findSameDevicePointForRole(pickedPoint, szRole) {
     if (!pickedPoint || !pickedPoint.szDeviceLabel || !arrAllPoints) return null;
     const szTplRole = CIRCUIT_ROLE_TO_TEMPLATE_ROLE[szRole];
-    const aliases = ((window._roleAliases && szTplRole && window._roleAliases[szTplRole]) || [])
-        .concat(CIRCUIT_HEADER_ALIASES[szRole] || []);
+    if (!szTplRole) return null;
+    const resolver = window._roleMatch && window._roleMatch.resolveRole;
+    if (!resolver) return null;
     for (const p of arrAllPoints) {
         if (p.szDeviceLabel !== pickedPoint.szDeviceLabel) continue;
         if (p.szSid === pickedPoint.szSid) continue;   // 排除剛綁定的點位本身
-        const szNorm = _normalizeHeaderText(p.szName || '');
-        if (!szNorm) continue;
-        if (aliases.includes(szNorm)) return p;
-        const nIdx = Math.max(szNorm.lastIndexOf('-'), szNorm.lastIndexOf('_'), szNorm.lastIndexOf(' '));
-        if (nIdx > 0 && aliases.includes(szNorm.substring(nIdx + 1))) return p;
+        if (resolver(p.szName || '') === szTplRole) return p;
     }
     return null;
 }

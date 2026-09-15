@@ -43,32 +43,48 @@
     }
 
     // ── 比對純函式（pluggable，未來換模糊比對只動這支）──
-    // 接受 point object（含 szName + szDeviceLabel），同時支援兩種命名風格：
+    // 接受 point object（含 szName + szDeviceLabel），支援三種命名風格：
+    //  風格 B'（開頭 token 式，使用者實際命名）：點位名「角色在前、相別在後」，
+    //                       開頭 token 命中角色 + 有設備標籤 e.g.
+    //                       szDeviceLabel = "北101", szName = "V_a" / "I_avg"
+    //                       → prefix = "北101", role = "V" / "A"（不切 szSeparator，
+    //                       亦不被尾段 a / avg 誤判；先於風格 A/B 判定）
     //  風格 A（plan 原樣本）：點位名本身含分隔符  e.g. szName = "PM-1-V"
-    //                       → prefix = "PM-1", role = "V"
-    //  風格 B（使用者實際資料）：點位名 = 角色，前綴在設備標籤 e.g.
-    //                       szDeviceLabel = "北101", szName = "V"
+    //                       → prefix = "PM-1", role = "V"（開頭 pm 非角色 → 走此）
+    //  風格 B（點位名整個就是角色）：szDeviceLabel = "北101", szName = "V"
     //                       → prefix = "北101", role = "V"
     // 回傳 { roleLabel, prefix, lastSegment, bDeviceAsPrefix } 或 null
     function matchRole(point, szSep) {
-        if (!point || !szSep) return null;
+        if (!point) return null;
         const szName = point.szName || '';
+        if (!szName) return null;
+
+        // 風格 B'：開頭 token 命中角色 + 有設備標籤 → 設備標籤當前綴（先於 A/B）
+        const leadingRole = window._roleMatch && window._roleMatch.leadingRole;
+        if (leadingRole && point.szDeviceLabel) {
+            const role = leadingRole(szName);
+            if (role) {
+                return { roleLabel: role, prefix: point.szDeviceLabel, lastSegment: szName, bDeviceAsPrefix: true };
+            }
+        }
 
         // 風格 A：點位名切分隔符
-        const nIdx = szName.lastIndexOf(szSep);
-        if (nIdx > 0) {
-            const szPrefix  = szName.substring(0, nIdx);
-            const szLastSeg = szName.substring(nIdx + szSep.length);
-            if (szPrefix && szLastSeg) {
-                const role = _findRoleByAlias(szLastSeg);
-                if (role) {
-                    return { roleLabel: role, prefix: szPrefix, lastSegment: szLastSeg, bDeviceAsPrefix: false };
+        if (szSep) {
+            const nIdx = szName.lastIndexOf(szSep);
+            if (nIdx > 0) {
+                const szPrefix  = szName.substring(0, nIdx);
+                const szLastSeg = szName.substring(nIdx + szSep.length);
+                if (szPrefix && szLastSeg) {
+                    const role = _findRoleByAlias(szLastSeg);
+                    if (role) {
+                        return { roleLabel: role, prefix: szPrefix, lastSegment: szLastSeg, bDeviceAsPrefix: false };
+                    }
                 }
             }
         }
 
         // 風格 B：點位名整個就是角色，前綴用設備標籤
-        if (point.szDeviceLabel && szName) {
+        if (point.szDeviceLabel) {
             const role = _findRoleByAlias(szName);
             if (role) {
                 return { roleLabel: role, prefix: point.szDeviceLabel, lastSegment: szName, bDeviceAsPrefix: true };
