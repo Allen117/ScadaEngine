@@ -24,6 +24,9 @@ node_modules/
 # Release output
 Release/
 
+# 現場工程工具包（大型安裝檔 + 測試工具）不進 git，改由內部雲端下載，見 Tools/README.md
+Tools/
+
 # Claude Code (personal memory only)
 .claude/projects/
 
