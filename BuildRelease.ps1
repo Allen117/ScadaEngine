@@ -29,13 +29,34 @@ dotnet publish $engineProject -c Release --self-contained true --runtime win-x64
 if ($LASTEXITCODE -ne 0) { Write-Host "Engine build FAILED" -ForegroundColor Red; exit 1 }
 
 # Copy Engine configs
-$engineConfigs = @("Setting", "Modbus", "MqttSetting", "DatabaseSchema", "DBPoint", "Algorithms")
+# Modbus / DBPoint 不列入複製清單 — 它們與 OpcUaPoint 都是「現場資料」而非產品，稍後統一清空
+$engineConfigs = @("Setting", "MqttSetting", "DatabaseSchema", "Algorithms")
 foreach ($dir in $engineConfigs) {
     $src = Join-Path $engineProject $dir
     if (Test-Path $src) {
         $dst = "$ReleasePath\Engine\App\$dir"
         if (-not (Test-Path $dst)) { New-Item -ItemType Directory -Path $dst -Force | Out-Null }
         Copy-Item -Path "$src\*" -Destination $dst -Recurse -Force
+    }
+}
+
+# 現場資料夾（Modbus / DBPoint / OpcUaPoint）：dotnet publish 會依 Engine csproj 的
+# CopyToOutputDirectory 把 repo 的 dev 裝置定義（*.json）與範例（*.json.example）帶進 Engine\App。
+# 這些是各站台自有的現場資料，不該隨 release 外流到客戶伺服器。作法：清掉整個資料夾內容，
+# 只回填 repo 內的 Excel 產生工具（*.xlsm）——現場工程師靠它建裝置定義檔。
+# 資料夾（含工具）都在，Install.bat 靠「Modbus 資料夾是否存在」判斷升級的哨兵照常運作，
+# 升級時現場既有設定也照樣被備份/還原。
+foreach ($siteDir in @("Modbus", "DBPoint", "OpcUaPoint")) {
+    $sitePath = "$ReleasePath\Engine\App\$siteDir"
+    if (Test-Path $sitePath) { Remove-Item $sitePath -Recurse -Force }
+    New-Item -ItemType Directory -Path $sitePath -Force | Out-Null
+    # 只回填產生工具（*.xlsm），不帶任何 dev 裝置 json / 範例 / 測試檔
+    $toolSrc = Join-Path $engineProject "$siteDir\*.xlsm"
+    if (Test-Path $toolSrc) {
+        Copy-Item -Path $toolSrc -Destination $sitePath -Force
+        Write-Host "  $siteDir : kept generator tool (*.xlsm), stripped dev data" -ForegroundColor Gray
+    } else {
+        Write-Host "  $siteDir : emptied (no generator tool found)" -ForegroundColor Gray
     }
 }
 
