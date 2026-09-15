@@ -338,8 +338,15 @@ public class ModbusConfigService
     /// <returns>重新載入的設備配置</returns>
     public async Task<ModbusDeviceConfigModel?> ReloadDeviceConfigAsync(string szFilePath)
     {
+        // 防呆：只有真正的 .json 才可進入載入流程（見 IsJsonConfigFile 說明）
+        if (!IsJsonConfigFile(szFilePath))
+        {
+            _logger.LogDebug("忽略非 .json 設定檔的重載請求: {FilePath}", szFilePath);
+            return null;
+        }
+
         _logger.LogInformation("重新載入 Modbus 設定檔: {FilePath}", szFilePath);
-        
+
         var config = await LoadSingleDeviceConfigAsync(szFilePath);
         
         if (config != null)
@@ -367,8 +374,9 @@ public class ModbusConfigService
 
         watcher.Changed += async (sender, e) =>
         {
+            if (!IsJsonConfigFile(e.FullPath)) return;
             _logger.LogInformation("偵測到設定檔變更: {FilePath}", e.FullPath);
-            
+
             // 延遲一下避免檔案被鎖定
             await Task.Delay(500);
             onConfigChanged(e.FullPath!);
@@ -376,15 +384,19 @@ public class ModbusConfigService
 
         watcher.Created += async (sender, e) =>
         {
+            if (!IsJsonConfigFile(e.FullPath)) return;
             _logger.LogInformation("偵測到新設定檔: {FilePath}", e.FullPath);
 
             await Task.Delay(500);
             onConfigChanged(e.FullPath!);
         };
 
-        // 原子替換（File.Replace / 先寫 tmp 再改名）在 Windows 以 rename 落地，只會產生 Renamed 事件
+        // 原子替換（File.Replace / 先寫 tmp 再改名）在 Windows 以 rename 落地，只會產生 Renamed 事件。
+        // 注意：filter "*.json" 對 rename 是「舊名或新名任一符合就觸發」，X.json → X.json.bak 這一步
+        // 舊名符合而以 e.FullPath=X.json.bak 觸發，IsJsonConfigFile 守衛在此擋掉，避免吃到 .bak 生幽靈 coordinator。
         watcher.Renamed += async (sender, e) =>
         {
+            if (!IsJsonConfigFile(e.FullPath)) return;
             _logger.LogInformation("偵測到設定檔改名（原子替換）: {FilePath}", e.FullPath);
 
             await Task.Delay(500);
@@ -393,4 +405,15 @@ public class ModbusConfigService
 
         return watcher;
     }
+
+    /// <summary>
+    /// 副檔名守衛：只有真正的 .json 設定檔才該進入載入流程。
+    /// FileSystemWatcher 的 "*.json" filter 對 rename 事件是「舊名或新名任一符合就觸發」，
+    /// Web 原子存檔 File.Replace 會把 X.json 改名成 X.json.bak（舊名符合 filter），
+    /// 以 e.FullPath=X.json.bak 觸發 Renamed；若不擋，GetFileNameWithoutExtension("X.json.bak")
+    /// = "X.json" 會被當成 Coordinator 名稱寫進 DB，形成幽靈 coordinator。
+    /// </summary>
+    private static bool IsJsonConfigFile(string? szFilePath)
+        => !string.IsNullOrEmpty(szFilePath)
+           && Path.GetExtension(szFilePath).Equals(".json", StringComparison.OrdinalIgnoreCase);
 }
