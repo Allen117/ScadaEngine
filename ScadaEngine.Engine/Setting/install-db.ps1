@@ -94,6 +94,66 @@ if ($svc) {
     Write-Host "警告: 本機找不到 SQL Server 服務（$svcName）— 若 SQL Server 在遠端主機，資料夾與權限請於該主機自行建立" -ForegroundColor Yellow
 }
 
+# ─── 2.5 確保本機 SQL Server 已開啟 TCP/IP（127.0.0.1 走 TCP 才連得上）──────
+# runtime（Engine/Web）以 SQL 驗證連 dbSetting.json 的 127.0.0.1，IP 位址會強制走 TCP；
+# 但 SQL Server（尤其 Express）預設 TCP/IP 協定為「關」→ App 連不上。此段開 TCP + 固定 1433
+# + 清動態埠，並在有變更時重啟服務套用。idempotent（值已正確則不動、不重啟）。
+# 127.0.0.1 為 loopback、不受 Windows 防火牆管制，故不需加防火牆規則。
+# 僅在偵測到本機實例服務（$svc）時執行；遠端 SQL 請於該主機自行開啟 TCP/IP。
+if ($svc) {
+    try {
+        # 由服務名反推登錄檔實例名：MSSQLSERVER=預設實例、MSSQL$XYZ→XYZ（與 SSPI 段一致）
+        $regInstanceName = if ($svc.Name -eq 'MSSQLSERVER') { 'MSSQLSERVER' } else { $svc.Name.Substring(6) }
+        $instMapPath = 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL'
+        $instId = $null
+        if (Test-Path $instMapPath) {
+            $instId = (Get-ItemProperty $instMapPath -ErrorAction SilentlyContinue).$regInstanceName
+        }
+        if (-not $instId) {
+            Write-Host "警告: 找不到 SQL 實例 $regInstanceName 的登錄檔節點，略過 TCP/IP 自動啟用（請手動於 SQL Server 組態管理員開啟並重啟服務）" -ForegroundColor Yellow
+        } else {
+            $tcpPath   = "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\$instId\MSSQLServer\SuperSocketNetLib\Tcp"
+            $ipAllPath = Join-Path $tcpPath 'IPAll'
+            if (-not (Test-Path $ipAllPath)) {
+                Write-Host "警告: 找不到 TCP 設定節點（$tcpPath），略過 TCP/IP 自動啟用" -ForegroundColor Yellow
+            } else {
+                $tcpChanged = $false
+
+                $curEnabled = (Get-ItemProperty $tcpPath -Name Enabled -ErrorAction SilentlyContinue).Enabled
+                if ($curEnabled -ne 1) {
+                    Set-ItemProperty $tcpPath -Name Enabled -Value 1 -Type DWord
+                    $tcpChanged = $true
+                    Write-Host "已啟用 TCP/IP 協定" -ForegroundColor Green
+                }
+
+                $curPort = (Get-ItemProperty $ipAllPath -Name TcpPort -ErrorAction SilentlyContinue).TcpPort
+                if ($curPort -ne '1433') {
+                    Set-ItemProperty $ipAllPath -Name TcpPort -Value '1433' -Type String
+                    $tcpChanged = $true
+                    Write-Host "已固定 TCP 埠為 1433" -ForegroundColor Green
+                }
+
+                $curDyn = (Get-ItemProperty $ipAllPath -Name TcpDynamicPorts -ErrorAction SilentlyContinue).TcpDynamicPorts
+                if ($curDyn -ne '') {
+                    Set-ItemProperty $ipAllPath -Name TcpDynamicPorts -Value '' -Type String
+                    $tcpChanged = $true
+                    Write-Host "已清除動態埠設定" -ForegroundColor Green
+                }
+
+                if ($tcpChanged) {
+                    Write-Host "重啟 SQL 服務以套用 TCP/IP 設定: $($svc.Name)" -ForegroundColor Yellow
+                    Restart-Service $svc.Name -Force
+                    Write-Host "SQL 服務已重啟，TCP/IP 生效" -ForegroundColor Green
+                } else {
+                    Write-Host "TCP/IP 已啟用且埠為 1433，無需變更"
+                }
+            }
+        }
+    } catch {
+        Write-Host "警告: 自動啟用 TCP/IP 時發生錯誤（$($_.Exception.Message)）— 請手動於 SQL Server 組態管理員開啟 TCP/IP 並重啟服務" -ForegroundColor Yellow
+    }
+}
+
 # ─── 3. SSPI 連線 master ────────────────────────────────────────────────
 # 整合式驗證改走本機實例名（shared memory）：位址是 IP 時 SSPI 查不到 SPN 退 NTLM，
 # 工作群組環境會報「登入來自未信任的網域」。服務名格式為安裝程式強制規格
