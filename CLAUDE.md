@@ -75,6 +75,7 @@ Engine 是背景服務，無 HTTP endpoint。
 
 ### 部署到 C:\SCADA（本機 = 生產機）
 
+- **Release 包為 framework-dependent（瘦身）**：三個 .NET 8 app（Engine/Web/ModbusServer）不再自帶 runtime，**目標機須先裝 `ASP.NET Core Runtime 8.0.x (x64)`**（一包覆蓋三者）。`Install.bat` 開頭會偵測，缺就中止不動機器。**升級既有 self-contained 生產機前，務必先裝好 runtime**。只鎖 major=8（只有 .NET 9 不會跑）。Python 抽成 package 根目錄的版號化基礎包，Install.bat 只在缺/版本變更才鋪；只改 C# 碼時可 `BuildRelease.ps1 -NoPython` 產 app-only 小包。詳見 docs/功能說明書_部署與遠端更新.md
 - **一鍵全部署**：repo 根目錄 `QuickDeployAll.bat`（系統管理員執行）＝ `BuildRelease.ps1` 打包 → 最新 Release 包 `Install.bat` 安裝 Engine + Web（升級自動備份/還原現場設定）。**不碰 Modbus Gateway** — 要裝/更新 Gateway 另跑 Release 包內 `InstallModbusServer.bat`
 - ⚠️ 各專案 `Scripts\QuickDeploy.bat` 的 Update（選 6）會用 **repo 版設定檔硬蓋** `C:\SCADA\...` 現場設定（無備份），且停服務後的進程清理用 `ScadaEngine*` 萬用字元會**誤殺另一個服務的進程**；生產機更新一律走 QuickDeployAll / Install.bat
 
