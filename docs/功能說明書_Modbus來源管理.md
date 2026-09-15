@@ -13,9 +13,10 @@
 - **結構鎖死**：SID 由陣列索引產生（`-S{index+1}`）、控制指令用 TagIndex 定位 — 禁止新增、刪除、排序點位；`IP / Port / ModbusId / ConnectTimeout / 檔名` 唯讀。後端存檔前重讀原檔驗證點位數量未變，不合即回 400。DataType 可改但限 Engine 支援白名單（`INTEGER / UINTEGER / FLOATINGPT / SWAPPEDFP / DOUBLE / SWAPPEDDOUBLE / UINT32BE`，UI 為下拉選單）
 - **原子寫檔**：先寫 `*.json.tmp`（不觸發 Engine watcher）→ `File.Replace` 原子替換 → 保留 `*.json.bak` 備份。控制路徑每筆指令都直接讀 JSON 且失敗不重試，原子替換保證任何瞬間讀到完整舊檔或完整新檔
 - **保留原檔編碼**：現場檔案為 UTF-16 LE with BOM（Excel 工具產生），寫回時偵測 BOM 沿用原編碼
-- **Engine 端配合**（唯二修改）：
+- **Engine 端配合**：
   - watcher 補訂 `Renamed` 事件 — `File.Replace` 在 Windows 以 rename 落地，原本只訂 Changed/Created 收不到
   - per-file 去抖 1 秒 — 一次存檔常觸發多個事件，去抖後設備只斷線重連一次
+  - **副檔名守衛**（`IsJsonConfigFile`）— watcher 的 `*.json` filter 對 rename 是「舊名或新名任一符合就觸發」，`File.Replace` 把 `X.json → X.json.bak`（舊名符合）會以 `e.FullPath=X.json.bak` 觸發 Renamed；若不擋，`GetFileNameWithoutExtension("X.json.bak")="X.json"` 會被當 Coordinator 名寫進 DB 生幽靈。三個 handler 與 `ReloadDeviceConfigAsync` 皆先檢查副檔名為 `.json` 才放行
 
 ## 2. 路由
 
