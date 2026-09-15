@@ -82,6 +82,19 @@ $webProject = Join-Path $RootPath "ScadaEngine.Web"
 dotnet publish $webProject -c Release --self-contained true --runtime win-x64 -o "$ReleasePath\Web\App" --nologo -v quiet
 if ($LASTEXITCODE -ne 0) { Write-Host "Web build FAILED" -ForegroundColor Red; exit 1 }
 
+# 移除 Web publish 遞移帶入的 Engine 設定資料夾（死檔，避免工程師誤改）
+# Web ProjectReference 到 Engine，Engine .csproj 把 Modbus/DBPoint/OpcUaPoint 的 *.json 標了
+# CopyToOutputDirectory，SDK 會沿引用把它們複製進 Web 輸出。但 Web 實際讀的是
+# appsettings.json 的 WatchedFolder（= C:\SCADA\Engine\App\...），Web\App 下這幾份是死的，
+# 留著只會讓現場工程師誤以為要改這裡。刪掉，保持 Web\App 乾淨。
+foreach ($deadDir in @("Modbus", "DBPoint", "OpcUaPoint")) {
+    $deadPath = "$ReleasePath\Web\App\$deadDir"
+    if (Test-Path $deadPath) {
+        Remove-Item $deadPath -Recurse -Force
+        Write-Host "  Removed dead $deadDir folder from Web\App (Engine owns it)" -ForegroundColor Gray
+    }
+}
+
 # Copy Web configs
 $webMqtt = Join-Path $webProject "MqttSetting\MqttSetting.json"
 $webMqttDst = "$ReleasePath\Web\App\MqttSetting"
