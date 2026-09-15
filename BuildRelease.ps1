@@ -23,7 +23,7 @@ New-Item -ItemType Directory -Path $ReleasePath -Force | Out-Null
 # ──────────────────────────────────────
 # 1. Build Engine
 # ──────────────────────────────────────
-Write-Host "[1/5] Building Engine (self-contained)..." -ForegroundColor Yellow
+Write-Host "[1/6] Building Engine (self-contained)..." -ForegroundColor Yellow
 $engineProject = Join-Path $RootPath "ScadaEngine.Engine"
 dotnet publish $engineProject -c Release --self-contained true --runtime win-x64 -o "$ReleasePath\Engine\App" --nologo -v quiet
 if ($LASTEXITCODE -ne 0) { Write-Host "Engine build FAILED" -ForegroundColor Red; exit 1 }
@@ -77,7 +77,7 @@ Write-Host "  Engine OK" -ForegroundColor Green
 # ──────────────────────────────────────
 # 2. Build Web
 # ──────────────────────────────────────
-Write-Host "[2/5] Building Web (self-contained)..." -ForegroundColor Yellow
+Write-Host "[2/6] Building Web (self-contained)..." -ForegroundColor Yellow
 $webProject = Join-Path $RootPath "ScadaEngine.Web"
 dotnet publish $webProject -c Release --self-contained true --runtime win-x64 -o "$ReleasePath\Web\App" --nologo -v quiet
 if ($LASTEXITCODE -ne 0) { Write-Host "Web build FAILED" -ForegroundColor Red; exit 1 }
@@ -148,7 +148,7 @@ Write-Host "  reset-engineer-password.ps1 moved to package root (engineer tool, 
 # ──────────────────────────────────────
 # 3. Build ModbusServer (optional gateway, NOT installed by main Install.bat)
 # ──────────────────────────────────────
-Write-Host "[3/5] Building ModbusServer gateway (self-contained)..." -ForegroundColor Yellow
+Write-Host "[3/6] Building ModbusServer gateway (self-contained)..." -ForegroundColor Yellow
 $modbusProject = Join-Path $RootPath "ScadaEngine.ModbusServer"
 dotnet publish $modbusProject -c Release --self-contained true --runtime win-x64 -o "$ReleasePath\ModbusServer\App" --nologo -v quiet
 if ($LASTEXITCODE -ne 0) { Write-Host "ModbusServer build FAILED" -ForegroundColor Red; exit 1 }
@@ -170,9 +170,24 @@ Copy-Item -Path (Join-Path $modbusProject "Scripts\QuickDeploy.bat") -Destinatio
 Write-Host "  ModbusServer OK" -ForegroundColor Green
 
 # ──────────────────────────────────────
-# 4. Create install script for on-site
+# 4. Build LicenseBridge (net48 HASP bridge — installed by Install.bat)
 # ──────────────────────────────────────
-Write-Host "[4/5] Creating install scripts..." -ForegroundColor Yellow
+# net48 x86 單一目標，不支援 --self-contained / --runtime（靠目標機內建 .NET Framework 4.8）。
+# HASP runtime dll 由 csproj 的 CopyToOutputDirectory 帶入輸出目錄，無需外網。
+Write-Host "[4/6] Building LicenseBridge (net48 HASP bridge)..." -ForegroundColor Yellow
+$bridgeProject = Join-Path $RootPath "ScadaEngine.LicenseBridge"
+dotnet publish $bridgeProject -c Release -o "$ReleasePath\LicenseBridge\App" --nologo -v quiet
+if ($LASTEXITCODE -ne 0) { Write-Host "LicenseBridge build FAILED" -ForegroundColor Red; exit 1 }
+
+# 驗證 HASP runtime dll 確實落在輸出（少了狗就驗不了證）
+$haspProbe = "$ReleasePath\LicenseBridge\App\hasp_net_windows.dll"
+if (-not (Test-Path $haspProbe)) { Write-Host "LicenseBridge missing HASP runtime dll" -ForegroundColor Red; exit 1 }
+Write-Host "  LicenseBridge OK (net48 + HASP runtime)" -ForegroundColor Green
+
+# ──────────────────────────────────────
+# 5. Create install script for on-site
+# ──────────────────────────────────────
+Write-Host "[5/6] Creating install scripts..." -ForegroundColor Yellow
 
 # On-site install script (simplified, no build needed)
 @"
@@ -188,6 +203,36 @@ if %errorLevel% NEQ 0 (
     pause
     exit /b 1
 )
+
+:: ── Prerequisite: .NET Framework 4.8 (required by License Bridge) ──
+:: Engine/Web/ModbusServer are self-contained .NET 8 and carry their own runtime,
+:: but the HASP License Bridge is net48 and relies on the OS having 4.8 (Release>=528040).
+:: Win11 / Server 2022 ship it; Server 2016/2019 / old Win10 do NOT. 4.8 is a ~120MB MS
+:: redistributable that can't be xcopy'd, so we DETECT and STOP (not bundle it) — abort
+:: before touching anything so the machine stays untouched until 4.8 is installed.
+set "_REL="
+for /f "tokens=3" %%r in ('reg query "HKLM\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full" /v Release 2^>nul ^| find "Release"') do set /a _REL=%%r
+if not defined _REL goto NET48_MISSING
+if %_REL% GEQ 528040 goto NET48_OK
+:NET48_MISSING
+echo ========================================
+echo   [ERROR] .NET Framework 4.8 is NOT installed
+echo ========================================
+echo   The HASP License Bridge (net48) needs .NET Framework 4.8, and without a
+echo   working License Bridge the Engine PAUSES Modbus data collection.
+echo   (Engine/Web are self-contained .NET 8 and do NOT need it - only License does.)
+echo.
+echo   FIX: install .NET Framework 4.8 (or newer), reboot, then re-run Install.bat.
+echo   Offline installer (put on the USB for air-gapped sites):
+echo     https://dotnet.microsoft.com/download/dotnet-framework/net48
+echo.
+echo   Nothing was installed. Aborting.
+echo.
+pause
+exit /b 1
+:NET48_OK
+echo [OK] .NET Framework 4.8+ detected (Release=%_REL%).
+echo.
 
 :: ── Detect upgrade: backup site-specific configs ──
 set "_BACKUP=C:\SCADA\_ConfigBackup"
@@ -209,12 +254,13 @@ if exist "C:\SCADA\Web\App\Setting" (
     xcopy /E /I /Y "C:\SCADA\Web\App\MqttSetting"     "%_BACKUP%\Web\MqttSetting"     >nul
 )
 
-echo [1/7] Stopping existing services (if any)...
+echo [1/8] Stopping existing services (if any)...
 echo.
 net stop ScadaEngineService >nul 2>&1
 net stop ScadaWebService >nul 2>&1
+net stop ScadaEngineLicense >nul 2>&1
 
-echo [2/7] Installing Engine...
+echo [2/8] Installing Engine...
 echo.
 xcopy /E /I /Y "%~dp0Engine\App" "C:\SCADA\Engine\App"
 sc create ScadaEngineService binPath= "\"C:\SCADA\Engine\App\ScadaEngine.Engine.exe\"" DisplayName= "\"SCADA Engine Service\"" start= auto
@@ -223,13 +269,24 @@ sc failure ScadaEngineService reset= 86400 actions= restart/5000/restart/10000/r
 echo Engine installed.
 echo.
 
-echo [3/7] Installing Web...
+echo [3/8] Installing Web...
 echo.
 xcopy /E /I /Y "%~dp0Web\App" "C:\SCADA\Web\App"
 sc create ScadaWebService binPath= "\"C:\SCADA\Web\App\ScadaEngine.Web.exe\"" DisplayName= "\"SCADA Web Service\"" start= auto
 sc description ScadaWebService "SCADA Web Dashboard (http://0.0.0.0:5038)"
 sc failure ScadaWebService reset= 86400 actions= restart/5000/restart/10000/restart/30000
 echo Web installed.
+echo.
+
+echo [4/8] Installing License Bridge (HASP)...
+echo.
+:: net48 x86 bridge; exe path is hard-coded in Engine as C:\SCADA\LicenseBridge\ (no \App subfolder)
+xcopy /E /I /Y "%~dp0LicenseBridge\App" "C:\SCADA\LicenseBridge"
+sc create ScadaEngineLicense binPath= "\"C:\SCADA\LicenseBridge\ScadaEngine.LicenseBridge.exe\"" DisplayName= "\"SCADA Engine License Bridge\"" start= auto
+sc description ScadaEngineLicense "32-bit HASP verification bridge (Named Pipe)"
+sc failure ScadaEngineLicense reset= 86400 actions= restart/5000/restart/10000/restart/30000
+echo License Bridge installed.
+echo   NOTE: still needs the HASP USB dongle plugged in + Sentinel runtime driver on this server.
 echo.
 
 :: ── Restore site-specific configs ──
@@ -257,7 +314,7 @@ if "%_IS_UPGRADE%"=="1" (
 
 :: ── Database setup: create DB if missing + backup folder ACL + app login ──
 :: idempotent; runs AFTER config restore so it reads the site's dbSetting.json
-echo [4/7] Database setup...
+echo [5/8] Database setup...
 powershell -ExecutionPolicy Bypass -File "C:\SCADA\Engine\App\Setting\install-db.ps1"
 if %errorLevel% NEQ 0 (
     echo [WARN] Database setup reported errors. Engine startup has a fallback,
@@ -266,7 +323,7 @@ if %errorLevel% NEQ 0 (
 )
 echo.
 
-echo [5/7] Generating internal HTTPS certificate (CA + server cert)...
+echo [6/8] Generating internal HTTPS certificate (CA + server cert)...
 echo.
 if exist "C:\SCADA\Web\App\certs\scada-web.pfx" (
     echo [INFO] Server certificate already exists - reusing.
@@ -288,12 +345,13 @@ if exist "C:\SCADA\Web\App\certs\ScadaEngine-CA.crt" (
 )
 echo.
 
-echo [6/7] Opening firewall ports 5038 (HTTP) and 7189 (HTTPS)...
+echo [7/8] Opening firewall ports 5038 (HTTP) and 7189 (HTTPS)...
 netsh advfirewall firewall add rule name="ScadaEngine Web" dir=in action=allow protocol=TCP localport=5038
 netsh advfirewall firewall add rule name="ScadaEngine Web HTTPS" dir=in action=allow protocol=TCP localport=7189
 echo.
 
-echo [7/7] Starting services...
+echo [8/8] Starting services...
+net start ScadaEngineLicense
 net start ScadaEngineService
 net start ScadaWebService
 echo.
@@ -322,6 +380,23 @@ echo     run install-ca-on-client.ps1 as Administrator, then fully restart the b
 echo   - Connect using the server IP printed in the certs output above (must match the certificate SAN).
 echo   - To disable HTTPS (HTTP-only on 5038): delete C:\SCADA\Web\App\certs\scada-web.pfx and restart ScadaWebService.
 echo.
+echo ========================================
+echo   Service Status  (RUNNING = OK)
+echo ========================================
+echo [Engine ] ScadaEngineService
+sc query ScadaEngineService  | find "STATE"
+echo [Web    ] ScadaWebService
+sc query ScadaWebService     | find "STATE"
+echo [License] ScadaEngineLicense
+sc query ScadaEngineLicense  | find "STATE"
+echo.
+echo If a line is blank or shows STOPPED, that service did not start -
+echo check its log and re-run this installer. (License also needs the HASP dongle.)
+echo.
+echo ----------------------------------------
+echo This window stays open so you can read the result above.
+echo Press any key to close it.
+echo ----------------------------------------
 pause
 "@ | Set-Content -Path "$ReleasePath\Install.bat" -Encoding ASCII
 
@@ -461,9 +536,9 @@ exit /b
 Write-Host "  InstallModbusServer.bat created (standalone gateway installer)" -ForegroundColor Green
 
 # ──────────────────────────────────────
-# 5. Summary
+# 6. Summary
 # ──────────────────────────────────────
-Write-Host "[5/5] Calculating size..." -ForegroundColor Yellow
+Write-Host "[6/6] Calculating size..." -ForegroundColor Yellow
 $totalSize = [math]::Round(((Get-ChildItem $ReleasePath -Recurse | Measure-Object -Property Length -Sum).Sum / 1MB), 1)
 
 Write-Host ""
@@ -486,6 +561,8 @@ Write-Host "  +-- Web\"
 Write-Host "  |   +-- App\                 <- Web executable + wwwroot + configs"
 Write-Host "  |   +-- QuickDeploy.bat      <- Web service manager"
 Write-Host "  |   +-- DeployWebService.ps1"
+Write-Host "  +-- LicenseBridge\"
+Write-Host "  |   +-- App\                 <- net48 HASP bridge (installed by Install.bat; needs USB dongle)"
 Write-Host "  +-- ModbusServer\"
 Write-Host "      +-- App\                 <- Modbus TCP gateway (FC4 float32) + browse page"
 Write-Host "      +-- QuickDeploy.bat      <- Gateway service manager"
