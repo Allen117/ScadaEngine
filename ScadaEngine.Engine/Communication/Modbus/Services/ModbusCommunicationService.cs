@@ -1084,6 +1084,18 @@ private List<RealtimeDataModel> ReadBatchGroup(ModbusBatchGroup batchGroup, byte
     }
 
     /// <summary>
+    /// 取出點位解碼過程登記的警告並寫 log。
+    /// ModbusTagModel 是純資料模型不持有 logger，且同一種警告每個點位只回報一次，不會刷屏。
+    /// </summary>
+    /// <param name="tag">點位模型</param>
+    private void LogDecodeWarningIfAny(ModbusTagModel tag)
+    {
+        var szWarning = tag.TakeDecodeWarning();
+        if (!string.IsNullOrEmpty(szWarning))
+            _logger.LogWarning("Modbus 解碼警告: {Warning}", szWarning);
+    }
+
+    /// <summary>
     /// 從點位模型建立即時資料
     /// </summary>
     /// <param name="tag">點位模型</param>
@@ -1097,6 +1109,7 @@ private List<RealtimeDataModel> ReadBatchGroup(ModbusBatchGroup batchGroup, byte
         {
             // 計算物理量
             var fPhysicalValue = tag.CalculatePhysicalValue(rawData);
+            LogDecodeWarningIfAny(tag);
 
             // 動態生成 SID
             var nXXX = _deviceConfig.nDatabaseId * 65536 + nModbusId * 256 + 1;
@@ -1218,7 +1231,8 @@ private List<RealtimeDataModel> ReadBatchGroup(ModbusBatchGroup batchGroup, byte
 
             // 計算物理量
             var fPhysicalValue = tag.CalculatePhysicalValue(rawData);
-            _logger.LogTrace("點位 {TagName} 物理量計算: 原始值={Raw} → 物理值={Physical}", 
+            LogDecodeWarningIfAny(tag);
+            _logger.LogTrace("點位 {TagName} 物理量計算: 原始值={Raw} → 物理值={Physical}",
                             tag.szName, string.Join(",", rawData), fPhysicalValue);
 
             // 動態生成當前 ModbusId 對應的 SID

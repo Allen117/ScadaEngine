@@ -55,3 +55,14 @@
     font-size: .85rem;
     min-width: 8.5rem;
 }
+/* DataType 欄：型別下拉 + （僅 BIT 型別時出現的）位元索引下拉並排 */
+.point-type-group {
+    display: flex;
+    gap: .25rem;
+    align-items: center;
+}
+.point-select-bit {
+    font-size: .85rem;
+    min-width: 4.5rem;
+    max-width: 4.5rem;
+}

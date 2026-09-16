@@ -75,9 +75,8 @@ public class ModbusPointModel
         if (string.IsNullOrWhiteSpace(szDataType))
             return false;
 
-        // 檢查數據型態是否支援
-        var supportedTypes = new[] { "INTEGER", "UINTEGER", "FLOATINGPT", "SWAPPEDFP", "DOUBLE", "SWAPPEDDOUBLE", "UINT32BE" };
-        if (!supportedTypes.Contains(szDataType))
+        // 檢查數據型態是否支援（白名單唯一真相來源在 ModbusTagModel，含 DEC10K3 / BCD / BIT0–BIT15）
+        if (!ModbusTagModel.SupportedDataTypes.Contains(szDataType))
             return false;
 
         return true;

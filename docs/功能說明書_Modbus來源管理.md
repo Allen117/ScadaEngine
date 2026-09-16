@@ -10,7 +10,19 @@
 ### 點位熱編輯核心設計
 
 - **主權在 JSON**：點位欄位的唯一真相是 Engine 執行目錄的 `Modbus/*.json` — Engine 每次重載與每筆控制指令都會重讀 JSON 並整批覆寫 `ModbusPoints` 表，因此 Web **只寫 JSON 檔、不寫 DB**（DB 會被 Engine 自動同步）
-- **結構鎖死**：SID 由陣列索引產生（`-S{index+1}`）、控制指令用 TagIndex 定位 — 禁止新增、刪除、排序點位；`IP / Port / ModbusId / ConnectTimeout / 檔名` 唯讀。後端存檔前重讀原檔驗證點位數量未變，不合即回 400。DataType 可改但限 Engine 支援白名單（`INTEGER / UINTEGER / FLOATINGPT / SWAPPEDFP / DOUBLE / SWAPPEDDOUBLE / UINT32BE`，UI 為下拉選單）
+- **結構鎖死**：SID 由陣列索引產生（`-S{index+1}`）、控制指令用 TagIndex 定位 — 禁止新增、刪除、排序點位；`IP / Port / ModbusId / ConnectTimeout / 檔名` 唯讀。後端存檔前重讀原檔驗證點位數量未變，不合即回 400。DataType 可改但限 Engine 支援白名單（`INTEGER / UINTEGER / FLOATINGPT / SWAPPEDFP / DOUBLE / SWAPPEDDOUBLE / UINT32BE / DEC10K3 / BCD / BIT0`–`BIT15`，UI 為下拉選單）。白名單唯一真相來源為 Engine 的 `ModbusTagModel.SupportedDataTypes`，Web 的 `ModbusConfigFileService.SupportedDataTypes` 直接引用它，前端 `modbuscoordinator.js` 的 `DATA_TYPES` 手動對齊（BIT 以迴圈產生）。各型別語意見 [功能說明書_Engine核心.md](功能說明書_Engine核心.md) §4.3
+
+#### DataType 欄的兩段式下拉
+
+`BIT0`–`BIT15` 攤平會讓下拉長達 26 項，故 UI 拆成兩段（`makeDataTypeCell`）：
+
+- **型別下拉**只放 10 項，BIT 收斂為單一的群組代表值 `BIT`（**僅存在於 UI，本身不是合法 DataType**）
+- 選到 `BIT` 才顯示右側 0–15 的**位元索引下拉**，其餘型別隱藏
+- 兩者由 `syncDataType()` 合成後寫進同格的隱藏欄位 `[data-field="dataType"]`
+
+**儲存格式不變**，JSON 寫入的仍是 `BIT5` 這種單一字串，後端與 Engine 零改動；`collectAndValidatePoints` / `countChanges` 照舊讀該隱藏欄位。
+
+`parseBitIndex()` 刻意只認大寫精確格式 `^BIT(\d{1,2})$`（與後端白名單同規則）— `Bit5` 這類舊寫法會落到「保留原值為第一個選項」路徑，才不會在使用者未操作時被靜默正規化成 `BIT5` 而多算一筆變更。
 - **原子寫檔**：先寫 `*.json.tmp`（不觸發 Engine watcher）→ `File.Replace` 原子替換 → 保留 `*.json.bak` 備份。控制路徑每筆指令都直接讀 JSON 且失敗不重試，原子替換保證任何瞬間讀到完整舊檔或完整新檔
 - **保留原檔編碼**：現場檔案為 UTF-16 LE with BOM（Excel 工具產生），寫回時偵測 BOM 沿用原編碼
 - **Engine 端配合**：

@@ -174,8 +174,44 @@ ExecuteAsync()
 | DOUBLE | 4 | Low Word First (GHEFCDAB) | IEEE 754 雙精度浮點數 |
 | SWAPPEDDOUBLE | 4 | High Word First (ABCDEFGH) | IEEE 754 雙精度浮點數（交換字組） |
 | UINT32BE | 2 | Big-Endian (ABCD) | 無號 32-bit 整數 |
+| DEC10K3 | 3 | R0→R1→R2 由低位址往高位址 | base-10000 十進位分段：`(R0×10000 + R1) + R2×0.0001`，8 位整數 + 4 位小數 |
+| BCD | 1 | — | 一個 word 的 4 個 nibble 各存一位十進位數字（`0x1234` → `1234`）|
+| BIT0 ~ BIT15 | 1 | — | 取該 word 的第 n 個位元，回 `0` 或 `1` |
 
-**物理值計算公式**：`實際值 = 原始值 × Ratio`
+**物理值計算公式**：`實際值 = 原始值 × Ratio`（三種新型別同樣走此出口，預設 Ratio = 1）
+
+#### DEC10K3
+
+三個連續暫存器各存一段**純二進位 0–9999**（不是 BCD），語意如下：
+
+| Register | 意義 | 權重 |
+|---|---|---|
+| R0 | 整數高位段 | ×10000 |
+| R1 | 整數低位段 | ×1 |
+| R2 | 小數四位 | ×0.0001 |
+
+⚠️ **精度上限**：值鏈全程為 `float`（single，約 7 位有效數字），此編碼最多 12 位：
+
+- 整數部分 > 約 838,861 → 小數位開始失真（間隔 0.015625）
+- 整數部分 > 8,388,608（2²³）→ 小數完全消失（間隔 1.0），Engine 對該點位輸出**一次** warning log
+
+若該點位是累積 kWh 且報表靠 boundary 相減，小負載的逐時差值可能被量化掉。
+
+#### BCD
+
+任一 nibble 落在 A–F 視為設備回傳異常或型別設錯，該次解碼**回傳 0** 並輸出一次 warning log —
+硬把 `0xA` 當 10 累加會產生「看起來合理但錯誤」的數值，比明確回 0 更危險。目前只支援 16-bit（4 位數）。
+
+#### BIT0 ~ BIT15
+
+位元索引寫在 **DataType** 而非 Address（`40001.5` 這種寫法會讓採集熱路徑的 `int.Parse(tag.szAddress)` 直接 FormatException，
+且 Excel 工具的地址欄會把它四捨五入成 `40002`）。
+
+BIT 型別**只能用於 Holding (4xxxx) / Input (3xxxx)** — Coil / Discrete 位址本身就是單一位元，
+再取 bit 必為設定錯誤，`ModbusTagModel.Validate()` 回 false 並記 error，該點位不採集。
+
+> 三種新型別**僅支援讀取**。被下控制指令時走 `MqttControlSubscribeService` 既有 `default` 分支：記 error 且不寫入任何暫存器。
+> （BIT 寫入需 read-modify-write，同一 word 多點位並行寫有競態，屬獨立議題）
 
 ### 4.4 多設備併行採集機制
 

@@ -179,6 +179,12 @@ public class ModbusConfigService
                     {
                         config.tagList.Add(tag);
                     }
+                    else if (!string.IsNullOrEmpty(tag.szValidationError))
+                    {
+                        // 語意設定錯誤（如 BIT 型別配到 Coil 位址）— 明確錯誤，需現場修正
+                        _logger.LogError("點位設定無效，已跳過: {TagName} ({Address}) — {Reason}",
+                                         tag.szName, tag.szAddress, tag.szValidationError);
+                    }
                     else
                     {
                         _logger.LogWarning("點位設定無效，已跳過: {TagName} ({Address})", tag.szName, tag.szAddress);

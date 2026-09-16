@@ -69,6 +69,93 @@ public class ModbusTagModel
     public int nRegisterCount { get; private set; } = 1;
 
     /// <summary>
+    /// 最近一次 Validate() 的語意檢查失敗原因（如 BIT 型別配到 Coil 位址），成功或格式性失敗時為 null。
+    /// 由持有 logger 的呼叫端取用寫 log。
+    /// </summary>
+    public string? szValidationError { get; private set; }
+
+    /// <summary>
+    /// single (float) 能逐一表達整數的上限 2^23。DEC10K3 整數部分超過此值後 0.0001 的小數解析度完全消失。
+    /// </summary>
+    private const double SINGLE_EXACT_INT_LIMIT = 8388608.0;
+
+    /// <summary>尚未被取走的解碼警告訊息</summary>
+    private string? _szPendingDecodeWarning;
+
+    /// <summary>已回報過的警告種類 — 同一點位同一種問題只回報一次，避免採集迴圈刷 log</summary>
+    private readonly HashSet<string> _reportedWarningKinds = new();
+
+    /// <summary>
+    /// Engine 支援的資料型態白名單（大寫正規形）。
+    /// 這是唯一真相來源 — ModbusPointModel.Validate 與 Web 的 ModbusConfigFileService.SupportedDataTypes
+    /// 都引用此清單，避免新增型別時漏改其中一處。
+    /// </summary>
+    public static readonly string[] SupportedDataTypes = BuildSupportedDataTypes();
+
+    private static string[] BuildSupportedDataTypes()
+    {
+        var typeList = new List<string>
+        {
+            "INTEGER", "UINTEGER", "FLOATINGPT", "SWAPPEDFP", "DOUBLE", "SWAPPEDDOUBLE", "UINT32BE",
+            "DEC10K3", "BCD"
+        };
+
+        // BIT0–BIT15：位元索引寫在型別字串裡（不動 Address 格式，詳見 docs/功能說明書_Engine核心.md）
+        for (var i = 0; i <= 15; i++)
+            typeList.Add($"BIT{i}");
+
+        return typeList.ToArray();
+    }
+
+    /// <summary>
+    /// 解析 BIT0–BIT15 型別字串的位元索引
+    /// </summary>
+    /// <param name="szDataType">資料型態字串</param>
+    /// <param name="nBitIndex">解析出的位元索引 (0–15)，失敗時為 -1</param>
+    /// <returns>是 BIT 型別且索引合法回傳 true</returns>
+    public static bool TryParseBitIndex(string? szDataType, out int nBitIndex)
+    {
+        nBitIndex = -1;
+
+        if (string.IsNullOrWhiteSpace(szDataType))
+            return false;
+
+        var szUpper = szDataType.Trim().ToUpperInvariant();
+        if (!szUpper.StartsWith("BIT") || szUpper.Length < 4 || szUpper.Length > 5)
+            return false;
+
+        var szIndex = szUpper.Substring(3);
+        if (!szIndex.All(char.IsAsciiDigit))
+            return false;
+
+        var nParsed = int.Parse(szIndex);
+        if (nParsed < 0 || nParsed > 15)
+            return false;
+
+        nBitIndex = nParsed;
+        return true;
+    }
+
+    /// <summary>
+    /// 取出並清除待回報的解碼警告訊息，無警告回傳 null（由持有 logger 的呼叫端寫 log）
+    /// </summary>
+    public string? TakeDecodeWarning()
+    {
+        var szWarning = _szPendingDecodeWarning;
+        _szPendingDecodeWarning = null;
+        return szWarning;
+    }
+
+    /// <summary>
+    /// 登記一則解碼警告 — 同一 kind 在此點位生命週期內只回報一次
+    /// </summary>
+    private void RaiseDecodeWarningOnce(string szKind, string szMessage)
+    {
+        if (_reportedWarningKinds.Add(szKind))
+            _szPendingDecodeWarning = szMessage;
+    }
+
+    /// <summary>
     /// 解析地址格式並設定功能碼與實際地址
     /// </summary>
     /// <returns>解析成功回傳 true，失敗回傳 false</returns>
@@ -198,7 +285,14 @@ public class ModbusTagModel
             case "UINT32BE":
                 nRegisterCount = 2;
                 break;
+            case "DEC10K3":
+                nRegisterCount = 3;
+                break;
+            case "BCD":
+                nRegisterCount = 1;
+                break;
             default:
+                // BIT0–BIT15 與未知型別皆視為單一暫存器
                 nRegisterCount = 1;
                 break;
         }
@@ -296,9 +390,64 @@ public class ModbusTagModel
                     fRawValue = BitConverter.ToUInt32(bytes, 0);
                 }
                 break;
+            case "DEC10K3":
+                if (rawData.Length >= 3)
+                {
+                    // base-10000 十進位分段（非 BCD）：每個 word 各存一段純二進位 0–9999
+                    // R0 = 整數高位段 (×10000)、R1 = 整數低位段 (×1)、R2 = 小數四位 (×0.0001)
+                    var dIntegerPart = rawData[0] * 10000.0 + rawData[1];
+
+                    if (dIntegerPart > SINGLE_EXACT_INT_LIMIT)
+                    {
+                        RaiseDecodeWarningOnce("DEC10K3_PRECISION",
+                            $"DEC10K3 點位 {szName} 整數部分 {dIntegerPart} 超過 single 可精確表達上限 {SINGLE_EXACT_INT_LIMIT}，小數位已失真");
+                    }
+
+                    // 先在 double 內合併整數與小數，最後才降階為 single，避免中間步驟額外損失精度
+                    fRawValue = (float)(dIntegerPart + rawData[2] * 0.0001);
+                }
+                break;
+            case "BCD":
+                fRawValue = DecodeBcd16(rawData[0]);
+                break;
+            default:
+                // BIT0–BIT15：取單一暫存器的指定位元，回 0 或 1
+                if (TryParseBitIndex(szDataType, out var nBitIndex))
+                    fRawValue = (rawData[0] >> nBitIndex) & 0x1;
+                break;
         }
 
         return fRawValue * fRatio;
+    }
+
+    /// <summary>
+    /// 16-bit BCD 解碼：4 個 nibble 各代表一位十進位數字 (0x1234 → 1234)。
+    /// 任一 nibble 落在 A–F 代表設備回傳異常或型別設錯，視為資料無效回傳 0 並登記一次警告 —
+    /// 硬把 0xA 當 10 累加會產生「看起來合理但錯誤」的數值，比明確回 0 更危險。
+    /// </summary>
+    /// <param name="nRaw">原始暫存器值</param>
+    /// <returns>解碼後的十進位數值，非法 nibble 回傳 0</returns>
+    private float DecodeBcd16(ushort nRaw)
+    {
+        var nValue = 0;
+        var nWeight = 1;
+
+        for (var i = 0; i < 4; i++)
+        {
+            var nNibble = (nRaw >> (i * 4)) & 0xF;
+
+            if (nNibble > 9)
+            {
+                RaiseDecodeWarningOnce("BCD_INVALID_NIBBLE",
+                    $"BCD 點位 {szName} 原始值 0x{nRaw:X4} 含非法 nibble (A–F)，視為資料無效回傳 0");
+                return 0.0f;
+            }
+
+            nValue += nNibble * nWeight;
+            nWeight *= 10;
+        }
+
+        return nValue;
     }
 
     /// <summary>
@@ -307,10 +456,24 @@ public class ModbusTagModel
     /// <returns>驗證成功回傳 true</returns>
     public bool Validate()
     {
+        szValidationError = null;
+
         if (string.IsNullOrEmpty(szName) || string.IsNullOrEmpty(szAddress))
             return false;
 
-        return ParseAddress() && ParseRatioAndRegisterCount();
+        if (!ParseAddress() || !ParseRatioAndRegisterCount())
+            return false;
+
+        // BIT0–BIT15 取的是「暫存器內的某個位元」，只在 Holding(4xxxx, FC3) / Input(3xxxx, FC4) 有意義。
+        // Coil / Discrete 位址本身就是單一位元，再取 bit 必為設定錯誤，寧可擋下不採集。
+        if (TryParseBitIndex(szDataType, out _) && nFunctionCode != 3 && nFunctionCode != 4)
+        {
+            szValidationError = $"{szDataType} 只能用於 Holding (4xxxx) / Input (3xxxx) 暫存器位址，" +
+                                $"目前位址 {szAddress} 為 Coil/Discrete";
+            return false;
+        }
+
+        return true;
     }
 }
 

@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using ScadaEngine.Engine.Communication.Modbus.Models;
 using ScadaEngine.Web.Features.ModbusCoordinator.Models;
 
 namespace ScadaEngine.Web.Services;
@@ -28,13 +29,10 @@ public class ModbusConfigFileService
     private static readonly SemaphoreSlim _writeLock = new(1, 1);
 
     /// <summary>
-    /// Engine 支援的資料型態 — 對應 ModbusTagModel.ParseRatioAndRegisterCount / CalculatePhysicalValue 的 switch case
-    /// （Engine 端比對時 ToUpper，故此處以大寫正規形比對；UI 下拉同此清單）
+    /// Engine 支援的資料型態 — 直接引用 Engine 端白名單（唯一真相來源 ModbusTagModel.SupportedDataTypes），
+    /// 新增型別時不會漏改這一側。Engine 端比對時 ToUpper，故清單為大寫正規形；UI 下拉同此清單。
     /// </summary>
-    public static readonly string[] SupportedDataTypes =
-    {
-        "INTEGER", "UINTEGER", "FLOATINGPT", "SWAPPEDFP", "DOUBLE", "SWAPPEDDOUBLE", "UINT32BE",
-    };
+    public static readonly string[] SupportedDataTypes = ModbusTagModel.SupportedDataTypes;
 
     public ModbusConfigFileService(
         IConfiguration configuration,

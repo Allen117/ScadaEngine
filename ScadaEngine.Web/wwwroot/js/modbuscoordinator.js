@@ -170,8 +170,90 @@
         el.style.display = szText ? '' : 'none';
     }
 
-    /** Engine 支援的資料型態 — 與後端 ModbusConfigFileService.SupportedDataTypes 一致 */
-    var DATA_TYPES = ['INTEGER', 'UINTEGER', 'FLOATINGPT', 'SWAPPEDFP', 'DOUBLE', 'SWAPPEDDOUBLE', 'UINT32BE'];
+    /**
+     * Engine 支援的資料型態 — 與後端 ModbusConfigFileService.SupportedDataTypes
+     * （＝ Engine ModbusTagModel.SupportedDataTypes）一致。
+     * BIT0–BIT15 為「取暫存器內第 n 個位元」，以迴圈產生避免手寫漏項。
+     *
+     * UI 為兩段式：型別下拉只放 BIT_GROUP 一項（否則清單長達 26 項），選到它才顯示
+     * 0–15 的位元索引下拉，兩者合成後寫進隱藏欄位。儲存格式仍是單一字串 BIT0–BIT15，
+     * JSON 與後端白名單完全不變。
+     */
+    var BASE_TYPES = ['INTEGER', 'UINTEGER', 'FLOATINGPT', 'SWAPPEDFP', 'DOUBLE', 'SWAPPEDDOUBLE', 'UINT32BE',
+                      'DEC10K3', 'BCD'];
+    var BIT_GROUP = 'BIT';      // 僅存在於 UI 的群組代表值，本身不是合法 DataType
+    var BIT_INDEX_MAX = 15;
+
+    /** 型別下拉的選項（BIT 收斂為一項）*/
+    var TYPE_OPTIONS = BASE_TYPES.concat([BIT_GROUP]);
+
+    /** 攤平的合法型別清單（等同後端白名單），用於判斷原值是否為已知型別 */
+    var DATA_TYPES = BASE_TYPES.slice();
+    for (var nBit = 0; nBit <= BIT_INDEX_MAX; nBit++) DATA_TYPES.push('BIT' + nBit);
+
+    /**
+     * 解析 BIT0–BIT15 的位元索引，非 BIT 型別回 -1。
+     * 刻意只認大寫精確格式（與後端白名單同規則）— 'Bit5' 這類舊寫法要落到「保留原值」路徑，
+     * 才不會在使用者未操作的情況下被靜默改成 'BIT5' 而算成一筆變更。
+     */
+    function parseBitIndex(sz) {
+        var m = /^BIT(\d{1,2})$/.exec(sz || '');
+        if (!m) return -1;
+        var n = parseInt(m[1], 10);
+        return (n >= 0 && n <= BIT_INDEX_MAX) ? n : -1;
+    }
+
+    function makeOption(szValue) {
+        var opt = document.createElement('option');
+        opt.value = szValue;
+        opt.textContent = szValue;
+        return opt;
+    }
+
+    /**
+     * DataType 欄 — 型別下拉 +（僅 BIT 時顯示的）位元索引下拉，兩者合成後寫進隱藏的
+     * [data-field="dataType"]，collectAndValidatePoints / countChanges 照舊讀該欄位不需改。
+     * 原值不在白名單（大小寫或舊格式）時保留為型別下拉的第一個選項，避免無操作也被視為變更。
+     */
+    function makeDataTypeCell(szCurrent) {
+        var td = document.createElement('td');
+        var group = document.createElement('div');
+        group.className = 'point-type-group';
+
+        var hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.dataset.field = 'dataType';
+
+        var nBitIndex = parseBitIndex(szCurrent);
+
+        var selType = document.createElement('select');
+        selType.className = 'form-select form-select-sm point-select point-select-type';
+        if (DATA_TYPES.indexOf(szCurrent) < 0 && szCurrent !== '') {
+            selType.appendChild(makeOption(szCurrent));
+        }
+        TYPE_OPTIONS.forEach(function (szType) { selType.appendChild(makeOption(szType)); });
+        selType.value = nBitIndex >= 0 ? BIT_GROUP : szCurrent;
+
+        var selBit = document.createElement('select');
+        selBit.className = 'form-select form-select-sm point-select-bit';
+        for (var i = 0; i <= BIT_INDEX_MAX; i++) selBit.appendChild(makeOption(String(i)));
+        selBit.value = String(nBitIndex >= 0 ? nBitIndex : 0);
+
+        function syncDataType() {
+            var isBit = selType.value === BIT_GROUP;
+            selBit.style.display = isBit ? '' : 'none';
+            hidden.value = isBit ? BIT_GROUP + selBit.value : selType.value;
+        }
+        selType.addEventListener('change', syncDataType);
+        selBit.addEventListener('change', syncDataType);
+        syncDataType();
+
+        group.appendChild(selType);
+        group.appendChild(selBit);
+        group.appendChild(hidden);
+        td.appendChild(group);
+        return td;
+    }
 
     /**
      * Modbus 位址驗證 — 與後端 ModbusConfigFileService.IsValidAddress 一致：
@@ -221,27 +303,7 @@
             tr.appendChild(makeCellInput(p.name, 'name'));
             tr.appendChild(makeCellInput(p.address, 'address', 'point-input-address'));
 
-            // DataType 下拉 — 限 Engine 支援清單；原值不在清單（大小寫或舊格式）時保留為第一個選項，避免無操作也被視為變更
-            var tdType = document.createElement('td');
-            var sel = document.createElement('select');
-            sel.className = 'form-select form-select-sm point-select';
-            sel.dataset.field = 'dataType';
-            var szCurrent = p.dataType || '';
-            if (DATA_TYPES.indexOf(szCurrent) < 0 && szCurrent !== '') {
-                var optKeep = document.createElement('option');
-                optKeep.value = szCurrent;
-                optKeep.textContent = szCurrent;
-                sel.appendChild(optKeep);
-            }
-            DATA_TYPES.forEach(function (szType) {
-                var opt = document.createElement('option');
-                opt.value = szType;
-                opt.textContent = szType;
-                sel.appendChild(opt);
-            });
-            sel.value = szCurrent;
-            tdType.appendChild(sel);
-            tr.appendChild(tdType);
+            tr.appendChild(makeDataTypeCell(p.dataType || ''));
 
             tr.appendChild(makeCellInput(p.ratio, 'ratio', 'point-input-num'));
             tr.appendChild(makeCellInput(p.unit, 'unit', 'point-input-num'));
