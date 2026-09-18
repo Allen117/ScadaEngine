@@ -21,6 +21,9 @@ function renderPropPanel(el) {
     // 文字 Widget 使用獨立屬性面板
     if (szType === 'text') {
         document.getElementById('propBody').innerHTML = buildTextPropHtml(el, props);
+        // 選取文字元件時直接 focus 文字內容欄，便於立即修改（與表格儲存格選取一致）
+        const ta = document.getElementById('txtContentInput');
+        if (ta) { ta.focus(); ta.select(); }
         return;
     }
 
@@ -53,11 +56,11 @@ function renderPropPanel(el) {
         </div>
         <div class="prop-group">
             <label>${escHtml(t('designer.prop.width'))}</label>
-            <input type="number" id="pW" value="${el.offsetWidth}" step="20" ${szSizeRO} ${szSizeOninput}>
+            <input type="number" id="pW" value="${el.offsetWidth}" step="1" ${szSizeRO} ${szSizeOninput}>
         </div>
         <div class="prop-group">
             <label>${escHtml(t('designer.prop.height'))}</label>
-            <input type="number" id="pH" value="${el.offsetHeight}" step="20" ${szSizeRO} ${szSizeOninputH}>
+            <input type="number" id="pH" value="${el.offsetHeight}" step="1" ${szSizeRO} ${szSizeOninputH}>
         </div>
         ${szSizeLockedHint}
         <hr class="prop-divider">
@@ -980,7 +983,7 @@ function buildTextPropHtml(el, props) {
     return `
         <div class="prop-group">
             <label>${escHtml(t('designer.prop.text_content'))}</label>
-            <textarea rows="3" style="width:100%;background:#3c3c3c;border:1px solid #555;
+            <textarea id="txtContentInput" rows="3" style="width:100%;background:#3c3c3c;border:1px solid #555;
                       color:#d4d4d4;padding:4px 6px;font-size:12px;border-radius:3px;
                       outline:none;resize:vertical;box-sizing:border-box;"
                       oninput="setProp('szText', this.value)">${escHtml(props.szText)}</textarea>
@@ -997,12 +1000,12 @@ function buildTextPropHtml(el, props) {
         </div>
         <div class="prop-group">
             <label>${escHtml(t('designer.prop.width'))}</label>
-            <input type="number" id="pW" value="${el.offsetWidth}" step="20"
+            <input type="number" id="pW" value="${el.offsetWidth}" step="1"
                    oninput="setSize('width', +this.value)">
         </div>
         <div class="prop-group">
             <label>${escHtml(t('designer.prop.height'))}</label>
-            <input type="number" id="pH" value="${el.offsetHeight}" step="20"
+            <input type="number" id="pH" value="${el.offsetHeight}" step="1"
                    oninput="setSize('height', +this.value)">
         </div>
         <hr class="prop-divider">
@@ -1435,13 +1438,54 @@ function setPos(szSide, nVal) {
 
 function setSize(szSide, nVal) {
     if (!selectedEl) return;
+    _applySizeTo(selectedEl, szSide, nVal);
+}
+
+// 對單一元件套用寬/高（含尺寸鎖定與最小值規則），供 setSize / setSizeMulti 共用
+function _applySizeTo(el, szSide, nVal) {
+    if (!el) return;
     // table 鎖定尺寸時禁止外部 setSize（plan 決策 4）
-    if (selectedEl.dataset.type === 'table' && selectedEl.widgetProps?.bTableSizeLocked) return;
+    if (el.dataset.type === 'table' && el.widgetProps?.bTableSizeLocked) return;
     // 折線管路大小由節點決定，禁止外部 setSize（plan 2026-07-23 決策 4）
-    if (selectedEl.dataset.type === 'pipe') return;
-    const def = WIDGET_DEFS[selectedEl.dataset.type];
+    if (el.dataset.type === 'pipe') return;
+    const def = WIDGET_DEFS[el.dataset.type];
     const nMin = szSide === 'width' ? (def?.nMinW || 40) : (def?.nMinH || 30);
-    selectedEl.style[szSide] = Math.max(nMin, nVal) + 'px';
+    el.style[szSide] = Math.max(nMin, nVal) + 'px';
+}
+
+// 多選時同步調整所有選取元件的寬或高（各自套用鎖定/最小值規則）
+function setSizeMulti(szSide, nVal) {
+    if (selectedWidgetIds.size === 0) return;
+    selectedWidgetIds.forEach(szId => {
+        _applySizeTo(document.getElementById(szId), szSide, nVal);
+    });
+}
+
+// 多選屬性面板：僅提供群組寬高調整（套用到所有選取元件）
+function renderMultiSelectPropPanel() {
+    const n   = selectedWidgetIds.size;
+    const ref = selectedEl;   // 以最後 focus 的元件當作寬高初始參考值
+    const nW  = ref ? ref.offsetWidth  : '';
+    const nH  = ref ? ref.offsetHeight : '';
+    document.getElementById('propBody').innerHTML = `
+        <div style="font-size:12px;color:#0d6efd;margin-bottom:6px;">
+            <i class="fas fa-object-group me-1"></i>${escHtml(t('designer.prop.multi_selected', { count: n }))}
+        </div>
+        <div style="font-size:10px;color:#888;margin-bottom:6px;line-height:1.4;">
+            ${escHtml(t('designer.prop.multi_size_hint'))}
+        </div>
+        <hr class="prop-divider">
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.width'))}</label>
+            <input type="number" id="pW" value="${nW}" step="1" min="1"
+                   oninput="setSizeMulti('width', +this.value)">
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.height'))}</label>
+            <input type="number" id="pH" value="${nH}" step="1" min="1"
+                   oninput="setSizeMulti('height', +this.value)">
+        </div>
+    `;
 }
 
 // ============================================================

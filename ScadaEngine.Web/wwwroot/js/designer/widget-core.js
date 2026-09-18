@@ -230,6 +230,16 @@ function selectWidget(el) {
     if (selectedEl) selectedEl.classList.remove('selected');
     selectedEl = el;
     const panel = document.querySelector('.property-panel');
+    // 多選（>1）：改用群組面板，僅提供寬高同步調整
+    if (selectedWidgetIds.size > 1) {
+        if (el) {
+            el.classList.add('selected');
+            el.style.zIndex = ++nWidgetCounter + 10;
+        }
+        renderMultiSelectPropPanel();
+        panel.classList.remove('collapsed');
+        return;
+    }
     if (el) {
         el.classList.add('selected');
         el.style.zIndex = ++nWidgetCounter + 10;
@@ -256,6 +266,8 @@ function onWidgetMouseDown(ev, el) {
         if (selectedEl === el) {
             const szNext = selectedWidgetIds.size ? [...selectedWidgetIds].pop() : null;
             selectWidget(szNext ? document.getElementById(szNext) : null);
+        } else if (selectedEl) {
+            selectWidget(selectedEl);   // 剃除非 focus 元件後刷新面板選取數
         }
         return;
     }
@@ -535,7 +547,7 @@ document.addEventListener('keydown', e => {
         selectWidget(null);
     }
     if (!isInput && (e.ctrlKey || e.metaKey)) {
-        if (e.key === 'a') { e.preventDefault(); canvas.querySelectorAll('.canvas-widget').forEach(w => selectedWidgetIds.add(w.id)); updateWidgetSelectionVisual(); }
+        if (e.key === 'a') { e.preventDefault(); canvas.querySelectorAll('.canvas-widget').forEach(w => selectedWidgetIds.add(w.id)); updateWidgetSelectionVisual(); const last = canvas.querySelector('.canvas-widget:last-child'); if (last) selectWidget(last); }
         if (e.key === 'c' && selectedWidgetIds.size > 0) { e.preventDefault(); copySelectedWidgets(); }
         if (e.key === 'x' && selectedWidgetIds.size > 0) { e.preventDefault(); copySelectedWidgets(); deleteSelectedWidgets(); }
         if (e.key === 'v') { e.preventDefault(); pasteWidgets(); }

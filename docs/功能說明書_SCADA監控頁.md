@@ -583,6 +583,8 @@ Designer 畫布上所有元件共用一套選取與定位規則（widget-core.js
 - **選取修飾鍵**：一般點擊 = 單選並清除其他；**Shift+點擊 = 連選（加入選取集合）**；**Ctrl+點擊 = 剃除（自選取集合移出）**。框選（拖曳空白處畫框）同樣支援 Shift / Ctrl 累加，不清空既有選取。
 - **最小步進 / 最小尺寸皆為 1px**：`snapGrid` 預設格改為 1（原 10），拖曳移動與 resize 均可 1px 微調；resize 最小尺寸統一放寬為 1×1（不再套用各元件 `nMinW/nMinH`）。背景 10px 網格線僅為視覺參考，不再限制落點。
 - **智慧對齊線**：拖曳 / 縮放時自動偵測鄰近元件的**左 / 中 / 右**與**上 / 中 / 下**，距離 ≤ 6px（`ALIGN_SNAP`）即吸附對齊並畫出洋紅參考線（`.designer-align-guide`）；多選群組以整體 bounding box 對齊。放開滑鼠即清除參考線。（`computeAlignGuides` / `drawAlignGuides`）
+- **多選群組寬高同步**：選取 ≥ 2 個元件（Shift 連選 / 框選 / `Ctrl+A` 全選）時，屬性面板改為群組面板，顯示選取數與**寬 / 高**兩欄；輸入任一欄即**同步套用到所有選取元件**（各自尊重尺寸鎖定與最小值 —— 折線管路、鎖定尺寸的表格會略過）。`renderMultiSelectPropPanel` / `setSizeMulti`，寬高規則與單選共用 `_applySizeTo`。剃除到剩 1 個時自動切回單選屬性面板。
+- **文字元件選取即編輯**：選取 `text` 靜態文字元件時，屬性面板自動 focus 並全選「文字內容」欄，可直接輸入取代（與表格儲存格點選 focus 行為一致）。（`renderPropPanel` text 分支 → `txtContentInput`）
 
 > **元件庫分類（Designer）**：元件庫改為三類 — 顯示元件（表格 / 儀錶板 / 文字）、點位與控制（控制按鈕 / AI / DI / AO / DO）、設備與動畫（水泵 / 管路 / 冷卻水塔 / 空調箱風扇 / 冰機 / 圖片動畫）。各類獨立捲動（`.widget-cat-items` overflow-y:auto），`.designer-outer` 釘視窗高使面板本身不捲，避免 100% 時多餘的整體捲軸。
 

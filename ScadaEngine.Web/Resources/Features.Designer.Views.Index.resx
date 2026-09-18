@@ -286,6 +286,8 @@
   <data name="designer.prop.pos_y" xml:space="preserve"><value>Y 位置</value></data>
   <data name="designer.prop.width" xml:space="preserve"><value>寬度</value></data>
   <data name="designer.prop.height" xml:space="preserve"><value>高度</value></data>
+  <data name="designer.prop.multi_selected" xml:space="preserve"><value>已選取 {count} 個元件</value></data>
+  <data name="designer.prop.multi_size_hint" xml:space="preserve"><value>調整寬高會套用到所有選取的元件</value></data>
   <data name="designer.prop.font_size" xml:space="preserve"><value>字體大小</value></data>
   <data name="designer.prop.font_color" xml:space="preserve"><value>字色</value></data>
   <data name="designer.prop.font_family" xml:space="preserve"><value>字體</value></data>

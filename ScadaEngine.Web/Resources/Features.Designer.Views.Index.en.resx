@@ -287,6 +287,8 @@
   <data name="designer.prop.pos_y" xml:space="preserve"><value>Y Position</value></data>
   <data name="designer.prop.width" xml:space="preserve"><value>Width</value></data>
   <data name="designer.prop.height" xml:space="preserve"><value>Height</value></data>
+  <data name="designer.prop.multi_selected" xml:space="preserve"><value>{count} widgets selected</value></data>
+  <data name="designer.prop.multi_size_hint" xml:space="preserve"><value>Width/height changes apply to all selected widgets</value></data>
   <data name="designer.prop.font_size" xml:space="preserve"><value>Font Size</value></data>
   <data name="designer.prop.font_color" xml:space="preserve"><value>Font Color</value></data>
   <data name="designer.prop.font_family" xml:space="preserve"><value>Font</value></data>
