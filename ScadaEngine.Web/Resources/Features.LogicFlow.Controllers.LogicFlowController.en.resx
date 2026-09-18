@@ -48,4 +48,6 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
   <data name="logicflow.api.version_conflict" xml:space="preserve"><value>Version conflict. Please reload.</value></data>
+  <data name="logicflow.api.copy_failed" xml:space="preserve"><value>Copy failed: source item not found or target location invalid.</value></data>
+  <data name="logicflow.copy.suffix" xml:space="preserve"><value> - Copy</value></data>
 </root>

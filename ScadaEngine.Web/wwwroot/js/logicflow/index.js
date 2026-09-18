@@ -14,6 +14,8 @@
         confirmRename: S.confirmRename,
         remove: S.remove,
         toggleEnabled: S.toggleEnabled,
+        copyTreeNode: S.copyTreeNode,
+        pasteTreeNode: S.pasteTreeNode,
         saveDiagram: S.saveDiagram,
         ppGoBack: S.ppGoBack,
         ppFilter: S.ppFilter,
@@ -41,6 +43,9 @@
 
     // 一次性綁定全域事件（keydown / 右鍵選單項目 / 全域點擊關選單）
     S.attachGlobalEvents();
+
+    // 樹狀選單右鍵（樹層級複製 / 貼上）— 委派綁在 #treeContainer，樹重繪不受影響
+    S.attachTreeEvents();
 
     // 載入演算法清單（非同步，buildAlgoSubmenu 在拉到後自行觸發）
     S.loadAlgorithms();

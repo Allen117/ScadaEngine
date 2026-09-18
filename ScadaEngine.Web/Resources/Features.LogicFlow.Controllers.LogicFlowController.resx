@@ -48,4 +48,6 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
   <data name="logicflow.api.version_conflict" xml:space="preserve"><value>版本衝突，請重新載入</value></data>
+  <data name="logicflow.api.copy_failed" xml:space="preserve"><value>複製失敗：來源項目不存在或目標位置無效</value></data>
+  <data name="logicflow.copy.suffix" xml:space="preserve"><value> - 複製</value></data>
 </root>

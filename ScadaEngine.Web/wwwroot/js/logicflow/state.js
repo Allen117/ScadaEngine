@@ -65,6 +65,13 @@
     S.selectedId = null;
     S.renameTargetId = null;
 
+    // ── 樹層級剪貼簿（與畫布節點剪貼簿 '_lf_clipboard' 是**兩回事**）──
+    // 畫布 Ctrl+C/V：複製節點，**保留**點位綁定
+    // 樹右鍵複製／貼上：複製整條邏輯或整個資料夾，點位綁定**一律清空**（後端 Stripper 負責）
+    // 存 localStorage 以支援跨分頁 / 重新整理後貼上；內容僅 { id, name }，貼上時才打 API
+    S.TREE_CLIPBOARD_KEY = '_lf_tree_clipboard';
+    S.treeCtxTargetId = null;
+
     // ── 畫布資料 ──
     S.canvasNodes = [];
     S.canvasEdges = [];

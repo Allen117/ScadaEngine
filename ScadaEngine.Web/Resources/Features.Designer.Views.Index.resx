@@ -175,6 +175,11 @@
   <data name="designer.page.new_name" xml:space="preserve"><value>新頁面</value></data>
   <data name="designer.page.prompt_name" xml:space="preserve"><value>請輸入頁面名稱：</value></data>
   <data name="designer.page.must_keep_one" xml:space="preserve"><value>至少需要保留一個頁面。</value></data>
+  <data name="designer.page.copy_suffix" xml:space="preserve"><value> - 複製</value></data>
+  <data name="designer.page.copied" xml:space="preserve"><value>已複製「{name}」（點位綁定已清空），請在目標位置按右鍵貼上</value></data>
+  <data name="designer.page.pasted" xml:space="preserve"><value>已貼上「{name}」，請重新綁定各元件點位</value></data>
+  <data name="designer.page.copy_bg_skipped" xml:space="preserve"><value>背景圖過大，已略過背景圖後複製</value></data>
+  <data name="designer.page.copy_failed" xml:space="preserve"><value>複製失敗：瀏覽器儲存空間不足</value></data>
   <data name="designer.page.confirm_delete" xml:space="preserve"><value>確定要刪除「{name}」？</value></data>
   <data name="designer.page.confirm_delete_with_children" xml:space="preserve"><value>確定要刪除「{name}」及其所有子頁面？</value></data>
 
@@ -208,6 +213,9 @@
   <!-- Context Menus -->
   <data name="designer.ctx.add_page" xml:space="preserve"><value>新增頁面</value></data>
   <data name="designer.ctx.add_subpage" xml:space="preserve"><value>新增子頁面</value></data>
+  <data name="designer.ctx.copy_page" xml:space="preserve"><value>複製此頁</value></data>
+  <data name="designer.ctx.paste_as_subpage" xml:space="preserve"><value>貼上為子頁面</value></data>
+  <data name="designer.ctx.paste_as_root" xml:space="preserve"><value>貼上為根頁面</value></data>
   <data name="designer.ctx.edit" xml:space="preserve"><value>編輯</value></data>
   <data name="designer.ctx.delete" xml:space="preserve"><value>刪除</value></data>
   <data name="designer.ctx.edit_cell" xml:space="preserve"><value>編輯儲存格</value></data>

@@ -323,6 +323,58 @@ const WIDGET_DEFS = {
     }
 };
 
+// ============================================================
+// 綁定欄位清單（頁面層級複製用）
+// ============================================================
+// page-clipboard.js 複製整頁時，會把 widget props 裡指向特定點位 / 迴路 / 排程的
+// 欄位全部清空 —— 「複製一頁 = 版面照抄、點位重綁」。
+//
+// 名稱欄（szXxxName）命名不規則，必須列舉；SID / CID 欄走前綴規則兜底。
+// ⚠️ 新增 widget 或新增綁定欄位時，這裡沒同步 = **靜默保留舊點位**（複製出來的頁面
+// 看起來沒綁，實際上還指著來源設備）。下方 _auditBindingKeys() 會在啟動時掃描
+// WIDGET_DEFS，把漏掉的 key 在 console 喊出來。
+const DESIGNER_BINDING_KEYS = new Set([
+    'szPointName',
+    'szRunName', 'szFaultName', 'szModeName', 'szFreqName', 'szLoadName',
+    'szChwOutName', 'szWaterTempName',
+    'szStartStopName', 'szFreqSetName', 'szSetTempName',
+    'szCircuitName', 'szScheduleName',
+    // 管路的綁定模式：'' = 未綁（純裝飾固定流動）。留著 'di'/'analog' 而 szSid 被清空，
+    // 執行期會卡在「永遠停止」的半狀態（scadapage/render.js updatePipe 直接 return）
+    'szBindMode',
+]);
+
+// 走 delete（而非設空字串）的欄位 —— 與既有 clearCellCircuit「新鍵全 delete，
+// JSON 無殘留」一致；szMetric 屬迴路綁定三元組（nCircuitId / szCircuitName / szMetric）
+const DESIGNER_BINDING_DELETE_KEYS = new Set([
+    'nCircuitId', 'nScheduleId', 'szMetric',
+]);
+
+// 前綴規則兜底：szSid* / szCid* 一律視為綁定
+// （szSidLabel / szCidLabel / szSidAttr 等只是渲染區域變數，不是 props，不受影響）
+function isDesignerBindingKey(szKey) {
+    return DESIGNER_BINDING_KEYS.has(szKey) || /^szSid/.test(szKey) || /^szCid/.test(szKey);
+}
+
+// 啟動自檢：掃描所有 defaultProps，找出「看起來像綁定卻沒被任何規則涵蓋」的 key。
+// 純硬編清單日後一定會漏（新增 widget 時沒人記得回來改），漏掉就是靜默保留舊點位。
+// 由 index.js 於啟動時呼叫（本檔不做頂層副作用）。
+function auditDesignerBindingKeys() {
+    const suspects = new Set();
+    for (const szType in WIDGET_DEFS) {
+        const props = WIDGET_DEFS[szType].defaultProps || {};
+        for (const k in props) {
+            if (isDesignerBindingKey(k) || DESIGNER_BINDING_DELETE_KEYS.has(k)) continue;
+            // 名稱像綁定（Sid / Cid / CircuitId / ScheduleId 結尾為 Name 的點位欄）卻沒涵蓋到
+            if (/Sid|Cid|CircuitId|ScheduleId/i.test(k)) suspects.add(`${szType}.${k}`);
+        }
+    }
+    if (suspects.size > 0) {
+        console.warn('[Designer] 疑似未納入複製清空範圍的綁定欄位：', [...suspects].join(', '),
+            '— 請檢查 widget-defs.js 的 DESIGNER_BINDING_KEYS');
+    }
+}
+
 // Resolve `__i18n__:key` placeholders in default props using current culture.
 // Called by widget-core.js when materializing widget defaults on create.
 function getWidgetDefaultProps(szType) {

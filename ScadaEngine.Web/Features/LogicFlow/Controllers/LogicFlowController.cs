@@ -67,6 +67,16 @@ public class LogicFlowController : Controller
         return ok ? Ok(new { success = true }) : NotFound();
     }
 
+    /// <summary>複製節點到指定父層（資料夾遞迴含所有子項；複製出的邏輯一律停用且點位綁定全清）</summary>
+    [HttpPost("api/tree/{nId}/copy")]
+    public async Task<IActionResult> CopyNode(int nId, [FromBody] CopyNodeDto dto)
+    {
+        var nNewId = await _service.CopyNodeAsync(nId, dto.TargetParentId, _l["logicflow.copy.suffix"].Value);
+        if (nNewId == null)
+            return NotFound(new { success = false, message = _l["logicflow.api.copy_failed"].Value });
+        return Ok(new { id = nNewId.Value });
+    }
+
     [HttpPut("api/tree/{nId}/toggle")]
     public async Task<IActionResult> ToggleEnabled(int nId, [FromBody] ToggleEnabledDto dto)
     {

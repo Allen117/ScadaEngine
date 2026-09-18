@@ -21,6 +21,12 @@ public class ToggleEnabledDto
     public bool IsEnabled { get; set; }
 }
 
+/// <summary>複製節點請求（資料夾遞迴含子項；TargetParentId = null 代表貼到根層）</summary>
+public class CopyNodeDto
+{
+    public int? TargetParentId { get; set; }
+}
+
 /// <summary>排序更新請求</summary>
 public class SortOrderDto
 {

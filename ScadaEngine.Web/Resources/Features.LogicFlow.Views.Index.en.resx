@@ -85,6 +85,11 @@
   <data name="logicflow.ctx.change_type" xml:space="preserve"><value>Change Type</value></data>
   <data name="logicflow.ctx.clear_binding" xml:space="preserve"><value>Clear Binding</value></data>
   <data name="logicflow.ctx.delete_node" xml:space="preserve"><value>Delete Node</value></data>
+  <data name="logicflow.ctx.tree_header" xml:space="preserve"><value>Item Actions</value></data>
+  <data name="logicflow.ctx.tree_copy" xml:space="preserve"><value>Copy</value></data>
+  <data name="logicflow.ctx.tree_copy_tip" xml:space="preserve"><value>Copy this item (folders include all children). Point bindings are cleared on paste.</value></data>
+  <data name="logicflow.ctx.tree_paste" xml:space="preserve"><value>Paste</value></data>
+  <data name="logicflow.ctx.tree_paste_root" xml:space="preserve"><value>Paste to Root</value></data>
 
   <data name="logicflow.node.input" xml:space="preserve"><value>Read Point</value></data>
   <data name="logicflow.node.output" xml:space="preserve"><value>Write Point</value></data>
@@ -173,6 +178,11 @@ Remove the point/schedule binding first.</value></data>
   <data name="logicflow.confirm.dp_direct_pret_zero" xml:space="preserve"><value>This point looks like a differential pressure sensor. When wiring dP directly, return pressure should be a constant 0.
 Automatically connect a constant 0 to return pressure (p_ret)?</value></data>
   <data name="logicflow.success.save" xml:space="preserve"><value>Saved successfully!</value></data>
+  <data name="logicflow.success.copy" xml:space="preserve"><value>"{name}" copied. Right-click the target location to paste.</value></data>
+  <data name="logicflow.error.copy_failed" xml:space="preserve"><value>Copy failed: {msg}</value></data>
+  <data name="logicflow.error.clipboard_source_missing" xml:space="preserve"><value>The clipboard source item no longer exists (it may have been deleted). Please copy again.</value></data>
+  <data name="logicflow.node.unbound" xml:space="preserve"><value>Not bound</value></data>
+  <data name="logicflow.node.unbound_tip" xml:space="preserve"><value>No point bound — this node will not read or write any device.</value></data>
 
   <data name="logicflow.pp.title_select_source" xml:space="preserve"><value>Select Point Source</value></data>
   <data name="logicflow.pp.title_select_device" xml:space="preserve"><value>Select Device</value></data>

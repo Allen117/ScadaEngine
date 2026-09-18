@@ -493,6 +493,14 @@
 | 歷史值讀取 | Historical Value Read | input / contact 點位模式選項 |
 | 讀取歷史值 | Read historical value | 點位選擇器 checkbox |
 | N 分鐘前 | N minutes ago | 歷史值 offset 欄位 |
+| 複製 | Copy | 樹右鍵（樹層級，含子項、清空綁定） |
+| 貼上 | Paste | 樹右鍵 |
+| 貼到根層 | Paste to Root | 樹空白區右鍵 |
+| - 複製 | - Copy | 複製後綴（同層重名再補「 (2)」） |
+| 已複製「{name}」 | "{name}" copied | toast |
+| 複製失敗 | Copy failed | API 錯誤 |
+| 來源項目已不存在 | Source item no longer exists | 剪貼簿來源已被刪除 |
+| 未綁定 | Not bound | 節點徽章（input / output / 接點無點位） |
 
 ### 節點類型 (Node displayName)
 
@@ -725,6 +733,13 @@
 | 儲存中… | Saving… | 工具列 |
 | 主頁面 | Main Page | 預設根節點 |
 | 新頁面 | New Page | addPage 預設名 |
+| 複製此頁 | Copy This Page | 頁面樹右鍵（不含子頁、清空綁定） |
+| 貼上為子頁面 | Paste as Subpage | 頁面樹右鍵 |
+| 貼上為根頁面 | Paste as Root Page | 頁面樹空白區右鍵 |
+| - 複製 | - Copy | 複製後綴（同層重名再補「 (2)」） |
+| 已複製「{name}」 | "{name}" copied | toast |
+| 已貼上「{name}」 | "{name}" pasted | toast |
+| 背景圖過大，已略過背景圖 | Background image too large — skipped | localStorage 配額不足 |
 | 燈號 / 文字 | Indicator / Text | DI 顯示模式 |
 | ON 文字 / OFF 文字 | ON Text / OFF Text | DI 標籤 |
 | 警報顏色 / 警報字色 | Alarm Color / Alarm Text Color | DI alarm |

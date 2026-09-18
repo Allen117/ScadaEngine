@@ -194,7 +194,7 @@
     const CTX_VIEW_MARGIN = 8;   // 與視窗邊界的留白
 
     function hideCtxMenu() {
-        ['ctxMenu', 'nodeCtxMenu'].forEach(id => {
+        ['ctxMenu', 'nodeCtxMenu', 'treeCtxMenu'].forEach(id => {
             const menu = document.getElementById(id);
             if (!menu) return;
             menu.style.display = 'none';
@@ -720,7 +720,7 @@
     function attachGlobalEvents() {
         // 全域關閉右鍵選單
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('#ctxMenu') && !e.target.closest('#nodeCtxMenu')) hideCtxMenu();
+            if (!e.target.closest('#ctxMenu') && !e.target.closest('#nodeCtxMenu') && !e.target.closest('#treeCtxMenu')) hideCtxMenu();
         });
 
         // 子選單方向偵測；視窗尺寸變了直接收掉選單（定位基準已失效）

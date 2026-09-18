@@ -20,6 +20,8 @@ function toggleComponentPanel() {
 // ============================================================
 // 等 i18n 字典就緒後再渲染，避免初次顯示時所有動態字串顯示成 key
 function _bootDesigner() {
+    // 綁定欄位自檢：新 widget 漏加綁定 key → 頁面複製會靜默保留舊點位，這裡先在 console 喊出來
+    auditDesignerBindingKeys();
     // 若預設樹仍是初始 '主頁面'、未從 DB 載入過，依當前 culture 覆寫名稱
     if (arrPageTree.length === 1 && arrPageTree[0].szId === 'p1' && arrPageTree[0].szName === '主頁面') {
         arrPageTree[0].szName = t('designer.page.default_name');

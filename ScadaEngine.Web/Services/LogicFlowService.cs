@@ -110,6 +110,122 @@ public class LogicFlowService
         }
     }
 
+    /// <summary>
+    /// 複製節點（資料夾遞迴含所有子孫；邏輯連同 Diagram）到指定父層。
+    /// 複製出的 Diagram 一律先過 <see cref="LogicFlowDiagramBindingStripper"/> 清除點位綁定 ——
+    /// 綁定殘留 = 新邏輯一啟用就寫進來源設備的 Modbus 暫存器（決策 4：清綁定在後端做）。
+    /// </summary>
+    /// <param name="nSourceId">來源節點 Id</param>
+    /// <param name="nTargetParentId">目標父層 Id；null = 貼到根層</param>
+    /// <param name="szCopySuffix">複製後綴（i18n，如「 - 複製」）；同層重名時再補「 (2)」遞增</param>
+    /// <returns>新節點 Id；來源不存在回 null</returns>
+    public async Task<int?> CopyNodeAsync(int nSourceId, int? nTargetParentId, string szCopySuffix)
+    {
+        using var conn = await GetConnectionAsync();
+        using var tran = conn.BeginTransaction();
+        try
+        {
+            // 來源子樹（含自身）；依 Id 排序確保父節點先於子節點建立
+            var srcNodes = (await conn.QueryAsync<LogicFlowTreeNode>(@"
+                WITH CTE AS (
+                    SELECT Id, ParentId, Name, NodeType, SortOrder, IsEnabled
+                    FROM LogicFlowTree WHERE Id = @Id
+                    UNION ALL
+                    SELECT t.Id, t.ParentId, t.Name, t.NodeType, t.SortOrder, t.IsEnabled
+                    FROM LogicFlowTree t INNER JOIN CTE c ON t.ParentId = c.Id
+                )
+                SELECT Id, ParentId, Name, NodeType, SortOrder, IsEnabled FROM CTE ORDER BY Id",
+                new { Id = nSourceId }, tran)).ToList();
+
+            if (srcNodes.Count == 0) { tran.Rollback(); return null; }
+
+            var srcRoot = srcNodes.First(n => n.Id == nSourceId);
+
+            // 目標父層必須存在且為資料夾（決策 8 的退回同層由前端解析，這裡只做防呆）
+            if (nTargetParentId.HasValue)
+            {
+                var szParentType = await conn.QuerySingleOrDefaultAsync<string>(
+                    "SELECT NodeType FROM LogicFlowTree WHERE Id = @Id",
+                    new { Id = nTargetParentId.Value }, tran);
+                if (szParentType != "folder") { tran.Rollback(); return null; }
+            }
+
+            // 同層既有名稱 → 決定唯一名稱；排序接在最後
+            var siblings = (await conn.QueryAsync<string>(
+                nTargetParentId.HasValue
+                    ? "SELECT Name FROM LogicFlowTree WHERE ParentId = @ParentId"
+                    : "SELECT Name FROM LogicFlowTree WHERE ParentId IS NULL",
+                new { ParentId = nTargetParentId }, tran)).ToList();
+
+            var szNewRootName = MakeUniqueName(srcRoot.Name, szCopySuffix, siblings);
+            var nRootSortOrder = siblings.Count;
+
+            // 逐節點建立，idMap 把來源 ParentId 對應到新節點 Id
+            var idMap = new Dictionary<int, int>();
+            var logicIds = new List<(int nSourceId, int nNewId)>();
+
+            foreach (var src in srcNodes)
+            {
+                var isRoot = src.Id == nSourceId;
+                // 邏輯一律停用（決策 3：點位還沒綁，啟用等於讓 Engine 排一條不完整的邏輯）
+                var isEnabled = src.NodeType != "logic";
+
+                int? nParentId = isRoot
+                    ? nTargetParentId
+                    : (src.ParentId.HasValue && idMap.TryGetValue(src.ParentId.Value, out var nMapped) ? nMapped : null);
+
+                var nNewId = await conn.QuerySingleAsync<int>(@"
+                    INSERT INTO LogicFlowTree (ParentId, Name, NodeType, SortOrder, IsEnabled)
+                    OUTPUT INSERTED.Id
+                    VALUES (@ParentId, @Name, @NodeType, @SortOrder, @IsEnabled)",
+                    new
+                    {
+                        ParentId = nParentId,
+                        Name = isRoot ? szNewRootName : src.Name,
+                        NodeType = src.NodeType,
+                        SortOrder = isRoot ? nRootSortOrder : src.SortOrder,
+                        IsEnabled = isEnabled
+                    }, tran);
+
+                idMap[src.Id] = nNewId;
+                if (src.NodeType == "logic") logicIds.Add((src.Id, nNewId));
+            }
+
+            // 逐條複製流程圖（清綁定後寫入，Version 從 0 起算）
+            foreach (var (nSrcLogicId, nNewLogicId) in logicIds)
+            {
+                var szJson = await conn.QuerySingleOrDefaultAsync<string>(
+                    "SELECT DiagramJson FROM LogicFlowDiagram WHERE TreeId = @TreeId",
+                    new { TreeId = nSrcLogicId }, tran);
+
+                await conn.ExecuteAsync(
+                    "INSERT INTO LogicFlowDiagram (TreeId, DiagramJson, Version) VALUES (@TreeId, @Json, 0)",
+                    new { TreeId = nNewLogicId, Json = LogicFlowDiagramBindingStripper.Strip(szJson) }, tran);
+            }
+
+            tran.Commit();
+            return idMap[nSourceId];
+        }
+        catch (Exception ex)
+        {
+            tran.Rollback();
+            _logger.LogError(ex, "複製 LogicFlowTree 節點 {Id} 到父層 {ParentId} 時發生錯誤", nSourceId, nTargetParentId);
+            return null;
+        }
+    }
+
+    /// <summary>「原名 + 後綴」；同層已存在則遞增為「原名 + 後綴 (2)」、「(3)」…</summary>
+    private static string MakeUniqueName(string szBaseName, string szCopySuffix, IEnumerable<string> siblingNames)
+    {
+        var used = new HashSet<string>(siblingNames, StringComparer.OrdinalIgnoreCase);
+        var szCandidate = szBaseName + szCopySuffix;
+        var n = 2;
+        while (used.Contains(szCandidate))
+            szCandidate = $"{szBaseName}{szCopySuffix} ({n++})";
+        // Name 欄位為 nvarchar(100)，超長截斷避免 INSERT 直接炸
+        return szCandidate.Length > 100 ? szCandidate[..100] : szCandidate;
+    }
+
     /// <summary>批次更新排序（前端拖曳排序後整批送回）</summary>
     public async Task<bool> UpdateSortOrderAsync(IEnumerable<(int nId, int nSortOrder)> sortList)
     {

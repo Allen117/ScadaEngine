@@ -162,6 +162,17 @@
     </div>
 </div>
 
+<!-- 樹節點右鍵選單（樹層級複製貼上；刻意不提供快捷鍵，避免與畫布 Ctrl+C/V 的「保留綁定」語意混淆） -->
+<div id="treeCtxMenu" class="ctx-menu" style="display:none;">
+    <div class="ctx-menu-header" id="treeCtxHeader">@Localizer["logicflow.ctx.tree_header"]</div>
+    <div class="ctx-menu-item tree-ctx-copy" title="@Localizer["logicflow.ctx.tree_copy_tip"]">
+        <i class="fas fa-copy text-primary me-2"></i>@Localizer["logicflow.ctx.tree_copy"]
+    </div>
+    <div class="ctx-menu-item tree-ctx-paste">
+        <i class="fas fa-paste text-success me-2"></i><span class="tree-ctx-paste-label">@Localizer["logicflow.ctx.tree_paste"]</span>
+    </div>
+</div>
+
 <!-- 畫布右鍵選單 -->
 <div id="ctxMenu" class="ctx-menu" style="display:none;">
     <div class="ctx-menu-header">@Localizer["logicflow.ctx.add_node"]</div>

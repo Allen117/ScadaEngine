@@ -176,6 +176,11 @@
   <data name="designer.page.new_name" xml:space="preserve"><value>New Page</value></data>
   <data name="designer.page.prompt_name" xml:space="preserve"><value>Enter page name:</value></data>
   <data name="designer.page.must_keep_one" xml:space="preserve"><value>At least one page must remain.</value></data>
+  <data name="designer.page.copy_suffix" xml:space="preserve"><value> - Copy</value></data>
+  <data name="designer.page.copied" xml:space="preserve"><value>"{name}" copied (point bindings cleared). Right-click the target location to paste.</value></data>
+  <data name="designer.page.pasted" xml:space="preserve"><value>"{name}" pasted. Please rebind the points on each widget.</value></data>
+  <data name="designer.page.copy_bg_skipped" xml:space="preserve"><value>Background image too large — copied without it.</value></data>
+  <data name="designer.page.copy_failed" xml:space="preserve"><value>Copy failed: browser storage quota exceeded.</value></data>
   <data name="designer.page.confirm_delete" xml:space="preserve"><value>Delete "{name}"?</value></data>
   <data name="designer.page.confirm_delete_with_children" xml:space="preserve"><value>Delete "{name}" and all its sub-pages?</value></data>
 
@@ -209,6 +214,9 @@
   <!-- Context Menus -->
   <data name="designer.ctx.add_page" xml:space="preserve"><value>Add Page</value></data>
   <data name="designer.ctx.add_subpage" xml:space="preserve"><value>Add Sub-Page</value></data>
+  <data name="designer.ctx.copy_page" xml:space="preserve"><value>Copy This Page</value></data>
+  <data name="designer.ctx.paste_as_subpage" xml:space="preserve"><value>Paste as Sub-Page</value></data>
+  <data name="designer.ctx.paste_as_root" xml:space="preserve"><value>Paste as Root Page</value></data>
   <data name="designer.ctx.edit" xml:space="preserve"><value>Edit</value></data>
   <data name="designer.ctx.delete" xml:space="preserve"><value>Delete</value></data>
   <data name="designer.ctx.edit_cell" xml:space="preserve"><value>Edit Cell</value></data>

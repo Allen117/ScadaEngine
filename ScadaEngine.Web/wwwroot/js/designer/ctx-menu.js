@@ -15,13 +15,26 @@ let arrCtxActions = [];
 function showCtxMenu(e, szPageId) {
     const items = [];
 
+    // 頁面層級複製貼上一律走右鍵（決策 1：不提供快捷鍵，避免與元件層級 Ctrl+C/V 的
+    // 「保留綁定」語意撞鍵）；剪貼簿為空時「貼上」不顯示
+    const bHasClip = hasPageClipboard();
+
     if (szPageId === null) {
         // 空白區右鍵
         items.push({ szIcon: 'fa-plus', szLabel: t('designer.ctx.add_page'), fn: () => addPage(null) });
+        if (bHasClip) {
+            items.push({ isDivider: true });
+            items.push({ szIcon: 'fa-paste', szLabel: t('designer.ctx.paste_as_root'), fn: () => pastePage(null) });
+        }
     } else {
         // 節點右鍵
         items.push({ szIcon: 'fa-pen',  szLabel: t('designer.ctx.edit'),         fn: () => editPage(szPageId) });
         items.push({ szIcon: 'fa-plus', szLabel: t('designer.ctx.add_subpage'),  fn: () => addPage(szPageId) });
+        items.push({ isDivider: true });
+        items.push({ szIcon: 'fa-copy', szLabel: t('designer.ctx.copy_page'),    fn: () => copyPage(szPageId) });
+        if (bHasClip) {
+            items.push({ szIcon: 'fa-paste', szLabel: t('designer.ctx.paste_as_subpage'), fn: () => pastePage(szPageId) });
+        }
         if (countPages(arrPageTree) > 1) {
             items.push({ isDivider: true });
             items.push({ szIcon: 'fa-trash-alt', szLabel: t('designer.ctx.delete'), fn: () => deletePage(szPageId), isDanger: true });

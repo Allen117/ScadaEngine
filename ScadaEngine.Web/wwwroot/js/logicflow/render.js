@@ -8,6 +8,18 @@
         return `<span class="hist-badge" title="${S.escHtml(S.t('logicflow.hist.badge_tip', { n: n.histOffsetMinutes }))}">${S.escHtml(S.t('logicflow.hist.badge', { n: n.histOffsetMinutes }))}</span>`;
     }
 
+    // 未綁定標記：「⃠ 未綁定」badge。樹層級複製出的邏輯點位全空，
+    // 少了這個提示會看不出哪些節點還沒接上點位（低調灰字，避免開發中的空白接點一片紅）
+    function unboundBadgeHtml(n) {
+        const isPointNode = n.type === 'input' || n.type === 'output';
+        const isContact = n.type === 'contact_no' || n.type === 'contact_nc';
+        if (!isPointNode && !isContact) return '';
+        if (n.sid) return '';
+        if (isContact && n.scheduleId != null) return '';
+        return `<span class="unbound-badge" title="${S.escHtml(S.t('logicflow.node.unbound_tip'))}">`
+            + `<i class="fas fa-unlink"></i>${S.escHtml(S.t('logicflow.node.unbound'))}</span>`;
+    }
+
     function renderCanvasNodes() {
         const canvas = document.getElementById('diagramCanvas');
         if (!canvas) return;
@@ -155,7 +167,7 @@
                     + `<div class="node-live-value${badClass}" data-sid="${S.escHtml(n.sid)}">${S.escHtml(valText)}${S.escHtml(unitText)}</div>`;
             } else if ((n.type === 'contact_no' || n.type === 'contact_nc') && !n.sid && n.scheduleId == null) {
                 // 無 SID、無排程的接點（純邏輯控制或未設定）
-                el.innerHTML = `<i class="${meta.icon}"></i><span>${S.escHtml(label)}</span>`
+                el.innerHTML = `<i class="${meta.icon}"></i><span>${S.escHtml(label)}</span>` + unboundBadgeHtml(n)
                     + `<span class="contact-state">--</span>`
                     + `<div class="node-live-value"><i class="fas fa-project-diagram me-1"></i>${S.escHtml(S.t('logicflow.node.logic_control'))}</div>`;
             } else if ((n.type === 'input' || n.type === 'output') && n.sid) {
@@ -176,7 +188,8 @@
                     + modeBadgeHtml
                     + `<div class="node-live-value${badClass}" data-sid="${S.escHtml(n.sid)}">${S.escHtml(valText)}${S.escHtml(unitText)}</div>`;
             } else {
-                el.innerHTML = `<i class="${meta.icon}"></i><span>${S.escHtml(label)}</span>`;
+                // 含「未綁點位的 input / output」——樹層級複製出的邏輯就長這樣
+                el.innerHTML = `<i class="${meta.icon}"></i><span>${S.escHtml(label)}</span>` + unboundBadgeHtml(n);
             }
 
             // 輸入埠（左側圓點）— algorithm 節點使用動態展開 inputs（含 variadic N 倍展開）

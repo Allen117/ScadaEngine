@@ -203,6 +203,114 @@
         } catch (e) { alert(S.t('logicflow.error.toggle_failed', { msg: e.message })); }
     }
 
+    // =========== 樹層級複製 / 貼上（右鍵選單；刻意無快捷鍵，決策 1） ===========
+    // 與畫布 Ctrl+C/V 的差別：這裡複製的是整條邏輯 / 整個資料夾（含所有子項），
+    // 且貼上後**點位綁定全部清空**（由後端 LogicFlowDiagramBindingStripper 執行）。
+    function readTreeClipboard() {
+        try {
+            const raw = localStorage.getItem(S.TREE_CLIPBOARD_KEY);
+            if (!raw) return null;
+            const obj = JSON.parse(raw);
+            return (obj && typeof obj.id === 'number') ? obj : null;
+        } catch (_) { return null; }
+    }
+
+    function copyTreeNode(id) {
+        const node = S.findNode(id, S.treeData);
+        if (!node) return;
+        localStorage.setItem(S.TREE_CLIPBOARD_KEY, JSON.stringify({ id: node.id, name: node.name }));
+        alert(S.t('logicflow.success.copy', { name: node.name }));
+    }
+
+    // 目標解析（決策 8）：資料夾 → 貼為子項；logic 不能有子項 → 退回其所在層；
+    // 空白處 / 目標已不存在 → 根層
+    function resolvePasteParentId(targetId) {
+        if (targetId == null) return null;
+        const target = S.findNode(targetId, S.treeData);
+        if (!target) return null;
+        if (target.type === 'folder') return target.id;
+        return target.parentId != null ? target.parentId : null;
+    }
+
+    async function pasteTreeNode(targetId) {
+        const clip = readTreeClipboard();
+        if (!clip) return;
+
+        // 來源可能在別的分頁被刪掉了 —— flatNodes 是剛 loadTree 的快照，足以判斷
+        if (!S.flatNodes.some(n => n.id === clip.id)) {
+            localStorage.removeItem(S.TREE_CLIPBOARD_KEY);
+            alert(S.t('logicflow.error.clipboard_source_missing'));
+            return;
+        }
+
+        const parentId = resolvePasteParentId(targetId);
+        try {
+            const res = await S.apiFetch(`/tree/${clip.id}/copy`, {
+                method: 'POST',
+                body: JSON.stringify({ targetParentId: parentId })
+            });
+            if (parentId != null) S.expandedSet.add(parentId);
+            S.selectedId = res.id;
+            await loadTree();
+            updateContent(S.findNode(res.id, S.treeData));
+        } catch (e) { alert(S.t('logicflow.error.copy_failed', { msg: e.message })); }
+    }
+
+    // ── 右鍵選單 ──
+    function showTreeCtxMenu(e, targetId) {
+        e.preventDefault();
+        e.stopPropagation();
+        S.hideCtxMenu();
+        S.treeCtxTargetId = targetId;
+
+        const menu = document.getElementById('treeCtxMenu');
+        if (!menu) return;
+
+        // 空白區：只有「貼上（貼到根層）」；節點上：複製 + 貼上
+        const copyItem = menu.querySelector('.tree-ctx-copy');
+        const pasteItem = menu.querySelector('.tree-ctx-paste');
+        const pasteLabel = menu.querySelector('.tree-ctx-paste-label');
+        copyItem.style.display = targetId == null ? 'none' : '';
+
+        const clip = readTreeClipboard();
+        // 剪貼簿為空 → 不顯示「貼上」（兩項都不顯示時整個選單就不必彈）
+        pasteItem.style.display = clip ? '' : 'none';
+        if (clip) {
+            pasteLabel.textContent = targetId == null
+                ? S.t('logicflow.ctx.tree_paste_root')
+                : S.t('logicflow.ctx.tree_paste');
+            pasteItem.title = clip.name || '';
+        }
+        if (targetId == null && !clip) return;
+
+        S.showMenuAt(menu, e.clientX, e.clientY);
+    }
+
+    // 樹容器事件一次性綁定（樹 HTML 每次 renderTree 都整塊重建，故用委派）
+    function attachTreeEvents() {
+        const container = document.getElementById('treeContainer');
+        if (!container) return;
+
+        container.addEventListener('contextmenu', (e) => {
+            const item = e.target.closest('.tree-item');
+            showTreeCtxMenu(e, item ? parseInt(item.dataset.id) : null);
+        });
+
+        const menu = document.getElementById('treeCtxMenu');
+        if (!menu) return;
+        menu.querySelector('.tree-ctx-copy').addEventListener('click', (e) => {
+            e.stopPropagation();
+            S.hideCtxMenu();
+            if (S.treeCtxTargetId != null) copyTreeNode(S.treeCtxTargetId);
+        });
+        menu.querySelector('.tree-ctx-paste').addEventListener('click', (e) => {
+            e.stopPropagation();
+            const targetId = S.treeCtxTargetId;
+            S.hideCtxMenu();
+            pasteTreeNode(targetId);
+        });
+    }
+
     // =========== 右側內容 ===========
     function updateContent(node) {
         const title = document.getElementById('contentTitle');
@@ -257,6 +365,10 @@
     S.confirmRename = confirmRename;
     S.remove = remove;
     S.toggleEnabled = toggleEnabled;
+    S.copyTreeNode = copyTreeNode;
+    S.pasteTreeNode = pasteTreeNode;
+    S.showTreeCtxMenu = showTreeCtxMenu;
+    S.attachTreeEvents = attachTreeEvents;
     S.updateContent = updateContent;
     S.clearContent = clearContent;
 })();
