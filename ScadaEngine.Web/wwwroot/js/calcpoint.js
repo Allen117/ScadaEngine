@@ -271,8 +271,7 @@
         if (!data.name) { alert(t('calcpoint.msg.enter_name')); return; }
         if (!data.formula) { alert(t('calcpoint.msg.enter_formula')); return; }
 
-        var mappings = JSON.parse(data.inputMappings);
-        if (Object.keys(mappings).length === 0) { alert(t('calcpoint.msg.need_variable')); return; }
+        // 允許零變數（純常數 / 只用自訂函數的公式），不再強制至少一個變數
 
         var url, body;
         if (_editMode) {

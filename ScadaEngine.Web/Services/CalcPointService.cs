@@ -46,16 +46,16 @@ public class CalcPointService
         if (string.IsNullOrWhiteSpace(szFormula))
             return (false, _l["calcpoint.svc.formula_empty"].Value, null);
 
-        // 驗證 InputMappings JSON
+        // 驗證 InputMappings JSON（允許零變數 — 純常數 / 只用自訂函數的公式）
         try
         {
             var mappings = JsonSerializer.Deserialize<Dictionary<string, string>>(szInputMappings);
-            if (mappings == null || mappings.Count == 0)
-                return (false, _l["calcpoint.svc.no_variables"].Value, null);
-
-            var szReserved = FindReservedVarName(mappings);
-            if (szReserved != null)
-                return (false, _l["calcpoint.svc.reserved_var", szReserved].Value, null);
+            if (mappings != null)
+            {
+                var szReserved = FindReservedVarName(mappings);
+                if (szReserved != null)
+                    return (false, _l["calcpoint.svc.reserved_var", szReserved].Value, null);
+            }
         }
         catch (JsonException)
         {
@@ -150,9 +150,9 @@ public class CalcPointService
     {
         try
         {
-            var mappings = JsonSerializer.Deserialize<Dictionary<string, string>>(szInputMappings);
-            if (mappings == null || mappings.Count == 0)
-                return (false, _l["calcpoint.svc.no_variables"].Value, null);
+            // 允許零變數（純常數 / 只用自訂函數的公式）
+            var mappings = JsonSerializer.Deserialize<Dictionary<string, string>>(szInputMappings)
+                ?? new Dictionary<string, string>();
 
             // 從 LatestData 取得最新值
             var latestDataList = await _repository.GetLatestDataAsync(10000);

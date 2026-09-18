@@ -70,14 +70,10 @@ public class CalculatedPointService
             {
                 try
                 {
+                    // 允許零變數（純常數 / 只用自訂函數的公式）
                     var inputMappings = JsonSerializer.Deserialize<Dictionary<string, string>>(
-                        point.szInputMappings, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-                    if (inputMappings == null || inputMappings.Count == 0)
-                    {
-                        _logger.LogWarning("計算點位 {SID} 的 InputMappings 為空，跳過", point.szSID);
-                        continue;
-                    }
+                        point.szInputMappings, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+                        ?? new Dictionary<string, string>();
 
                     configs.Add(new CalculatedPointConfig
                     {

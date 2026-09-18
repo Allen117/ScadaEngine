@@ -487,6 +487,8 @@ InitializeAsync()
 - **引擎**：NCalc 表達式計算引擎
 - **SID 格式**：`CALC-S{N}`（如 `CALC-S1`）
 - **規則重載**：每 60 秒從 CalculatedPoints 表重新載入
+- **零變數**：InputMappings 可為空 `{}` — 公式為純常數（如固定基準/設定值）或只用自訂函數時，
+  不強制至少一個輸入變數（Web Create/Preview 與 Engine 重載皆已放行）
 
 ### 8.2 公式範例
 
