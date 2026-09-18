@@ -262,12 +262,10 @@
     var _ppPickedSid = null;
     var _ppPickedName = '';
 
-    function isCalcSid(sid) { return sid && sid.indexOf('CALC-') === 0; }
+    // isCalcSid / getSidPrefix 委派共用層 window.PointGrouping（分群解析單一真相）
+    function isCalcSid(sid) { return window.PointGrouping.isCalcSid(sid); }
 
-    function getSidPrefix(szSid) {
-        var m = szSid.match(/^(\d+)-S\d+$/);
-        return m ? parseInt(m[1], 10) : -1;
-    }
+    function getSidPrefix(szSid) { return window.PointGrouping.getSidPrefix(szSid); }
     function isOfDevice(szSid, nDevId) {
         var n = getSidPrefix(szSid);
         return n >= nDevId * 65536 && n < (nDevId + 1) * 65536;
@@ -283,25 +281,11 @@
             _ppPoints = res[1];
             // 為每個點位補上設備標籤
             _ppPoints.forEach(function (p) {
-                var nPfx = getSidPrefix(p.szSid);
                 p.szDevLabel = '';
                 for (var di = 0; di < _ppDevices.length; di++) {
                     var d = _ppDevices[di];
                     if (!isOfDevice(p.szSid, d.nId)) continue;
-                    var mids = (d.szModbusID || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
-                    var dnames = (d.szDeviceName || '').split(',').map(function (s) { return s.trim(); });
-                    if (mids.length > 1) {
-                        for (var j = 0; j < mids.length; j++) {
-                            var mid = parseInt(mids[j], 10);
-                            var base = d.nId * 65536 + mid * 256;
-                            if (nPfx >= base && nPfx < base + 256) {
-                                p.szDevLabel = (j < dnames.length && dnames[j]) ? dnames[j] : d.szName;
-                                break;
-                            }
-                        }
-                    } else {
-                        p.szDevLabel = d.szName;
-                    }
+                    p.szDevLabel = window.PointGrouping.pointDeviceLabel(p.szSid, p.szDeviceGroup, d);
                     break;
                 }
             });
@@ -345,8 +329,9 @@
             for (var k = 0; k < _ppPoints.length; k++) {
                 if (isOfDevice(_ppPoints[k].szSid, d.nId)) nPts++;
             }
-            var mids = (d.szModbusID || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
-            var dnames = (d.szDeviceName || '').split(',').map(function (s) { return s.trim(); });
+            var _coord = window.PointGrouping.parseCoord(d);
+            var mids = _coord.modbusIds;
+            var dnames = _coord.deviceNames;
 
             if (mids.length > 1) {
                 html += '<div class="pp-dev-item" onclick="window._eventLog.ppToggleSub(this)">' +

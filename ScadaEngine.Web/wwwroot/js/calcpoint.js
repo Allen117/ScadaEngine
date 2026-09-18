@@ -16,6 +16,7 @@
     var _pickerTargetRow = null; // 目前開啟選擇器的 <tr>
     var _pickerDevId = -1;
     var _pickerModbusId = null;
+    var _pickerDeviceGroup = null; // Modbus 站號內 Device 分群（null=不依 Device 篩, ''=未分群桶）
     var _pickerCalcGroup = null;
     var _pickerSourceType = null;  // 'modbus' | 'calc' | 'db' | 'opc'
     var _pickerExtGroup = null;    // DB/OPC 來源的 Coordinator 群組
@@ -424,38 +425,22 @@
                 p._deviceLabel = p.szGroupName || '';
                 return;
             }
-            var nPfx = _getSidPrefix(p.szSid);
             var szLabel = '';
             for (var i = 0; i < _pickerDevices.length; i++) {
                 var d = _pickerDevices[i];
                 if (!_isPointOfDevice(p.szSid, d.nId)) continue;
-                var modbusIds = (d.szModbusID || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
-                var deviceNames = (d.szDeviceName || '').split(',').map(function (s) { return s.trim(); });
-                if (modbusIds.length > 1) {
-                    for (var j = 0; j < modbusIds.length; j++) {
-                        var mid = parseInt(modbusIds[j], 10);
-                        var base = d.nId * 65536 + mid * 256;
-                        if (nPfx >= base && nPfx < base + 256) {
-                            szLabel = (j < deviceNames.length && deviceNames[j]) ? deviceNames[j] : d.szName;
-                            break;
-                        }
-                    }
-                } else {
-                    szLabel = d.szName;
-                }
+                szLabel = window.PointGrouping.pointDeviceLabel(p.szSid, p.szDeviceGroup, d);
                 break;
             }
             p._deviceLabel = szLabel;
         });
     }
 
-    function _isCalcPoint(sid) { return sid && sid.indexOf('CALC-') === 0; }
-    function _isDbPoint(sid) { return sid && /^DB\d+-S\d+$/.test(sid); }
-    function _isOpcPoint(sid) { return sid && /^OPC\d+-S\d+$/.test(sid); }
-    function _getSidPrefix(sid) {
-        var m = sid.match(/^(\d+)-S\d+$/);
-        return m ? parseInt(m[1], 10) : -1;
-    }
+    // 以下四個 helper 委派共用層 window.PointGrouping（分群解析單一真相）
+    function _isCalcPoint(sid) { return window.PointGrouping.isCalcSid(sid); }
+    function _isDbPoint(sid) { return window.PointGrouping.isDbSid(sid); }
+    function _isOpcPoint(sid) { return window.PointGrouping.isOpcSid(sid); }
+    function _getSidPrefix(sid) { return window.PointGrouping.getSidPrefix(sid); }
     function _isPointOfDevice(sid, nDevId) {
         if (nDevId === CALC_DEV_ID) return _isCalcPoint(sid);
         if (_isCalcPoint(sid)) return false;
@@ -480,6 +465,8 @@
 
     function _pkShowDeviceStep() {
         _pickerSourceType = 'modbus';
+        _pickerModbusId = null;
+        _pickerDeviceGroup = null;
         document.getElementById('cpPkStep0').style.display = 'none';
         document.getElementById('cpPkStep1').style.display = '';
         document.getElementById('cpPkStep2').style.display = 'none';
@@ -633,8 +620,9 @@
         for (var i = 0; i < _pickerDevices.length; i++) {
             var d = _pickerDevices[i];
             var nPts = (_pickerPoints || []).filter(function (p) { return _isPointOfDevice(p.szSid, d.nId); }).length;
-            var modbusIds = (d.szModbusID || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
-            var deviceNames = (d.szDeviceName || '').split(',').map(function (s) { return s.trim(); });
+            var coord = window.PointGrouping.parseCoord(d);
+            var modbusIds = coord.modbusIds;
+            var deviceNames = coord.deviceNames;
 
             if (modbusIds.length > 1) {
                 var subHtml = '';
@@ -655,6 +643,35 @@
                     '</div>' +
                     '<i class="fas fa-chevron-down cpPk-toggle-icon" style="color:#999;font-size:11px;transition:transform .2s;"></i></div>' +
                     '<div class="cpPk-sub-menu" style="display:none;">' + subHtml + '</div>';
+            } else if (window.PointGrouping.hasDeviceGroups(d, _pickerPoints)) {
+                // 單站號 + 有 Device 分群：可展開 Device 子選單（+「未分群」桶，決策 4/5）
+                var dg = window.PointGrouping.coordDeviceGroups(d, _pickerPoints);
+                var gSub = '';
+                for (var gi = 0; gi < dg.names.length; gi++) {
+                    var gName = dg.names[gi];
+                    var nG = dg.countByGroup[gName] || 0;
+                    gSub += '<div class="cpPk-list-item cpPk-sub-item" onclick="window._calcPoint.pkSelectDeviceGroup(' + d.nId + ',\'' + escapeHtml(gName) + '\')">' +
+                        '<i class="fas fa-microchip" style="color:#0d6efd;flex-shrink:0;font-size:12px;"></i>' +
+                        '<div style="flex:1;min-width:0;"><div class="cpPk-item-name">' + escapeHtml(gName) + '</div>' +
+                        '<div class="cpPk-item-sub">' + escapeHtml(t('calcpoint.pk.points_count', { n: nG })) + '</div></div>' +
+                        '<i class="fas fa-chevron-right" style="color:#999;font-size:11px;"></i></div>';
+                }
+                if (dg.hasUngrouped) {
+                    var nU = (_pickerPoints || []).filter(function (pp) { return _isPointOfDevice(pp.szSid, d.nId) && !window.PointGrouping.getDeviceGroup(pp); }).length;
+                    gSub += '<div class="cpPk-list-item cpPk-sub-item" onclick="window._calcPoint.pkSelectDeviceGroup(' + d.nId + ',\'\')">' +
+                        '<i class="fas fa-inbox" style="color:#6c757d;flex-shrink:0;font-size:12px;"></i>' +
+                        '<div style="flex:1;min-width:0;"><div class="cpPk-item-name">' + escapeHtml(t('calcpoint.pk.ungrouped')) + '</div>' +
+                        '<div class="cpPk-item-sub">' + escapeHtml(t('calcpoint.pk.points_count', { n: nU })) + '</div></div>' +
+                        '<i class="fas fa-chevron-right" style="color:#999;font-size:11px;"></i></div>';
+                }
+                html += '<div class="cpPk-list-item" onclick="window._calcPoint.pkToggleSub(this)" style="cursor:pointer;">' +
+                    '<i class="fas fa-server" style="color:#0d6efd;flex-shrink:0;"></i>' +
+                    '<div style="flex:1;min-width:0;">' +
+                    '<div class="cpPk-item-name">' + escapeHtml(d.szName) + '</div>' +
+                    '<div class="cpPk-item-sub">' + escapeHtml(t('calcpoint.pk.points_count', { n: nPts })) + '</div>' +
+                    '</div>' +
+                    '<i class="fas fa-chevron-down cpPk-toggle-icon" style="color:#999;font-size:11px;transition:transform .2s;"></i></div>' +
+                    '<div class="cpPk-sub-menu" style="display:none;">' + gSub + '</div>';
             } else {
                 html += '<div class="cpPk-list-item" onclick="window._calcPoint.pkSelectDevice(' + d.nId + ',\'' + escapeHtml(d.szName) + '\')">' +
                     '<i class="fas fa-server" style="color:#0d6efd;flex-shrink:0;"></i>' +
@@ -683,9 +700,21 @@
     function pkSelectDevice(nDevId, szLabel, nModbusId) {
         _pickerDevId = nDevId;
         _pickerModbusId = nModbusId != null ? nModbusId : null;
+        _pickerDeviceGroup = null;
         _pickerSelectedSid = null;
         document.getElementById('cpPkDevName').textContent = szLabel || String(nDevId);
         document.getElementById('cpPkDevIcon').className = 'fas fa-server me-1';
+        _pkShowPointList(t('calcpoint.pk.title_select_point'));
+    }
+
+    // 選取單站號 Coordinator 內某 Device 子設備（szGroup=''＝未分群桶）
+    function pkSelectDeviceGroup(nDevId, szGroup) {
+        _pickerDevId = nDevId;
+        _pickerModbusId = null;
+        _pickerDeviceGroup = szGroup;
+        _pickerSelectedSid = null;
+        document.getElementById('cpPkDevName').textContent = szGroup || t('calcpoint.pk.ungrouped');
+        document.getElementById('cpPkDevIcon').className = szGroup ? 'fas fa-microchip me-1' : 'fas fa-inbox me-1';
         _pkShowPointList(t('calcpoint.pk.title_select_point'));
     }
 
@@ -716,6 +745,9 @@
                 var nPfx = _getSidPrefix(p.szSid);
                 var base = _pickerDevId * 65536 + _pickerModbusId * 256;
                 if (nPfx < base || nPfx >= base + 256) return false;
+            } else if (_pickerDeviceGroup != null) {
+                if (!_isPointOfDevice(p.szSid, _pickerDevId)) return false;
+                if (window.PointGrouping.getDeviceGroup(p) !== _pickerDeviceGroup) return false;
             } else {
                 if (!_isPointOfDevice(p.szSid, _pickerDevId)) return false;
             }
@@ -824,6 +856,7 @@
         pkShowExtStep: pkShowExtStep,
         pkSelectExtGroup: pkSelectExtGroup,
         pkSelectDevice: pkSelectDevice,
+        pkSelectDeviceGroup: pkSelectDeviceGroup,
         pkSelectCalcGroup: pkSelectCalcGroup,
         pkSelectPoint: pkSelectPoint,
         pkFilterPoints: pkFilterPoints,

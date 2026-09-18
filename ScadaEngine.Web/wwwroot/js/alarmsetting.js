@@ -52,7 +52,8 @@
 
     var CALC_DEVICE_ID = -999;
 
-    function isCalcSid(sid) { return sid && sid.indexOf('CALC-') === 0; }
+    // isCalcSid 委派共用層 window.PointGrouping（分群解析單一真相）
+    function isCalcSid(sid) { return window.PointGrouping.isCalcSid(sid); }
 
     // ── 多 ID 設備判斷 ──
 
@@ -61,10 +62,9 @@
     }
 
     function getSubDevices(coord) {
-        var modbusIds = coord.modbusId.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
-        var deviceNames = (coord.deviceName || '').split(',').map(function (s) { return s.trim(); });
-        return modbusIds.map(function (mid, i) {
-            return { modbusId: parseInt(mid), name: deviceNames[i] || mid };
+        var c = window.PointGrouping.parseCoord(coord);
+        return c.modbusIds.map(function (mid, i) {
+            return { modbusId: parseInt(mid), name: c.deviceNames[i] || mid };
         });
     }
 

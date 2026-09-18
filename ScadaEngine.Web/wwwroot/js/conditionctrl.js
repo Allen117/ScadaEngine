@@ -7,9 +7,9 @@
     var allDbCoords = data.allDbCoords || [];
     var dbRules     = data.dbRules     || [];
 
-    // ── SID 類型判斷 ───────────────────────────────────────────────
-    function isCalcSid(sid) { return !!sid && sid.indexOf('CALC-') === 0; }
-    function isDbSid(sid)   { return !!sid && /^DB\d+-S\d+$/.test(sid); }
+    // ── SID 類型判斷（委派共用層 window.PointGrouping，分群解析單一真相）──
+    function isCalcSid(sid) { return window.PointGrouping.isCalcSid(sid); }
+    function isDbSid(sid)   { return window.PointGrouping.isDbSid(sid); }
     function getDbCoordIdForSid(sid) {
         var m = sid && sid.match(/^DB(\d+)-S\d+$/);
         return m ? parseInt(m[1]) : 0;
@@ -86,10 +86,9 @@
     }
 
     function getSubDevices(coord) {
-        var modbusIds = coord.modbusId.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
-        var deviceNames = (coord.deviceName || '').split(',').map(function (s) { return s.trim(); });
-        return modbusIds.map(function (mid, i) {
-            return { modbusId: parseInt(mid), name: deviceNames[i] || mid };
+        var c = window.PointGrouping.parseCoord(coord);
+        return c.modbusIds.map(function (mid, i) {
+            return { modbusId: parseInt(mid), name: c.deviceNames[i] || mid };
         });
     }
 

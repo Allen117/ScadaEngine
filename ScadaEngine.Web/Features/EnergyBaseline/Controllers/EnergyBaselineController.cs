@@ -67,20 +67,24 @@ public class EnergyBaselineController : Controller
 
         var allPoints = modbusPoints.Select(p => new
         {
-            szSid = p.szSID, szName = p.szName, szUnit = p.szUnit, szType = "Modbus", szGroupName = ""
+            szSid = p.szSID, szName = p.szName, szUnit = p.szUnit, szType = "Modbus", szGroupName = "",
+            szDeviceGroup = p.szDeviceGroup
         }).Concat(calcPoints.Select(p => new
         {
-            szSid = p.szSID, szName = p.szName, szUnit = p.szUnit, szType = "Calculated", szGroupName = p.szGroupName
+            szSid = p.szSID, szName = p.szName, szUnit = p.szUnit, szType = "Calculated", szGroupName = p.szGroupName,
+            szDeviceGroup = (string?)null
         })).Concat(dbPoints.Select(p => new
         {
             szSid = p.szSID, szName = p.szName, szUnit = p.szUnit ?? string.Empty, szType = "DB",
-            szGroupName = dbCoordNameMap.TryGetValue(p.nCoordinatorId, out var szDbName) ? szDbName : "DB"
+            szGroupName = dbCoordNameMap.TryGetValue(p.nCoordinatorId, out var szDbName) ? szDbName : "DB",
+            szDeviceGroup = (string?)null
         })).Concat(opcUaPoints.Select(p => new
         {
             szSid = p.szSID, szName = p.szName, szUnit = p.szUnit ?? string.Empty, szType = "OpcUa",
             szGroupName = opcUaCoordNameMap.TryGetValue(p.nCoordinatorId, out var szCoordName)
                 ? (string.IsNullOrEmpty(p.szDeviceName) ? szCoordName : $"{szCoordName}/{p.szDeviceName}")
-                : "OPCUA"
+                : "OPCUA",
+            szDeviceGroup = (string?)null
         }));
         return Json(allPoints);
     }

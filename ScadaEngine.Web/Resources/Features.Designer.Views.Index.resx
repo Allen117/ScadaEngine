@@ -139,6 +139,7 @@
   <data name="designer.picker.back_to_source" xml:space="preserve"><value>返回來源選擇</value></data>
   <data name="designer.picker.device_list" xml:space="preserve"><value>設備清單</value></data>
   <data name="designer.picker.search_placeholder" xml:space="preserve"><value>搜尋點位名稱…</value></data>
+  <data name="designer.picker.device_search_placeholder" xml:space="preserve"><value>搜尋設備 / 子設備…</value></data>
   <data name="designer.picker.cancel" xml:space="preserve"><value>取消</value></data>
   <data name="designer.picker.confirm" xml:space="preserve"><value>確認</value></data>
   <data name="designer.picker.points_count" xml:space="preserve"><value>{count} 個點位</value></data>

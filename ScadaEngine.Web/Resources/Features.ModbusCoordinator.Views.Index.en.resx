@@ -85,6 +85,9 @@
   <data name="modbuscoordinator.points.col_unit" xml:space="preserve"><value>Unit</value></data>
   <data name="modbuscoordinator.points.col_min" xml:space="preserve"><value>Min</value></data>
   <data name="modbuscoordinator.points.col_max" xml:space="preserve"><value>Max</value></data>
+  <data name="modbuscoordinator.points.col_device" xml:space="preserve"><value>Sub Device</value></data>
+  <data name="modbuscoordinator.points.device_multi_hint" xml:space="preserve"><value>Multi-station coordinators are grouped by station; this field does not apply</value></data>
+  <data name="modbuscoordinator.points.device_na" xml:space="preserve"><value>N/A</value></data>
   <data name="modbuscoordinator.points.device_info" xml:space="preserve"><value>IP {ip}:{port} | ModbusId {modbusId} | Connect Timeout {timeout} ms (fields above are read-only; points cannot be added, removed or reordered)</value></data>
   <data name="modbuscoordinator.points.msg_loading" xml:space="preserve"><value>Loading…</value></data>
   <data name="modbuscoordinator.points.msg_load_failed" xml:space="preserve"><value>Failed to load points</value></data>

@@ -283,6 +283,27 @@
         return td;
     }
 
+    /**
+     * Device（站號內子設備分群）欄 — 多站號 Coordinator 依決策 4 站號即設備、Tag.Device 不適用，
+     * 故 disable + 提示，從源頭避免誤填。
+     */
+    function makeDeviceCell(szValue, isMulti) {
+        var td = document.createElement('td');
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'form-control form-control-sm point-input';
+        input.value = szValue == null ? '' : szValue;
+        input.dataset.field = 'device';
+        input.autocomplete = 'off';
+        if (isMulti) {
+            input.disabled = true;
+            input.title = t('modbuscoordinator.points.device_multi_hint');
+            input.placeholder = t('modbuscoordinator.points.device_na');
+        }
+        td.appendChild(input);
+        return td;
+    }
+
     function renderPoints(data) {
         var tbody = document.getElementById('pointsTbody');
         tbody.innerHTML = '';
@@ -291,6 +312,9 @@
         infoEl.textContent = t('modbuscoordinator.points.device_info', {
             ip: data.ip, port: data.port, modbusId: data.modbusId, timeout: data.connectTimeout
         });
+
+        // 站號 / Device 互斥（決策 4）：多站號 Coordinator 的 Device 欄一律 disable
+        var isMulti = (data.modbusId || '').indexOf(',') >= 0;
 
         (data.points || []).forEach(function (p, i) {
             var tr = document.createElement('tr');
@@ -309,6 +333,7 @@
             tr.appendChild(makeCellInput(p.unit, 'unit', 'point-input-num'));
             tr.appendChild(makeCellInput(p.min, 'min', 'point-input-num'));
             tr.appendChild(makeCellInput(p.max, 'max', 'point-input-num'));
+            tr.appendChild(makeDeviceCell(p.device || '', isMulti));
 
             tbody.appendChild(tr);
         });
@@ -326,7 +351,7 @@
         titleEl.appendChild(document.createTextNode(t('modbuscoordinator.points.title') + ' — ' + szName));
 
         document.getElementById('pointsTbody').innerHTML =
-            '<tr><td colspan="8" class="text-center text-muted py-3">' + t('modbuscoordinator.points.msg_loading') + '</td></tr>';
+            '<tr><td colspan="9" class="text-center text-muted py-3">' + t('modbuscoordinator.points.msg_loading') + '</td></tr>';
 
         try {
             var resp = await fetch('/ModbusCoordinator/Points/' + encodeURIComponent(szName), { credentials: 'same-origin' });
@@ -358,7 +383,8 @@
                 ratio: get('ratio'),
                 unit: get('unit'),
                 min: get('min'),
-                max: get('max')
+                max: get('max'),
+                device: get('device')
             };
 
             var nRow = i + 1;
@@ -388,7 +414,8 @@
         for (var i = 0; i < aPoints.length; i++) {
             var o = aOriginalPoints[i], p = aPoints[i];
             if (o.name !== p.name || o.address !== p.address || (o.dataType || '') !== p.dataType ||
-                o.ratio !== p.ratio || o.unit !== p.unit || o.min !== p.min || o.max !== p.max) nChanged++;
+                o.ratio !== p.ratio || o.unit !== p.unit || o.min !== p.min || o.max !== p.max ||
+                (o.device || '') !== (p.device || '')) nChanged++;
         }
         return nChanged;
     }

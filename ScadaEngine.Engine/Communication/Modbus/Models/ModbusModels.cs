@@ -44,6 +44,12 @@ public class ModbusTagModel
     public string szMin { get; set; } = string.Empty;
 
     /// <summary>
+    /// 站號內子設備分群名稱（Tag.Device，optional）。一顆 PLC（單一站號）內放多台設備時用來分群；
+    /// 留白代表未分群（見 plan 決策 5 留白必須）。多站號 Coordinator 會忽略此欄（決策 4）。
+    /// </summary>
+    public string szDevice { get; set; } = string.Empty;
+
+    /// <summary>
     /// 點位唯一識別碼 (SID)，格式為 XXX-SN
     /// </summary>
     public string szSID { get; set; } = string.Empty;

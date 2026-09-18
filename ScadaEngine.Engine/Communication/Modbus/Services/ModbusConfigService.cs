@@ -171,7 +171,9 @@ public class ModbusConfigService
                         szRatio = tagJson.Ratio?.ToString() ?? "1",
                         szUnit = tagJson.Unit ?? string.Empty,
                         szMax = tagJson.Max?.ToString() ?? string.Empty,
-                        szMin = tagJson.Min?.ToString() ?? string.Empty
+                        szMin = tagJson.Min?.ToString() ?? string.Empty,
+                        // 站號內子設備分群（optional，舊設定檔無此欄 → 空字串，行為不變）
+                        szDevice = tagJson.Device ?? string.Empty
                     };
 
                     // 驗證並解析點位設定
@@ -261,6 +263,10 @@ public class ModbusConfigService
                 return;
             }
 
+            // 站號 / Device 互斥（plan 決策 4）：多站號時每個站號即一台設備，
+            // 站號優先、Tag.Device 靜默忽略 → DeviceGroup 一律留 null（規則見 ResolveDeviceGroup）。
+            var isMultiStation = modbusIds.Count > 1;
+
             // 為每個 ModbusId 生成點位
             foreach (var nModbusId in modbusIds)
             {
@@ -268,11 +274,13 @@ public class ModbusConfigService
                 {
                     var tag = config.tagList[nTagIndex];
 
-                    // 生成 SID: 
+                    // 生成 SID:
                     var szSID = (nDatabaseId * 65536 + nModbusId * 256 +1).ToString() + "-S" + (nTagIndex+1).ToString();
 
+                    var szDeviceGroup = ModbusPointModel.ResolveDeviceGroup(tag.szDevice, isMultiStation);
+
                     // 建立 ModbusPointModel
-                    var point = ModbusPointModel.FromTag(tag, szSID);
+                    var point = ModbusPointModel.FromTag(tag, szSID, szDeviceGroup);
                     
                     if (point.Validate())
                     {

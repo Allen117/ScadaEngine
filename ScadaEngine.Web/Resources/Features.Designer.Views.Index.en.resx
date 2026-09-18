@@ -140,6 +140,7 @@
   <data name="designer.picker.back_to_source" xml:space="preserve"><value>Back to source selection</value></data>
   <data name="designer.picker.device_list" xml:space="preserve"><value>Device List</value></data>
   <data name="designer.picker.search_placeholder" xml:space="preserve"><value>Search point name…</value></data>
+  <data name="designer.picker.device_search_placeholder" xml:space="preserve"><value>Search device / sub-device…</value></data>
   <data name="designer.picker.cancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="designer.picker.confirm" xml:space="preserve"><value>Confirm</value></data>
   <data name="designer.picker.points_count" xml:space="preserve"><value>{count} points</value></data>

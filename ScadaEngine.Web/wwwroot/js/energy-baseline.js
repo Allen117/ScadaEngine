@@ -304,9 +304,9 @@
             default: return 'modbus';
         }
     }
+    // sidNumericPrefix 委派共用層 window.PointGrouping（分群解析單一真相）
     function sidNumericPrefix(szSid) {
-        var m = /^(\d+)-S\d+$/.exec(szSid || '');
-        return m ? parseInt(m[1], 10) : -1;
+        return window.PointGrouping.getSidPrefix(szSid);
     }
     function modbusDeviceOf(szSid) {
         var nPfx = sidNumericPrefix(szSid);
@@ -317,9 +317,11 @@
         }
         return null;
     }
+    // 注意：此處為「範圍篩選」語意，單站號也要回其 mid（與 label 導向的
+    // PointGrouping.subOfSid 對單站號回 null 刻意不同），故只借用 parseCoord 拆欄位
     function modbusSubIdOf(szSid, d) {
         var nPfx = sidNumericPrefix(szSid);
-        var mids = (d.szModbusID || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+        var mids = window.PointGrouping.parseCoord(d).modbusIds;
         for (var j = 0; j < mids.length; j++) {
             var mid = parseInt(mids[j], 10);
             var base = d.nId * 65536 + mid * 256;
@@ -329,10 +331,9 @@
     }
     function deviceScopeLabel(d, mid) {
         if (mid == null) return d.szName;
-        var mids = (d.szModbusID || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
-        var names = (d.szDeviceName || '').split(',').map(function (s) { return s.trim(); });
-        var idx = mids.indexOf(String(mid));
-        return (idx >= 0 && names[idx]) ? names[idx] : (d.szName + ' / ' + mid);
+        var c = window.PointGrouping.parseCoord(d);
+        var idx = c.modbusIds.indexOf(String(mid));
+        return (idx >= 0 && c.deviceNames[idx]) ? c.deviceNames[idx] : (d.szName + ' / ' + mid);
     }
     function findPoint(szSid) {
         for (var i = 0; i < g_points.length; i++) if (g_points[i].szSid === szSid) return g_points[i];
@@ -346,17 +347,7 @@
         if (pkKind(p) !== 'modbus') return p.szGroupName || '';
         var d = modbusDeviceOf(p.szSid);
         if (!d) return '';
-        var mids = (d.szModbusID || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
-        var names = (d.szDeviceName || '').split(',').map(function (s) { return s.trim(); });
-        if (mids.length > 1) {
-            var nPfx = sidNumericPrefix(p.szSid);
-            for (var j = 0; j < mids.length; j++) {
-                var mid = parseInt(mids[j], 10);
-                var base = d.nId * 65536 + mid * 256;
-                if (nPfx >= base && nPfx < base + 256) return names[j] || d.szName;
-            }
-        }
-        return d.szName;
+        return window.PointGrouping.pointDeviceLabel(p.szSid, p.szDeviceGroup, d);
     }
     // 綁定顯示名（母設備名 / 點位名，Designer 綁定格式，無 SID）— Y 目標與 X 變數共用
     function pkPointFullName(p) {
@@ -438,8 +429,9 @@
                 var dev = modbusDeviceOf(p.szSid); return dev && dev.nId === d.nId;
             }).length;
             if (nPts === 0) return '';
-            var mids = (d.szModbusID || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
-            var names = (d.szDeviceName || '').split(',').map(function (s) { return s.trim(); });
+            var _coord = window.PointGrouping.parseCoord(d);
+            var mids = _coord.modbusIds;
+            var names = _coord.deviceNames;
             if (mids.length > 1) {
                 var sub = mids.map(function (mid, j) {
                     var szSubName = (j < names.length && names[j]) ? names[j] : mid;

@@ -2,15 +2,15 @@
 (function () {
     const S = window.__lfNS;
 
+    // 以下三個 helper 委派共用層 window.PointGrouping（分群解析單一真相）
     function getSidPrefix(szSid) {
-        const m = szSid.match(/^(\d+)-S\d+$/);
-        return m ? parseInt(m[1], 10) : -1;
+        return window.PointGrouping.getSidPrefix(szSid);
     }
     function isCalcSid(szSid) {
-        return szSid && szSid.indexOf('CALC-') === 0;
+        return window.PointGrouping.isCalcSid(szSid);
     }
     function isDbSid(szSid) {
-        return !!szSid && /^DB\d+-S\d+$/.test(szSid);
+        return window.PointGrouping.isDbSid(szSid);
     }
     function isPointOfDev(szSid, nDevId) {
         if (nDevId === S.PP_CALC_DEV_ID) return isCalcSid(szSid);
@@ -38,22 +38,9 @@
                 p._devLabel = p.szGroupName || S.t('logicflow.pp.calc_points');
                 return;
             }
-            const pfx = getSidPrefix(p.szSid);
             for (const d of S.ppAllDevices) {
                 if (!isPointOfDev(p.szSid, d.nId)) continue;
-                const mids = (d.szModbusID || '').split(',').map(s => s.trim()).filter(Boolean);
-                const names = (d.szDeviceName || '').split(',').map(s => s.trim());
-                if (mids.length > 1) {
-                    for (let j = 0; j < mids.length; j++) {
-                        const base = d.nId * 65536 + parseInt(mids[j], 10) * 256;
-                        if (pfx >= base && pfx < base + 256) {
-                            p._devLabel = (j < names.length && names[j]) ? names[j] : d.szName;
-                            break;
-                        }
-                    }
-                } else {
-                    p._devLabel = d.szName;
-                }
+                p._devLabel = window.PointGrouping.pointDeviceLabel(p.szSid, p.szDeviceGroup, d);
                 break;
             }
         });
@@ -78,6 +65,7 @@
         S.ppPickedSid = null;
         S.ppPickedDevId = -1;
         S.ppPickedModbusId = null;
+        S.ppPickedDeviceGroup = null;
         S.ppPickedScheduleId = null;
         S.ppPickedScheduleName = null;
         S.ppSourceMode = 'point';
@@ -146,23 +134,16 @@
                         }, 50);
                         return;
                     }
-                    const pfx = getSidPrefix(boundSid);
                     let foundDev = null, foundModbusId = null, szLabel = '';
                     for (const d of S.ppAllDevices) {
                         if (!isPointOfDev(boundSid, d.nId)) continue;
                         foundDev = d;
                         szLabel = d.szName;
-                        const mids = (d.szModbusID || '').split(',').map(s => s.trim()).filter(Boolean);
-                        const names = (d.szDeviceName || '').split(',').map(s => s.trim());
-                        if (mids.length > 1) {
-                            for (let j = 0; j < mids.length; j++) {
-                                const mid = parseInt(mids[j], 10);
-                                const base = d.nId * 65536 + mid * 256;
-                                if (pfx >= base && pfx < base + 256) {
-                                    foundModbusId = mid;
-                                    szLabel = (j < names.length && names[j]) ? names[j] : String(mid);
-                                    break;
-                                }
+                        if (window.PointGrouping.isMultiId(d)) {
+                            const sub = window.PointGrouping.subOfSid(boundSid, d);
+                            if (sub) {
+                                foundModbusId = sub.mid;
+                                szLabel = sub.subName || String(sub.mid);
                             }
                         }
                         break;
@@ -222,8 +203,9 @@
         }
         container.innerHTML = S.ppAllDevices.map(d => {
             const nPts = (S.ppAllPoints || []).filter(p => isPointOfDev(p.szSid, d.nId)).length;
-            const mids = (d.szModbusID || '').split(',').map(s => s.trim()).filter(Boolean);
-            const names = (d.szDeviceName || '').split(',').map(s => s.trim());
+            const coord = window.PointGrouping.parseCoord(d);
+            const mids = coord.modbusIds;
+            const names = coord.deviceNames;
             if (mids.length > 1) {
                 const subs = mids.map((mid, j) => {
                     const label = (j < names.length && names[j]) ? names[j] : mid;
@@ -237,6 +219,29 @@
                     <div style="flex:1;"><div class="pp-point-name">${S.escHtml(d.szName)}</div><div class="pp-point-sid">${S.escHtml(S.t('logicflow.pp.points_count', { count: nPts }))}</div></div>
                     <i class="fas fa-chevron-down text-muted" style="font-size:11px;"></i></div>
                 <div style="display:none;">${subs}</div>`;
+            }
+            // 單站號 + 有 Device 分群：可展開 Device 子選單（+「未分群」桶，決策 4/5）
+            const devGroups = window.PointGrouping.coordDeviceGroups(d, S.ppAllPoints);
+            if (devGroups && devGroups.names.length > 0) {
+                let dsub = devGroups.names.map(g => {
+                    const nG = devGroups.countByGroup[g] || 0;
+                    return `<div class="pp-list-item" style="padding-left:28px;" onclick="window._lf.ppSelectDeviceGroup(${d.nId},'${S.escHtml(g)}')">
+                        <i class="fas fa-microchip text-info" style="font-size:12px;"></i>
+                        <div style="flex:1;"><div class="pp-point-name">${S.escHtml(g)}</div><div class="pp-point-sid">${S.escHtml(S.t('logicflow.pp.points_count', { count: nG }))}</div></div>
+                        <i class="fas fa-chevron-right text-muted" style="font-size:11px;"></i></div>`;
+                }).join('');
+                if (devGroups.hasUngrouped) {
+                    const nU = (S.ppAllPoints || []).filter(p => isPointOfDev(p.szSid, d.nId) && !window.PointGrouping.getDeviceGroup(p)).length;
+                    dsub += `<div class="pp-list-item" style="padding-left:28px;" onclick="window._lf.ppSelectDeviceGroup(${d.nId},'')">
+                        <i class="fas fa-inbox text-secondary" style="font-size:12px;"></i>
+                        <div style="flex:1;"><div class="pp-point-name">${S.escHtml(S.t('logicflow.pp.ungrouped'))}</div><div class="pp-point-sid">${S.escHtml(S.t('logicflow.pp.points_count', { count: nU }))}</div></div>
+                        <i class="fas fa-chevron-right text-muted" style="font-size:11px;"></i></div>`;
+                }
+                return `<div class="pp-list-item" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none'">
+                    <i class="fas fa-server text-primary" style="font-size:14px;"></i>
+                    <div style="flex:1;"><div class="pp-point-name">${S.escHtml(d.szName)}</div><div class="pp-point-sid">${S.escHtml(S.t('logicflow.pp.points_count', { count: nPts }))}</div></div>
+                    <i class="fas fa-chevron-down text-muted" style="font-size:11px;"></i></div>
+                <div style="display:none;">${dsub}</div>`;
             }
             return `<div class="pp-list-item" onclick="window._lf.ppSelectDev(${d.nId},'${S.escHtml(d.szName)}')">
                 <i class="fas fa-server text-primary" style="font-size:14px;"></i>
@@ -478,10 +483,28 @@
     function ppSelectDev(nDevId, szLabel, nModbusId) {
         S.ppPickedDevId = nDevId;
         S.ppPickedModbusId = nModbusId != null ? nModbusId : null;
+        S.ppPickedDeviceGroup = null;
         S.ppPickedSid = null;
         document.getElementById('btnConfirmPoint').disabled = true;
         document.getElementById('ppDeviceName').textContent = szLabel;
         document.getElementById('ppDeviceIcon').className = 'fas fa-server me-1';
+        document.getElementById('ppModalTitle').textContent = S.t('logicflow.pp.title_select_point');
+        document.getElementById('ppStep0').style.display = 'none';
+        document.getElementById('ppStep1').style.display = 'none';
+        document.getElementById('ppStep2').style.display = '';
+        document.getElementById('ppPointSearch').value = '';
+        ppRenderPoints('');
+    }
+
+    // 選取單站號 Coordinator 內某 Device 子設備（szGroup=''＝未分群桶）
+    function ppSelectDeviceGroup(nDevId, szGroup) {
+        S.ppPickedDevId = nDevId;
+        S.ppPickedModbusId = null;
+        S.ppPickedDeviceGroup = szGroup;
+        S.ppPickedSid = null;
+        document.getElementById('btnConfirmPoint').disabled = true;
+        document.getElementById('ppDeviceName').textContent = szGroup || S.t('logicflow.pp.ungrouped');
+        document.getElementById('ppDeviceIcon').className = szGroup ? 'fas fa-microchip me-1' : 'fas fa-inbox me-1';
         document.getElementById('ppModalTitle').textContent = S.t('logicflow.pp.title_select_point');
         document.getElementById('ppStep0').style.display = 'none';
         document.getElementById('ppStep1').style.display = 'none';
@@ -530,6 +553,9 @@
                 const pfx = getSidPrefix(p.szSid);
                 const base = S.ppPickedDevId * 65536 + S.ppPickedModbusId * 256;
                 if (pfx < base || pfx >= base + 256) return false;
+            } else if (S.ppPickedDeviceGroup != null) {
+                if (!isPointOfDev(p.szSid, S.ppPickedDevId)) return false;
+                if (window.PointGrouping.getDeviceGroup(p) !== S.ppPickedDeviceGroup) return false;
             } else {
                 if (!isPointOfDev(p.szSid, S.ppPickedDevId)) return false;
             }
@@ -668,6 +694,7 @@
     S.ppSwitchSource = ppSwitchSource;
     S.ppSelectSchedule = ppSelectSchedule;
     S.ppSelectDev = ppSelectDev;
+    S.ppSelectDeviceGroup = ppSelectDeviceGroup;
     S.ppGoBack = ppGoBack;
     S.ppFilter = ppFilter;
     S.ppSelectPoint = ppSelectPoint;

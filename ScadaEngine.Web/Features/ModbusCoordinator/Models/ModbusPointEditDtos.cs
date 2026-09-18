@@ -12,6 +12,8 @@ public class ModbusPointDto
     public string Unit { get; set; } = string.Empty;
     public string Min { get; set; } = string.Empty;
     public string Max { get; set; } = string.Empty;
+    /// <summary>站號內子設備分群（Tag.Device，optional）。多站號 Coordinator 由 Engine 忽略（決策 4）</summary>
+    public string Device { get; set; } = string.Empty;
 }
 
 /// <summary>

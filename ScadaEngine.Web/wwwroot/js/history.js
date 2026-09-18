@@ -16,10 +16,11 @@
     var currentSidPrefix     = null;   // null = 不以 SID 前綴篩選；'DB' / 'DB1-' 等切換到 DB 群組
 
     // ── 為每個點位計算所屬設備/子設備名稱，作為顯示前綴 ──────────────────
-    function isCalcSid(sid) { return sid && sid.indexOf('CALC-') === 0; }
+    // isCalcSid 委派共用層 window.PointGrouping（分群解析單一真相）
+    function isCalcSid(sid) { return window.PointGrouping.isCalcSid(sid); }
 
     (function enrichPointsWithDeviceLabel() {
-        var getSidPfx = function (sid) { var m = sid.match(/^(\d+)-S\d+$/); return m ? parseInt(m[1], 10) : -1; };
+        var getSidPfx = function (sid) { return window.PointGrouping.getSidPrefix(sid); };
         var isOfDev   = function (sid, nId) { var n = getSidPfx(sid); return n >= nId * 65536 && n < (nId + 1) * 65536; };
         allPoints.forEach(function (p) {
             if (isCalcSid(p.sid)) {
@@ -28,25 +29,12 @@
                 p.fullName = grp + ' / ' + p.name;
                 return;
             }
-            var nPfx = getSidPfx(p.sid);
             var szLabel = '';
             for (var di = 0; di < allCoordinators.length; di++) {
                 var d = allCoordinators[di];
                 if (!isOfDev(p.sid, d.nId)) continue;
-                var modbusIds   = (d.szModbusID || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
-                var deviceNames = (d.szDeviceName || '').split(',').map(function (s) { return s.trim(); });
-                if (modbusIds.length > 1) {
-                    for (var j = 0; j < modbusIds.length; j++) {
-                        var mid  = parseInt(modbusIds[j], 10);
-                        var base = d.nId * 65536 + mid * 256;
-                        if (nPfx >= base && nPfx < base + 256) {
-                            szLabel = (j < deviceNames.length && deviceNames[j]) ? deviceNames[j] : d.szName;
-                            break;
-                        }
-                    }
-                } else {
-                    szLabel = d.szName;
-                }
+                // coord 為 Hungarian（d.szModbusID…），point 為 camelCase（p.sid / p.deviceGroup）
+                szLabel = window.PointGrouping.pointDeviceLabel(p.sid, p.deviceGroup, d);
                 break;
             }
             p.deviceLabel = szLabel;

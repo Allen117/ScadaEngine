@@ -10,7 +10,8 @@
     var pointJson = System.Text.Json.JsonSerializer.Serialize(
         Model.PointList.Select(p => new {
             sid = p.szSID, name = p.szName, unit = p.szUnit ?? "",
-            groupName = calcGroupMap.TryGetValue(p.szSID, out var g) ? g : ""
+            groupName = calcGroupMap.TryGetValue(p.szSID, out var g) ? g : "",
+            deviceGroup = p.szDeviceGroup   // Modbus 站號內 Device 分群（其餘來源為 null）
         })
     );
 
@@ -446,5 +447,6 @@
         initialCoordId: @initialCoordId
     };
 </script>
+<script src="~/js/common/point-grouping.js"></script>
 <script src="~/js/history.js"></script>
 }

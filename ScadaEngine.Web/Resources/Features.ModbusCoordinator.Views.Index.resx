@@ -85,6 +85,9 @@
   <data name="modbuscoordinator.points.col_unit" xml:space="preserve"><value>單位</value></data>
   <data name="modbuscoordinator.points.col_min" xml:space="preserve"><value>下限</value></data>
   <data name="modbuscoordinator.points.col_max" xml:space="preserve"><value>上限</value></data>
+  <data name="modbuscoordinator.points.col_device" xml:space="preserve"><value>子設備</value></data>
+  <data name="modbuscoordinator.points.device_multi_hint" xml:space="preserve"><value>多站號設備以站號分群，此欄不適用</value></data>
+  <data name="modbuscoordinator.points.device_na" xml:space="preserve"><value>不適用</value></data>
   <data name="modbuscoordinator.points.device_info" xml:space="preserve"><value>IP {ip}:{port}｜ModbusId {modbusId}｜連線逾時 {timeout} ms（以上欄位唯讀；點位不可新增、刪除或排序）</value></data>
   <data name="modbuscoordinator.points.msg_loading" xml:space="preserve"><value>載入中…</value></data>
   <data name="modbuscoordinator.points.msg_load_failed" xml:space="preserve"><value>載入點位失敗</value></data>

@@ -24,6 +24,7 @@ let szPickerWidgetType = 'gauge'; // 記錄是哪種 widget 開啟選擇器
 let _pointPickerModal  = null;
 let nPickedCalcGroup   = null;   // 計算點位群組篩選（null=全部, ''=未分組, 'GroupName'=指定群組）
 let szPickedDbGroup    = null;   // DB 來源 Coordinator 群組篩選（null=全部, 'CoordinatorName'=指定群組）
+let szPickedDeviceGroup = null;  // Modbus 站號內 Device 分群篩選（null=不依 Device 篩, ''=未分群桶, 'Device'=指定子設備）
 
 const CALC_DEVICE_ID    = -999; // 計算點位的虛擬設備 ID
 const DB_DEVICE_ID      = -998; // DB 來源點位的虛擬設備 ID
@@ -44,17 +45,17 @@ let _pipePickerMode    = '';
 
 // SID 格式: {coordinatorId*65536 + modbusId*256 + 1}-S{N}
 // 某設備所屬 SID 的數字前綴落在 [Id*65536, (Id+1)*65536-1] 範圍內
+// 以下三個 helper 委派共用層 window.PointGrouping（分群解析單一真相）
 function getSidNumericPrefix(szSid) {
-    const m = szSid.match(/^(\d+)-S\d+$/);
-    return m ? parseInt(m[1], 10) : -1;
+    return window.PointGrouping.getSidPrefix(szSid);
 }
 
 function isCalcPoint(szSid) {
-    return szSid && szSid.startsWith('CALC-');
+    return window.PointGrouping.isCalcSid(szSid);
 }
 
 function isDbPoint(szSid) {
-    return !!(szSid && /^DB\d+-S\d+$/.test(szSid));
+    return window.PointGrouping.isDbSid(szSid);
 }
 
 function isPointOfDevice(szSid, nDevId) {
@@ -72,6 +73,8 @@ async function openPointPicker(x, y, szWidgetType) {
     szPickerWidgetType = szWidgetType || 'gauge';
     szPickedSid        = null;
     nPickedDevId       = -1;
+    nPickedModbusId    = null;
+    szPickedDeviceGroup = null;
     nPickedCircuitId   = null;
     nPickedScheduleId  = null;
     szPickedScheduleName = '';
@@ -245,25 +248,11 @@ function _enrichPointsWithDeviceLabel() {
             p.szDeviceLabel = p.szGroupName || t('designer.picker.source.calc');
             return;
         }
-        const nPfx = getSidNumericPrefix(p.szSid);
         let szLabel = '';
         for (const d of arrAllDevices) {
             if (!isPointOfDevice(p.szSid, d.nId)) continue;
-            const modbusIds   = (d.szModbusID || '').split(',').map(s => s.trim()).filter(Boolean);
-            const deviceNames = (d.szDeviceName || '').split(',').map(s => s.trim());
-            if (modbusIds.length > 1) {
-                // 多子 ID：找出所屬的子設備名稱
-                for (let j = 0; j < modbusIds.length; j++) {
-                    const mid  = parseInt(modbusIds[j], 10);
-                    const base = d.nId * 65536 + mid * 256;
-                    if (nPfx >= base && nPfx < base + 256) {
-                        szLabel = (j < deviceNames.length && deviceNames[j]) ? deviceNames[j] : d.szName;
-                        break;
-                    }
-                }
-            } else {
-                szLabel = d.szName;
-            }
+            // 四級 fallback：Tag.Device（DeviceGroup）→ 站號子設備 → Coordinator 名（決策 5）
+            szLabel = window.PointGrouping.pointDeviceLabel(p.szSid, p.szDeviceGroup, d);
             break;
         }
         p.szDeviceLabel = szLabel;
@@ -300,12 +289,15 @@ function showDeviceStep() {
     nPickedModbusId  = null;
     nPickedCalcGroup = null;
     szPickedDbGroup  = null;
+    szPickedDeviceGroup = null;
     szPickedSid      = null;
     document.getElementById('ppStep0').style.display = 'none';
     document.getElementById('ppStep1').style.display = '';
     document.getElementById('ppStep2').style.display = 'none';
     document.getElementById('ppModalTitle').textContent = t('designer.picker.title.device');
     document.getElementById('btnConfirmPoint').disabled = true;
+    const szSearch = document.getElementById('ppDeviceSearch');
+    if (szSearch) szSearch.value = '';
     renderDeviceList();
 }
 
@@ -551,6 +543,7 @@ function goBackToStep0() {
     document.getElementById('btnConfirmPoint').disabled = true;
     szPickedSid = null;
     nPickedCircuitId = null;
+    szPickedDeviceGroup = null;
 }
 
 // 從 widget 取得已綁定的 SID（不同 widget 用 szSid 或 szCid）
@@ -590,18 +583,11 @@ function _showPickerForBoundSid(szBoundSid) {
         for (const d of arrAllDevices) {
             if (!isPointOfDevice(szBoundSid, d.nId)) continue;
             foundDevice = d;
-            const modbusIds   = (d.szModbusID || '').split(',').map(s => s.trim()).filter(Boolean);
-            const deviceNames = (d.szDeviceName || '').split(',').map(s => s.trim());
-            if (modbusIds.length > 1) {
-                const nPfx = getSidNumericPrefix(szBoundSid);
-                for (let j = 0; j < modbusIds.length; j++) {
-                    const mid  = parseInt(modbusIds[j], 10);
-                    const base = d.nId * 65536 + mid * 256;
-                    if (nPfx >= base && nPfx < base + 256) {
-                        foundModbusId = mid;
-                        szDevLabel = (j < deviceNames.length && deviceNames[j]) ? deviceNames[j] : d.szName;
-                        break;
-                    }
+            if (window.PointGrouping.isMultiId(d)) {
+                const sub = window.PointGrouping.subOfSid(szBoundSid, d);
+                if (sub) {
+                    foundModbusId = sub.mid;
+                    szDevLabel = sub.subName || d.szName;
                 }
             } else {
                 szDevLabel = d.szName;
@@ -642,17 +628,39 @@ function _showPickerForBoundSid(szBoundSid) {
     _pointPickerModal.show();
 }
 
-function renderDeviceList() {
+// Step 1 設備層搜尋（決策 7）：關鍵字比對 Coordinator 名 / 站號子設備名 / Device 分群名
+function filterDeviceList(szKeyword) {
+    renderDeviceList(szKeyword);
+}
+
+function _deviceMatchesSearch(d, szQ) {
+    if ((d.szName || '').toLowerCase().includes(szQ)) return true;
+    const coord = window.PointGrouping.parseCoord(d);
+    if (coord.deviceNames.some(n => (n || '').toLowerCase().includes(szQ))) return true;
+    const dg = window.PointGrouping.coordDeviceGroups(d, arrAllPoints);
+    if (dg && dg.names.some(n => n.toLowerCase().includes(szQ))) return true;
+    return false;
+}
+
+function renderDeviceList(szKeyword) {
     const container = document.getElementById('deviceListContainer');
     if (!arrAllDevices || arrAllDevices.length === 0) {
         container.innerHTML = '<div style="color:#888;font-size:12px;text-align:center;padding:20px;">' +
             '<i class="fas fa-plug" style="font-size:24px;display:block;margin-bottom:8px;"></i>' + escHtml(t('designer.picker.no_devices')) + '</div>';
         return;
     }
-    container.innerHTML = arrAllDevices.map(d => {
+    const szQ = (szKeyword || '').trim().toLowerCase();
+    const devices = szQ ? arrAllDevices.filter(d => _deviceMatchesSearch(d, szQ)) : arrAllDevices;
+    if (devices.length === 0) {
+        container.innerHTML = '<div style="color:#888;font-size:12px;text-align:center;padding:20px;">' +
+            '<i class="fas fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;"></i>' + escHtml(t('designer.picker.no_matching_points')) + '</div>';
+        return;
+    }
+    container.innerHTML = devices.map(d => {
         const nPts = (arrAllPoints || []).filter(p => isPointOfDevice(p.szSid, d.nId)).length;
-        const modbusIds = (d.szModbusID || '').split(',').map(s => s.trim()).filter(Boolean);
-        const deviceNames = (d.szDeviceName || '').split(',').map(s => s.trim());
+        const coord = window.PointGrouping.parseCoord(d);
+        const modbusIds = coord.modbusIds;
+        const deviceNames = coord.deviceNames;
 
         if (modbusIds.length > 1) {
             // 多 ModbusID：可展開的群組
@@ -670,6 +678,48 @@ function renderDeviceList() {
                 </div>`;
             }).join('');
 
+            return `
+            <div class="point-list-item" style="cursor:pointer;"
+                 onclick="toggleDeviceSub(this)">
+                <i class="fas fa-server" style="font-size:14px;color:#7ecfff;flex-shrink:0;"></i>
+                <div style="flex:1;min-width:0;">
+                    <div class="point-name">${escHtml(d.szName)}</div>
+                    <div class="point-sid">${escHtml(t('designer.picker.points_count', { count: nPts }))}</div>
+                </div>
+                <i class="fas fa-chevron-down toggle-dev-icon" style="color:#555;font-size:11px;transition:transform .2s;"></i>
+            </div>
+            <div class="dev-sub-menu" style="display:none;">${subHtml}</div>`;
+        }
+
+        // 單站號 + 有 Device 分群：可展開的 Device 子選單（+「未分群」桶，決策 4/5）
+        const devGroups = window.PointGrouping.coordDeviceGroups(d, arrAllPoints);
+        if (devGroups && devGroups.names.length > 0) {
+            let subHtml = devGroups.names.map(g => {
+                const nG = devGroups.countByGroup[g] || 0;
+                return `
+                <div class="point-list-item" style="padding-left:28px;background:#1e1e1e;"
+                     onclick="selectDeviceGroupItem(this,${d.nId},'${escHtml(g)}')">
+                    <i class="fas fa-microchip" style="font-size:12px;color:#6ea8fe;flex-shrink:0;"></i>
+                    <div style="flex:1;min-width:0;">
+                        <div class="point-name">${escHtml(g)}</div>
+                        <div class="point-sid">${escHtml(t('designer.picker.points_count', { count: nG }))}</div>
+                    </div>
+                    <i class="fas fa-chevron-right" style="color:#555;font-size:11px;"></i>
+                </div>`;
+            }).join('');
+            if (devGroups.hasUngrouped) {
+                const nU = (arrAllPoints || []).filter(p => isPointOfDevice(p.szSid, d.nId) && !window.PointGrouping.getDeviceGroup(p)).length;
+                subHtml += `
+                <div class="point-list-item" style="padding-left:28px;background:#1e1e1e;"
+                     onclick="selectDeviceGroupItem(this,${d.nId},'')">
+                    <i class="fas fa-inbox" style="font-size:12px;color:#6c757d;flex-shrink:0;"></i>
+                    <div style="flex:1;min-width:0;">
+                        <div class="point-name">${escHtml(t('designer.picker.ungrouped'))}</div>
+                        <div class="point-sid">${escHtml(t('designer.picker.points_count', { count: nU }))}</div>
+                    </div>
+                    <i class="fas fa-chevron-right" style="color:#555;font-size:11px;"></i>
+                </div>`;
+            }
             return `
             <div class="point-list-item" style="cursor:pointer;"
                  onclick="toggleDeviceSub(this)">
@@ -710,8 +760,26 @@ function toggleDeviceSub(el) {
 function selectDeviceItem(el, nDevId, szLabel, nModbusId) {
     nPickedDevId = nDevId;
     nPickedModbusId = nModbusId != null ? nModbusId : null;
+    szPickedDeviceGroup = null;
     document.getElementById('ppDeviceName').textContent = szLabel || String(nDevId);
     document.getElementById('ppDeviceIcon').className = 'fas fa-server me-1';
+    document.getElementById('ppStep0').style.display = 'none';
+    document.getElementById('ppStep1').style.display = 'none';
+    document.getElementById('ppStep2').style.display = '';
+    document.getElementById('ppModalTitle').textContent = t('designer.picker.title.point');
+    document.getElementById('ppPointSearch').value = '';
+    szPickedSid = null;
+    document.getElementById('btnConfirmPoint').disabled = true;
+    _renderFilteredPoints('');
+}
+
+// 選取單站號 Coordinator 內某 Device 子設備（szGroup=''＝未分群桶）
+function selectDeviceGroupItem(el, nDevId, szGroup) {
+    nPickedDevId = nDevId;
+    nPickedModbusId = null;
+    szPickedDeviceGroup = szGroup;
+    document.getElementById('ppDeviceName').textContent = szGroup || t('designer.picker.ungrouped');
+    document.getElementById('ppDeviceIcon').className = szGroup ? 'fas fa-microchip me-1' : 'fas fa-inbox me-1';
     document.getElementById('ppStep0').style.display = 'none';
     document.getElementById('ppStep1').style.display = 'none';
     document.getElementById('ppStep2').style.display = '';
@@ -766,6 +834,10 @@ function _renderFilteredPoints(szKeyword) {
             const nPfx = getSidNumericPrefix(p.szSid);
             const base = nPickedDevId * 65536 + nPickedModbusId * 256;
             if (nPfx < base || nPfx >= base + 256) return false;
+        } else if (szPickedDeviceGroup != null) {
+            // 單站號內依 Device 分群篩選（''＝未分群桶）
+            if (!isPointOfDevice(p.szSid, nPickedDevId)) return false;
+            if (window.PointGrouping.getDeviceGroup(p) !== szPickedDeviceGroup) return false;
         } else {
             if (!isPointOfDevice(p.szSid, nPickedDevId)) return false;
         }

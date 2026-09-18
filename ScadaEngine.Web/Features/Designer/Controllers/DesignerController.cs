@@ -56,40 +56,45 @@ public class DesignerController : Controller
         var opcUaCoordinators = await _repository.GetAllOpcUaCoordinatorsAsync();
         var opcUaCoordNameMap = opcUaCoordinators.ToDictionary(c => c.Id, c => c.szName);
 
+        // szDeviceGroup：Modbus 站號內子設備分群（Tag.Device 投影）；其餘來源本就有自己的群組欄（szGroupName），此欄留 null
         var allPoints = modbusPoints.Select(p => new
         {
-            szSid       = p.szSID,
-            szName      = p.szName,
-            szUnit      = p.szUnit,
-            fMin        = p.fMin ?? 0f,
-            fMax        = p.fMax ?? 100f,
-            szGroupName = ""
+            szSid         = p.szSID,
+            szName        = p.szName,
+            szUnit        = p.szUnit,
+            fMin          = p.fMin ?? 0f,
+            fMax          = p.fMax ?? 100f,
+            szGroupName   = "",
+            szDeviceGroup = p.szDeviceGroup
         }).Concat(calcPoints.Where(c => c.isEnabled).Select(c => new
         {
-            szSid       = c.szSID,
-            szName      = c.szName,
-            szUnit      = c.szUnit,
-            fMin        = 0f,
-            fMax        = 100f,
-            szGroupName = c.szGroupName
+            szSid         = c.szSID,
+            szName        = c.szName,
+            szUnit        = c.szUnit,
+            fMin          = 0f,
+            fMax          = 100f,
+            szGroupName   = c.szGroupName,
+            szDeviceGroup = (string?)null
         })).Concat(dbPoints.Select(p => new
         {
-            szSid       = p.szSID,
-            szName      = p.szName,
-            szUnit      = p.szUnit ?? string.Empty,
-            fMin        = p.fMin,
-            fMax        = p.fMax,
-            szGroupName = dbCoordNameMap.TryGetValue(p.nCoordinatorId, out var szName) ? szName : "DB"
+            szSid         = p.szSID,
+            szName        = p.szName,
+            szUnit        = p.szUnit ?? string.Empty,
+            fMin          = p.fMin,
+            fMax          = p.fMax,
+            szGroupName   = dbCoordNameMap.TryGetValue(p.nCoordinatorId, out var szName) ? szName : "DB",
+            szDeviceGroup = (string?)null
         })).Concat(opcUaPoints.Select(p => new
         {
-            szSid       = p.szSID,
-            szName      = p.szName,
-            szUnit      = p.szUnit ?? string.Empty,
-            fMin        = p.fMin ?? 0f,
-            fMax        = p.fMax ?? 100f,
-            szGroupName = opcUaCoordNameMap.TryGetValue(p.nCoordinatorId, out var szCoordName)
+            szSid         = p.szSID,
+            szName        = p.szName,
+            szUnit        = p.szUnit ?? string.Empty,
+            fMin          = p.fMin ?? 0f,
+            fMax          = p.fMax ?? 100f,
+            szGroupName   = opcUaCoordNameMap.TryGetValue(p.nCoordinatorId, out var szCoordName)
                 ? (string.IsNullOrEmpty(p.szDeviceName) ? szCoordName : $"{szCoordName}/{p.szDeviceName}")
-                : "OPCUA"
+                : "OPCUA",
+            szDeviceGroup = (string?)null
         }));
 
         return Json(allPoints);

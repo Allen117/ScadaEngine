@@ -5,7 +5,8 @@
 `/ModbusCoordinator` 頁面顯示 Engine 端 Modbus 設備登記（左側清單 + 右側詳情雙欄佈局），並提供兩項編輯能力：
 
 1. **子設備名稱編輯**：多站號（ModbusID 逗號分隔）設備可為每個站號取名（寫 `ModbusCoordinator.DeviceName`，主權在 DB）
-2. **點位熱編輯**（限 Admin）：選擇設備後，右側詳情卡片標題列出現「點位設定」按鈕，點擊彈出 Modal 視窗，原地編輯設備 JSON 內點位的 Name / Address / DataType / Ratio / Unit / Min / Max，存檔後 **不需重啟 Engine**，數秒內以新設定採集
+2. **點位熱編輯**（限 Admin）：選擇設備後，右側詳情卡片標題列出現「點位設定」按鈕，點擊彈出 Modal 視窗，原地編輯設備 JSON 內點位的 Name / Address / DataType / Ratio / Unit / Min / Max / **子設備（Device）**，存檔後 **不需重啟 Engine**，數秒內以新設定採集
+3. **站號內子設備分群（Tag.Device）**：一顆 PLC（單一站號）內放多台設備時，可為每個點位標註所屬子設備做分群，讓點位選擇器可展開瀏覽（見 §站號內子設備分群）
 
 ### 點位熱編輯核心設計
 
@@ -29,6 +30,38 @@
   - watcher 補訂 `Renamed` 事件 — `File.Replace` 在 Windows 以 rename 落地，原本只訂 Changed/Created 收不到
   - per-file 去抖 1 秒 — 一次存檔常觸發多個事件，去抖後設備只斷線重連一次
   - **副檔名守衛**（`IsJsonConfigFile`）— watcher 的 `*.json` filter 對 rename 是「舊名或新名任一符合就觸發」，`File.Replace` 把 `X.json → X.json.bak`（舊名符合）會以 `e.FullPath=X.json.bak` 觸發 Renamed；若不擋，`GetFileNameWithoutExtension("X.json.bak")="X.json"` 會被當 Coordinator 名寫進 DB 生幽靈。三個 handler 與 `ReloadDeviceConfigAsync` 皆先檢查副檔名為 `.json` 才放行
+
+## 站號內子設備分群（Tag.Device）
+
+**痛點**：一顆 PLC（單一站號）放 5 種設備、每設備 5 個點時，25 個點在點位選擇器同一層平鋪、找設備要滾很久。Modbus 原本缺「站號內子設備」這一分群層（計算點位有 `GroupName`、DB 來源有 Coordinator 群組、OPC UA 有 Devices 分組，只有 Modbus 沒有）。
+
+### 資料鏈與主權
+
+- **主權在 `Modbus.json` 的 `Tag.Device`**（optional 字串欄）。Engine 載入 JSON → 寫進 `ModbusPoints.DeviceGroup`（每次重載重寫的投影，與其他欄位同機制；DB 只是投影，改 JSON 才是改分群）
+- 未填 `Device` 的既有設定檔**行為完全不變**（留白 = 未分群，可一台一台慢慢補）
+- 熱編輯 Modal 的「子設備」欄寫回 JSON 的 `Tag.Device` → Engine watcher 重載 → `DeviceGroup` 更新，**免重啟**
+
+### 決策 4：站號 / Device 互斥
+
+現場的多站號 Coordinator，一個站號本來就是一台設備，不會再有站號內分設備需求。因此兩種分群來源**互斥**，由站號數決定走哪條、永不疊加：
+
+| Coordinator 情況 | 分群依據 | Device 欄 |
+|---|---|---|
+| 多站號（ModbusId 逗號分隔） | 站號 → `DeviceName`（現況邏輯不變） | **忽略**：Modal 內 disable + 提示；Engine `ResolveDeviceGroup` 一律寫 null |
+| 單站號 + 有 Device | `Tag.Device` | 可編輯 |
+| 單站號 + 無 Device | Coordinator 名（直接可點） | 可編輯（留白） |
+
+互斥規則的單一真相 = `ModbusPointModel.ResolveDeviceGroup(device, isMultiStation)`（Engine 載入 JSON 與 Web 熱編輯共用）。
+
+### 四級 fallback 鏈（點位設備標籤）
+
+點位在選擇器顯示的設備標籤走：`Tag.Device` → 多站號的站號子設備名 → Coordinator 名 →（設備清單的「未分群」桶）。
+
+### 前端共用層 `point-grouping.js`
+
+「SID → 站號內子設備」的解析（`split(',')` + `CoordinatorId*65536 + ModbusId*256` 落點）原本被複製 5+ 份、fallback 各自走偏。已收斂為 `wwwroot/js/common/point-grouping.js`（`window.PointGrouping`），對外提供 `parseCoord` / `subOfSid` / `pointDeviceLabel`（四級鏈）/ `coordDeviceGroups`（單站號盤點 Device、多站號回 null）等。designer / logicflow / calcpoint 點位選擇器據此讓「單站號有 Device」的 Coordinator 可展開子選單 + 「未分群」桶；eventlog / energy-baseline / history 的設備標籤亦走同一支。
+
+> ⚠️ **現場 `Modbus通訊檔案產生工具.xlsm` 需同步**：巨集若不加 `Device` 欄輸出，現場重產設定檔會讓分群整批消失（VBA 需人工改，見 docs/plans 對應 plan）。
 
 ## 2. 路由
 

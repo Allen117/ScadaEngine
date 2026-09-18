@@ -467,7 +467,12 @@
                         </button>
                         <span class="pp-device-tag"><i class="fas fa-server me-1"></i>@Localizer["designer.picker.device_list"]</span>
                     </div>
-                    <div id="deviceListContainer" style="max-height:290px;overflow-y:auto;"></div>
+                    <input type="text" id="ppDeviceSearch"
+                           class="form-control form-control-sm mb-2"
+                           placeholder="@Localizer["designer.picker.device_search_placeholder"]"
+                           style="background:#3c3c3c;border:1px solid #555;color:#c8c8c8;"
+                           oninput="filterDeviceList(this.value)">
+                    <div id="deviceListContainer" style="max-height:262px;overflow-y:auto;"></div>
                 </div>
 
                 <!-- Step 2: 點位清單 -->
@@ -579,6 +584,7 @@
 
 @* asp-append-version：檔案內容 hash 進 query string，改版後瀏覽器不會吃到舊快取 JS *@
 @section Scripts {
+<script src="~/js/common/point-grouping.js" asp-append-version="true"></script>
 <script src="~/js/common/schedule-eval.js" asp-append-version="true"></script>
 <script src="~/js/common/motor-equip-svg.js" asp-append-version="true"></script>
 <script src="~/js/common/pipe-svg.js" asp-append-version="true"></script>

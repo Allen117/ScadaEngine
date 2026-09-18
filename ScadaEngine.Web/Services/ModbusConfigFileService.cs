@@ -101,6 +101,7 @@ public class ModbusConfigFileService
                     Unit = tag["Unit"]?.ToString() ?? string.Empty,
                     Min = tag["Min"]?.ToString() ?? string.Empty,
                     Max = tag["Max"]?.ToString() ?? string.Empty,
+                    Device = tag["Device"]?.ToString() ?? string.Empty,
                 });
             }
         }
@@ -188,6 +189,7 @@ public class ModbusConfigFileService
                 tag["Unit"] = (p.Unit ?? string.Empty).Trim();
                 tag["Min"] = (p.Min ?? string.Empty).Trim();
                 tag["Max"] = (p.Max ?? string.Empty).Trim();
+                tag["Device"] = (p.Device ?? string.Empty).Trim();
             }
 
             var szNewJson = root.ToJsonString(new JsonSerializerOptions
@@ -288,6 +290,7 @@ public class ModbusConfigFileService
         Compare("Unit", (p.Unit ?? string.Empty).Trim());
         Compare("Min", (p.Min ?? string.Empty).Trim());
         Compare("Max", (p.Max ?? string.Empty).Trim());
+        Compare("Device", (p.Device ?? string.Empty).Trim());
 
         return string.Join(", ", aDiffs);
     }

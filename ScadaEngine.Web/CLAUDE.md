@@ -71,6 +71,10 @@ ScadaEngine.Web/
 
 View discovery is configured in `Program.cs` to look in both `/Views/{1}/{0}.cshtml` and `/Features/{1}/Views/{0}.cshtml`.
 
+## 點位分群解析單一真相：`js/common/point-grouping.js`
+
+「SID → 站號內子設備」的解析（`split(',')` 拆 `szModbusID`/`szDeviceName` + `CoordinatorId*65536 + ModbusId*256` 落點）**不要在各頁重寫**——一律走 `window.PointGrouping`（`parseCoord` 吸收 Hungarian/camelCase 兩種欄位命名、`subOfSid`、`pointDeviceLabel` 四級 fallback、`coordDeviceGroups` 盤點單站號 Device 分群）。designer/logicflow/calcpoint/eventlog/energy-baseline/history 皆已改走它。載入順序須在各頁主 JS 之前。詳見 [docs/功能說明書_Modbus來源管理.md](../docs/功能說明書_Modbus來源管理.md) §站號內子設備分群。
+
 ## Key Patterns & Pitfalls（Web 端）
 
 ### MQTT JSON Parsing

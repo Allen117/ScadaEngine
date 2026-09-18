@@ -49,45 +49,47 @@
 
 ### 新增
 
-- [ ] `ScadaEngine.Web/wwwroot/js/common/point-grouping.js` — 分群解析單一真相
+- [x] `ScadaEngine.Web/wwwroot/js/common/point-grouping.js` — 分群解析單一真相
   - 沿用既有 `js/common/` 模式（已有 `schedule-eval.js` / `motor-equip-svg.js` / `pipe-svg.js`）
-  - 對外介面：`resolveGroup(sid, devices, points)` → `{ 來源, coordinator, 站號, 設備標籤, 分群標籤, isUngrouped }`
+  - **階段 A 實際介面**（比原計畫更貼近現況）：`parseCoord(d)`（吸收 Hungarian / camelCase）、`getSidPrefix` / `isCalcSid` / `isDbSid` / `isOpcSid`、`isMultiId(coord)`、`coordContainsSid(sid,c)`、`subOfSid(sid,coord)→{mid,idx,subName}`、`subRangeBase(id,mid)`
+  - ⚠️ 原計畫的 `resolveGroup(...)` 四級 fallback 版留待**階段 C** 再加（階段 A 只收斂「算」的部分，顯示用預設標籤/i18n key 各頁不同，仍由各頁自理，確保行為等價）
 
 ### 修改 — Engine 側
 
-- [ ] `ScadaEngine.Engine/Communication/Modbus/Models/ModbusModels.cs` — `ModbusTagModel`（:9）加 `szDevice`（optional，預設空字串）
-- [ ] `ScadaEngine.Engine/Communication/Modbus/Models/ModbusPointModel.cs` — `ModbusPointModel`（:9）加 `szDeviceGroup`
-- [ ] `ScadaEngine.Engine/Communication/Modbus/Services/ModbusConfigService.cs` — 載入 JSON 時把 `Tag.Device` 帶進點位
-- [ ] `ScadaEngine.Engine/Data/Repositories/SqlServerDataRepository.cs`
-  - INSERT（:1044）欄位清單 + 參數加 `DeviceGroup`
+- [x] `ScadaEngine.Engine/Communication/Modbus/Models/ModbusModels.cs` — `ModbusTagModel` 加 `szDevice`（optional，預設空字串）
+- [x] `ScadaEngine.Engine/Communication/Modbus/Models/ModbusPointModel.cs` — 加 `szDeviceGroup` + **`ResolveDeviceGroup(device, isMultiStation)` 靜態方法（決策 4 互斥規則單一真相，Engine/Web 熱編輯共用）** + `FromTag` 加 optional `szDeviceGroup` 參數
+- [x] `ScadaEngine.Engine/Communication/Modbus/Services/ModbusConfigService.cs` — `MapJsonToConfigModel` 讀 `tagJson.Device`；`InsertTagsToModbusPointsAsync` 依 `ResolveDeviceGroup` 投影（多站號 → null）
+- [x] `ScadaEngine.Engine/Data/Repositories/SqlServerDataRepository.cs`
+  - INSERT 欄位清單 + 參數加 `DeviceGroup`
   - `GetAllModbusPointsAsync` 的 SELECT 加 `DeviceGroup AS szDeviceGroup`
-- [ ] `ScadaEngine.Engine/DatabaseSchema/DatabaseSchema.json` — `ModbusPoints`（:73）加欄位
-- [ ] `ScadaEngine.Engine/Modbus/Modbus.json`、`Modbus2.json` — 視需要補 `Device` 範例（可留白）
+  - ⚠️ `GetModbusPointsByCoordinatorAsync`（另一 SELECT）欄位無 alias、本就與 model 不對映（既有狀態），未在 plan 範圍，不動
+- [x] `ScadaEngine.Engine/DatabaseSchema/DatabaseSchema.json` — `ModbusPoints` 加 `DeviceGroup`（nvarchar 100, Nullable）
+- [~] `ScadaEngine.Engine/Modbus/Modbus.json`、`Modbus2.json` — **不補範例**（留白即行為不變；且現場檔為 UTF-16、多站號 `1,2,3` 本就會被決策 4 忽略，補了也不生效，反易誤導）
 
 ### 修改 — Web 側（全部改走共用層）
 
 **點位選擇器（本次主要 UX 改動）**
-- [ ] `ScadaEngine.Web/wwwroot/js/designer/picker.js` — `renderDeviceList()`（:645-695）展開條件改為「多站號 **或** 有 Device」；`_enrichPointsWithDeviceLabel()`（:236-271）改呼叫共用層
-- [ ] `ScadaEngine.Web/wwwroot/js/logicflow/picker.js`
-- [ ] `ScadaEngine.Web/wwwroot/js/calcpoint.js` — 兩處重複解析（:432-443、:636-647）
+- [x] `ScadaEngine.Web/wwwroot/js/designer/picker.js` — enrich / `_showPickerForBoundSid` / `renderDeviceList` 三處 SID 數學已改走共用層（helper 委派 + `subOfSid`/`parseCoord`）。⚠️ 展開條件改「多站號 **或** 有 Device」留待階段 C
+- [x] `ScadaEngine.Web/wwwroot/js/logicflow/picker.js` — 同上三處（保留其 sub 列 fallback 退 `String(mid)` 的差異）
+- [x] `ScadaEngine.Web/wwwroot/js/calcpoint.js` — enrich + `_pkRenderDeviceList` 已改走共用層
 
 **其餘使用 `szDeviceName` / `deviceName` 的前端（grep 命中，改走共用層）**
-- [ ] `ScadaEngine.Web/wwwroot/js/alarmsetting.js`（:63-68 `getSubDevices`）
-- [ ] `ScadaEngine.Web/wwwroot/js/chilledwater.js`
-- [ ] `ScadaEngine.Web/wwwroot/js/watermeter.js`
-- [ ] `ScadaEngine.Web/wwwroot/js/gasmeter.js`
-- [ ] `ScadaEngine.Web/wwwroot/js/energymeter.js`（唯一用 `optgroup` 的頁面）
-- [ ] `ScadaEngine.Web/wwwroot/js/conditionctrl.js`
-- [ ] `ScadaEngine.Web/wwwroot/js/energy-baseline.js`
-- [ ] `ScadaEngine.Web/wwwroot/js/history.js`
-- [ ] `ScadaEngine.Web/wwwroot/js/eventlog.js`
-- [ ] `ScadaEngine.Web/wwwroot/js/designer/row-template.js`、`prop-panel.js` — 僅顯示標籤，確認是否需同步
+- [x] `ScadaEngine.Web/wwwroot/js/alarmsetting.js` — `isCalcSid` 委派 + `getSubDevices` 改走 `parseCoord`（B型 camelCase；直接算術 helper 保留）
+- [~] `ScadaEngine.Web/wwwroot/js/chilledwater.js` — **C型，後端已解析 `deviceName`，無 SID 數學可收斂 → 階段 A 不動**
+- [~] `ScadaEngine.Web/wwwroot/js/watermeter.js` — 同上（C型）
+- [~] `ScadaEngine.Web/wwwroot/js/gasmeter.js` — 同上（C型）
+- [~] `ScadaEngine.Web/wwwroot/js/energymeter.js` — 同上（C型，`optgroup`）
+- [x] `ScadaEngine.Web/wwwroot/js/conditionctrl.js` — `isCalcSid`/`isDbSid` 委派 + `getSubDevices` 改走 `parseCoord`
+- [x] `ScadaEngine.Web/wwwroot/js/energy-baseline.js` — `sidNumericPrefix` 委派、`modbusSubIdOf`/`deviceScopeLabel`/`pkPointDeviceLabel`/`showModbusDevices` 改走共用層（`modbusSubIdOf` 保留「單站號也回 mid」的範圍語意）
+- [x] `ScadaEngine.Web/wwwroot/js/history.js` — enrich 改走共用層（混合形狀：coord Hungarian + point camelCase，`parseCoord`/`subOfSid` 皆吸收）
+- [x] `ScadaEngine.Web/wwwroot/js/eventlog.js` — enrich + `ppRenderDevices` 改走共用層（保留「找不到設備留空字串、不退 groupName」的原行為）
+- [~] `ScadaEngine.Web/wwwroot/js/designer/row-template.js`、`prop-panel.js` — 已確認**無 SID→device 解析邏輯**，無需改
 
 **點位熱編輯 UI（讓現場能填 Device）**
-- [ ] `ScadaEngine.Web/Features/ModbusCoordinator/Views/Index.cshtml` — 點位設定 Modal 加 Device 欄
-- [ ] `ScadaEngine.Web/wwwroot/js/modbuscoordinator.js` — 讀寫 Device 欄位
-- [ ] `ScadaEngine.Web/Features/ModbusCoordinator/Controllers/ModbusCoordinatorController.cs` — `UpdatePoints` 帶 Device
-- [ ] `ScadaEngine.Web/Features/ModbusCoordinator/Models/ModbusCoordinatorRequestDtos.cs` — DTO 加欄位
+- [x] `ScadaEngine.Web/Features/ModbusCoordinator/Views/Index.cshtml` — 點位設定 Modal 加「子設備」欄（th + colspan 8→9）
+- [x] `ScadaEngine.Web/wwwroot/js/modbuscoordinator.js` — `makeDeviceCell`（多站號 disable + 提示）、renderPoints/collect/countChanges 帶 device
+- [x] `ScadaEngine.Web/Services/ModbusConfigFileService.cs` — 讀/寫/BuildChangeSummary 帶 `Device`（`UpdatePoints` 走此服務，Controller 無需改）
+- [x] `ScadaEngine.Web/Features/ModbusCoordinator/Models/ModbusPointEditDtos.cs` — `ModbusPointDto` 加 `Device`
 
 **其他**
 - [ ] 各頁 `.cshtml` 加 `<script src="~/js/common/point-grouping.js">`（載入順序須在各頁主 JS 之前）
@@ -172,36 +174,40 @@
 
 **階段 A — 共用層（地基，一次到位，不可分批）**
 
-1. [ ] 建 `js/common/point-grouping.js`，把現有 5 份解析邏輯收斂為一份（先不含 Device，**行為完全等價**）
-2. [ ] 各頁 `.cshtml` 引入該檔（注意載入順序在各頁主 JS 之前）
-3. [ ] 逐檔改走共用層：designer/picker → logicflow/picker → calcpoint → alarmsetting → chilledwater → watermeter → gasmeter → energymeter → conditionctrl → energy-baseline → history → eventlog
-4. [ ] 驗證：分群顯示與改動前**逐頁比對一致**（此階段不應有任何可見變化）
+1. [x] 建 `js/common/point-grouping.js`，把現有解析邏輯收斂為一份（先不含 Device，**行為完全等價**）
+2. [x] 各頁 `.cshtml` 引入該檔（8 頁：Designer / LogicFlow / CalcPoint / EventLog / EnergyBaseline / AlarmSetting / ConditionCtrl / History；載入順序在各頁主 JS 之前）
+3. [x] 逐檔改走共用層：designer/picker、logicflow/picker、calcpoint、eventlog、energy-baseline、history、alarmsetting、conditionctrl（**C型 chilledwater/watermeter/gasmeter/energymeter 後端已解析，無 SID 數學可收斂，不動**）
+4. [x] 驗證：以 **Node 等價性 harness**（`scratchpad/equiv.js`）把舊內嵌解析 vs 新共用層跑同批 fixture 逐一比對 → **266 項全數位元相同**（涵蓋單站號/多站號對齊/逗號數兩方向不對齊/中間空名/子站號 gap/calc-db-opc/界外）+ `dotnet build` 全綠。純函式等價已證，此階段設計上無可見變化
 
 **階段 B — Engine 資料鏈**
 
-5. [ ] `DatabaseSchema.json` 加 `ModbusPoints.DeviceGroup`
-6. [ ] `ModbusTagModel` 加 `szDevice`、`ModbusPointModel` 加 `szDeviceGroup`
-7. [ ] `ModbusConfigService` 載入時帶入；`SqlServerDataRepository` INSERT / SELECT 同步
-8. [ ] 驗證：手動在 `Modbus.json` 填一個 `Device`，重載後查 DB 確認 `DeviceGroup` 已寫入
+5. [x] `DatabaseSchema.json` 加 `ModbusPoints.DeviceGroup`（nvarchar 100 Nullable；schema-sync 於 Engine/Web 啟動時 `ALTER TABLE ADD` 自動補，已確認 `SyncMissingColumnsAsync` 涵蓋此 nullable 欄）
+6. [x] `ModbusTagModel` 加 `szDevice`、`ModbusPointModel` 加 `szDeviceGroup` + `ResolveDeviceGroup` 靜態互斥規則
+7. [x] `ModbusConfigService` 載入時帶入（多站號忽略）；`SqlServerDataRepository` INSERT / `GetAllModbusPointsAsync` SELECT 同步
+8. [~] 驗證：**改以單元測試鎖規則**（`ResolveDeviceGroupTests` 10 項全過：決策 4 多站號一律 null + 決策 5 留白 null + trim + FromTag 帶入）+ 全 solution `dotnet build` 0 error。
+   - ⚠️ **未跑實機重載 round-trip**：`ScadaEngineService` **正在運行**，會持續 delete-then-insert 同一張 `ModbusPoints`，再起一個 dev Engine 會兩邊搶寫、有資料風險 → 不做。真正的「重載後 DB 有 DeviceGroup」會在**下次服務重啟（部署）自然發生**（schema-sync 補欄位 + Engine 重建點位）
 
 **階段 C — 分群生效（UX 改動）**
 
-9. [ ] `point-grouping.js` 加入四級 fallback 鏈與「未分群」桶
-10. [ ] `renderDeviceList()` 展開條件改為「多站號 **或** 單站號有 Device」，兩者互斥擇一（決策 4）
-11. [ ] Step 1 加搜尋框（決策 7）
-12. [ ] 驗證四種情境（決策 3 表格）逐一比對
+9. [x] `point-grouping.js` 加四級 fallback（`pointDeviceLabel`）+ 「未分群」桶盤點（`coordDeviceGroups`/`hasDeviceGroups`/`getDeviceGroup`）
+10. [x] `renderDeviceList()` 展開條件改「多站號 **或** 單站號有 Device」互斥擇一（決策 4）— designer / logicflow / calcpoint 三支 picker 皆已加 Device 子選單 + 未分群桶 + 點位篩選 + selectDeviceGroupItem
+11. [x] Step 1 加搜尋框（決策 7）— **designer 已加**（比對 Coordinator 名 / 站號子設備 / Device 名）；⚠️ **logicflow / calcpoint 待補**：其設備層渲染函式未參數化 keyword，補搜尋需較深重構且本機無法視覺驗，暫緩（主頁 designer 已覆蓋痛點）
+12. [~] 驗證：`dotnet build` 0 error + Node harness（`stagec.js` 四級/分群盤點 **19 項全過**、`equiv.js` 階段 A 回歸 **266 項仍全過**）；四種情境（決策 3 表格）的實際畫面待服務重啟有 DeviceGroup 資料後人工看
+    - **Controller/DTO 已補 `szDeviceGroup`**：`/Designer/Points`（designer/logicflow/calcpoint/eventlog 共用）、`/EnergyBaseline/api/points`、History `__historyConfig.points`
+    - **Device 標籤已全頁一致**：designer / logicflow / calcpoint / eventlog / energy-baseline / history 的 enrich 都改走 `pointDeviceLabel`（四級鏈）
+    - ⚠️ **暫緩（groundwork 已備，屬 picker 展開 UI 或周邊頁）**：eventlog 設備層 Device 展開（標籤已 Device-aware）；B型（alarmsetting/conditionctrl）與 C型（watermeter/gasmeter/energymeter/chilledwater）的 Device 分群顯示
 
 **階段 D — 讓現場能填**
 
-13. [ ] `/ModbusCoordinator` 點位熱編輯 Modal 加 Device 欄 + Controller / DTO 同步
-14. [ ] 驗證：改完不需重啟 Engine，數秒內生效
-15. [ ] `.xlsm` 巨集加 Device 欄輸出
+13. [x] `/ModbusCoordinator` 點位熱編輯 Modal 加「子設備」欄 + DTO + `ModbusConfigFileService` 讀寫/變更偵測同步；多站號 disable（決策 4 防呆）
+14. [~] 驗證：程式路徑打通 + build 0 error。**未跑實機**（prod `ScadaEngineService` 運行中，實測會改動線上 Modbus.json + 觸發線上 Engine 重載）→ 熱編輯免重啟機制本就存在（其他欄位既有），Device 只是加進同一 round-trip，走既有 watcher 生效
+15. [ ] `.xlsm` 巨集加 Device 欄輸出 — **待使用者**（VBA 無法程式化編輯；提供巨集修改指引，或使用者貼巨集碼代改）
 
 **階段 E — 收尾**
 
-16. [ ] i18n resx（zh-TW + en）
-17. [ ] 文件同步
-18. [ ] `dotnet test` 全綠
+16. [x] i18n resx（zh-TW + en）：`modbuscoordinator.points.{col_device,device_multi_hint,device_na}`、`designer.picker.device_search_placeholder`（其餘 ungrouped 等沿用既有 key）；en `col_device`=Sub Device 對齊 glossary
+17. [x] 文件同步：`docs/功能說明書_Modbus來源管理.md`（新增 §站號內子設備分群）、`ScadaEngine.Web/CLAUDE.md`（point-grouping.js 單一真相）；glossary 既有「子設備/未分組」沿用
+18. [x] `dotnet test` 全綠：**553 通過 / 0 失敗**（含新增 `ResolveDeviceGroupTests` 10 項）
 
 ---
 
@@ -249,6 +255,45 @@
 - **尚未動工**，實作從階段 A 步驟 1 開始
 - ⚠️ 本檔依 `docs/plans/.gitignore` 的 `*.md` 本應排除，為了跨裝置接手以 `git add -f` 強制納入版控
 - **換裝置接手提示**：先讀本 plan 的「關鍵設計決策」7 條再動工；階段 A 是行為等價的純重構，逐頁比對不可省
+
+### 2026-09-18（對話 2）— 階段 A 完成（純重構），待驗證
+- **調查修正**：原 plan 假設「5 份相同複製」，實際盤點為 **3~4 種資料形狀**：
+  - **A型**（前端 SID 數學，Hungarian 欄位）：designer/picker、logicflow/picker、calcpoint、eventlog、energy-baseline
+  - **B型**（camelCase coord，Razor 注入，用 `Math.floor(((num-1)%65536)/256)` 直接算術而非 range-scan）：alarmsetting、conditionctrl
+  - **C型**（後端 `/api/sids` 已回傳 `deviceName`，前端**無任何 SID 數學**）：watermeter、gasmeter、energymeter、chilledwater
+  - **混合**：history（coord Hungarian + point camelCase）
+- **共用層 `point-grouping.js`**：只收斂「算」的部分（`parseCoord` 吸收兩種欄位命名 + SID 判斷 + `subOfSid` 65536/256 定位）；顯示用預設標籤/i18n 各頁自理 → 行為等價
+- **改走共用層**：8 個 A/B/混合檔（見檔案異動清單勾選）；C型 4 檔無 SID 數學可收斂，階段 A 不動；row-template/prop-panel 確認無此邏輯
+- **刻意保留的各頁差異**（維持等價，不在階段 A 統一，留待階段 C 的四級 fallback 再收斂）：logicflow sub 列 fallback 退 `String(mid)`、eventlog 找不到設備留 `''` 不退 groupName、energy-baseline `modbusSubIdOf` 單站號也回 mid（範圍語意）
+- **驗證**：`dotnet build ScadaEngine.Web` 全綠（0 error）+ **Node 等價性 harness 266 項全過**（舊內嵌 vs 新共用層位元相同）。
+  - ⚠️ **修正舊假設**：使用者把 `ScadaWebService` 停掉後 5038/7189 即釋放，dev Web **跑得起來**（我實測啟動成功、根路徑正常導向 /Login，DB 連線正常）。原 plan「本機 dev Web 跑不起」不成立 —— 只要使用者先停正式服務即可
+  - 未用 Playwright 逐頁點：登入需 DB 真實帳號（admin/admin 後門已於 SEC-08 移除），在生產機上不宜索取/使用真實密碼瀏覽正式資料；且純函式等價已由 harness 嚴格證明，殘留僅「瀏覽器內實跑」一項，需使用者登入才覆蓋
+- **未做（等使用者驗證階段 A 後再進）**：階段 B（Engine 資料鏈）、C（分群生效 UX）、D（熱編輯 + xlsm）、E（i18n + 文件）
+- ⚠️ 本階段**未 commit**（依 CLAUDE.md，等使用者驗證後才進 commit 流程）
+
+### 2026-09-18（對話 2）— 階段 B 完成（Engine 資料鏈）
+- **DeviceGroup 資料鏈打通**：`DatabaseSchema.json` 加欄位 → `ModbusTagModel.szDevice`（讀 JSON `Device`）→ `ResolveDeviceGroup` 決策 4 互斥 → `ModbusPointModel.szDeviceGroup` → Repository INSERT/SELECT
+- **決策 4 落在資料層**：`InsertTagsToModbusPointsAsync` 對多站號 Coordinator 一律寫 null，抽成 `ModbusPointModel.ResolveDeviceGroup` 靜態方法當單一真相（階段 D 熱編輯寫回會共用，不重複實作互斥規則）
+- **JSON 欄位確認**：現場 `Modbus.json` 為 **UTF-16 LE、PascalCase**（`"Name"`/`"Device"`），`tagJson.Device`（Newtonsoft dynamic）對得上
+- **驗證**：全 solution build 0 error；新增 `ScadaEngine.Tests/Modbus/ResolveDeviceGroupTests.cs` **10 項全過**；schema-sync（`DatabaseInitializationService.SyncMissingColumnsAsync`）確認會 `ALTER TABLE ModbusPoints ADD DeviceGroup ... NULL`
+- **刻意未做**：實機重載 round-trip（prod `ScadaEngineService` 運行中，不併跑第二個 Engine 搶寫）→ 部署重啟時自然生效
+- **未 commit**（等使用者驗證）
+
+### 2026-09-18（對話 2）— 階段 C 核心完成（分群生效）
+- **共用層四級鏈**：`pointDeviceLabel`（Device→站號子設備→Coordinator 名）+ `coordDeviceGroups`/`hasDeviceGroups`/`getDeviceGroup`/`pointSid`；單站號才盤點 Device、多站號回 null（決策 4 互斥）
+- **三支 picker 加 Device 分群**：designer（含 Step1 搜尋）、logicflow、calcpoint —— 單站號有 Device 的 Coordinator 變可展開子選單 + 「未分群」桶 + 點位依 Device 篩 + `selectDeviceGroupItem`/`ppSelectDeviceGroup`/`pkSelectDeviceGroup` + 狀態 reset
+- **Device 標籤全頁一致**：6 頁 enrich 改走 `pointDeviceLabel`；Controller/DTO 補 `szDeviceGroup`（/Designer/Points、/EnergyBaseline/api/points、History config）
+- **驗證**：Web build 0 error；`stagec.js` 19 項全過（四級鏈 + 分群盤點 + 排序 + 未分群桶邊界）；`equiv.js` 階段 A 回歸 266 項仍全過
+- **暫緩（transparent，非漏做）**：logicflow/calcpoint Step1 搜尋（渲染函式未參數化，需較深重構且無法視覺驗）；eventlog 設備層 Device 展開（標籤已 Device-aware）；B型/C型 頁面 Device 分群
+- ⚠️ 實際分群畫面需**服務重啟**讓 DeviceGroup 進 DB 後才看得到（現 live DB 尚無此欄/資料）
+- **未 commit**（等使用者驗證）
+
+### 2026-09-18（對話 2）— 階段 D + E（收尾）
+- **階段 D**：熱編輯 Modal 加「子設備」欄，`ModbusPointDto.Device` + `ModbusConfigFileService` 讀/寫/BuildChangeSummary 同步（走既有原子寫檔 + watcher 重載，免重啟）；多站號 Coordinator 的 Device 欄 disable + 提示（決策 4 防呆）
+- **階段 E**：i18n resx（4 新 key，zh/en 同步，en 對齊 glossary）；文件同步（Modbus 來源管理新增 §站號內子設備分群、Web CLAUDE.md 記 point-grouping.js）；`dotnet test` **553/0**
+- **.xlsm 待使用者**：VBA 無法程式化改，提供巨集修改指引
+- **整體驗證**：全 solution build 0 error；Node harness `equiv.js` 266 + `stagec.js` 19 全過；dotnet test 553 全過
+- **未 commit**（等使用者驗證後才進 commit 流程）
 
 ## 討論過程與成本記錄
 

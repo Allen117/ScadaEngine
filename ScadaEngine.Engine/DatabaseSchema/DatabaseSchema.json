@@ -79,7 +79,9 @@
         { "Name": "Ratio", "Type": "float", "Default": 1.0, "Nullable": false },
         { "Name": "Unit", "Type": "nvarchar", "Length": 50, "Nullable": false },
         { "Name": "Min", "Type": "float", "Nullable": true },
-        { "Name": "Max", "Type": "float", "Nullable": true }
+        { "Name": "Max", "Type": "float", "Nullable": true },
+        { "Name": "DeviceGroup", "Type": "nvarchar", "Length": 100, "Nullable": true,
+          "_comment": "站號內子設備分群（Tag.Device 的投影）。主權在 Modbus.json，每次重載重寫；多站號 Coordinator 刻意留 NULL（站號即設備，見 plan 決策 4）" }
       ]
     },
     {

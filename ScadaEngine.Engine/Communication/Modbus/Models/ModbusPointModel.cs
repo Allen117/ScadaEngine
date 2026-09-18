@@ -61,6 +61,13 @@ public class ModbusPointModel
     public float? fMax { get; set; }
 
     /// <summary>
+    /// 站號內子設備分群名稱（Tag.Device 的投影，對應 ModbusPoints.DeviceGroup）。
+    /// 未分群 / 多站號時為 null（見 plan 決策 4、5）。
+    /// </summary>
+    [StringLength(100)]
+    public string? szDeviceGroup { get; set; }
+
+    /// <summary>
     /// 驗證模型有效性
     /// </summary>
     /// <returns>驗證成功回傳 true</returns>
@@ -83,12 +90,22 @@ public class ModbusPointModel
     }
 
     /// <summary>
+    /// 依「站號 / Device 互斥」規則（plan 決策 4）算出點位的 DeviceGroup 投影值 —— 互斥規則的單一真相來源，
+    /// 供 Engine 載入 JSON 與 Web 熱編輯寫回共用，避免兩處各寫一份而走偏。
+    /// 多站號 Coordinator → 一律 null（站號即設備，Tag.Device 靜默忽略）；
+    /// 單站號 → Tag.Device 去頭尾空白，留白（未填）則回 null（未分群，行為不變）。
+    /// </summary>
+    public static string? ResolveDeviceGroup(string? szDevice, bool isMultiStation)
+        => (isMultiStation || string.IsNullOrWhiteSpace(szDevice)) ? null : szDevice.Trim();
+
+    /// <summary>
     /// 從 ModbusTagModel 建立 ModbusPointModel
     /// </summary>
     /// <param name="tag">Modbus 標籤模型</param>
     /// <param name="szSID">點位 SID</param>
+    /// <param name="szDeviceGroup">站號內子設備分群（由呼叫端依站號互斥規則決定，多站號傳 null）</param>
     /// <returns>ModbusPoint 模型</returns>
-    public static ModbusPointModel FromTag(ModbusTagModel tag, string szSID)
+    public static ModbusPointModel FromTag(ModbusTagModel tag, string szSID, string? szDeviceGroup = null)
     {
         var point = new ModbusPointModel
         {
@@ -97,7 +114,8 @@ public class ModbusPointModel
             szAddress = tag.szAddress,
             szDataType = tag.szDataType,
             fRatio = float.Parse(tag.szRatio),
-            szUnit = tag.szUnit
+            szUnit = tag.szUnit,
+            szDeviceGroup = szDeviceGroup
         };
 
         // 解析最小值和最大值

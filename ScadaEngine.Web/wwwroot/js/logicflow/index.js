@@ -20,6 +20,7 @@
         ppGoBack: S.ppGoBack,
         ppFilter: S.ppFilter,
         ppSelectDev: S.ppSelectDev,
+        ppSelectDeviceGroup: S.ppSelectDeviceGroup,
         ppSelectPoint: S.ppSelectPoint,
         ppConfirm: S.ppConfirm,
         ppSwitchSource: S.ppSwitchSource,

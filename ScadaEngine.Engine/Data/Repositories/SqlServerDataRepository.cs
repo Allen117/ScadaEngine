@@ -1041,10 +1041,10 @@ public class SqlServerDataRepository : IDataRepository, IDisposable
 
                 // Step 2: 批量插入新點位
                 const string szInsertSql = @"
-                    INSERT INTO ModbusPoints 
-                    (SID, Name, Address, DataType, Ratio, Unit, Min, Max)
-                    VALUES 
-                    (@SID, @Name, @Address, @DataType, @Ratio, @Unit, @Min, @Max)";
+                    INSERT INTO ModbusPoints
+                    (SID, Name, Address, DataType, Ratio, Unit, Min, Max, DeviceGroup)
+                    VALUES
+                    (@SID, @Name, @Address, @DataType, @Ratio, @Unit, @Min, @Max, @DeviceGroup)";
 
                 var nInsertedCount = 0;
                 var nValidationFailures = 0;
@@ -1065,7 +1065,8 @@ public class SqlServerDataRepository : IDataRepository, IDisposable
                                 Ratio = point.fRatio,
                                 Unit = point.szUnit,
                                 Min = point.fMin,
-                                Max = point.fMax
+                                Max = point.fMax,
+                                DeviceGroup = point.szDeviceGroup
                             }, transaction);
 
                             nInsertedCount++;
@@ -1172,14 +1173,15 @@ public class SqlServerDataRepository : IDataRepository, IDisposable
 
             const string szSql = @"
                 SELECT
-                    SID      AS szSID,
-                    Name     AS szName,
-                    Address  AS szAddress,
-                    DataType AS szDataType,
-                    Ratio    AS fRatio,
-                    Unit     AS szUnit,
-                    Min      AS fMin,
-                    Max      AS fMax
+                    SID         AS szSID,
+                    Name        AS szName,
+                    Address     AS szAddress,
+                    DataType    AS szDataType,
+                    Ratio       AS fRatio,
+                    Unit        AS szUnit,
+                    Min         AS fMin,
+                    Max         AS fMax,
+                    DeviceGroup AS szDeviceGroup
                 FROM ModbusPoints
                 ORDER BY SID";
 
