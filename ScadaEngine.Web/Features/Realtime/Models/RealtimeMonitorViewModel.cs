@@ -64,6 +64,9 @@ public class RealtimeMonitorViewModel
 
     /// <summary>計算點位 SID → GroupName 對照（前端 JS 過濾用）</summary>
     public Dictionary<string, string> CalcGroupMap { get; set; } = new();
+
+    /// <summary>Modbus SID → 站號內 Device 分群對照（單站號子設備展開 + 前端 JS 過濾用；無分群者不列入）</summary>
+    public Dictionary<string, string> DeviceGroupMap { get; set; } = new();
 }
 
 /// <summary>

@@ -53,6 +53,7 @@
   <data name="history.coordinator.title" xml:space="preserve"><value>Devices</value></data>
   <data name="history.coordinator.calc" xml:space="preserve"><value>Calculated Points</value></data>
   <data name="history.coordinator.ungrouped" xml:space="preserve"><value>Ungrouped</value></data>
+  <data name="history.coordinator.ungrouped" xml:space="preserve"><value>Ungrouped</value></data>
   <data name="history.coordinator.empty" xml:space="preserve"><value>No devices</value></data>
 
   <data name="history.filter.title" xml:space="preserve"><value>Query Conditions</value></data>

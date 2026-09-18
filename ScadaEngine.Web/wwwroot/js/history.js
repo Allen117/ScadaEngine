@@ -14,6 +14,7 @@
     var currentModbusId      = null;
     var currentCalcGroup     = null;   // null = 全部計算點位, string = 指定群組
     var currentSidPrefix     = null;   // null = 不以 SID 前綴篩選；'DB' / 'DB1-' 等切換到 DB 群組
+    var currentDeviceGroup   = null;   // null = 不依 Device 篩；'' = 未分群桶；'子設備名' = 指定 Device（單站號內）
 
     // ── 為每個點位計算所屬設備/子設備名稱，作為顯示前綴 ──────────────────
     // isCalcSid 委派共用層 window.PointGrouping（分群解析單一真相）
@@ -121,9 +122,7 @@
     // ── 點位選取清單 ─────────────────────────────────────────────────────
     var getN = function (sid) { var m = sid.match(/-S(\d+)$/); return m ? parseInt(m[1]) : Infinity; };
 
-    function renderPointList(nDbId, nModbusId, szCalcGroup, szSidPrefix) {
-        console.log('[renderPointList] nDbId=' + nDbId + ', nModbusId=' + nModbusId +
-            ', szCalcGroup=' + szCalcGroup + ', szSidPrefix=' + szSidPrefix);
+    function renderPointList(nDbId, nModbusId, szCalcGroup, szSidPrefix, szDeviceGroup) {
         var pts;
         if (szSidPrefix) {
             // DB 群組（父或子）— 以 SID 前綴篩選
@@ -147,6 +146,11 @@
                 if (h < 0) return false;
                 var num = parseInt(p.sid.substring(0, h));
                 if (isNaN(num)) return false;
+                if (szDeviceGroup != null) {
+                    // 單站號內依 Device 分群篩選（'' = 未分群桶）
+                    if (num < nDbId * 65536 || num >= (nDbId + 1) * 65536) return false;
+                    return window.PointGrouping.getDeviceGroup(p) === szDeviceGroup;
+                }
                 if (nModbusId != null) {
                     var base = nDbId * 65536 + nModbusId * 256;
                     return num >= base && num < base + 256;
@@ -744,6 +748,14 @@
                 currentCoordinatorId = 0;
                 currentModbusId = null;
                 currentCalcGroup = null;
+                currentDeviceGroup = null;
+            } else if (el.hasAttribute('data-devicegroup')) {
+                // 單站號內 Device 子設備（'' = 未分群桶）
+                currentSidPrefix = null;
+                currentCoordinatorId = parseInt(el.dataset.id) || 0;
+                currentModbusId = null;
+                currentCalcGroup = null;
+                currentDeviceGroup = el.dataset.devicegroup;
             } else {
                 currentSidPrefix = null;
                 currentCoordinatorId = parseInt(el.dataset.id) || 0;
@@ -751,8 +763,9 @@
                     ? (parseInt(el.dataset.modbusid) || null)
                     : null;
                 currentCalcGroup = el.dataset.calcgroup != null ? el.dataset.calcgroup : null;
+                currentDeviceGroup = null;
             }
-            renderPointList(currentCoordinatorId, currentModbusId, currentCalcGroup, currentSidPrefix);
+            renderPointList(currentCoordinatorId, currentModbusId, currentCalcGroup, currentSidPrefix, currentDeviceGroup);
         }
 
         document.querySelectorAll('.coordinator-item').forEach(function (item) {

@@ -53,6 +53,7 @@
   <data name="history.coordinator.title" xml:space="preserve"><value>設備清單</value></data>
   <data name="history.coordinator.calc" xml:space="preserve"><value>計算點位</value></data>
   <data name="history.coordinator.ungrouped" xml:space="preserve"><value>未分組</value></data>
+  <data name="history.coordinator.ungrouped" xml:space="preserve"><value>未分組</value></data>
   <data name="history.coordinator.empty" xml:space="preserve"><value>無設備資料</value></data>
 
   <data name="history.filter.title" xml:space="preserve"><value>查詢條件</value></data>

@@ -3,7 +3,7 @@
 **狀態**: 進行中 <!-- 進行中 | 已完成 | 廢棄 -->
 **建立**: 2026-09-18
 **最後更新**: 2026-09-18
-**相關 commit**: <!-- 完成後回填 commit hash -->
+**相關 commit**: `9119ade`（階段 A–E 核心）；歷史/即時頁 Device 分群另 commit
 
 ---
 
@@ -287,6 +287,13 @@
 - **暫緩（transparent，非漏做）**：logicflow/calcpoint Step1 搜尋（渲染函式未參數化，需較深重構且無法視覺驗）；eventlog 設備層 Device 展開（標籤已 Device-aware）；B型/C型 頁面 Device 分群
 - ⚠️ 實際分群畫面需**服務重啟**讓 DeviceGroup 進 DB 後才看得到（現 live DB 尚無此欄/資料）
 - **未 commit**（等使用者驗證）
+
+### 2026-09-18（對話 2）— 追加：歷史資料查詢 + 即時數據頁 Device 分群（使用者要求）
+- **History/Trend**：點位選擇側欄的單站號 Coordinator 若有 Device 分群 → 改渲染可展開子選單（Device 子設備 + 未分群桶）；`renderPointList` 加 `szDeviceGroup` 篩選維度、`applySelectionFromEl` 讀 `data-devicegroup`；`__historyConfig.points` 已帶 `deviceGroup`（前一批）
+- **Realtime（/RealTime）**：同型側欄展開；`RealtimeMonitorViewModel.DeviceGroupMap`（SID→Device，Controller 由 GetAllModbusPointsAsync 建）→ 前端 `_realtimeDeviceGroupMap`；`filterByCoordinator` 加 Device 分群分支、`applySidebarSelection` 讀 `data-devicegroup`
+- 兩頁的「未分群桶」判定：History 用全 PointList、Realtime 用 RealtimeDataList 內「不在 DeviceGroupMap 的點」
+- **驗證**：Web build 0 error；`dotnet test` 553 全綠（過程遇一次 EnergyReportExcelExporter.cs 的並行編輯 race，非本次改動，該檔恢復後即綠）
+- DeviceGroup 欄未進 DB 前，兩頁側欄自然維持原「直接可點」（map/欄空 → 不展開）
 
 ### 2026-09-18（對話 2）— 階段 D + E（收尾）
 - **階段 D**：熱編輯 Modal 加「子設備」欄，`ModbusPointDto.Device` + `ModbusConfigFileService` 讀/寫/BuildChangeSummary 同步（走既有原子寫檔 + watcher 重載，免重啟）；多站號 Coordinator 的 Device 欄 disable + 提示（決策 4 防呆）

@@ -38,6 +38,28 @@
 
     var szCalcLabel = Localizer["realtime.coordinator.calc"].Value;
     var szUngroupedLabel = Localizer["realtime.coordinator.ungrouped"].Value;
+
+    // 單站號 Coordinator 的站號內 Device 分群（Tag.Device 投影）— 供側欄可展開子設備。
+    // 多站號走站號子選單（決策 4 互斥）。DeviceGroupMap 只含有分群的點；未分群桶靠「該站有點不在 map 中」判定。
+    // DeviceGroup 欄尚未進 DB 時 map 為空 → 維持原「直接可點」。
+    var deviceGroupsByCoord = new Dictionary<int, (List<string> Names, bool HasUngrouped)>();
+    foreach (var c in Model.CoordinatorList)
+    {
+        var midArr = (c.szModbusID ?? "").Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        if (midArr.Length != 1) continue;
+        var names = new SortedSet<string>(StringComparer.Ordinal);
+        var hasUngrouped = false;
+        foreach (var item in Model.RealtimeDataList)
+        {
+            var h = item.szSID.IndexOf('-');
+            if (h < 0) continue;
+            if (!long.TryParse(item.szSID.Substring(0, h), out var num)) continue;
+            if (num < (long)c.Id * 65536 || num >= (long)(c.Id + 1) * 65536) continue;
+            if (Model.DeviceGroupMap.TryGetValue(item.szSID, out var dgv) && !string.IsNullOrWhiteSpace(dgv)) names.Add(dgv);
+            else hasUngrouped = true;
+        }
+        if (names.Count > 0) deviceGroupsByCoord[c.Id] = (names.ToList(), hasUngrouped);
+    }
 }
 
 <link rel="stylesheet" href="~/css/realtime.css" />
@@ -104,6 +126,43 @@
                                                data-name="@(string.IsNullOrEmpty(subName) ? subModbusId : subName)">
                                                 <i class="fas fa-microchip me-1 text-muted" style="font-size:.75rem;"></i>
                                                 <span class="small">@(string.IsNullOrEmpty(subName) ? subModbusId : subName)</span>
+                                            </a>
+                                        }
+                                    </div>
+                                </div>
+                                isFirst = false;
+                            }
+                            else if (deviceGroupsByCoord.TryGetValue(coordinator.Id, out var dg))
+                            {
+                                <div class="coordinator-group">
+                                    <a href="#" class="list-group-item list-group-item-action py-2 coordinator-toggle @(isFirst ? "active" : "")"
+                                       data-id="@coordinator.Id"
+                                       data-name="@coordinator.szName">
+                                        <i class="fas fa-chevron-right me-1 toggle-icon text-secondary" style="font-size:.7rem;transition:transform .2s;"></i>
+                                        <i class="fas fa-plug me-1 text-secondary"></i>
+                                        <span class="small">@coordinator.szName</span>
+                                    </a>
+                                    <div class="sub-menu" style="display:none;">
+                                        @foreach (var gName in dg.Names)
+                                        {
+                                            <a href="#"
+                                               class="list-group-item list-group-item-action py-1 ps-4 sub-item"
+                                               data-id="@coordinator.Id"
+                                               data-devicegroup="@gName"
+                                               data-name="@gName">
+                                                <i class="fas fa-microchip me-1 text-muted" style="font-size:.75rem;"></i>
+                                                <span class="small">@gName</span>
+                                            </a>
+                                        }
+                                        @if (dg.HasUngrouped)
+                                        {
+                                            <a href="#"
+                                               class="list-group-item list-group-item-action py-1 ps-4 sub-item"
+                                               data-id="@coordinator.Id"
+                                               data-devicegroup=""
+                                               data-name="@szUngroupedLabel">
+                                                <i class="fas fa-inbox me-1 text-muted" style="font-size:.75rem;"></i>
+                                                <span class="small">@szUngroupedLabel</span>
                                             </a>
                                         }
                                     </div>
@@ -333,6 +392,7 @@
         window._realtimeInitCoordinatorId = @(firstCoordinator?.Id ?? 0);
         window._realtimeInitData = @Html.Raw(initialDataJson);
         window._realtimeCalcGroupMap = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CalcGroupMap));
+        window._realtimeDeviceGroupMap = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DeviceGroupMap));
     </script>
     <script src="~/js/realtime.js"></script>
 }

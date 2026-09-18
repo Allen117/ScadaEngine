@@ -22,6 +22,27 @@
     var firstCoordinator = Model.CoordinatorList.FirstOrDefault();
     int initialCoordId = firstCoordinator?.Id ?? 0;
 
+    // 單站號 Coordinator 的站號內 Device 分群（Tag.Device 投影）— 供側欄可展開子設備。
+    // 多站號走站號子選單（決策 4 互斥），不在此。DeviceGroup 欄尚未進 DB 時自然為空 → 維持原「直接可點」。
+    var deviceGroupsByCoord = new Dictionary<int, (List<string> Names, bool HasUngrouped)>();
+    foreach (var c in Model.CoordinatorList)
+    {
+        var mids = (c.szModbusID ?? "").Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        if (mids.Length != 1) continue;
+        var names = new SortedSet<string>(StringComparer.Ordinal);
+        var hasUngrouped = false;
+        foreach (var p in Model.PointList)
+        {
+            var h = p.szSID.IndexOf('-');
+            if (h < 0) continue;
+            if (!long.TryParse(p.szSID.Substring(0, h), out var num)) continue;
+            if (num < (long)c.Id * 65536 || num >= (long)(c.Id + 1) * 65536) continue;
+            var dg = (p.szDeviceGroup ?? "").Trim();
+            if (dg.Length > 0) names.Add(dg); else hasUngrouped = true;
+        }
+        if (names.Count > 0) deviceGroupsByCoord[c.Id] = (names.ToList(), hasUngrouped);
+    }
+
     var szCalcLabel = Localizer["history.coordinator.calc"].Value;
     var szUngroupedLabel = Localizer["history.coordinator.ungrouped"].Value;
 }
@@ -81,6 +102,43 @@
                                                data-name="@(string.IsNullOrEmpty(subName) ? modbusIds[j] : subName)">
                                                 <i class="fas fa-microchip me-1 text-muted" style="font-size:.75rem;"></i>
                                                 <span class="small">@(string.IsNullOrEmpty(subName) ? modbusIds[j] : subName)</span>
+                                            </a>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                            else if (deviceGroupsByCoord.TryGetValue(c.Id, out var dg))
+                            {
+                                <div class="coordinator-group">
+                                    <a href="#"
+                                       class="list-group-item list-group-item-action py-2 coordinator-toggle @(isFirst ? "active" : "")"
+                                       data-id="@c.Id"
+                                       data-name="@c.szName">
+                                        <i class="fas fa-chevron-right me-1 toggle-icon text-secondary" style="font-size:.7rem;transition:transform .2s;"></i>
+                                        <i class="fas fa-plug me-1 text-secondary"></i>
+                                        <span class="small">@c.szName</span>
+                                    </a>
+                                    <div class="sub-menu" style="display:none;">
+                                        @foreach (var gName in dg.Names)
+                                        {
+                                            <a href="#"
+                                               class="list-group-item list-group-item-action py-1 ps-4 sub-item"
+                                               data-id="@c.Id"
+                                               data-devicegroup="@gName"
+                                               data-name="@gName">
+                                                <i class="fas fa-microchip me-1 text-muted" style="font-size:.75rem;"></i>
+                                                <span class="small">@gName</span>
+                                            </a>
+                                        }
+                                        @if (dg.HasUngrouped)
+                                        {
+                                            <a href="#"
+                                               class="list-group-item list-group-item-action py-1 ps-4 sub-item"
+                                               data-id="@c.Id"
+                                               data-devicegroup=""
+                                               data-name="@szUngroupedLabel">
+                                                <i class="fas fa-inbox me-1 text-muted" style="font-size:.75rem;"></i>
+                                                <span class="small">@szUngroupedLabel</span>
                                             </a>
                                         }
                                     </div>

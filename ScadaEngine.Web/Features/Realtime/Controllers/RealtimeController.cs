@@ -73,6 +73,12 @@ public class RealtimeController : Controller
                 .Distinct().OrderBy(g => g).ToList();
             model.CalcGroupMap = calcPointsAll.ToDictionary(c => c.szSID, c => c.szGroupName ?? "");
 
+            // SID → 站號內 Device 分群對照（Modbus 點位；供側欄單站號子設備展開與前端篩選）
+            var modbusPoints = await _dataRepository.GetAllModbusPointsAsync();
+            model.DeviceGroupMap = modbusPoints
+                .Where(p => !string.IsNullOrWhiteSpace(p.szDeviceGroup))
+                .ToDictionary(p => p.szSID, p => p.szDeviceGroup!.Trim());
+
             ViewData["PageTitle"] = "SCADA 即時監控儀表板";
 
             _logger.LogDebug("載入即時監控首頁，總計 {TotalPoints} 個點位，活躍 {ActivePoints} 個",

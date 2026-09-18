@@ -10,6 +10,8 @@
     var currentSidPrefix = null;
     // 計算點位群組篩選：null = 全部、''（空字串）= 未分組、其他 = 指定 GroupName
     var currentCalcGroup = null;
+    // 單站號內 Device 分群篩選：null = 不依 Device 篩、'' = 未分群桶、其他 = 指定子設備
+    var currentDeviceGroup = null;
 
     // 排序狀態
     var sortColumn = null;
@@ -105,6 +107,21 @@
                 ', 總資料=' + data.length +
                 ', 篩選後=' + filtered.length);
             return filtered;
+        }
+
+        // 單站號內 Device 分群篩選（'' = 未分群桶）
+        if (currentDeviceGroup !== null) {
+            var dgMap = window._realtimeDeviceGroupMap || {};
+            var dgBase = currentCoordinatorDbId * 65536;
+            var dgEnd = dgBase + 65536;
+            return data.filter(function (item) {
+                if (!item.sid) return false;
+                var hy = item.sid.indexOf('-');
+                if (hy < 0) return false;
+                var n = parseInt(item.sid.substring(0, hy));
+                if (isNaN(n) || n < dgBase || n >= dgEnd) return false;
+                return (dgMap[item.sid] || '') === currentDeviceGroup;
+            });
         }
 
         var rangeBase, rangeEnd;
@@ -302,6 +319,14 @@
                 currentCoordinatorDbId = 0;
                 currentSubModbusId = null;
                 currentCalcGroup = null;
+                currentDeviceGroup = null;
+            } else if (el.hasAttribute('data-devicegroup')) {
+                // 單站號內 Device 子設備（'' = 未分群桶）
+                currentSidPrefix = null;
+                currentCoordinatorDbId = parseInt(el.dataset.id) || 0;
+                currentSubModbusId = null;
+                currentCalcGroup = null;
+                currentDeviceGroup = el.dataset.devicegroup;
             } else {
                 currentSidPrefix = null;
                 currentCoordinatorDbId = parseInt(el.dataset.id) || 0;
@@ -310,6 +335,7 @@
                     : null;
                 // 計算點位群組（仅在計算點位 sub-item 上設定 data-calcgroup）
                 currentCalcGroup = el.dataset.calcgroup != null ? el.dataset.calcgroup : null;
+                currentDeviceGroup = null;
             }
             var nameEl = document.getElementById('currentCoordinatorName');
             if (nameEl) nameEl.textContent = '— ' + (el.dataset.name || '');
