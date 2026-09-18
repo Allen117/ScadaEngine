@@ -1,6 +1,6 @@
 # Modbus 點位站號內設備分群（Tag.Device）+ 分群解析共用層
 
-**狀態**: 進行中 <!-- 進行中 | 已完成 | 廢棄 -->
+**狀態**: 已完成 <!-- 進行中 | 已完成 | 廢棄 -->（核心 A–E + 歷史/即時頁；.xlsm 巨集已交付待現場貼、部分周邊頁 Device 分群暫緩，見進度日誌）
 **建立**: 2026-09-18
 **最後更新**: 2026-09-18
 **相關 commit**: `9119ade`（階段 A–E 核心）；歷史/即時頁 Device 分群另 commit
@@ -343,18 +343,35 @@
 
 ### Archive 總結（搬進 _archive 前回填）
 
-- **總 token**：input __ / output __ / cache read __ / cache write __
-- **模型**：
-- **API 費用（當下牌價，附計算式）**：牌價查詢日 YYYY-MM-DD，來源 __
+> 取得方式：解析本專案 projects 目錄最新 session transcript `32dcb6ca-acfd-47e7-80b2-00fc72703506.jsonl`，依 `message.id` 去重後加總 295 則 assistant 訊息的 `message.usage`。此為對話 2（實作全程）用量；對話 1（plan 撰寫）用量見上方成本記錄表，跨 session 不可直接相加。
+
+- **總 token（對話 2）**：input **37,884** / output **263,428** / cache read **95,839,357** / cache write **856,395**
+- **模型**：claude-opus-4-8（Opus 4.8 1M context）
+- **API 費用（當下牌價，附計算式）**：牌價查詢日 **2026-09-18**，來源 `claude-api` skill 定價表（Opus 4.8：input $5 / output $25 per MTok；cache read 0.1×=$0.50；cache write 5-min TTL 1.25×=$6.25）
   - 計算式：
+    - input：37,884 / 1e6 × $5 = **$0.19**
+    - output：263,428 / 1e6 × $25 = **$6.59**
+    - cache read：95,839,357 / 1e6 × $0.50 = **$47.92**
+    - cache write：856,395 / 1e6 × $6.25 = **$5.35**
+    - **合計 ≈ $60.05 USD**（cache read 佔 ~80%，長脈絡多輪重讀主導成本）
 
 ## 完成後補充
 
 ### 實際做法 vs 原計畫差異
--
+- 原 plan 假設「5 份相同複製」，實際是 **3~4 種資料形狀**（A型前端 SID 數學 / B型 camelCase 直接算術 / C型後端已解析 / 混合）。共用層因此只收斂「算」的部分，顯示標籤各頁自理，才守住行為等價。
+- 共用層對外介面與原 plan 的 `resolveGroup(...)` 不同：階段 A 先出 `parseCoord`/`subOfSid` 等原語（行為等價），四級 fallback 的 `pointDeviceLabel` 到階段 C 才加。
+- C型頁（水/氣/能源錶、冰水）階段 A 無 SID 數學可收斂，未動；階段 C 也未加其 Device 分群（暫緩）。
+- 決策 4 互斥抽成 `ModbusPointModel.ResolveDeviceGroup` 靜態方法，Engine 載入與 Web 熱編輯共用（原 plan 未明列此重構）。
+- 追加（使用者要求，不在原 plan）：歷史查詢 + 即時數據兩頁側欄的 Device 分群展開。
 
 ### 踩到的雷
--
+- 驗證策略：本機 dev Web「跑不起」是誤解 —— 停掉 `ScadaWebService` 後 5038 就空出來。但登入需 DB 真實帳號、prod Engine 運行中不可併跑第二個 Engine，故用 **Node 等價 harness**（純函式）+ dotnet test + build 綠 代替瀏覽器實跑。
+- `dotnet test` 撞過一次 `EnergyReportExcelExporter.cs` 編譯錯 —— 是**並行編輯**的中間狀態（非本次改動），檔案存成完整版後即綠。教訓：race 於併發編輯，不要當成自己改壞。
+- HistoryData.cshtml 已有 `szUngroupedLabel`，我加了重複宣告 → CS0128，移除重複即可。
+- 熱編輯：Device 欄插在 Excel **A 欄（最前）**，`.xlsm` 巨集所有欄索引右移 +1，且 `lastRow` 不能再用可留白的 A 欄偵測，改用 Name(B 欄)。
+- Bash 工具 cwd 會殘留（前面 `cd ScadaEngine.Web` 後路徑就以那為基準），用絕對路徑或重新 cd 避免 `ScadaEngine.Web/ScadaEngine.Web/...`。
 
 ### 對 memory / CLAUDE.md 的更新建議
--
+- 已更新 memory [[web-runs-from-repo-bin]]：補「停 ScadaWebService 後 dev Web 跑得起來」「dotnet ...dll 進程名是 dotnet.exe、驗完用 TaskStop 停背景 task 別盲殺 5038 owner」。
+- 已於 `ScadaEngine.Web/CLAUDE.md` 記 `point-grouping.js` 為 SID→設備分群單一真相。
+- 可考慮：CLAUDE.md 補一句「前端純函式重構優先用 Node 等價 harness 驗（不需 JS 測試框架）」。
