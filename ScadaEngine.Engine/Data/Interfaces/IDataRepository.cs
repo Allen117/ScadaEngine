@@ -161,6 +161,18 @@ public interface IDataRepository
     Task<IEnumerable<ScadaDesignPageModel>> LoadPublishedDesignAsync();
 
     /// <summary>
+    /// 依 Hash 去重寫入 Designer 圖片資產（同內容只存一份；已存在則略過）。
+    /// </summary>
+    /// <param name="asset">資產內容（szHash 須為內容 SHA-256 hex）</param>
+    /// <returns>成功回傳 true</returns>
+    Task<bool> UpsertDesignAssetAsync(ScadaDesignAssetModel asset);
+
+    /// <summary>
+    /// 依 Hash 讀取 Designer 圖片資產；不存在回傳 null。
+    /// </summary>
+    Task<ScadaDesignAssetModel?> GetDesignAssetAsync(string szHash);
+
+    /// <summary>
     /// 取得所有使用者帳號資料
     /// </summary>
     /// <returns>使用者清單</returns>

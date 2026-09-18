@@ -112,6 +112,7 @@ function renderWidget(el) {
                     : szType === 'coolingTower'   ? buildCoolingTowerHtml(props, 'stop')
                     : szType === 'ahuFan'         ? buildAhuFanHtml(props, 'stop')
                     : szType === 'chiller'        ? buildChillerHtml(props, 'stop')
+                    : szType === 'image'          ? buildImageHtml(props, 'run')
                     : buildGaugeHtml(props);
 
     // hover tooltip（controlBtn / realtimeValue）

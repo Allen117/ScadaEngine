@@ -102,6 +102,26 @@
   <data name="designer.widget.coolingTower" xml:space="preserve"><value>冷卻水塔</value></data>
   <data name="designer.widget.ahuFan" xml:space="preserve"><value>空調箱風扇</value></data>
   <data name="designer.widget.chiller" xml:space="preserve"><value>冰機</value></data>
+  <data name="designer.widget.image" xml:space="preserve"><value>圖片/動畫</value></data>
+  <data name="designer.widget_tooltip.image" xml:space="preserve"><value>拖曳至畫布以新增自訂圖片/動畫（GIF）；可綁定點位，依狀態切換動畫圖與靜止圖</value></data>
+  <data name="designer.default.image_title" xml:space="preserve"><value>圖片/動畫</value></data>
+  <data name="designer.prop.image.sources" xml:space="preserve"><value>圖片來源</value></data>
+  <data name="designer.prop.image.anim" xml:space="preserve"><value>動畫圖（GIF）</value></data>
+  <data name="designer.prop.image.still" xml:space="preserve"><value>靜止圖</value></data>
+  <data name="designer.prop.image.upload" xml:space="preserve"><value>上傳</value></data>
+  <data name="designer.prop.image.still_hint" xml:space="preserve"><value>建議上傳靜止圖；未提供時停止狀態會以灰階顯示動畫圖</value></data>
+  <data name="designer.prop.image.gallery" xml:space="preserve"><value>內建圖庫</value></data>
+  <data name="designer.prop.image.binding" xml:space="preserve"><value>狀態綁定</value></data>
+  <data name="designer.prop.image.binding_hint" xml:space="preserve"><value>DI 與類比二擇一；未綁定＝純裝飾固定播放</value></data>
+  <data name="designer.prop.image.fit" xml:space="preserve"><value>縮放方式</value></data>
+  <data name="designer.prop.image.fit_contain" xml:space="preserve"><value>完整顯示（contain）</value></data>
+  <data name="designer.prop.image.fit_cover" xml:space="preserve"><value>填滿裁切（cover）</value></data>
+  <data name="designer.prop.image.fit_fill" xml:space="preserve"><value>拉伸填滿（fill）</value></data>
+  <data name="designer.image.no_image" xml:space="preserve"><value>尚未選圖</value></data>
+  <data name="designer.image.gallery_loading" xml:space="preserve"><value>載入圖庫中…</value></data>
+  <data name="designer.image.gallery_empty" xml:space="preserve"><value>圖庫尚無圖片</value></data>
+  <data name="designer.image.gallery_error" xml:space="preserve"><value>圖庫載入失敗</value></data>
+  <data name="designer.image.upload_failed" xml:space="preserve"><value>圖片上傳失敗</value></data>
 
   <data name="designer.widget_tooltip.table" xml:space="preserve"><value>拖曳至畫布以新增資料表格</value></data>
   <data name="designer.widget_tooltip.gauge" xml:space="preserve"><value>拖曳至畫布以新增儀錶板</value></data>

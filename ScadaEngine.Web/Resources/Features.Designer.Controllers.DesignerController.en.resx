@@ -49,5 +49,9 @@
 
   <data name="designer.save_error" xml:space="preserve"><value>Error occurred while saving the design</value></data>
   <data name="designer.untitled_design" xml:space="preserve"><value>Untitled Design</value></data>
+  <data name="designer.image.upload_empty" xml:space="preserve"><value>No file selected</value></data>
+  <data name="designer.image.upload_too_large" xml:space="preserve"><value>Image too large (max 2MB)</value></data>
+  <data name="designer.image.upload_bad_type" xml:space="preserve"><value>Unsupported image type (GIF / PNG / JPEG / WebP / SVG only)</value></data>
+  <data name="designer.image.upload_failed" xml:space="preserve"><value>Image upload failed</value></data>
   <data name="designer.row_template.invalid_payload" xml:space="preserve"><value>Invalid row template payload</value></data>
 </root>

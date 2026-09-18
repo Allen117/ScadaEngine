@@ -714,6 +714,127 @@ function renderPropPanel(el) {
                    style="width:100%;margin-top:4px;${isBgTransparent ? 'display:none;' : ''}"
                    oninput="setProp('szBgColor', this.value)">
         </div>`;
+    } else if (szType === 'image') {
+        const isBgTransparent = !props.szBgColor || props.szBgColor === 'transparent';
+        const szBgColorVal    = isBgTransparent ? '#ffffff' : props.szBgColor;
+        const szMode = props.szBindMode || '';
+        const szFit  = props.szFit || 'contain';
+
+        // 目前兩張圖預覽（無則顯示佔位框）
+        function imgPreview(szSrc) {
+            return szSrc
+                ? `<img src="${escHtml(szSrc)}" style="width:44px;height:44px;object-fit:contain;background:#2b2b2b;border:1px solid #555;border-radius:4px;">`
+                : `<div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:#2b2b2b;border:1px dashed #555;border-radius:4px;color:#777;font-size:9px;">—</div>`;
+        }
+
+        const szDiName = (szMode === 'di' && props.szPointName)
+            ? `<span style="font-size:12px;color:#c8c8c8;">${escHtml(props.szPointName)}</span>`
+            : szUnboundLabel;
+        const szAnName = (szMode === 'analog' && props.szPointName)
+            ? `<span style="font-size:12px;color:#c8c8c8;">${escHtml(props.szPointName)}</span>`
+            : szUnboundLabel;
+
+        szHtml += `
+        <div style="font-size:11px;color:#aaa;margin-bottom:4px;letter-spacing:1px;">${escHtml(t('designer.prop.image.sources'))}</div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.image.anim'))}</label>
+            <div style="display:flex;align-items:center;gap:8px;">
+                ${imgPreview(props.szAnimSrc)}
+                <button class="btn btn-outline-info btn-sm py-0 px-2" style="font-size:11px;"
+                        onclick="pickImageFile('anim')">
+                    <i class="fas fa-upload me-1"></i>${escHtml(t('designer.prop.image.upload'))}
+                </button>
+                ${props.szAnimSrc ? `<button class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size:11px;"
+                        onclick="clearImageSrc('anim')"><i class="fas fa-times"></i></button>` : ''}
+            </div>
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.image.still'))}</label>
+            <div style="display:flex;align-items:center;gap:8px;">
+                ${imgPreview(props.szStillSrc)}
+                <button class="btn btn-outline-info btn-sm py-0 px-2" style="font-size:11px;"
+                        onclick="pickImageFile('still')">
+                    <i class="fas fa-upload me-1"></i>${escHtml(t('designer.prop.image.upload'))}
+                </button>
+                ${props.szStillSrc ? `<button class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size:11px;"
+                        onclick="clearImageSrc('still')"><i class="fas fa-times"></i></button>` : ''}
+            </div>
+        </div>
+        <div style="font-size:10px;color:#888;margin:2px 0 6px;">${escHtml(t('designer.prop.image.still_hint'))}</div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.image.gallery'))}</label>
+            <div id="imageGalleryGrid" class="image-gallery-grid">
+                <div style="font-size:10px;color:#888;">${escHtml(t('designer.image.gallery_loading'))}</div>
+            </div>
+        </div>
+        <hr class="prop-divider">
+        <div style="font-size:11px;color:#aaa;margin-bottom:4px;letter-spacing:1px;">${escHtml(t('designer.prop.image.binding'))}</div>
+        <div style="font-size:10px;color:#888;margin-bottom:6px;">${escHtml(t('designer.prop.image.binding_hint'))}</div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.pipe.bind_di'))}</label>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                ${szDiName}
+                <button class="btn btn-outline-success btn-sm py-0 px-2" style="font-size:11px;"
+                        onclick="rerouteImageBinding('di')">
+                    <i class="fas fa-exchange-alt me-1"></i>${escHtml(t(szMode === 'di' ? 'designer.prop.reselect' : 'designer.prop.bind'))}
+                </button>
+            </div>
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.pipe.bind_analog'))}</label>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                ${szAnName}
+                <button class="btn btn-outline-info btn-sm py-0 px-2" style="font-size:11px;"
+                        onclick="rerouteImageBinding('analog')">
+                    <i class="fas fa-exchange-alt me-1"></i>${escHtml(t(szMode === 'analog' ? 'designer.prop.reselect' : 'designer.prop.bind'))}
+                </button>
+                ${szMode ? `<button class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size:11px;"
+                        title="${escHtml(t('designer.ctx.clear_binding'))}"
+                        onclick="clearImageBinding()"><i class="fas fa-times"></i></button>` : ''}
+            </div>
+        </div>`;
+        if (szMode === 'analog') {
+            szHtml += `
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.pipe.compare'))}</label>
+            <select onchange="setProp('szCompare', this.value)"
+                    style="width:100%;background:#3c3c3c;border:1px solid #555;color:#d4d4d4;padding:4px 6px;font-size:12px;border-radius:3px;">
+                <option value="gt"  ${(props.szCompare || 'gt') === 'gt'  ? 'selected' : ''}>${escHtml(t('designer.prop.pipe.compare_gt'))}</option>
+                <option value="gte" ${props.szCompare === 'gte' ? 'selected' : ''}>${escHtml(t('designer.prop.pipe.compare_gte'))}</option>
+            </select>
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.pipe.threshold'))}</label>
+            <input type="number" value="${props.fThreshold ?? 0}" step="any"
+                   oninput="setProp('fThreshold', +this.value)">
+        </div>`;
+        }
+        szHtml += `
+        <hr class="prop-divider">
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.image.fit'))}</label>
+            <select onchange="setProp('szFit', this.value)"
+                    style="width:100%;background:#3c3c3c;border:1px solid #555;color:#d4d4d4;padding:4px 6px;font-size:12px;border-radius:3px;">
+                <option value="contain" ${szFit === 'contain' ? 'selected' : ''}>${escHtml(t('designer.prop.image.fit_contain'))}</option>
+                <option value="cover"   ${szFit === 'cover'   ? 'selected' : ''}>${escHtml(t('designer.prop.image.fit_cover'))}</option>
+                <option value="fill"    ${szFit === 'fill'    ? 'selected' : ''}>${escHtml(t('designer.prop.image.fit_fill'))}</option>
+            </select>
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.background_color'))}</label>
+            <label style="display:inline-flex;align-items:center;gap:3px;font-size:11px;color:#9d9d9d;
+                          font-weight:normal;text-transform:none;letter-spacing:0;cursor:pointer;margin-top:4px;white-space:nowrap;">
+                <input type="checkbox" style="cursor:pointer;width:auto;"
+                       ${isBgTransparent ? 'checked' : ''}
+                       onchange="onImageBgTransparentChange(this.checked)">
+                ${escHtml(t('designer.prop.transparent_bg'))}
+            </label>
+            <input type="color" id="imageBgPicker" value="${szBgColorVal}"
+                   style="width:100%;margin-top:4px;${isBgTransparent ? 'display:none;' : ''}"
+                   oninput="setProp('szBgColor', this.value)">
+        </div>`;
+        // 面板寫入 DOM 後再非同步載入內建圖庫縮圖
+        setTimeout(_loadImageGallery, 0);
     } else if (szType === 'coolingTower' || szType === 'ahuFan' || szType === 'chiller') {
         // 馬達型設備（冷卻水塔 / 空調箱風扇 / 冰機）— 仿水泵，依設備差異客製綁定
         const isBgTransparent = !props.szBgColor || props.szBgColor === 'transparent';
@@ -927,6 +1048,91 @@ function buildTextPropHtml(el, props) {
                    oninput="setProp('szBgColor', this.value)">
         </div>
     `;
+}
+
+// ============================================================
+// 圖片/動畫元件（image）— 圖片來源 / 內建圖庫 / 透明底
+// ============================================================
+function onImageBgTransparentChange(isChecked) {
+    const picker = document.getElementById('imageBgPicker');
+    if (isChecked) {
+        setProp('szBgColor', 'transparent');
+        if (picker) picker.style.display = 'none';
+    } else {
+        setProp('szBgColor', picker ? picker.value : '#ffffff');
+        if (picker) picker.style.display = '';
+    }
+}
+
+// 設定/清空 動畫圖或靜止圖來源
+function _imageSetSrc(szWhich, szUrl) {
+    if (!selectedEl || selectedEl.dataset.type !== 'image') return;
+    const szKey = (szWhich === 'still') ? 'szStillSrc' : 'szAnimSrc';
+    selectedEl.widgetProps[szKey] = szUrl || '';
+    renderWidget(selectedEl);
+    renderPropPanel(selectedEl);
+}
+function clearImageSrc(szWhich) { _imageSetSrc(szWhich, ''); }
+
+// 上傳自訂圖片：讀檔 → POST /Designer/asset → 回存 URL
+function pickImageFile(szWhich) {
+    if (!selectedEl || selectedEl.dataset.type !== 'image') return;
+    const input = document.createElement('input');
+    input.type   = 'file';
+    input.accept = 'image/gif,image/png,image/jpeg,image/webp,image/svg+xml';
+    input.onchange = async () => {
+        const f = input.files && input.files[0];
+        if (!f) return;
+        const fd = new FormData();
+        fd.append('file', f);
+        try {
+            const resp = await fetch('/Designer/asset', { method: 'POST', body: fd });
+            const r = await resp.json();
+            if (r.success && r.url) _imageSetSrc(szWhich, r.url);
+            else alert(r.error || t('designer.image.upload_failed'));
+        } catch (e) {
+            alert(t('designer.image.upload_failed'));
+        }
+    };
+    input.click();
+}
+
+// 選用內建圖庫：動畫圖設為 anim、靜止圖設為 still（缺一則互補）
+function chooseGalleryImage(szAnim, szStill) {
+    if (!selectedEl || selectedEl.dataset.type !== 'image') return;
+    selectedEl.widgetProps.szAnimSrc  = szAnim || szStill || '';
+    selectedEl.widgetProps.szStillSrc = szStill || szAnim || '';
+    renderWidget(selectedEl);
+    renderPropPanel(selectedEl);
+}
+
+// 內建圖庫縮圖載入（session 內快取一次）
+let _imageGalleryCache = null;
+async function _loadImageGallery() {
+    const grid = document.getElementById('imageGalleryGrid');
+    if (!grid) return;
+    try {
+        if (!_imageGalleryCache) {
+            const resp = await fetch('/Designer/gallery');
+            _imageGalleryCache = await resp.json();
+        }
+        if (!_imageGalleryCache || !_imageGalleryCache.length) {
+            grid.innerHTML = `<div style="font-size:10px;color:#888;">${escHtml(t('designer.image.gallery_empty'))}</div>`;
+            return;
+        }
+        grid.innerHTML = _imageGalleryCache.map(it =>
+            `<div class="image-gallery-item" title="${escHtml((it.szCategory || '') + ' / ' + (it.szName || ''))}"
+                  data-anim="${escHtml(it.szAnimSrc || '')}" data-still="${escHtml(it.szStillSrc || '')}">
+                <img src="${escHtml(it.szAnimSrc || it.szStillSrc || '')}" alt="">
+            </div>`
+        ).join('');
+        // 綁 click（避免把 URL 塞進 inline onclick 造成引號逃逸問題）
+        grid.querySelectorAll('.image-gallery-item').forEach(el => {
+            el.addEventListener('click', () => chooseGalleryImage(el.dataset.anim, el.dataset.still));
+        });
+    } catch (e) {
+        grid.innerHTML = `<div style="font-size:10px;color:#e06c75;">${escHtml(t('designer.image.gallery_error'))}</div>`;
+    }
 }
 
 function onTextBgTransparentChange(isChecked) {

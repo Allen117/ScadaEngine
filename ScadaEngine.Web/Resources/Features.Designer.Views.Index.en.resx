@@ -103,6 +103,26 @@
   <data name="designer.widget.coolingTower" xml:space="preserve"><value>Cooling Tower</value></data>
   <data name="designer.widget.ahuFan" xml:space="preserve"><value>AHU Fan</value></data>
   <data name="designer.widget.chiller" xml:space="preserve"><value>Chiller</value></data>
+  <data name="designer.widget.image" xml:space="preserve"><value>Image / GIF</value></data>
+  <data name="designer.widget_tooltip.image" xml:space="preserve"><value>Drag to canvas to add a custom image / GIF; bind a point to switch between the animated and still image by state</value></data>
+  <data name="designer.default.image_title" xml:space="preserve"><value>Image / GIF</value></data>
+  <data name="designer.prop.image.sources" xml:space="preserve"><value>Image sources</value></data>
+  <data name="designer.prop.image.anim" xml:space="preserve"><value>Animated (GIF)</value></data>
+  <data name="designer.prop.image.still" xml:space="preserve"><value>Still image</value></data>
+  <data name="designer.prop.image.upload" xml:space="preserve"><value>Upload</value></data>
+  <data name="designer.prop.image.still_hint" xml:space="preserve"><value>A still image is recommended; without it the stop state shows the GIF in grayscale</value></data>
+  <data name="designer.prop.image.gallery" xml:space="preserve"><value>Built-in gallery</value></data>
+  <data name="designer.prop.image.binding" xml:space="preserve"><value>State binding</value></data>
+  <data name="designer.prop.image.binding_hint" xml:space="preserve"><value>DI or analog (mutually exclusive); unbound = decorative, always playing</value></data>
+  <data name="designer.prop.image.fit" xml:space="preserve"><value>Fit</value></data>
+  <data name="designer.prop.image.fit_contain" xml:space="preserve"><value>Contain</value></data>
+  <data name="designer.prop.image.fit_cover" xml:space="preserve"><value>Cover</value></data>
+  <data name="designer.prop.image.fit_fill" xml:space="preserve"><value>Fill</value></data>
+  <data name="designer.image.no_image" xml:space="preserve"><value>No image</value></data>
+  <data name="designer.image.gallery_loading" xml:space="preserve"><value>Loading gallery…</value></data>
+  <data name="designer.image.gallery_empty" xml:space="preserve"><value>Gallery is empty</value></data>
+  <data name="designer.image.gallery_error" xml:space="preserve"><value>Failed to load gallery</value></data>
+  <data name="designer.image.upload_failed" xml:space="preserve"><value>Image upload failed</value></data>
 
   <data name="designer.widget_tooltip.table" xml:space="preserve"><value>Drag to canvas to add a data table</value></data>
   <data name="designer.widget_tooltip.gauge" xml:space="preserve"><value>Drag to canvas to add a gauge</value></data>

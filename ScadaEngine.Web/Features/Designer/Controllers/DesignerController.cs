@@ -1,7 +1,9 @@
+using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 using ScadaEngine.Engine.Data.Interfaces;
+using ScadaEngine.Engine.Models;
 using ScadaEngine.Web.Features.Designer.Models;
 using ScadaEngine.Web.Services;
 
@@ -19,19 +21,30 @@ public class DesignerController : Controller
     private readonly IStringLocalizer<DesignerController> _l;
     private readonly DesignerTemplateService _templateService;
     private readonly EnergyCircuitService _circuitService;
+    private readonly IWebHostEnvironment _env;
+
+    // 自訂圖片上傳限制（image widget）：單檔上限 + 允許型別（決策 4 / 已知風險）
+    private const long AssetMaxBytes = 2 * 1024 * 1024;   // 2MB
+    private static readonly HashSet<string> AssetAllowedTypes = new(StringComparer.OrdinalIgnoreCase)
+        { "image/gif", "image/png", "image/jpeg", "image/webp", "image/svg+xml" };
+
+    // 內建圖庫根目錄（相對 wwwroot），成對命名約定：{名稱}_anim.* / {名稱}_still.*
+    private const string GalleryRelDir = "img/designer-gifs";
 
     public DesignerController(
         IDataRepository repository,
         ILogger<DesignerController> logger,
         IStringLocalizer<DesignerController> localizer,
         DesignerTemplateService templateService,
-        EnergyCircuitService circuitService)
+        EnergyCircuitService circuitService,
+        IWebHostEnvironment env)
     {
         _repository      = repository;
         _logger          = logger;
         _l               = localizer;
         _templateService = templateService;
         _circuitService  = circuitService;
+        _env             = env;
     }
 
     [HttpGet("/Designer")]
@@ -197,5 +210,120 @@ public class DesignerController : Controller
         }
         var isOk = await _templateService.WriteAsync(dto);
         return Json(new { success = isOk });
+    }
+
+    // ============================================================
+    // image widget — 自訂圖片上傳 / 提供 / 內建圖庫（plan 2026-09-18 決策 1 / 4）
+    // ============================================================
+
+    /// <summary>
+    /// 上傳自訂圖片（GIF / 靜止圖）。以內容 SHA-256 去重，回傳可直接當 img src 的 URL。
+    /// </summary>
+    [HttpPost("/Designer/asset")]
+    [Authorize(Roles = "Engineer")]
+    [RequestSizeLimit(AssetMaxBytes + 4096)]
+    public async Task<IActionResult> UploadAsset(IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+            return Json(new { success = false, error = _l["designer.image.upload_empty"].Value });
+        if (file.Length > AssetMaxBytes)
+            return Json(new { success = false, error = _l["designer.image.upload_too_large"].Value });
+        if (!AssetAllowedTypes.Contains(file.ContentType))
+            return Json(new { success = false, error = _l["designer.image.upload_bad_type"].Value });
+
+        try
+        {
+            using var ms = new MemoryStream();
+            await file.CopyToAsync(ms);
+            var bytes = ms.ToArray();
+            var szHash = Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
+
+            var isOk = await _repository.UpsertDesignAssetAsync(new ScadaDesignAssetModel
+            {
+                szHash        = szHash,
+                szContentType = file.ContentType,
+                szDataBase64  = Convert.ToBase64String(bytes),
+                nByteSize     = bytes.Length
+            });
+            if (!isOk)
+                return Json(new { success = false, error = _l["designer.image.upload_failed"].Value });
+
+            return Json(new { success = true, url = $"/Designer/asset/{szHash}" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "UploadAsset 失敗");
+            return Json(new { success = false, error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// 依 Hash 提供圖片內容。內容定址（Hash=內容）故可長快取；ScadaPage 執行期共用（一般 [Authorize]）。
+    /// </summary>
+    [HttpGet("/Designer/asset/{hash}")]
+    public async Task<IActionResult> GetAsset(string hash)
+    {
+        var asset = await _repository.GetDesignAssetAsync(hash);
+        if (asset == null) return NotFound();
+
+        byte[] bytes;
+        try { bytes = Convert.FromBase64String(asset.szDataBase64); }
+        catch { return NotFound(); }
+
+        // 內容不會變（Hash=內容），可放心長快取
+        Response.Headers["Cache-Control"] = "public, max-age=31536000, immutable";
+        return File(bytes, string.IsNullOrEmpty(asset.szContentType) ? "application/octet-stream" : asset.szContentType);
+    }
+
+    /// <summary>
+    /// 列出內建圖庫（wwwroot/img/designer-gifs/{分類}/{名稱}_anim|_still.*）。
+    /// 掃目錄動態產生，免手維護 manifest。
+    /// </summary>
+    [HttpGet("/Designer/gallery")]
+    [Authorize(Roles = "Engineer")]
+    public IActionResult GetGallery()
+    {
+        var result = new List<object>();
+        try
+        {
+            var szRoot = Path.Combine(_env.WebRootPath, GalleryRelDir.Replace('/', Path.DirectorySeparatorChar));
+            if (!Directory.Exists(szRoot)) return Json(result);
+
+            foreach (var szCatDir in Directory.GetDirectories(szRoot).OrderBy(d => d))
+            {
+                var szCat = Path.GetFileName(szCatDir);
+                // 依 _anim / _still 前的基底名配對
+                var groups = new Dictionary<string, (string? anim, string? still)>(StringComparer.OrdinalIgnoreCase);
+                foreach (var szFile in Directory.GetFiles(szCatDir).OrderBy(f => f))
+                {
+                    var szBare = Path.GetFileNameWithoutExtension(szFile);
+                    string szBase; bool bAnim;
+                    if (szBare.EndsWith("_anim", StringComparison.OrdinalIgnoreCase))      { szBase = szBare[..^5]; bAnim = true;  }
+                    else if (szBare.EndsWith("_still", StringComparison.OrdinalIgnoreCase)) { szBase = szBare[..^6]; bAnim = false; }
+                    else continue;
+
+                    var szUrl = $"/{GalleryRelDir}/{szCat}/{Path.GetFileName(szFile)}";
+                    groups.TryGetValue(szBase, out var pair);
+                    groups[szBase] = bAnim ? (szUrl, pair.still) : (pair.anim, szUrl);
+                }
+
+                foreach (var kv in groups)
+                {
+                    if (kv.Value.anim == null && kv.Value.still == null) continue;
+                    result.Add(new
+                    {
+                        szCategory = szCat,
+                        szName     = kv.Key,
+                        szAnimSrc  = kv.Value.anim  ?? kv.Value.still,   // 缺動畫圖時退靜止圖
+                        szStillSrc = kv.Value.still ?? kv.Value.anim
+                    });
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "GetGallery 掃描失敗");
+        }
+        return Json(result);
     }
 }

@@ -283,6 +283,22 @@
                     _motorPromptSetTemp(el);
                 });
             }
+        } else if (ws.szType === 'image') {
+            // 圖片/動畫（自訂 GIF）— 綁定條件成立播 GIF、不成立顯示靜止圖（plan 2026-09-18）
+            var p = ws.props || {};
+            el.dataset.animSrc    = p.szAnimSrc  || '';
+            el.dataset.stillSrc   = p.szStillSrc || '';
+            el.dataset.fit        = p.szFit      || 'contain';
+            el.dataset.szBgColor  = p.szBgColor  || 'transparent';
+            el.dataset.bindMode   = p.szBindMode || '';
+            el.dataset.sid        = p.szSid      || '';
+            el.dataset.fThreshold = (p.fThreshold != null ? p.fThreshold : 0);
+            el.dataset.szCompare  = p.szCompare  || 'gt';
+            el.classList.add('scada-image');
+            // 未綁定 → 純裝飾固定播放；已綁定 → 初始靜止，待 polling 更新
+            var szImgInit = p.szBindMode ? 'stop' : 'run';
+            el.dataset._imgState = szImgInit;
+            el.innerHTML = ImageWidget.build(p, szImgInit, '');
         }
         canvas.appendChild(el);
     }
@@ -649,6 +665,40 @@
                 szDir: el.dataset.szDir, szBgColor: el.dataset.szBgColor,
                 szTitle: el.dataset.szTitle, arrPoints: arrPipePts
             }, szState, szValueText, parseInt(el.style.width), parseInt(el.style.height));
+        });
+
+        // 更新圖片/動畫元件（依綁定狀態切 GIF / 靜止圖）
+        document.querySelectorAll('.scada-image').forEach(function (el) {
+            var szBindMode = el.dataset.bindMode || '';
+            if (!szBindMode) return;   // 未綁定 → 純裝飾固定播放，不更新
+            var sid = el.dataset.sid || '';
+            if (!sid) return;
+
+            var szState;
+            if (isBadQuality(sid)) {
+                szState = 'bad';
+            } else if (szBindMode === 'di') {
+                var raw = sidValueMap[sid];
+                if (raw === undefined || raw === '--') return;
+                var bIsOn = (raw === 1 || raw === '1' || raw === true || raw === 'true'
+                    || (typeof raw === 'string' && raw.toUpperCase() === 'ON')
+                    || parseFloat(raw) >= 1);
+                szState = bIsOn ? 'run' : 'stop';
+            } else {   // analog：越過閾值才動
+                if (sidMap[sid] === undefined) return;
+                var fVal = sidMap[sid];
+                var fThr = parseFloat(el.dataset.fThreshold) || 0;
+                var bRun = (el.dataset.szCompare === 'gte') ? (fVal >= fThr) : (fVal > fThr);
+                szState = bRun ? 'run' : 'stop';
+            }
+
+            // 狀態不變不重繪（避免每秒換 innerHTML 讓 GIF 重播閃爍）
+            if (el.dataset._imgState === szState) return;
+            el.dataset._imgState = szState;
+            el.innerHTML = ImageWidget.build({
+                szAnimSrc: el.dataset.animSrc, szStillSrc: el.dataset.stillSrc,
+                szFit: el.dataset.fit, szBgColor: el.dataset.szBgColor
+            }, szState, '');
         });
 
         // 更新表格 SID 儲存格

@@ -295,6 +295,28 @@ const WIDGET_DEFS = {
             szBgColor:        'transparent'
         }
     },
+    image: {
+        szLabel: '圖片/動畫',
+        szIcon: 'fas fa-film',
+        nDefaultW: 120,
+        nDefaultH: 120,
+        nMinW: 24, nMinH: 24,
+        defaultProps: {
+            szTitle:     '__i18n__:designer.default.image_title',
+            // 兩張圖來源（URL；內建圖庫走靜態路徑、上傳走 /Designer/asset/{hash}）
+            szAnimSrc:   '',           // 動畫圖（GIF）— 綁定條件成立時顯示
+            szStillSrc:  '',           // 靜止圖 — 綁定條件不成立時顯示（決策 2：選項 a）
+            // 綁定（沿用管路 szBindMode 模型；'' = 純裝飾固定播放）
+            szBindMode:  '',           // '' 未綁 | 'di' | 'analog'
+            szSid:       '',
+            szPointName: '',
+            fThreshold:  0,            // 僅 analog：越過此值才動
+            szCompare:   'gt',         // 'gt'（>）| 'gte'（>=）
+            // 外觀
+            szFit:       'contain',    // object-fit：contain | cover | fill
+            szBgColor:   'transparent'
+        }
+    },
     chiller: {
         szLabel: '冰機',
         szIcon: 'fas fa-snowflake',
@@ -1006,4 +1028,12 @@ function buildPipeHtml(props, szState, el) {
     const nW = el ? (parseInt(el.style.width)  || el.offsetWidth  || 160) : 160;
     const nH = el ? (parseInt(el.style.height) || el.offsetHeight || 24)  : 24;
     return PipeSvg.build({ props: props, szState: szState, nW: nW, nH: nH, szHoverHtml: '' });
+}
+
+// ============================================================
+// 圖片/動畫元件（自訂 GIF；圖形共用 common/image-widget.js）
+// ============================================================
+// szState: 'run'（播 GIF）| 'stop'（靜止圖）| 'bad'（斷線）。Designer 預覽固定 'run'（畫布顯示動畫，決策 4）。
+function buildImageHtml(props, szState) {
+    return ImageWidget.build(props, szState || 'run', t('designer.image.no_image'));
 }

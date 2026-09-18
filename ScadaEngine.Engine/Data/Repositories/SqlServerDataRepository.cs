@@ -1488,6 +1488,65 @@ public class SqlServerDataRepository : IDataRepository, IDisposable
         }
     }
 
+    /// <summary>
+    /// 依 Hash 去重寫入 Designer 圖片資產（同內容只存一份；已存在則略過）。
+    /// </summary>
+    public async Task<bool> UpsertDesignAssetAsync(ScadaDesignAssetModel asset)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            // 內容定址：同 Hash 即同內容，已存在無需覆寫
+            const string szSql = @"
+                IF NOT EXISTS (SELECT 1 FROM ScadaDesignAsset WHERE Hash = @Hash)
+                    INSERT INTO ScadaDesignAsset (Hash, ContentType, DataBase64, ByteSize, CreatedAt)
+                    VALUES (@Hash, @ContentType, @DataBase64, @ByteSize, GETDATE())";
+            await connection.ExecuteAsync(szSql, new
+            {
+                Hash        = asset.szHash,
+                ContentType = asset.szContentType,
+                DataBase64  = asset.szDataBase64,
+                ByteSize    = asset.nByteSize
+            });
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "UpsertDesignAssetAsync 時發生錯誤（Hash={Hash}）", asset.szHash);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 依 Hash 讀取 Designer 圖片資產；不存在回傳 null。
+    /// </summary>
+    public async Task<ScadaDesignAssetModel?> GetDesignAssetAsync(string szHash)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            const string szSql = @"
+                SELECT Hash        AS szHash,
+                       ContentType AS szContentType,
+                       DataBase64  AS szDataBase64,
+                       ByteSize    AS nByteSize
+                FROM ScadaDesignAsset
+                WHERE Hash = @Hash";
+            return await connection.QuerySingleOrDefaultAsync<ScadaDesignAssetModel>(szSql, new { Hash = szHash });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "GetDesignAssetAsync 時發生錯誤（Hash={Hash}）", szHash);
+            return null;
+        }
+    }
+
     #endregion
 
     #region ManualControlValue

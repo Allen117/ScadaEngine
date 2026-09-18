@@ -49,5 +49,9 @@
 
   <data name="designer.save_error" xml:space="preserve"><value>儲存畫面設計時發生錯誤</value></data>
   <data name="designer.untitled_design" xml:space="preserve"><value>未命名設計</value></data>
+  <data name="designer.image.upload_empty" xml:space="preserve"><value>未選擇檔案</value></data>
+  <data name="designer.image.upload_too_large" xml:space="preserve"><value>圖片檔案過大（上限 2MB）</value></data>
+  <data name="designer.image.upload_bad_type" xml:space="preserve"><value>不支援的圖片格式（僅 GIF / PNG / JPEG / WebP / SVG）</value></data>
+  <data name="designer.image.upload_failed" xml:space="preserve"><value>圖片上傳失敗</value></data>
   <data name="designer.row_template.invalid_payload" xml:space="preserve"><value>列範本內容無效</value></data>
 </root>

@@ -1058,6 +1058,25 @@ function confirmPointPick() {
                 const fMax = point.fMax ?? 100;
                 props.fThreshold = Math.round((fMin + fMax) / 2 * 100) / 100;
             }
+        } else if (szType === 'image') {
+            // 圖片/動畫 — 綁定模型同管路（DI / 類比二擇一互斥），僅不改 szTitle
+            const props = selectedEl.widgetProps;
+            const szNewMode = (_pipePickerMode === 'analog') ? 'analog' : 'di';
+            if (props.szBindMode && props.szBindMode !== szNewMode && props.szSid) {
+                const szMsg = szNewMode === 'analog'
+                    ? t('designer.pipe.confirm_switch_to_analog')
+                    : t('designer.pipe.confirm_switch_to_di');
+                if (!confirm(szMsg)) return;
+            }
+            const bWasAnalog = props.szBindMode === 'analog';
+            props.szBindMode  = szNewMode;
+            props.szSid       = point.szSid;
+            props.szPointName = szFullName;
+            if (szNewMode === 'analog' && !bWasAnalog) {
+                const fMin = point.fMin ?? 0;
+                const fMax = point.fMax ?? 100;
+                props.fThreshold = Math.round((fMin + fMax) / 2 * 100) / 100;
+            }
         }
         renderWidget(selectedEl);
         renderPropPanel(selectedEl);
@@ -1272,6 +1291,34 @@ async function reroutePipeBinding(szMode) {
             ? (selectedEl.widgetProps.szSid || '') : '';
         _showPickerForBoundSid(szBoundSid);
     } catch (_) { /* 已在 _ensurePickerData 顯示 alert */ }
+}
+
+// 從屬性面板「綁定/重選」呼叫（image — DI 或 類比二擇一互斥，沿用 pipe 模型）
+async function rerouteImageBinding(szMode) {
+    if (!selectedEl || selectedEl.dataset.type !== 'image') return;
+    _pipePickerMode    = (szMode === 'analog') ? 'analog' : 'di';
+    pendingGaugeX      = -1;
+    pendingGaugeY      = -1;
+    szPickerWidgetType = 'image';
+    szPickedSid        = null;
+    nPickedDevId       = -1;
+    try {
+        await _ensurePickerData();
+        const szBoundSid = (selectedEl.widgetProps.szBindMode === _pipePickerMode)
+            ? (selectedEl.widgetProps.szSid || '') : '';
+        _showPickerForBoundSid(szBoundSid);
+    } catch (_) { /* 已在 _ensurePickerData 顯示 alert */ }
+}
+
+// 清除 image 綁定（回純裝飾固定播放）
+function clearImageBinding() {
+    if (!selectedEl || selectedEl.dataset.type !== 'image') return;
+    const props = selectedEl.widgetProps;
+    props.szBindMode  = '';
+    props.szSid       = '';
+    props.szPointName = '';
+    renderWidget(selectedEl);
+    renderPropPanel(selectedEl);
 }
 
 // 開啟點位選擇器（表格儲存格）

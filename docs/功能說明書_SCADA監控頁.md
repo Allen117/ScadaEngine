@@ -554,7 +554,29 @@ props：`szBindMode / szSid / szPointName / fThreshold / szCompare('gt'|'gte') /
 - hover 管身顯示「標題 — 狀態（流動 / 靜止 / 斷線）— 數值(類比)」tooltip；右鍵管身開趨勢圖照舊
 - 圖形共用 `wwwroot/js/common/pipe-svg.js`（`window.PipeSvg.build`）：Designer `buildPipeHtml`（widget-defs.js）與 ScadaPage `buildPipeViewHtml`（js/scadapage/widget-pipe.js）皆為薄包裝，同 `motor-equip-svg.js` 單一真相模式；樣式 `.pipe-svg / .pipe-svg-track / .pipe-svg-flow / .pipe-svg-hit`（舊 `.pipe-h / .pipe-v` CSS 保留一版防未升級快取頁面）
 
-> **元件庫分類（Designer）**：元件庫改為三類 — 顯示元件（表格 / 儀錶板 / 文字）、點位與控制（控制按鈕 / AI / DI / AO / DO）、設備與動畫（水泵 / 管路 / 冷卻水塔 / 空調箱風扇 / 冰機）。各類獨立捲動（`.widget-cat-items` overflow-y:auto），`.designer-outer` 釘視窗高使面板本身不捲，避免 100% 時多餘的整體捲軸。
+#### (12) image — 圖片/動畫元件（自訂 GIF）
+
+**用途**：匯入使用者自有的 GIF 動畫（或靜態圖）作為設備圖，依綁定點位狀態切換「動 / 不動」。GIF 天生 `<img>` 自動播放，切成靜止圖即「停」，無需自行做影格控制。
+
+**兩張圖**：
+- `szAnimSrc`：**動畫圖（GIF）** — 綁定條件成立時顯示（播放）
+- `szStillSrc`：**靜止圖** — 綁定條件不成立時顯示（停止）；未提供時 fallback 為「動畫圖 + 灰階降透明」當已停視覺提示
+
+**兩種載入來源**（widget 一律只存一個 URL 字串，渲染端源無關）：
+1. **內建圖庫**：`wwwroot/img/designer-gifs/{分類}/{名稱}_anim.*` + `{名稱}_still.*`，`GET /Designer/gallery` 掃目錄動態列出（免手維護 manifest），屬性面板縮圖 grid 點選即用，存靜態 URL（如 `/img/designer-gifs/Fan/fan_anim.gif`）
+2. **自訂上傳**：`POST /Designer/asset`（`Roles=Engineer`，單檔 ≤2MB，限 gif/png/jpeg/webp/svg），以內容 **SHA-256 去重**存 `ScadaDesignAsset` 表（base64 於 `nvarchar(MAX)`；同內容只存一份），回傳 `/Designer/asset/{hash}` URL。`GET /Designer/asset/{hash}` 提供內容（內容定址 → `Cache-Control: immutable` 長快取）
+
+**綁定（二擇一互斥，沿用管路 `szBindMode` 模型）**：`''` 未綁（純裝飾固定播放）/ `'di'`（值 ON→動）/ `'analog'`（`> 閾值` 或 `≥`，由 `szCompare` 決定→動）。斷線（Bad quality）→ 靜止圖 + 灰階。
+
+props：`szAnimSrc / szStillSrc / szBindMode / szSid / szPointName / fThreshold / szCompare('gt'|'gte') / szFit('contain'|'cover'|'fill') / szBgColor`。
+
+- 拖入畫布**直接建立**（不先開 picker），圖片與綁定於屬性面板設定；Designer 畫布本體固定顯示動畫圖（`run`）表明這是動畫元件
+- 圖形共用 `wwwroot/js/common/image-widget.js`（`window.ImageWidget.build(props, szState, 提示字)`）：Designer `buildImageHtml`（widget-defs.js）與 ScadaPage 執行期（render.js `.scada-image` 分派）皆為薄包裝，同 `pipe-svg.js` 單一真相模式
+- 執行期依 `_imgState` 比對，狀態不變不重繪（避免每秒換 innerHTML 讓 GIF 重播閃爍）
+
+> **儲存設計（plan 2026-09-18）**：GIF 不塞進頁 `WidgetStateJson`（會膨脹、同圖多份），改以 `ScadaDesignAsset` 去重表 + URL 引用。孤兒資產（widget 刪除後）目前 append-only 不即時回收，日後如需要再補離線 GC。
+
+> **元件庫分類（Designer）**：元件庫改為三類 — 顯示元件（表格 / 儀錶板 / 文字）、點位與控制（控制按鈕 / AI / DI / AO / DO）、設備與動畫（水泵 / 管路 / 冷卻水塔 / 空調箱風扇 / 冰機 / 圖片動畫）。各類獨立捲動（`.widget-cat-items` overflow-y:auto），`.designer-outer` 釘視窗高使面板本身不捲，避免 100% 時多餘的整體捲軸。
 
 ---
 
@@ -581,6 +603,7 @@ props：`szBindMode / szSid / szPointName / fThreshold / szCompare('gt'|'gte') /
     ├─ .scada-di-point     → 重建 HTML（含 DI 警報脈動）
     ├─ .scada-pump         → 比對 stateKey 決定是否重建 SVG / 僅更新 Gauge
     ├─ .scada-pipe         → 依 bindMode（DI ON/OFF｜類比 vs 閾值｜Bad）比對 pipeKey 決定是否重建
+    ├─ .scada-image        → 依 bindMode（DI ON/OFF｜類比 vs 閾值｜Bad）比對 _imgState 切換 GIF/靜止圖
     └─ .scada-table td[data-sid] → 逐格更新文字與色彩
 ```
 

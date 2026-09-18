@@ -121,6 +121,20 @@
       ]
     },
     {
+      "_comment": "Designer 自訂圖片/GIF 去重資產表 — Hash=SHA-256(內容) 為主鍵，同內容只存一份；image widget 只存 /Designer/asset/{Hash} URL 引用，避免頁 WidgetStateJson 內嵌 base64 膨脹。內容以 base64 存 nvarchar(MAX)（去重表單份，膨脹可接受，換取免動建表器 varbinary 支援）。",
+      "TableName": "ScadaDesignAsset",
+      "Columns": [
+        { "Name": "Hash",        "Type": "varchar",  "Length": 64,  "IsPrimaryKey": true, "Nullable": false,
+          "_comment": "SHA-256 hex（小寫）" },
+        { "Name": "ContentType", "Type": "nvarchar", "Length": 100,               "Nullable": false,
+          "_comment": "MIME，例如 image/gif、image/png" },
+        { "Name": "DataBase64",  "Type": "nvarchar", "Length": -1,                "Nullable": false,
+          "_comment": "圖片內容 base64（不含 data: 前綴）；nvarchar(MAX)" },
+        { "Name": "ByteSize",    "Type": "int",                                   "Nullable": false, "Default": 0 },
+        { "Name": "CreatedAt",   "Type": "datetime",                              "Nullable": false, "Default": "getdate()" }
+      ]
+    },
+    {
       "_comment": "事件/警報記錄表 — 記錄警報觸發、恢復、確認的完整生命週期",
       "TableName": "EventLog",
       "Columns": [
