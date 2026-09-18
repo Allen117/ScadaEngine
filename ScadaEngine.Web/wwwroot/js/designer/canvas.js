@@ -37,14 +37,14 @@ canvas.addEventListener('mousedown', e => {
         document.removeEventListener('mouseup', onUp);
         selRect.remove();
         if (!moved) {
-            if (!ev.ctrlKey) { selectWidget(null); clearWidgetSelection(); }
+            if (!ev.ctrlKey && !ev.shiftKey) { selectWidget(null); clearWidgetSelection(); }
             return;
         }
         const cx = ev.clientX - cRect.left;
         const cy = ev.clientY - cRect.top;
         const rx = Math.min(sx, cx), ry = Math.min(sy, cy);
         const rw = Math.abs(cx - sx), rh = Math.abs(cy - sy);
-        if (!ev.ctrlKey) clearWidgetSelection();
+        if (!ev.ctrlKey && !ev.shiftKey) clearWidgetSelection();
         canvas.querySelectorAll('.canvas-widget').forEach(w => {
             const wx = parseInt(w.style.left) || 0;
             const wy = parseInt(w.style.top) || 0;

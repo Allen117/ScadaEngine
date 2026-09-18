@@ -204,6 +204,16 @@ main { padding: 0 !important; min-height: 0 !important; }
     box-shadow: 0 0 8px rgba(13, 110, 253, 0.4);
 }
 
+/* ========== 智慧對齊線（拖曳/縮放時吸附鄰近元件） ========== */
+.designer-align-guide {
+    position: absolute;
+    background: #ff2d95;
+    pointer-events: none;
+    z-index: 60;
+}
+.designer-align-guide.v { width: 1px; }
+.designer-align-guide.h { height: 1px; }
+
 /* ========== 框選矩形 ========== */
 .designer-selection-rect {
     position: absolute;

@@ -82,7 +82,8 @@ window.addEventListener('resize', adjustHeight);
 // ============================================================
 // 工具函式
 // ============================================================
-function snapGrid(n, nGrid = 10) {
+// 網格吸附步進 = 1px（自由定位；對齊改由智慧對齊線負責，見 widget-core.js）
+function snapGrid(n, nGrid = 1) {
     return Math.round(n / nGrid) * nGrid;
 }
 

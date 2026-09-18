@@ -240,13 +240,23 @@ function selectWidget(el) {
     }
 }
 
-// Widget mousedown 處理（支援 Ctrl 多選切換）
+// Widget mousedown 處理（Shift 連選加入 / Ctrl 剃除移出 / 一般單選）
 function onWidgetMouseDown(ev, el) {
-    if (ev.ctrlKey) {
-        if (selectedWidgetIds.has(el.id)) selectedWidgetIds.delete(el.id);
-        else selectedWidgetIds.add(el.id);
+    if (ev.shiftKey) {
+        // Shift 連選：加入選取集合
+        selectedWidgetIds.add(el.id);
         updateWidgetSelectionVisual();
-        selectWidget(selectedWidgetIds.has(el.id) ? el : null);
+        selectWidget(el);
+        return;
+    }
+    if (ev.ctrlKey) {
+        // Ctrl 剃除：自選取集合移出（若移出的是目前 focus，改為 focus 集合內任一）
+        selectedWidgetIds.delete(el.id);
+        updateWidgetSelectionVisual();
+        if (selectedEl === el) {
+            const szNext = selectedWidgetIds.size ? [...selectedWidgetIds].pop() : null;
+            selectWidget(szNext ? document.getElementById(szNext) : null);
+        }
         return;
     }
     if (!selectedWidgetIds.has(el.id)) { clearWidgetSelection(); selectedWidgetIds.add(el.id); updateWidgetSelectionVisual(); }
@@ -329,7 +339,7 @@ function deleteSelectedWidgets() {
 // 移動 Widget（拖移 header）
 // ============================================================
 function startMove(e, el) {
-    if (e.ctrlKey) return; // Ctrl+click 由 onWidgetMouseDown 處理
+    if (e.ctrlKey || e.shiftKey) return; // Ctrl 剃除 / Shift 連選 由 onWidgetMouseDown 處理
     e.stopPropagation();
 
     // 確保被拖曳的元件在選取集合中
@@ -374,12 +384,87 @@ function startResize(e, el) {
 }
 
 // ============================================================
+// 智慧對齊線（拖曳 / 縮放時偵測鄰近元件的邊/中心對齊）
+// ============================================================
+const ALIGN_SNAP = 6;   // 吸附門檻（px）
+
+// box: { xs:[候選自身 X 值], ys:[候選自身 Y 值], left, right, top, bottom }
+// excludeIds: 不納入比對的元件 Id 集合（自身/選取群組）
+// 回傳最接近的一組 X / Y 對齊（含偏移量 off 與對齊線跨距），無則為 null
+function computeAlignGuides(box, excludeIds) {
+    let bestX = null, bestY = null;
+    canvas.querySelectorAll('.canvas-widget').forEach(w => {
+        if (excludeIds.has(w.id)) return;
+        const ol = parseInt(w.style.left) || 0, ot = parseInt(w.style.top) || 0;
+        const ow = w.offsetWidth, oh = w.offsetHeight;
+        const oXs = [ol, ol + ow / 2, ol + ow];   // 左 / 中 / 右
+        const oYs = [ot, ot + oh / 2, ot + oh];   // 上 / 中 / 下
+        for (const s of box.xs) for (const o of oXs) {
+            const d = o - s;
+            if (Math.abs(d) <= ALIGN_SNAP && (!bestX || Math.abs(d) < Math.abs(bestX.off)))
+                bestX = { off: d, x: o, top: Math.min(box.top, ot), bottom: Math.max(box.bottom, ot + oh) };
+        }
+        for (const s of box.ys) for (const o of oYs) {
+            const d = o - s;
+            if (Math.abs(d) <= ALIGN_SNAP && (!bestY || Math.abs(d) < Math.abs(bestY.off)))
+                bestY = { off: d, y: o, left: Math.min(box.left, ol), right: Math.max(box.right, ol + ow) };
+        }
+    });
+    return { bestX, bestY };
+}
+
+function clearAlignGuides() {
+    canvas.querySelectorAll('.designer-align-guide').forEach(g => g.remove());
+}
+
+function drawAlignGuides(bestX, bestY) {
+    clearAlignGuides();
+    if (bestX) {
+        const g = document.createElement('div');
+        g.className = 'designer-align-guide v';
+        g.style.left   = bestX.x + 'px';
+        g.style.top    = bestX.top + 'px';
+        g.style.height = Math.max(1, bestX.bottom - bestX.top) + 'px';
+        canvas.appendChild(g);
+    }
+    if (bestY) {
+        const g = document.createElement('div');
+        g.className = 'designer-align-guide h';
+        g.style.left  = bestY.left + 'px';
+        g.style.top   = bestY.y + 'px';
+        g.style.width = Math.max(1, bestY.right - bestY.left) + 'px';
+        canvas.appendChild(g);
+    }
+}
+
+// ============================================================
 // 全域 mousemove / mouseup
 // ============================================================
 function onDocMouseMove(e) {
     if (isMoving && selectedWidgetIds.size > 0) {
-        const dx = e.clientX - moveStartMouse.x;
-        const dy = e.clientY - moveStartMouse.y;
+        let dx = e.clientX - moveStartMouse.x;
+        let dy = e.clientY - moveStartMouse.y;
+
+        // 以選取群組的 bounding box（左/中/右、上/中/下）對齊鄰近元件
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        for (const szId of selectedWidgetIds) {
+            const w = document.getElementById(szId);
+            const orig = moveOrigPositions[szId];
+            if (!w || !orig) continue;
+            minX = Math.min(minX, orig.x); minY = Math.min(minY, orig.y);
+            maxX = Math.max(maxX, orig.x + w.offsetWidth); maxY = Math.max(maxY, orig.y + w.offsetHeight);
+        }
+        if (isFinite(minX)) {
+            const l = minX + dx, r = maxX + dx, t = minY + dy, b = maxY + dy;
+            const g = computeAlignGuides({
+                xs: [l, (l + r) / 2, r], ys: [t, (t + b) / 2, b],
+                left: l, right: r, top: t, bottom: b
+            }, selectedWidgetIds);
+            if (g.bestX) dx += g.bestX.off;
+            if (g.bestY) dy += g.bestY.off;
+            drawAlignGuides(g.bestX, g.bestY);
+        }
+
         for (const szId of selectedWidgetIds) {
             const w = document.getElementById(szId);
             const orig = moveOrigPositions[szId];
@@ -397,9 +482,19 @@ function onDocMouseMove(e) {
     if (isResizing && resizingEl) {
         const dx = e.clientX - resizeStart.mx;
         const dy = e.clientY - resizeStart.my;
-        const def = WIDGET_DEFS[resizingEl.dataset.type];
-        const nW = snapGrid(Math.max(def?.nMinW || 40, resizeStart.w + dx));
-        const nH = snapGrid(Math.max(def?.nMinH || 30, resizeStart.h + dy));
+        // 最小尺寸統一放寬為 1px（不再套用各元件的 nMinW/nMinH）
+        let nW = snapGrid(Math.max(1, resizeStart.w + dx));
+        let nH = snapGrid(Math.max(1, resizeStart.h + dy));
+        // 智慧對齊：resize 右/下邊吸附鄰近元件的邊/中心
+        const nLeft = parseInt(resizingEl.style.left) || 0;
+        const nTop  = parseInt(resizingEl.style.top)  || 0;
+        const rz = computeAlignGuides({
+            xs: [nLeft + nW], ys: [nTop + nH],
+            left: nLeft, right: nLeft + nW, top: nTop, bottom: nTop + nH
+        }, new Set([resizingEl.id]));
+        if (rz.bestX) nW = Math.max(1, nW + rz.bestX.off);
+        if (rz.bestY) nH = Math.max(1, nH + rz.bestY.off);
+        drawAlignGuides(rz.bestX, rz.bestY);
         resizingEl.style.width  = nW + 'px';
         resizingEl.style.height = nH + 'px';
         syncSizeInputs(nW, nH);
@@ -410,6 +505,7 @@ function onDocMouseUp() {
     isMoving   = false;
     isResizing = false;
     resizingEl = null;
+    clearAlignGuides();
     document.removeEventListener('mousemove', onDocMouseMove);
     document.removeEventListener('mouseup', onDocMouseUp);
     if (selectedEl) document.querySelector('.property-panel')?.classList.remove('collapsed');
