@@ -172,15 +172,19 @@
             startStr = ys + '-01-01T00:00:00';
             endStr = ye + '-01-01T00:00:00';
         }
-        return { circuitId, granularity: g, start: startStr, end: endStr };
+        // 去年同期比較：僅月粒度有效（checkbox 只在月粒度顯示）
+        const yoyEl = document.getElementById('erYoy');
+        const yoy = (g === 'month') && !!(yoyEl && yoyEl.checked);
+        return { circuitId, granularity: g, start: startStr, end: endStr, yoy };
     }
 
     async function query() {
         const req = buildRequest();
         if (!req) return;
 
+        const nLoadCols = req.yoy ? 5 : 2;
         document.getElementById('erTableBody').innerHTML =
-            `<tr><td colspan="2" class="text-center text-muted py-3"><div class="spinner-border spinner-border-sm text-primary"></div> ${escapeHtml(t('energyreport.table.querying'))}</td></tr>`;
+            `<tr><td colspan="${nLoadCols}" class="text-center text-muted py-3"><div class="spinner-border spinner-border-sm text-primary"></div> ${escapeHtml(t('energyreport.table.querying'))}</td></tr>`;
         document.getElementById('btnExport').disabled = true;
 
         try {
@@ -202,8 +206,9 @@
             renderChart(data);
             document.getElementById('btnExport').disabled = false;
         } catch (err) {
+            const nErrCols = req.yoy ? 5 : 2;
             document.getElementById('erTableBody').innerHTML =
-                `<tr><td colspan="2" class="text-center text-danger py-3">${escapeHtml(t('energyreport.alert.query_failed', { 0: err.message }))}</td></tr>`;
+                `<tr><td colspan="${nErrCols}" class="text-center text-danger py-3">${escapeHtml(t('energyreport.alert.query_failed', { 0: err.message }))}</td></tr>`;
         }
     }
 
@@ -214,16 +219,45 @@
         return Number(v).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
     }
 
+    // 差異：帶正負號的 kWh
+    function fmtDiff(v) {
+        if (v == null) return '--';
+        return (v > 0 ? '+' : '') + fmtKwh(v);
+    }
+
+    // 增減%：漲紅（▲）跌綠（▼），null → --
+    function pctCellHtml(p) {
+        if (p == null) return '<span class="text-muted">--</span>';
+        if (p > 0) return `<span class="er-yoy-up">▲ +${p.toFixed(1)}%</span>`;
+        if (p < 0) return `<span class="er-yoy-down">▼ ${p.toFixed(1)}%</span>`;
+        return '<span class="text-muted">0.0%</span>';
+    }
+
+    // 依 YOY 與否重建表頭；回傳欄數（供空狀態 colspan 用）
+    function applyTableHead(isYoy) {
+        const head = document.getElementById('erTableHeadRow');
+        const period = `<th>${escapeHtml(t('energyreport.table.col_period'))}</th>`;
+        const kwh = `<th class="text-end">${escapeHtml(t('energyreport.table.col_kwh'))}</th>`;
+        if (!isYoy) { head.innerHTML = period + kwh; return 2; }
+        head.innerHTML = period + kwh +
+            `<th class="text-end">${escapeHtml(t('energyreport.table.col_lastyear'))}</th>` +
+            `<th class="text-end">${escapeHtml(t('energyreport.table.col_diff'))}</th>` +
+            `<th class="text-end">${escapeHtml(t('energyreport.table.col_pct'))}</th>`;
+        return 5;
+    }
+
     function renderTable(data) {
+        const isYoy = !!data.isYoy;
+        const nCols = applyTableHead(isYoy);
         const tbody = document.getElementById('erTableBody');
+        const totalLabel = escapeHtml(t('energyreport.table.total'));
+        const staleTip = escapeHtml(t('energyreport.tooltip.stale'));
+
         if (!data.buckets || data.buckets.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="2" class="text-center text-muted py-3">${escapeHtml(t('energyreport.table.no_data'))}</td></tr>`;
-        } else {
-            const totalLabel = escapeHtml(t('energyreport.table.total'));
-            const staleTip = escapeHtml(t('energyreport.tooltip.stale'));
+            tbody.innerHTML = `<tr><td colspan="${nCols}" class="text-center text-muted py-3">${escapeHtml(t('energyreport.table.no_data'))}</td></tr>`;
+        } else if (!isYoy) {
             tbody.innerHTML = data.buckets.map(b => {
-                const mark = b.isStale
-                    ? ` <span class="er-stale-mark" title="${staleTip}">⚠</span>` : '';
+                const mark = b.isStale ? ` <span class="er-stale-mark" title="${staleTip}">⚠</span>` : '';
                 const rowAttr = b.isStale ? ` title="${staleTip}"` : '';
                 return `
                 <tr${rowAttr}>
@@ -232,6 +266,39 @@
                 </tr>`;
             }).join('') +
                 `<tr class="er-total"><td>${totalLabel}</td><td class="text-end">${fmtKwh(data.dTotalKwh)}</td></tr>`;
+        } else {
+            // YOY：期別 / 本期 / 去年同期 / 差異 / 增減%
+            const rows = data.buckets.map(b => {
+                const mark = b.isStale ? ` <span class="er-stale-mark" title="${staleTip}">⚠</span>` : '';
+                const rowAttr = b.isStale ? ` title="${staleTip}"` : '';
+                return `
+                <tr${rowAttr}>
+                    <td>${escapeHtml(b.szLabel)}${mark}</td>
+                    <td class="text-end">${fmtKwh(b.dKwh)}</td>
+                    <td class="text-end">${fmtKwh(b.dLastYearKwh)}</td>
+                    <td class="text-end">${fmtDiff(b.dDiffKwh)}</td>
+                    <td class="text-end">${pctCellHtml(b.dPctChange)}</td>
+                </tr>`;
+            }).join('');
+            // 合計列 YOY 只加總「有去年同期」的可比 bucket
+            const matched = data.buckets.filter(b => b.dLastYearKwh != null);
+            let lyTotalHtml = '--', diffTotalHtml = '--', pctTotalHtml = pctCellHtml(null);
+            if (matched.length) {
+                const curMatched = matched.reduce((s, b) => s + b.dKwh, 0);
+                const lyTotal = matched.reduce((s, b) => s + b.dLastYearKwh, 0);
+                const diffTotal = curMatched - lyTotal;
+                lyTotalHtml = fmtKwh(lyTotal);
+                diffTotalHtml = fmtDiff(diffTotal);
+                pctTotalHtml = pctCellHtml(lyTotal === 0 ? null : diffTotal / Math.abs(lyTotal) * 100);
+            }
+            tbody.innerHTML = rows +
+                `<tr class="er-total">
+                    <td>${totalLabel}</td>
+                    <td class="text-end">${fmtKwh(data.dTotalKwh)}</td>
+                    <td class="text-end">${lyTotalHtml}</td>
+                    <td class="text-end">${diffTotalHtml}</td>
+                    <td class="text-end">${pctTotalHtml}</td>
+                </tr>`;
         }
         document.getElementById('erTotal').textContent = fmtKwh(data.dTotalKwh);
         document.getElementById('erWarnText').textContent = data.isHasWarning
@@ -319,6 +386,16 @@
                 borderColor: 'rgba(13, 110, 253, 1)',
                 borderWidth: 1
             }];
+            // YOY：疊一組淡橘「去年同期」對照序列（並列 bar）
+            if (data.isYoy) {
+                datasets.push({
+                    label: t('energyreport.chart.lastyear_label'),
+                    data: data.buckets.map(b => b.dLastYearKwh),
+                    backgroundColor: 'rgba(255, 159, 64, 0.45)',
+                    borderColor: 'rgba(255, 159, 64, 1)',
+                    borderWidth: 1
+                });
+            }
         }
 
         g_chart = new Chart(ctx, {

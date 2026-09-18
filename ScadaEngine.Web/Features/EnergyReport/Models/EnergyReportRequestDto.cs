@@ -8,6 +8,9 @@ public class EnergyReportRequestDto
     /// <summary>hour / day / month / year</summary>
     public string granularity { get; set; } = "day";
 
+    /// <summary>去年同期比較（僅月粒度有效；非月粒度時忽略）</summary>
+    public bool yoy { get; set; }
+
     /// <summary>
     /// 期間起點：
     /// - hour: 起時（會被截到整點，分鐘秒歸零）

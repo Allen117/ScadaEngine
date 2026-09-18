@@ -820,7 +820,10 @@
 | 今日即時需量 | Today's Real-time Demand | 卡名 |
 | 主要電表用電長條圖 | Main Meter Energy Bar Chart | 卡名 |
 | 子迴路用電占比圓餅圖 | Sub-circuit Energy Share Pie | 卡名 |
-| 去年同期比較 | Year-over-Year Comparison | 卡名 |
+| 去年同期比較 | Year-over-Year Comparison | 卡名 / 用電報表 YOY checkbox |
+| 去年同期 (kWh) | Last Year (kWh) | 用電報表 YOY 欄／Excel |
+| 差異 (kWh) | Diff (kWh) | 用電報表 YOY 欄／Excel |
+| 增減% | Change % | 用電報表 YOY 欄／Excel |
 | 電費狀態 | Electricity Cost Status | 卡名 |
 | 用氣量長條圖 | Gas Usage Bar Chart | 卡名 |
 | 子迴路用氣占比圓餅圖 | Sub-circuit Gas Usage Pie | 卡名 |

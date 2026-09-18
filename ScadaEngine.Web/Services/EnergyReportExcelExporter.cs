@@ -14,6 +14,31 @@ public class EnergyReportExcelExporter
     /// <summary>kWh 儲存格格式 — 顯示小數一位（0 → 0.0），與頁面/日報/能源申報一致。儲存格內的值仍是全精度。</summary>
     private const string KwhFormat = "#,##0.0";
 
+    /// <summary>增減% 格式 — 小數一位帶正負號與 % 符號（正;負;零 三段）。</summary>
+    private const string PctFormat = "+0.0\"%\";-0.0\"%\";0.0\"%\"";
+
+    /// <summary>去年同期/差異儲存格：有值填數字（KwhFormat），null 填 "--"。</summary>
+    private static void SetKwhOrDash(IXLCell cell, double? dValue)
+    {
+        if (dValue.HasValue)
+        {
+            cell.Value = dValue.Value;
+            cell.Style.NumberFormat.Format = KwhFormat;
+        }
+        else cell.Value = "--";
+    }
+
+    /// <summary>增減% 儲存格：有值填百分比數字，null 填 "--"。</summary>
+    private static void SetPctOrDash(IXLCell cell, double? dValue)
+    {
+        if (dValue.HasValue)
+        {
+            cell.Value = dValue.Value;
+            cell.Style.NumberFormat.Format = PctFormat;
+        }
+        else cell.Value = "--";
+    }
+
     private readonly IStringLocalizer<EnergyReportExcelExporter> _l;
 
     public EnergyReportExcelExporter(IStringLocalizer<EnergyReportExcelExporter> localizer)
@@ -28,7 +53,12 @@ public class EnergyReportExcelExporter
         var ws = workbook.Worksheets.Add(_l["excel.sheet_name"]);
 
         var bHasChildren = result.children.Count > 0;
-        var nLastCol = bHasChildren ? 2 + result.children.Count : 2;
+        var bYoy = result.isYoy;
+        // 資料主欄（期別 + 本期 kWh + 各子迴路），YOY 三欄接在最後（去年同期 / 差異 / 增減%）
+        var nBaseCols = bHasChildren ? 2 + result.children.Count : 2;
+        var nYoyStartCol = nBaseCols + 1;
+        var nLastCol = bYoy ? nBaseCols + 3 : nBaseCols;
+        var bWide = bHasChildren || bYoy;
 
         // 標題區
         ws.Cell(1, 1).Value = _l["excel.title"].Value;
@@ -51,7 +81,7 @@ public class EnergyReportExcelExporter
         ws.Cell(8, 2).Value = result.dTotalKwh;
         ws.Cell(8, 2).Style.NumberFormat.Format = KwhFormat;
 
-        if (bHasChildren)
+        if (bWide)
         {
             for (var r = 3; r <= 8; r++) ws.Range(r, 2, r, nLastCol).Merge();
         }
@@ -88,6 +118,12 @@ public class EnergyReportExcelExporter
                 ws.Cell(nDataStartRow, 3 + i).Value = _l["excel.col.with_circuit_kwh", result.children[i].szName].Value;
             }
         }
+        if (bYoy)
+        {
+            ws.Cell(nDataStartRow, nYoyStartCol).Value = _l["excel.col.lastyear_kwh"].Value;
+            ws.Cell(nDataStartRow, nYoyStartCol + 1).Value = _l["excel.col.diff_kwh"].Value;
+            ws.Cell(nDataStartRow, nYoyStartCol + 2).Value = _l["excel.col.pct_change"].Value;
+        }
         ws.Range(nDataStartRow, 1, nDataStartRow, nLastCol).Style.Font.Bold = true;
         ws.Range(nDataStartRow, 1, nDataStartRow, nLastCol).Style.Fill.BackgroundColor = XLColor.LightSteelBlue;
 
@@ -107,6 +143,13 @@ public class EnergyReportExcelExporter
                     ws.Cell(row, 3 + c).Style.NumberFormat.Format = KwhFormat;
                 }
             }
+            if (bYoy)
+            {
+                var b = result.buckets[i];
+                SetKwhOrDash(ws.Cell(row, nYoyStartCol), b.dLastYearKwh);
+                SetKwhOrDash(ws.Cell(row, nYoyStartCol + 1), b.dDiffKwh);
+                SetPctOrDash(ws.Cell(row, nYoyStartCol + 2), b.dPctChange);
+            }
         }
 
         // 合計列
@@ -120,6 +163,27 @@ public class EnergyReportExcelExporter
             {
                 ws.Cell(sumRow, 3 + c).Value = result.children[c].dTotalKwh;
                 ws.Cell(sumRow, 3 + c).Style.NumberFormat.Format = KwhFormat;
+            }
+        }
+        if (bYoy)
+        {
+            // 合計列 YOY 只比「有去年同期資料」的可比 bucket，避免把缺去年的期別灌進差異
+            var matched = result.buckets.Where(b => b.dLastYearKwh.HasValue).ToList();
+            if (matched.Count > 0)
+            {
+                var dCurMatched = Math.Round(matched.Sum(b => b.dKwh), 3);
+                var dLastTotal = Math.Round(matched.Sum(b => b.dLastYearKwh!.Value), 3);
+                var dDiffTotal = Math.Round(dCurMatched - dLastTotal, 3);
+                SetKwhOrDash(ws.Cell(sumRow, nYoyStartCol), dLastTotal);
+                SetKwhOrDash(ws.Cell(sumRow, nYoyStartCol + 1), dDiffTotal);
+                SetPctOrDash(ws.Cell(sumRow, nYoyStartCol + 2),
+                    dLastTotal == 0 ? (double?)null : Math.Round(dDiffTotal / Math.Abs(dLastTotal) * 100, 1));
+            }
+            else
+            {
+                SetKwhOrDash(ws.Cell(sumRow, nYoyStartCol), null);
+                SetKwhOrDash(ws.Cell(sumRow, nYoyStartCol + 1), null);
+                SetPctOrDash(ws.Cell(sumRow, nYoyStartCol + 2), null);
             }
         }
         ws.Range(sumRow, 1, sumRow, nLastCol).Style.Font.Bold = true;

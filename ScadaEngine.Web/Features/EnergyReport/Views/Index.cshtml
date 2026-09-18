@@ -83,6 +83,16 @@
                     <input type="number" id="erYearEnd" class="form-control form-control-sm" min="2000" max="2100">
                 </div>
 
+                <!-- 月粒度：去年同期比較（預設勾選；只月粒度出現） -->
+                <div class="er-period er-period-month er-yoy-check">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="erYoy" checked>
+                        <label class="form-check-label fw-semibold" for="erYoy">
+                            <i class="fas fa-scale-balanced me-1"></i>@Localizer["energyreport.filter.yoy"]
+                        </label>
+                    </div>
+                </div>
+
                 <!-- 月粒度：期別實際區間提示（由 /BillingPeriodSetting/api/range 帶出） -->
                 <div class="er-period er-period-month er-period-hint">
                     <span id="erPeriodHint" class="text-muted small"></span>
@@ -134,7 +144,7 @@
                     <div class="table-responsive" style="max-height:420px;overflow-y:auto;">
                         <table class="table table-striped table-hover table-bordered mb-0">
                             <thead class="table-dark" style="position:sticky;top:0;z-index:30;">
-                                <tr>
+                                <tr id="erTableHeadRow">
                                     <th>@Localizer["energyreport.table.col_period"]</th>
                                     <th class="text-end">@Localizer["energyreport.table.col_kwh"]</th>
                                 </tr>

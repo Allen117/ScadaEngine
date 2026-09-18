@@ -63,6 +63,9 @@
   <data name="excel.col.period" xml:space="preserve"><value>Period</value></data>
   <data name="excel.col.kwh" xml:space="preserve"><value>Energy (kWh)</value></data>
   <data name="excel.col.with_circuit_kwh" xml:space="preserve"><value>{0} (kWh)</value></data>
+  <data name="excel.col.lastyear_kwh" xml:space="preserve"><value>Last Year (kWh)</value></data>
+  <data name="excel.col.diff_kwh" xml:space="preserve"><value>Diff (kWh)</value></data>
+  <data name="excel.col.pct_change" xml:space="preserve"><value>Change %</value></data>
   <data name="excel.row.total" xml:space="preserve"><value>Total</value></data>
   <data name="excel.granularity.hour" xml:space="preserve"><value>Hour</value></data>
   <data name="excel.granularity.day" xml:space="preserve"><value>Day</value></data>

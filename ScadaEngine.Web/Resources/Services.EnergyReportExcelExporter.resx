@@ -63,6 +63,9 @@
   <data name="excel.col.period" xml:space="preserve"><value>時段</value></data>
   <data name="excel.col.kwh" xml:space="preserve"><value>用電量 (kWh)</value></data>
   <data name="excel.col.with_circuit_kwh" xml:space="preserve"><value>{0} (kWh)</value></data>
+  <data name="excel.col.lastyear_kwh" xml:space="preserve"><value>去年同期 (kWh)</value></data>
+  <data name="excel.col.diff_kwh" xml:space="preserve"><value>差異 (kWh)</value></data>
+  <data name="excel.col.pct_change" xml:space="preserve"><value>增減%</value></data>
   <data name="excel.row.total" xml:space="preserve"><value>合計</value></data>
   <data name="excel.granularity.hour" xml:space="preserve"><value>時</value></data>
   <data name="excel.granularity.day" xml:space="preserve"><value>日</value></data>

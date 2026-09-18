@@ -54,7 +54,7 @@ public class EnergyReportController : Controller
     {
         try
         {
-            var result = await _reportService.GetReportWithChildrenAsync(dto.circuitId, dto.granularity, dto.start, dto.end);
+            var result = await QueryReportAsync(dto);
             return Ok(result);
         }
         catch (Exception ex)
@@ -70,7 +70,7 @@ public class EnergyReportController : Controller
     {
         try
         {
-            var result = await _reportService.GetReportWithChildrenAsync(dto.circuitId, dto.granularity, dto.start, dto.end);
+            var result = await QueryReportAsync(dto);
             var szOperator = User.Identity?.Name ?? "anonymous";
             var bytes = _exporter.Export(result, szOperator);
             var szFileName = $"EnergyReport_{result.szCircuitName}_{result.szGranularity}_{DateTime.Now:yyyyMMddHHmmss}.xlsx";
@@ -82,4 +82,10 @@ public class EnergyReportController : Controller
             return BadRequest(new { message = ex.Message });
         }
     }
+
+    /// <summary>查詢/匯出共用：月粒度 + 勾 YOY 走去年同期版，其餘走一般（含 children）版</summary>
+    private Task<Common.Data.Models.EnergyReportResult> QueryReportAsync(EnergyReportRequestDto dto)
+        => dto.yoy && dto.granularity == "month"
+            ? _reportService.GetReportWithYoyAsync(dto.circuitId, dto.start, dto.end)
+            : _reportService.GetReportWithChildrenAsync(dto.circuitId, dto.granularity, dto.start, dto.end);
 }

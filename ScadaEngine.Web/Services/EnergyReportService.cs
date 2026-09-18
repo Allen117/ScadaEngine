@@ -137,6 +137,79 @@ public class EnergyReportService
     }
 
     /// <summary>
+    /// 月粒度「去年同期比較」報表。
+    /// 本期沿用 <see cref="GetReportWithChildrenAsync"/>（含 children，供圖表明細/Excel 子欄），
+    /// 另針對**所選迴路總量**逐 bucket 補上去年同期 kWh + 差異 + 增減%。
+    /// 去年同期 = 去年同月的**帳單期別**（依 BillingPeriodService 解析，非自然月硬減一年）；
+    /// bucket 以 (年,月) 期別鍵對齊，去年缺該期 → 該 bucket 三欄為 null。
+    /// 僅供月粒度呼叫；其他粒度不走此路徑（見 CLAUDE.md / plan：YOY 僅月粒度）。
+    /// </summary>
+    public async Task<EnergyReportResult> GetReportWithYoyAsync(
+        int nCircuitId, DateTime dtStart, DateTime dtEnd)
+    {
+        // 本期（月粒度，含 children）
+        var result = await GetReportWithChildrenAsync(nCircuitId, "month", dtStart, dtEnd);
+        result.isYoy = true;
+
+        // 本期各期別（與 result.buckets 同序同數：兩者都源自 GetPeriodRangesAsync(dtStart,dtEnd)）
+        var curPeriods = await _billingPeriodService.GetPeriodRangesAsync(dtStart, dtEnd);
+        // 去年整段期別，以 (年,月) 為鍵供對齊
+        var lastPeriods = await _billingPeriodService.GetPeriodRangesAsync(dtStart.AddYears(-1), dtEnd.AddYears(-1));
+        var lastByKey = new Dictionary<(int, int), BillingPeriodRange>();
+        foreach (var p in lastPeriods) lastByKey[(p.nYear, p.nMonth)] = p;
+
+        // 期數對不上時（理論上不會）保守放棄 YOY 補值，回本期結果即可
+        if (curPeriods.Count != result.buckets.Count)
+            return result;
+
+        // 對每個本期 bucket 找去年同月期別，收集需計算的去年 ranges（保序、可含缺口）
+        var lyRanges = new List<(DateTime dtStart, DateTime dtEnd)>();
+        var bucketToLy = new int[result.buckets.Count];
+        for (var i = 0; i < result.buckets.Count; i++)
+        {
+            var cp = curPeriods[i];
+            if (lastByKey.TryGetValue((cp.nYear - 1, cp.nMonth), out var lp))
+            {
+                bucketToLy[i] = lyRanges.Count;
+                lyRanges.Add((lp.dtStart, lp.dtEndExclusive));
+            }
+            else bucketToLy[i] = -1;
+        }
+
+        double[] lySums = Array.Empty<double>();
+        if (lyRanges.Count > 0)
+        {
+            using var conn = await GetConnectionAsync();
+            // 主迴路：ComputeBucketSumsForCircuitAsync 已對內部葉子累乘 sign，無需外加（同 GetReportAsync）
+            (lySums, _, _) = await ComputeBucketSumsForCircuitAsync(nCircuitId, lyRanges, conn);
+        }
+
+        for (var i = 0; i < result.buckets.Count; i++)
+        {
+            var b = result.buckets[i];
+            double? dLastRaw = bucketToLy[i] < 0 ? null : lySums[bucketToLy[i]];
+            (b.dLastYearKwh, b.dDiffKwh, b.dPctChange) = ComputeYoyCell(b.dKwh, dLastRaw);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// 單一 bucket 的「去年同期比較」三欄計算（純函式，鎖規則用）。
+    /// dLastYear 為 null（去年缺該期別/無資料）→ 三欄皆 null；
+    /// 去年為 0 → 無法算增減比，pct 回 null（差異仍算）；
+    /// 負底取絕對值保留增減方向語意（比照 EMS YOY）。四捨五入：kWh 3 位、pct 1 位。
+    /// </summary>
+    public static (double? dLastYear, double? dDiff, double? dPct) ComputeYoyCell(double dCurrent, double? dLastYear)
+    {
+        if (dLastYear == null) return (null, null, null);
+        var dLast = Math.Round(dLastYear.Value, 3);
+        var dDiff = Math.Round(dCurrent - dLast, 3);
+        var dPct = dLast == 0 ? (double?)null : Math.Round((dCurrent - dLast) / Math.Abs(dLast) * 100, 1);
+        return (dLast, dDiff, dPct);
+    }
+
+    /// <summary>
     /// 能源申報專用 — 指定年度的 12 個「曆月」bucket（每月 1 號 00:00 ~ 次月 1 號 00:00），
     /// 不走月結期別（BillingPeriodService）。共用 ComputeBucketSumsForCircuitAsync 計算核心，
     /// 溢位/Sign/staleness 規則與一般報表完全一致。

@@ -31,6 +31,12 @@ public class EnergyReportResult
     public bool isHasWarning { get; set; }
 
     /// <summary>
+    /// 是否為「去年同期比較」模式（僅月粒度 + 使用者勾選時 true）。
+    /// true 時各 bucket 的 dLastYearKwh / dDiffKwh / dPctChange 已填，View / Excel 據此增欄。
+    /// </summary>
+    public bool isYoy { get; set; }
+
+    /// <summary>
     /// 直接子迴路的拆解（僅 Excel 匯出使用，預設為空）。
     /// 查詢 API 不會填這個欄位；只有 GetReportWithChildrenAsync 會展開。
     /// </summary>
@@ -54,6 +60,18 @@ public class EnergyReportBucket
     /// 前端據此在該柱/格 hover 提示「電表資料不完整、可能斷線」。
     /// </summary>
     public bool isStale { get; set; }
+
+    /// <summary>
+    /// 去年同期（去年同月的帳單期別）該 bucket 的 kWh；
+    /// 去年該期未設定/無資料時為 null（View / Excel 顯示 "--"）。僅 YOY 模式填值。
+    /// </summary>
+    public double? dLastYearKwh { get; set; }
+
+    /// <summary>本期 − 去年同期（kWh）；去年為 null 時亦為 null。僅 YOY 模式填值。</summary>
+    public double? dDiffKwh { get; set; }
+
+    /// <summary>增減百分比 = 差異 / |去年同期| × 100；去年為 0 或 null 時為 null。僅 YOY 模式填值。</summary>
+    public double? dPctChange { get; set; }
 }
 
 /// <summary>
