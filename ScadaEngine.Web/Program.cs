@@ -190,6 +190,8 @@ builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyDeclarationService>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.TariffSettingService>();
 // 國定假日設定 — Holidays 表讀寫（static 快取，寫入時失效；TOU 計價 DayType 判定用）
 builder.Services.AddScoped<ScadaEngine.Web.Services.HolidayService>();
+// 班別設定 — SystemSettings JSON 讀寫 + 日期範圍展開（電/水/氣用量報表「班別」粒度共用）
+builder.Services.AddScoped<ScadaEngine.Web.Services.ShiftScheduleService>();
 // 電費計算核心 — 逐時計價 + EMS 電費狀態卡查詢彙總
 builder.Services.AddScoped<ScadaEngine.Web.Services.ElectricityCostService>();
 // 電費逐時計價背景服務（每小時 XX:05 重算近 48h rolling window，啟動 catch-up 近 N 天）

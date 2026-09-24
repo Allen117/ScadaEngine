@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="shiftsetting.title" xml:space="preserve"><value>班別設定</value></data>
+  <data name="shiftsetting.breadcrumb.energy" xml:space="preserve"><value>能源管理</value></data>
+  <data name="shiftsetting.card.title" xml:space="preserve"><value>班別清單</value></data>
+  <data name="shiftsetting.button.add" xml:space="preserve"><value>新增班別</value></data>
+  <data name="shiftsetting.button.save" xml:space="preserve"><value>儲存</value></data>
+  <data name="shiftsetting.button.delete" xml:space="preserve"><value>刪除</value></data>
+  <data name="shiftsetting.col.name" xml:space="preserve"><value>班別名稱</value></data>
+  <data name="shiftsetting.col.start" xml:space="preserve"><value>起始時間</value></data>
+  <data name="shiftsetting.col.end" xml:space="preserve"><value>結束時間</value></data>
+  <data name="shiftsetting.col.duration" xml:space="preserve"><value>時數</value></data>
+  <data name="shiftsetting.col.weekdays" xml:space="preserve"><value>適用星期</value></data>
+  <data name="shiftsetting.loading" xml:space="preserve"><value>載入中…</value></data>
+  <data name="shiftsetting.empty" xml:space="preserve"><value>尚未設定班別，點「新增班別」開始建立</value></data>
+  <data name="shiftsetting.placeholder.name" xml:space="preserve"><value>例：早班</value></data>
+  <data name="shiftsetting.badge.crossday" xml:space="preserve"><value>跨日</value></data>
+  <data name="shiftsetting.duration.hours" xml:space="preserve"><value>{0} 小時</value></data>
+  <data name="shiftsetting.hint" xml:space="preserve"><value>班別起訖限整點；結束時間早於或等於起始時間視為跨日班（用量歸屬起始日）；同一星期內各班別時段不可重疊。設定後電/水/氣用量報表可選「班別」粒度分段檢視，未被班別涵蓋的時段列為「非班別」。</value></data>
+  <data name="shiftsetting.weekday.mon" xml:space="preserve"><value>一</value></data>
+  <data name="shiftsetting.weekday.tue" xml:space="preserve"><value>二</value></data>
+  <data name="shiftsetting.weekday.wed" xml:space="preserve"><value>三</value></data>
+  <data name="shiftsetting.weekday.thu" xml:space="preserve"><value>四</value></data>
+  <data name="shiftsetting.weekday.fri" xml:space="preserve"><value>五</value></data>
+  <data name="shiftsetting.weekday.sat" xml:space="preserve"><value>六</value></data>
+  <data name="shiftsetting.weekday.sun" xml:space="preserve"><value>日</value></data>
+  <data name="shiftsetting.msg.saved" xml:space="preserve"><value>已儲存</value></data>
+  <data name="shiftsetting.msg.save_failed" xml:space="preserve"><value>儲存失敗：{0}</value></data>
+  <data name="shiftsetting.msg.load_failed" xml:space="preserve"><value>載入失敗：{0}</value></data>
+</root>

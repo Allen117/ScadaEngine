@@ -145,6 +145,7 @@ public class WaterUsageReportExcelExporter
         "day" => _l["excel.granularity.day"].Value,
         "month" => _l["excel.granularity.month"].Value,
         "year" => _l["excel.granularity.year"].Value,
+        "shift" => _l["excel.granularity.shift"].Value,
         _ => szGranularity
     };
 }

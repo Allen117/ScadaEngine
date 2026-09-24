@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="shiftsetting.title" xml:space="preserve"><value>Shift Setting</value></data>
+  <data name="shiftsetting.breadcrumb.energy" xml:space="preserve"><value>Energy Management</value></data>
+  <data name="shiftsetting.card.title" xml:space="preserve"><value>Shifts</value></data>
+  <data name="shiftsetting.button.add" xml:space="preserve"><value>Add Shift</value></data>
+  <data name="shiftsetting.button.save" xml:space="preserve"><value>Save</value></data>
+  <data name="shiftsetting.button.delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="shiftsetting.col.name" xml:space="preserve"><value>Shift Name</value></data>
+  <data name="shiftsetting.col.start" xml:space="preserve"><value>Start</value></data>
+  <data name="shiftsetting.col.end" xml:space="preserve"><value>End</value></data>
+  <data name="shiftsetting.col.duration" xml:space="preserve"><value>Hours</value></data>
+  <data name="shiftsetting.col.weekdays" xml:space="preserve"><value>Weekdays</value></data>
+  <data name="shiftsetting.loading" xml:space="preserve"><value>Loading…</value></data>
+  <data name="shiftsetting.empty" xml:space="preserve"><value>No shifts yet. Click "Add Shift" to create one.</value></data>
+  <data name="shiftsetting.placeholder.name" xml:space="preserve"><value>e.g. Morning</value></data>
+  <data name="shiftsetting.badge.crossday" xml:space="preserve"><value>Overnight</value></data>
+  <data name="shiftsetting.duration.hours" xml:space="preserve"><value>{0} h</value></data>
+  <data name="shiftsetting.hint" xml:space="preserve"><value>Shift boundaries are whole hours only. An end time earlier than or equal to the start time means an overnight shift (usage is attributed to the start date). Shifts must not overlap within a week. Once configured, the electricity / water / gas usage reports offer a "Shift" granularity; uncovered periods are shown as "Off-shift".</value></data>
+  <data name="shiftsetting.weekday.mon" xml:space="preserve"><value>Mon</value></data>
+  <data name="shiftsetting.weekday.tue" xml:space="preserve"><value>Tue</value></data>
+  <data name="shiftsetting.weekday.wed" xml:space="preserve"><value>Wed</value></data>
+  <data name="shiftsetting.weekday.thu" xml:space="preserve"><value>Thu</value></data>
+  <data name="shiftsetting.weekday.fri" xml:space="preserve"><value>Fri</value></data>
+  <data name="shiftsetting.weekday.sat" xml:space="preserve"><value>Sat</value></data>
+  <data name="shiftsetting.weekday.sun" xml:space="preserve"><value>Sun</value></data>
+  <data name="shiftsetting.msg.saved" xml:space="preserve"><value>Saved</value></data>
+  <data name="shiftsetting.msg.save_failed" xml:space="preserve"><value>Save failed: {0}</value></data>
+  <data name="shiftsetting.msg.load_failed" xml:space="preserve"><value>Load failed: {0}</value></data>
+</root>

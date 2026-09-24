@@ -71,6 +71,7 @@
   <data name="waterusagereport.granularity.day" xml:space="preserve"><value>日</value></data>
   <data name="waterusagereport.granularity.month" xml:space="preserve"><value>月</value></data>
   <data name="waterusagereport.granularity.year" xml:space="preserve"><value>年</value></data>
+  <data name="waterusagereport.granularity.shift" xml:space="preserve"><value>班別</value></data>
 
   <data name="waterusagereport.button.query" xml:space="preserve"><value>查詢</value></data>
   <data name="waterusagereport.button.export" xml:space="preserve"><value>匯出 Excel</value></data>

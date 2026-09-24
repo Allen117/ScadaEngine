@@ -51,25 +51,13 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
-  <data name="excel.sheet_name" xml:space="preserve"><value>用電報表</value></data>
-  <data name="excel.title" xml:space="preserve"><value>用電報表</value></data>
-  <data name="excel.label.circuit" xml:space="preserve"><value>迴路名稱</value></data>
-  <data name="excel.label.granularity" xml:space="preserve"><value>粒度</value></data>
-  <data name="excel.label.range" xml:space="preserve"><value>查詢區間</value></data>
-  <data name="excel.label.query_time" xml:space="preserve"><value>查詢時間</value></data>
-  <data name="excel.label.operator" xml:space="preserve"><value>操作者</value></data>
-  <data name="excel.label.total_kwh" xml:space="preserve"><value>總用電量 (kWh)</value></data>
-  <data name="excel.label.warning" xml:space="preserve"><value>⚠ 部分電表偵測到累積值倒退但未設 MaxKwh，該段視為 0</value></data>
-  <data name="excel.col.period" xml:space="preserve"><value>時段</value></data>
-  <data name="excel.col.kwh" xml:space="preserve"><value>用電量 (kWh)</value></data>
-  <data name="excel.col.with_circuit_kwh" xml:space="preserve"><value>{0} (kWh)</value></data>
-  <data name="excel.col.lastyear_kwh" xml:space="preserve"><value>去年同期 (kWh)</value></data>
-  <data name="excel.col.diff_kwh" xml:space="preserve"><value>差異 (kWh)</value></data>
-  <data name="excel.col.pct_change" xml:space="preserve"><value>增減%</value></data>
-  <data name="excel.row.total" xml:space="preserve"><value>合計</value></data>
-  <data name="excel.granularity.hour" xml:space="preserve"><value>時</value></data>
-  <data name="excel.granularity.day" xml:space="preserve"><value>日</value></data>
-  <data name="excel.granularity.month" xml:space="preserve"><value>月</value></data>
-  <data name="excel.granularity.year" xml:space="preserve"><value>年</value></data>
-  <data name="excel.granularity.shift" xml:space="preserve"><value>班別</value></data>
+  <data name="shift.offshift_label" xml:space="preserve"><value>Off-shift</value></data>
+  <data name="shift.error.not_configured" xml:space="preserve"><value>No shifts configured. Please create shifts on the Shift Setting page first.</value></data>
+  <data name="shift.error.name_required" xml:space="preserve"><value>Shift name is required.</value></data>
+  <data name="shift.error.name_duplicate" xml:space="preserve"><value>Duplicate shift name: {0}</value></data>
+  <data name="shift.error.hour_range" xml:space="preserve"><value>Shift "{0}" has an out-of-range time (whole hours 0–23 only).</value></data>
+  <data name="shift.error.zero_length" xml:space="preserve"><value>Shift "{0}" start and end time must differ.</value></data>
+  <data name="shift.error.weekday_required" xml:space="preserve"><value>Shift "{0}" has no applicable weekday selected.</value></data>
+  <data name="shift.error.weekday_invalid" xml:space="preserve"><value>Shift "{0}" has invalid weekday settings.</value></data>
+  <data name="shift.error.overlap" xml:space="preserve"><value>Shifts "{0}" and "{1}" overlap (usage would be double-counted). Adjust times or weekdays.</value></data>
 </root>

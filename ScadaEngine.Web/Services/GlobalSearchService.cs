@@ -62,6 +62,7 @@ public class GlobalSearchService
         new("/GasBillingPeriodSetting",    "layout.menu.gas_billing_period",         "fas fa-calendar-day",        "氣費 月結 週期 期別 gas billing period"),
         new("/GasTariffSetting",           "layout.menu.gas_tariff_setting",         "fas fa-money-bill-wave",     "氣費 氣價 費率 天然氣 瓦斯 gas tariff"),
         new("/HolidaySetting",             "layout.menu.holiday_setting",            "fas fa-calendar-day",        "假日 國定 行事曆 holiday"),
+        new("/ShiftSetting",               "layout.menu.shift_setting",              "fas fa-user-clock",          "班別 班表 早班 晚班 輪班 shift"),
         new("/EmsCardSetting",             "layout.menu.ems_card_setting",           "fas fa-th-large",            "卡片 顯示 ems card"),
     ];
 

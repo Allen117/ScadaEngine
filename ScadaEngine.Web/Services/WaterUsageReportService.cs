@@ -20,18 +20,21 @@ public class WaterUsageReportService
     private readonly DatabaseConfigService _configService;
     private readonly WaterMeterCircuitService _circuitService;
     private readonly WaterBillingPeriodService _billingPeriodService;
+    private readonly ShiftScheduleService _shiftScheduleService;
     private string _szConnectionString = string.Empty;
 
     public WaterUsageReportService(
         ILogger<WaterUsageReportService> logger,
         DatabaseConfigService configService,
         WaterMeterCircuitService circuitService,
-        WaterBillingPeriodService billingPeriodService)
+        WaterBillingPeriodService billingPeriodService,
+        ShiftScheduleService shiftScheduleService)
     {
         _logger = logger;
         _configService = configService;
         _circuitService = circuitService;
         _billingPeriodService = billingPeriodService;
+        _shiftScheduleService = shiftScheduleService;
     }
 
     private async Task<SqlConnection> GetConnectionAsync()
@@ -47,28 +50,29 @@ public class WaterUsageReportService
     /// 取得報表結果。
     /// </summary>
     /// <param name="nCircuitId">自來水表迴路 Id（葉子或虛擬皆可）</param>
-    /// <param name="szGranularity">hour / day / month / year</param>
-    /// <param name="dtStart">區間起點（含），時/日粒度需精確到天，月需精確到月，年需精確到年</param>
+    /// <param name="szGranularity">hour / day / month / year / shift</param>
+    /// <param name="dtStart">區間起點（含），時/日/班別粒度需精確到天，月需精確到月，年需精確到年</param>
     /// <param name="dtEnd">區間終點（含），同上</param>
     public async Task<WaterUsageReportResult> GetReportAsync(
         int nCircuitId, string szGranularity, DateTime dtStart, DateTime dtEnd)
     {
         var circuit = await GetCircuitOrThrowAsync(nCircuitId);
-        var (ranges, labels) = await BuildBucketRangesAsync(szGranularity, dtStart, dtEnd);
+        var (calcRanges, labels, displayRanges, groupOf) = await BuildBucketRangesAsync(szGranularity, dtStart, dtEnd);
 
         var result = new WaterUsageReportResult
         {
             nCircuitId = nCircuitId,
             szCircuitName = circuit.szName,
             szGranularity = szGranularity,
-            dtStart = ranges[0].dtStart,
-            dtEnd = ranges[^1].dtEnd,
+            dtStart = displayRanges[0].dtStart,
+            dtEnd = displayRanges[^1].dtEnd,
         };
 
         using var conn = await GetConnectionAsync();
-        var (bucketSums, bHasWarning, staleFlags) = await ComputeBucketSumsForCircuitAsync(nCircuitId, ranges, conn);
+        var (bucketSums, bHasWarning, staleFlags) =
+            await ComputeDisplayBucketSumsAsync(nCircuitId, calcRanges, groupOf, labels.Count, conn);
 
-        FillBucketsAndTotal(result, ranges, labels, bucketSums, staleFlags);
+        FillBucketsAndTotal(result, displayRanges, labels, bucketSums, staleFlags);
         result.isHasWarning = bHasWarning;
         return result;
     }
@@ -81,20 +85,21 @@ public class WaterUsageReportService
         int nCircuitId, string szGranularity, DateTime dtStart, DateTime dtEnd)
     {
         var circuit = await GetCircuitOrThrowAsync(nCircuitId);
-        var (ranges, labels) = await BuildBucketRangesAsync(szGranularity, dtStart, dtEnd);
+        var (calcRanges, labels, displayRanges, groupOf) = await BuildBucketRangesAsync(szGranularity, dtStart, dtEnd);
 
         var result = new WaterUsageReportResult
         {
             nCircuitId = nCircuitId,
             szCircuitName = circuit.szName,
             szGranularity = szGranularity,
-            dtStart = ranges[0].dtStart,
-            dtEnd = ranges[^1].dtEnd,
+            dtStart = displayRanges[0].dtStart,
+            dtEnd = displayRanges[^1].dtEnd,
         };
 
         using var conn = await GetConnectionAsync();
-        var (bucketSums, bHasWarning, staleFlags) = await ComputeBucketSumsForCircuitAsync(nCircuitId, ranges, conn);
-        FillBucketsAndTotal(result, ranges, labels, bucketSums, staleFlags);
+        var (bucketSums, bHasWarning, staleFlags) =
+            await ComputeDisplayBucketSumsAsync(nCircuitId, calcRanges, groupOf, labels.Count, conn);
+        FillBucketsAndTotal(result, displayRanges, labels, bucketSums, staleFlags);
         result.isHasWarning = bHasWarning;
 
         // 自己就是葉子 → 不展開子層（匯出格式維持 2 欄）
@@ -106,7 +111,8 @@ public class WaterUsageReportService
         {
             // 子迴路內部 leaves 的 sign 已由 GetLeavesUnderAsync 累乘（相對於 child），
             // child 自己對父的方向需在這裡額外乘上。
-            var (childSums, childWarning, _) = await ComputeBucketSumsForCircuitAsync(child.nId, ranges, conn);
+            var (childSums, childWarning, _) =
+                await ComputeDisplayBucketSumsAsync(child.nId, calcRanges, groupOf, labels.Count, conn);
             var nChildSign = child.nSign == -1 ? -1 : 1;
             var series = new WaterUsageReportChildSeries
             {
@@ -151,9 +157,10 @@ public class WaterUsageReportService
     public async Task<(double dTotalM3, bool isHasWarning)> GetTotalM3Async(
         int nCircuitId, string szGranularity, DateTime dtStart, DateTime dtEnd)
     {
-        var (ranges, _) = await BuildBucketRangesAsync(szGranularity, dtStart, dtEnd);
+        // 總量 = 各計算區間加總，與是否合併為顯示 bucket 無關 → 直接用 calcRanges
+        var (calcRanges, _, _, _) = await BuildBucketRangesAsync(szGranularity, dtStart, dtEnd);
         using var conn = await GetConnectionAsync();
-        var (bucketSums, bHasWarning, _) = await ComputeBucketSumsForCircuitAsync(nCircuitId, ranges, conn);
+        var (bucketSums, bHasWarning, _) = await ComputeBucketSumsForCircuitAsync(nCircuitId, calcRanges, conn);
         return (Math.Round(bucketSums.Sum(), 3), bHasWarning);
     }
 
@@ -167,24 +174,46 @@ public class WaterUsageReportService
     }
 
     /// <summary>
-    /// 產生 N 個 bucket 的 [起, 訖) 邊界對與標籤。
+    /// 產生 bucket 計畫：calcRanges 供計算、displayRanges/labels 供顯示、
+    /// groupOf 非 null 時（班別粒度）表示 calcRanges[i] 屬於第 groupOf[i] 個顯示 bucket。
     /// 月粒度 = 水費期別：dtStart/dtEnd 的年月視為期別編號，期界由 WaterBillingPeriodService 解析
-    /// （期別間可能空窗/重疊 → 不共用邊界點）；其餘粒度沿用連續邊界切法。
+    /// （期別間可能空窗/重疊 → 不共用邊界點）；班別粒度由 ShiftScheduleService 展開；
+    /// 其餘粒度沿用連續邊界切法（calcRanges == displayRanges、groupOf = null）。
     /// </summary>
-    private async Task<(List<(DateTime dtStart, DateTime dtEnd)> ranges, List<string> labels)>
+    private async Task<(List<(DateTime dtStart, DateTime dtEnd)> calcRanges, List<string> labels,
+            List<(DateTime dtStart, DateTime dtEnd)> displayRanges, List<int>? groupOf)>
         BuildBucketRangesAsync(string szGranularity, DateTime dtStart, DateTime dtEnd)
     {
         if (szGranularity == "month")
         {
             var periods = await _billingPeriodService.GetPeriodRangesAsync(dtStart, dtEnd);
-            return (periods.Select(p => (p.dtStart, p.dtEndExclusive)).ToList(),
-                    periods.Select(p => p.szLabel).ToList());
+            var monthRanges = periods.Select(p => (p.dtStart, p.dtEndExclusive)).ToList();
+            return (monthRanges, periods.Select(p => p.szLabel).ToList(), monthRanges, null);
+        }
+        if (szGranularity == "shift")
+        {
+            var plan = await _shiftScheduleService.BuildBucketPlanAsync(dtStart, dtEnd);
+            return (plan.flatRanges, plan.displayLabels, plan.displayRanges, plan.groupOf);
         }
         var boundaries = BuildBoundaries(szGranularity, dtStart, dtEnd);
         var ranges = new List<(DateTime, DateTime)>(boundaries.Count - 1);
         for (var i = 0; i < boundaries.Count - 1; i++)
             ranges.Add((boundaries[i], boundaries[i + 1]));
-        return (ranges, BuildLabels(szGranularity, boundaries));
+        return (ranges, BuildLabels(szGranularity, boundaries), ranges, null);
+    }
+
+    /// <summary>
+    /// 計算 + （班別粒度時）依 groupOf 合併為顯示 bucket。
+    /// groupOf = null（一般粒度）→ 直接回傳計算結果。
+    /// </summary>
+    private async Task<(double[] bucketSums, bool isHasWarning, bool[] staleFlags)> ComputeDisplayBucketSumsAsync(
+        int nCircuitId, List<(DateTime dtStart, DateTime dtEnd)> calcRanges, List<int>? groupOf,
+        int nDisplayBuckets, SqlConnection conn)
+    {
+        var (flatSums, bHasWarning, flatStale) = await ComputeBucketSumsForCircuitAsync(nCircuitId, calcRanges, conn);
+        if (groupOf == null) return (flatSums, bHasWarning, flatStale);
+        var (sums, stale) = ShiftScheduleService.MergeByGroup(flatSums, flatStale, groupOf, nDisplayBuckets);
+        return (sums, bHasWarning, stale);
     }
 
     /// <summary>

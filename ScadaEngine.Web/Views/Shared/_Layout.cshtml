@@ -239,7 +239,7 @@
                                     </a>
                                 </li>
                             }
-                            @if (canAccess("/ChilledWaterSystem") || canAccess("/EnergyMeter") || canAccess("/WaterMeterSetting") || canAccess("/GasMeterSetting") || canAccess("/BillingPeriodSetting") || canAccess("/WaterBillingPeriodSetting") || canAccess("/GasBillingPeriodSetting") || canAccess("/TariffSetting") || canAccess("/WaterTariffSetting") || canAccess("/GasTariffSetting") || canAccess("/HolidaySetting") || canAccess("/EmsCardSetting") || canAccess("/DailyReportSetting"))
+                            @if (canAccess("/ChilledWaterSystem") || canAccess("/EnergyMeter") || canAccess("/WaterMeterSetting") || canAccess("/GasMeterSetting") || canAccess("/BillingPeriodSetting") || canAccess("/WaterBillingPeriodSetting") || canAccess("/GasBillingPeriodSetting") || canAccess("/TariffSetting") || canAccess("/WaterTariffSetting") || canAccess("/GasTariffSetting") || canAccess("/HolidaySetting") || canAccess("/ShiftSetting") || canAccess("/EmsCardSetting") || canAccess("/DailyReportSetting"))
                             {
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
@@ -317,7 +317,7 @@
                                                 </ul>
                                             </li>
                                         }
-                                        @if (canAccess("/HolidaySetting") || canAccess("/EmsCardSetting") || canAccess("/DailyReportSetting"))
+                                        @if (canAccess("/HolidaySetting") || canAccess("/ShiftSetting") || canAccess("/EmsCardSetting") || canAccess("/DailyReportSetting"))
                                         {
                                             @if (canAccess("/ChilledWaterSystem") || canAccess("/EnergyMeter") || canAccess("/BillingPeriodSetting") || canAccess("/TariffSetting") || canAccess("/WaterMeterSetting") || canAccess("/WaterBillingPeriodSetting") || canAccess("/WaterTariffSetting") || canAccess("/GasMeterSetting") || canAccess("/GasBillingPeriodSetting") || canAccess("/GasTariffSetting"))
                                             {
@@ -327,6 +327,10 @@
                                         @if (canAccess("/HolidaySetting"))
                                         {
                                             <li><a class="dropdown-item" href="/HolidaySetting"><i class="fas fa-calendar-day me-2"></i>@Localizer["layout.menu.holiday_setting"]</a></li>
+                                        }
+                                        @if (canAccess("/ShiftSetting"))
+                                        {
+                                            <li><a class="dropdown-item" href="/ShiftSetting"><i class="fas fa-user-clock me-2"></i>@Localizer["layout.menu.shift_setting"]</a></li>
                                         }
                                         @if (canAccess("/EmsCardSetting"))
                                         {

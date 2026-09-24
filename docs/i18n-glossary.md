@@ -50,6 +50,9 @@
 | 月結週期設定 | Billing Cycle Settings | `/BillingPeriodSetting` |
 | 電費設定 | Tariff Settings | `/TariffSetting` |
 | 國定假日設定 | National Holidays / National Holiday Settings | `/HolidaySetting`（選單用短形） |
+| 班別設定 | Shift Settings | `/ShiftSetting` |
+| 班別 | Shift | 報表粒度選項 + 班別設定；跨日班 = Overnight |
+| 非班別 | Off-shift | 班別粒度報表中未被班次涵蓋時段的補桶列 |
 | 系統設定 | System Settings | top-level menu |
 | 工程師模式 | Engineer Mode | top-level menu，僅 Engineer 角色可見（含畫面設計/點位設定/流程圖控制） |
 | 畫面設計 | Designer | `/Designer` |
@@ -691,6 +694,13 @@
 | 緊急 + 高 | Critical + High | Line option |
 | 全收 | All | Line option |
 | 由 Designer DI 點位設定自動帶入 | Auto-populated from Designer DI point settings | hint |
+| 計算點位 | Calc Points | 選點器設備選項 |
+| 需量點位 | Demand Points | 選點器設備選項（DMD- 虛擬點位） |
+| 迴路用電 | Circuit Energy | 選點器設備選項（NRGD-/NRGM- 虛擬點位） |
+| 每日用電 | Daily kWh | 迴路用電點位後綴（曆日，今日 00:00 起） |
+| 每月用電 | Monthly kWh | 迴路用電點位後綴（曆月，非電費期別） |
+| 群組 / 未分組 | Group / Ungrouped | 計算點兩層瀏覽 |
+| 迴路 / 請選擇迴路 / 請選擇群組 | Circuit / Select a circuit / Select a group | 第二層下拉 |
 | 測試發送 | Test Send | Line 按鈕 |
 | 發送中 | Sending | 按鈕 loading |
 | 測試訊息已送出，請檢查群組 | Test message sent. Please check the group. | toast |

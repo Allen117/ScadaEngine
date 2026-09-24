@@ -94,6 +94,7 @@
   <data name="layout.menu.gas_billing_period" xml:space="preserve"><value>Gas Billing Cycle</value></data>
   <data name="layout.menu.tariff_setting" xml:space="preserve"><value>Tariff Settings</value></data>
   <data name="layout.menu.holiday_setting" xml:space="preserve"><value>National Holidays</value></data>
+  <data name="layout.menu.shift_setting" xml:space="preserve"><value>Shift Settings</value></data>
   <data name="layout.menu.ems_card_setting" xml:space="preserve"><value>Card Display Settings</value></data>
   <data name="layout.menu.daily_report" xml:space="preserve"><value>Daily Energy Report</value></data>
   <data name="layout.menu.daily_report_setting" xml:space="preserve"><value>Daily Report Settings</value></data>

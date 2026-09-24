@@ -50,6 +50,9 @@
         endHourSel.value = '23';
         document.getElementById('wurDayStart').value = ymStart;
         document.getElementById('wurDayEnd').value = today;
+        // 班別粒度：預設單日（今天）— 一天內各班分段
+        document.getElementById('wurShiftStart').value = today;
+        document.getElementById('wurShiftEnd').value = today;
         document.getElementById('wurMonthStart').value = ym;
         document.getElementById('wurMonthEnd').value = ym;
         document.getElementById('wurYearStart').value = d.getFullYear();
@@ -171,6 +174,13 @@
             if (parseInt(ye, 10) < parseInt(ys, 10)) { alert(t('waterusagereport.alert.year_order')); return null; }
             startStr = ys + '-01-01T00:00:00';
             endStr = ye + '-01-01T00:00:00';
+        } else if (g === 'shift') {
+            const ss = document.getElementById('wurShiftStart').value;
+            const se = document.getElementById('wurShiftEnd').value;
+            if (!ss || !se) { alert(t('waterusagereport.alert.day_order')); return null; }
+            startStr = ss + 'T00:00:00';
+            endStr = se + 'T00:00:00';
+            if (new Date(endStr) < new Date(startStr)) { alert(t('waterusagereport.alert.day_order')); return null; }
         }
         return { circuitId, granularity: g, start: startStr, end: endStr };
     }

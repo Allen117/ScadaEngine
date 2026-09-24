@@ -50,6 +50,9 @@
         endHourSel.value = '23';
         document.getElementById('erDayStart').value = ymStart;
         document.getElementById('erDayEnd').value = today;
+        // 班別粒度：預設單日（今天）— 一天內各班分段
+        document.getElementById('erShiftStart').value = today;
+        document.getElementById('erShiftEnd').value = today;
         document.getElementById('erMonthStart').value = ym;
         document.getElementById('erMonthEnd').value = ym;
         document.getElementById('erYearStart').value = d.getFullYear();
@@ -171,6 +174,13 @@
             if (parseInt(ye, 10) < parseInt(ys, 10)) { alert(t('energyreport.alert.year_order')); return null; }
             startStr = ys + '-01-01T00:00:00';
             endStr = ye + '-01-01T00:00:00';
+        } else if (g === 'shift') {
+            const ss = document.getElementById('erShiftStart').value;
+            const se = document.getElementById('erShiftEnd').value;
+            if (!ss || !se) { alert(t('energyreport.alert.day_order')); return null; }
+            startStr = ss + 'T00:00:00';
+            endStr = se + 'T00:00:00';
+            if (new Date(endStr) < new Date(startStr)) { alert(t('energyreport.alert.day_order')); return null; }
         }
         // 去年同期比較：僅月粒度有效（checkbox 只在月粒度顯示）
         const yoyEl = document.getElementById('erYoy');

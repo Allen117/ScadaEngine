@@ -34,6 +34,7 @@
                         <option value="day" selected>@Localizer["waterusagereport.granularity.day"]</option>
                         <option value="month">@Localizer["waterusagereport.granularity.month"]</option>
                         <option value="year">@Localizer["waterusagereport.granularity.year"]</option>
+                        <option value="shift">@Localizer["waterusagereport.granularity.shift"]</option>
                     </select>
                 </div>
 
@@ -81,6 +82,16 @@
                 <div class="wur-narrow-date wur-period wur-period-year">
                     <label class="form-label fw-semibold"><i class="fas fa-calendar-alt me-1"></i>@Localizer["waterusagereport.filter.year_end"]</label>
                     <input type="number" id="wurYearEnd" class="form-control form-control-sm" min="2000" max="2100">
+                </div>
+
+                <!-- 班別粒度：起訖日（每列 = 日期 × 班別；班別於 /ShiftSetting 定義） -->
+                <div class="wur-narrow-date wur-period wur-period-shift">
+                    <label class="form-label fw-semibold"><i class="fas fa-calendar me-1"></i>@Localizer["waterusagereport.filter.day_start"]</label>
+                    <input type="date" id="wurShiftStart" class="form-control form-control-sm">
+                </div>
+                <div class="wur-narrow-date wur-period wur-period-shift">
+                    <label class="form-label fw-semibold"><i class="fas fa-calendar me-1"></i>@Localizer["waterusagereport.filter.day_end"]</label>
+                    <input type="date" id="wurShiftEnd" class="form-control form-control-sm">
                 </div>
 
                 <!-- 月粒度：期別實際區間提示（由 /BillingPeriodSetting/api/range 帶出） -->

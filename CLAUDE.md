@@ -73,6 +73,14 @@ Engine 是背景服務，無 HTTP endpoint。
 
 > ⚠️ Razor views 是 **precompiled**，改 .cshtml 必須 `dotnet build` 才生效。
 
+### 測試撞埠時可暫停生產服務（2026-09-24 使用者授權）
+
+Web 埠 5038 寫死在 Program.cs（`ListenAnyIP`，環境變數無效），生產服務 `ScadaWebService` 佔住雙棧時開發實例起不來。
+**為了驗證改動而需要起開發 Web 實例時，允許 `Stop-Service ScadaWebService` 暫停生產服務**（Engine 對應 `ScadaEngineService` 同理）。
+
+- 驗完**同一輪必須復原**：關掉開發實例（路徑過濾殺進程，見下節）→ `Start-Service` 把停掉的服務全部拉回來，並確認 `Get-Service` 為 Running
+- 停/啟服務要在回覆中明講，讓使用者知道生產監控有中斷窗口
+
 ### 部署到 C:\SCADA（本機 = 生產機）
 
 - **Release 包為 framework-dependent（瘦身）**：三個 .NET 8 app（Engine/Web/ModbusServer）不再自帶 runtime，**目標機須先裝 `ASP.NET Core Runtime 8.0.x (x64)`**（一包覆蓋三者）。`Install.bat` 開頭會偵測，缺就中止不動機器。**升級既有 self-contained 生產機前，務必先裝好 runtime**。只鎖 major=8（只有 .NET 9 不會跑）。Python 抽成 package 根目錄的版號化基礎包，Install.bat 只在缺/版本變更才鋪；只改 C# 碼時可 `BuildRelease.ps1 -NoPython` 產 app-only 小包。詳見 docs/功能說明書_部署與遠端更新.md

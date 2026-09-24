@@ -34,6 +34,7 @@
                         <option value="day" selected>@Localizer["energyreport.granularity.day"]</option>
                         <option value="month">@Localizer["energyreport.granularity.month"]</option>
                         <option value="year">@Localizer["energyreport.granularity.year"]</option>
+                        <option value="shift">@Localizer["energyreport.granularity.shift"]</option>
                     </select>
                 </div>
 
@@ -81,6 +82,16 @@
                 <div class="er-narrow-date er-period er-period-year">
                     <label class="form-label fw-semibold"><i class="fas fa-calendar-alt me-1"></i>@Localizer["energyreport.filter.year_end"]</label>
                     <input type="number" id="erYearEnd" class="form-control form-control-sm" min="2000" max="2100">
+                </div>
+
+                <!-- 班別粒度：起訖日（每列 = 日期 × 班別；班別於 /ShiftSetting 定義） -->
+                <div class="er-narrow-date er-period er-period-shift">
+                    <label class="form-label fw-semibold"><i class="fas fa-calendar me-1"></i>@Localizer["energyreport.filter.day_start"]</label>
+                    <input type="date" id="erShiftStart" class="form-control form-control-sm">
+                </div>
+                <div class="er-narrow-date er-period er-period-shift">
+                    <label class="form-label fw-semibold"><i class="fas fa-calendar me-1"></i>@Localizer["energyreport.filter.day_end"]</label>
+                    <input type="date" id="erShiftEnd" class="form-control form-control-sm">
                 </div>
 
                 <!-- 月粒度：去年同期比較（預設勾選；只月粒度出現） -->
