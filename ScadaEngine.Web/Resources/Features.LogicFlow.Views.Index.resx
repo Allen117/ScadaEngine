@@ -262,4 +262,8 @@
   <data name="logicflow.pp.hist.invalid" xml:space="preserve"><value>歷史值分鐘數須為 1–43200 之間的整數（最長 30 天）</value></data>
   <data name="logicflow.hist.badge" xml:space="preserve"><value>⏱ -{n}分</value></data>
   <data name="logicflow.hist.badge_tip" xml:space="preserve"><value>讀取 {n} 分鐘前的歷史值；查無資料時視為 Bad</value></data>
+  <data name="logicflow.pp.demand_points" xml:space="preserve"><value>需量點位</value></data>
+  <data name="logicflow.pp.option.demand_point" xml:space="preserve"><value>需量點位</value></data>
+  <data name="logicflow.pp.option.demand_point_desc" xml:space="preserve"><value>電表迴路 15 分鐘需量（kW，唯讀）</value></data>
+  <data name="logicflow.pp.title_select_demand_point" xml:space="preserve"><value>選擇需量點位</value></data>
 </root>

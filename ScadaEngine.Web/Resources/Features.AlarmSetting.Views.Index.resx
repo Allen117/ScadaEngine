@@ -226,4 +226,5 @@
   <data name="alarm.alert.phone_invalid" xml:space="preserve"><value>手機號碼格式不正確（僅數字與開頭 +，8~15 碼）</value></data>
   <data name="alarm.confirm.delete_sms_target" xml:space="preserve"><value>確定要刪除此簡訊號碼？</value></data>
   <data name="alarm.toast.saved" xml:space="preserve"><value>已儲存</value></data>
+  <data name="alarm.option.demand_point" xml:space="preserve"><value>需量點位</value></data>
 </root>

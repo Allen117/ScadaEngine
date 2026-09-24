@@ -530,4 +530,7 @@
   <data name="designer.cmetric.fill_row_mismatch" xml:space="preserve"><value>注意：此列列名「{row}」與迴路名「{name}」不同，請確認帶入內容是否正確</value></data>
   <data name="designer.cmetric.fill_btn_skip" xml:space="preserve"><value>不帶入</value></data>
   <data name="designer.cmetric.fill_btn_apply" xml:space="preserve"><value>帶入勾選項目</value></data>
+  <data name="designer.picker.source.demand" xml:space="preserve"><value>需量點位</value></data>
+  <data name="designer.picker.source.demand_desc" xml:space="preserve"><value>電表迴路 15 分鐘需量（kW，每分鐘更新）</value></data>
+  <data name="designer.picker.title.demand_point" xml:space="preserve"><value>選擇需量點位</value></data>
 </root>

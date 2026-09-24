@@ -45,6 +45,10 @@ public class ConditionCtrlController : Controller
             .Select(p => new ModbusPointModel { szSID = p.szSID, szName = p.szName, szUnit = p.szUnit ?? string.Empty }));
         pointList.AddRange((await _dataRepository.GetAllOpcUaPointsAsync())
             .Select(p => new ModbusPointModel { szSID = p.szSID, szName = p.szName, szUnit = p.szUnit ?? string.Empty }));
+        // 需量虛擬點位（僅作條件點；控制點選單於 View 端排除 —— 需量不可寫）
+        var szDemandSuffix = _l["conditionctrl.demand.point_suffix"].Value;
+        pointList.AddRange((await _dataRepository.GetDemandPointInfosAsync())
+            .Select(d => new ModbusPointModel { szSID = $"DMD-{d.szSID}", szName = $"{d.szName} {szDemandSuffix}", szUnit = "kW" }));
 
         var existingRules = (await _dataRepository.GetAllConditionControlRulesAsync()).ToList();
 

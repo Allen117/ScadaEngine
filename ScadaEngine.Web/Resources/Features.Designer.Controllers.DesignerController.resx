@@ -54,4 +54,6 @@
   <data name="designer.image.upload_bad_type" xml:space="preserve"><value>不支援的圖片格式（僅 GIF / PNG / JPEG / WebP / SVG）</value></data>
   <data name="designer.image.upload_failed" xml:space="preserve"><value>圖片上傳失敗</value></data>
   <data name="designer.row_template.invalid_payload" xml:space="preserve"><value>列範本內容無效</value></data>
+  <data name="designer.points.demand_group" xml:space="preserve"><value>需量</value></data>
+  <data name="designer.points.demand_suffix" xml:space="preserve"><value>需量</value></data>
 </root>

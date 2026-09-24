@@ -2457,6 +2457,31 @@ public class SqlServerDataRepository : IDataRepository, IDisposable
         }
     }
 
+    public async Task<IEnumerable<DemandCircuitModel>> GetDemandPointInfosAsync()
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+            // 同 SID 被多迴路引用時取 MIN(Name)，SID 集合與 GetDemandSidsAsync 一致
+            const string szSql = @"
+                SELECT SID AS szSID, MIN(Name) AS szName
+                FROM EnergyCircuit
+                WHERE IsDemandEnabled = 1 AND SID IS NOT NULL AND SID <> ''
+                GROUP BY SID
+                ORDER BY MIN(Name)";
+            return await connection.QueryAsync<DemandCircuitModel>(szSql);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "取得需量虛擬點位資訊失敗");
+            return Enumerable.Empty<DemandCircuitModel>();
+        }
+    }
+
     public async Task<TodayDemandModel?> GetTodayDemandAsync(string szDemandSID)
     {
         if (string.IsNullOrEmpty(_szConnectionString))

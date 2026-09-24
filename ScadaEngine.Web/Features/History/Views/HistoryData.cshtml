@@ -45,6 +45,8 @@
 
     var szCalcLabel = Localizer["history.coordinator.calc"].Value;
     var szUngroupedLabel = Localizer["history.coordinator.ungrouped"].Value;
+    var szDemandLabel = Localizer["history.coordinator.demand"].Value;
+    var hasDemandPoints = Model.PointList.Any(p => p.szSID.StartsWith("DMD-"));
 }
 
 <link rel="stylesheet" href="~/lib/flatpickr/flatpickr.min.css" />
@@ -229,6 +231,17 @@
                                 <i class="fas fa-chevron-right me-1" style="font-size:.7rem;visibility:hidden;"></i>
                                 <i class="fas fa-calculator me-1 text-warning"></i>
                                 <span class="small">@szCalcLabel</span>
+                            </a>
+                        }
+                        @* 需量虛擬點位（Engine 每分鐘發布 DMD-{kWhSID}）— 走通用 data-sid-prefix 篩選 *@
+                        @if (hasDemandPoints)
+                        {
+                            <a href="#" class="list-group-item list-group-item-action py-2 coordinator-item"
+                               data-sid-prefix="DMD-"
+                               data-name="@szDemandLabel">
+                                <i class="fas fa-chevron-right me-1" style="font-size:.7rem;visibility:hidden;"></i>
+                                <i class="fas fa-bolt me-1 text-danger"></i>
+                                <span class="small">@szDemandLabel</span>
                             </a>
                         }
                     }
@@ -502,7 +515,8 @@
     window.__historyConfig = {
         points:         @Html.Raw(pointJson),
         coordinators:   @Html.Raw(coordJson),
-        initialCoordId: @initialCoordId
+        initialCoordId: @initialCoordId,
+        calcLabel:      @Html.Raw(System.Text.Json.JsonSerializer.Serialize(szCalcLabel))
     };
 </script>
 <script src="~/js/common/point-grouping.js"></script>

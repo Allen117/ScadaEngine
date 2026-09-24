@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using ScadaEngine.Engine.Communication.Modbus.Models;
 using ScadaEngine.Engine.Data.Interfaces;
 using ScadaEngine.Web.Features.History.Models;
@@ -11,11 +12,16 @@ public class HistoryController : Controller
 {
     private readonly IDataRepository _dataRepository;
     private readonly ILogger<HistoryController> _logger;
+    private readonly IStringLocalizer<HistoryController> _l;
 
-    public HistoryController(IDataRepository dataRepository, ILogger<HistoryController> logger)
+    public HistoryController(
+        IDataRepository dataRepository,
+        ILogger<HistoryController> logger,
+        IStringLocalizer<HistoryController> localizer)
     {
         _dataRepository = dataRepository;
         _logger = logger;
+        _l = localizer;
     }
 
     /// <summary>
@@ -40,6 +46,11 @@ public class HistoryController : Controller
         // 合併 OPC UA 來源點位
         pointList.AddRange((await _dataRepository.GetAllOpcUaPointsAsync())
             .Select(p => new ModbusPointModel { szSID = p.szSID, szName = p.szName, szUnit = p.szUnit ?? string.Empty }));
+
+        // 合併需量虛擬點位（DMD-{kWhSID}，側欄「需量」桶走 data-sid-prefix="DMD-"）
+        var szDemandSuffix = _l["history.demand.point_suffix"].Value;
+        pointList.AddRange((await _dataRepository.GetDemandPointInfosAsync())
+            .Select(d => new ModbusPointModel { szSID = $"DMD-{d.szSID}", szName = $"{d.szName} {szDemandSuffix}", szUnit = "kW" }));
 
         // 計算點位群組名稱（供側欄分群）
         var calcPointGroups = calcPointsAll
@@ -119,6 +130,13 @@ public class HistoryController : Controller
                 var op = opcUaPoints.FirstOrDefault(p => p.szSID == szSID);
                 if (op != null)
                     point = new ModbusPointModel { szSID = op.szSID, szName = op.szName, szUnit = op.szUnit ?? string.Empty };
+            }
+            if (point == null && szSID.StartsWith("DMD-"))
+            {
+                var demandInfos = await _dataRepository.GetDemandPointInfosAsync();
+                var dm = demandInfos.FirstOrDefault(d => $"DMD-{d.szSID}" == szSID);
+                if (dm != null)
+                    point = new ModbusPointModel { szSID = szSID, szName = $"{dm.szName} {_l["history.demand.point_suffix"].Value}", szUnit = "kW" };
             }
 
             // 計算標準差

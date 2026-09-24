@@ -51,9 +51,11 @@
     var _currentEmailGroupRecipients = [];  // 編輯群組 modal 時的暫存收件人清單
 
     var CALC_DEVICE_ID = -999;
+    var DMD_DEVICE_ID = -998;   // 需量虛擬點位（DMD-{kWhSID}）
 
-    // isCalcSid 委派共用層 window.PointGrouping（分群解析單一真相）
+    // isCalcSid / isDmdSid 委派共用層 window.PointGrouping（分群解析單一真相）
     function isCalcSid(sid) { return window.PointGrouping.isCalcSid(sid); }
+    function isDmdSid(sid) { return window.PointGrouping.isDmdSid(sid); }
 
     // ── 多 ID 設備判斷 ──
 
@@ -106,6 +108,7 @@
 
     function getDeviceLabelForSid(sid) {
         if (isCalcSid(sid)) return t('alarm.option.calc_point');
+        if (isDmdSid(sid)) return t('alarm.option.demand_point');
         var coord = findCoordForSid(sid);
         if (!coord) return '';
         if (isMultiIdCoord(coord)) {
@@ -232,6 +235,13 @@
         calcOpt.value = CALC_DEVICE_ID;
         calcOpt.textContent = t('alarm.option.calc_point');
         sel.appendChild(calcOpt);
+        // 需量虛擬點位（有點位才顯示）
+        if (_points.some(function (p) { return isDmdSid(p.sid); })) {
+            var dmdOpt = document.createElement('option');
+            dmdOpt.value = DMD_DEVICE_ID;
+            dmdOpt.textContent = t('alarm.option.demand_point');
+            sel.appendChild(dmdOpt);
+        }
     }
 
     function onCoordChange() {
@@ -250,6 +260,12 @@
             showSubDeviceCol(false);
             var calcPts = _points.filter(function (p) { return isCalcSid(p.sid); });
             fillPointDropdown(calcPts);
+            return;
+        }
+
+        if (nDbId === DMD_DEVICE_ID) {
+            showSubDeviceCol(false);
+            fillPointDropdown(_points.filter(function (p) { return isDmdSid(p.sid); }));
             return;
         }
 
@@ -294,6 +310,16 @@
             showSubDeviceCol(false);
             var calcPts = _points.filter(function (p) { return isCalcSid(p.sid); });
             fillPointDropdown(calcPts);
+            document.getElementById('selPoint').value = sid;
+            document.getElementById('txtSid').value = sid;
+            applyDiLabelsForSid(sid);
+            return;
+        }
+
+        if (isDmdSid(sid)) {
+            document.getElementById('selCoord').value = DMD_DEVICE_ID;
+            showSubDeviceCol(false);
+            fillPointDropdown(_points.filter(function (p) { return isDmdSid(p.sid); }));
             document.getElementById('selPoint').value = sid;
             document.getElementById('txtSid').value = sid;
             applyDiLabelsForSid(sid);

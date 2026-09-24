@@ -70,6 +70,8 @@
                             <option value="DB:@c.Id">@(c.szName + dbSourceSuffix)</option>
                         }
                         <option value="CALC">@Localizer["conditionctrl.option.calc"]</option>
+                        @* 需量虛擬點位僅可作條件點，控制設備下拉不加 *@
+                        <option value="DMD">@Localizer["conditionctrl.option.demand"]</option>
                     </select>
                 </div>
 
@@ -164,7 +166,8 @@
                     </label>
                     <select id="controlPoint" class="form-select form-select-sm">
                         <option value="">@Localizer["conditionctrl.option.select_point"]</option>
-                        @foreach (var p in Model.PointList)
+                        @* 需量虛擬點位（DMD-）唯讀，不可作控制點 *@
+                        @foreach (var p in Model.PointList.Where(p => !p.szSID.StartsWith("DMD-")))
                         {
                             <option value="@p.szSID" data-name="@p.szName" data-unit="@(p.szUnit ?? "")">
                                 @p.szName

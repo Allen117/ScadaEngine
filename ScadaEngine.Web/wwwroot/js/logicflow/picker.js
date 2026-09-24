@@ -12,10 +12,14 @@
     function isDbSid(szSid) {
         return window.PointGrouping.isDbSid(szSid);
     }
+    function isDmdSid(szSid) {
+        return window.PointGrouping.isDmdSid(szSid);
+    }
     function isPointOfDev(szSid, nDevId) {
         if (nDevId === S.PP_CALC_DEV_ID) return isCalcSid(szSid);
         if (nDevId === S.PP_DB_DEV_ID)   return isDbSid(szSid);
-        if (isCalcSid(szSid) || isDbSid(szSid)) return false;
+        if (nDevId === S.PP_DMD_DEV_ID)  return isDmdSid(szSid);
+        if (isCalcSid(szSid) || isDbSid(szSid) || isDmdSid(szSid)) return false;
         const p = getSidPrefix(szSid);
         return p >= nDevId * 65536 && p < (nDevId + 1) * 65536;
     }
@@ -36,6 +40,10 @@
             }
             if (isCalcSid(p.szSid)) {
                 p._devLabel = p.szGroupName || S.t('logicflow.pp.calc_points');
+                return;
+            }
+            if (isDmdSid(p.szSid)) {
+                p._devLabel = p.szGroupName || S.t('logicflow.pp.demand_points');
                 return;
             }
             for (const d of S.ppAllDevices) {
@@ -134,6 +142,17 @@
                         }, 50);
                         return;
                     }
+                    if (isDmdSid(boundSid)) {
+                        ppShowDmdStep();
+                        S.ppPickedSid = boundSid;
+                        document.getElementById('btnConfirmPoint').disabled = false;
+                        S.ppModal.show();
+                        setTimeout(() => {
+                            const item = document.querySelector('#pointListContainer .pp-list-item[data-sid="' + boundSid + '"]');
+                            if (item) { item.classList.add('selected'); item.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+                        }, 50);
+                        return;
+                    }
                     let foundDev = null, foundModbusId = null, szLabel = '';
                     for (const d of S.ppAllDevices) {
                         if (!isPointOfDev(boundSid, d.nId)) continue;
@@ -176,11 +195,13 @@
         document.getElementById('ppStep1').style.display = 'none';
         document.getElementById('ppStep2').style.display = 'none';
         document.getElementById('btnConfirmPoint').disabled = true;
-        // 寫入點位不可選計算點位（計算值無法控制）；DB 點位允許寫入
+        // 寫入點位不可選計算點位（計算值無法控制）；DB 點位允許寫入；需量點位唯讀同計算點
         var calcEl = document.getElementById('ppStep0Calc');
         if (calcEl) calcEl.style.display = (S.ppPendingType === 'output') ? 'none' : '';
         var dbEl = document.getElementById('ppStep0Db');
         if (dbEl) dbEl.style.display = '';
+        var dmdEl = document.getElementById('ppStep0Dmd');
+        if (dmdEl) dmdEl.style.display = (S.ppPendingType === 'output') ? 'none' : '';
     }
 
     function ppShowStep1() {
@@ -334,6 +355,24 @@
 
     function ppBackToStep0() {
         ppShowStep0();
+    }
+
+    // =========== 需量虛擬點位（DMD-{kWhSID}，數量少 → 免群組層直接平鋪）===========
+    function ppShowDmdStep() {
+        S.ppPickedDevId = S.PP_DMD_DEV_ID;
+        S.ppPickedModbusId = null;
+        S.ppPickedSid = null;
+        S.ppPickedCalcGroup = null;
+        S.ppPickedDbCoord = null;
+        document.getElementById('ppStep0').style.display = 'none';
+        document.getElementById('ppStep1').style.display = 'none';
+        document.getElementById('ppStep2').style.display = '';
+        document.getElementById('ppModalTitle').textContent = S.t('logicflow.pp.title_select_demand_point');
+        document.getElementById('ppDeviceName').textContent = S.t('logicflow.pp.demand_points');
+        document.getElementById('ppDeviceIcon').className = 'fas fa-bolt me-1';
+        document.getElementById('ppPointSearch').value = '';
+        document.getElementById('btnConfirmPoint').disabled = true;
+        ppRenderPoints('');
     }
 
     // =========== DB 來源 ===========
@@ -528,6 +567,9 @@
             } else {
                 ppShowStep0();
             }
+        } else if (S.ppPickedDevId === S.PP_DMD_DEV_ID) {
+            // 需量：無群組層，直接回來源選擇
+            ppShowStep0();
         } else {
             ppShowDeviceStep();
         }
@@ -549,6 +591,9 @@
                 // DB 點位 Coordinator 篩選（ppPickedDbCoord 為 null 時顯示全部 DB）
                 if (!isDbSid(p.szSid)) return false;
                 if (S.ppPickedDbCoord != null && (p.szGroupName || '') !== S.ppPickedDbCoord) return false;
+            } else if (S.ppPickedDevId === S.PP_DMD_DEV_ID) {
+                // 需量虛擬點位（平鋪，無群組層）
+                if (!isDmdSid(p.szSid)) return false;
             } else if (S.ppPickedModbusId != null) {
                 const pfx = getSidPrefix(p.szSid);
                 const base = S.ppPickedDevId * 65536 + S.ppPickedModbusId * 256;
@@ -688,6 +733,7 @@
     S.ppShowDeviceStep = ppShowDeviceStep;
     S.ppShowCalcStep = ppShowCalcStep;
     S.ppShowDbStep = ppShowDbStep;
+    S.ppShowDmdStep = ppShowDmdStep;
     S.ppBackToStep0 = ppBackToStep0;
     S.ppSelectCalcGroup = ppSelectCalcGroup;
     S.ppSelectDbCoordinator = ppSelectDbCoordinator;

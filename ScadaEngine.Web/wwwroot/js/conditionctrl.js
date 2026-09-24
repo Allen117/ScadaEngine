@@ -10,14 +10,16 @@
     // ── SID 類型判斷（委派共用層 window.PointGrouping，分群解析單一真相）──
     function isCalcSid(sid) { return window.PointGrouping.isCalcSid(sid); }
     function isDbSid(sid)   { return window.PointGrouping.isDbSid(sid); }
+    function isDmdSid(sid)  { return window.PointGrouping.isDmdSid(sid); }
     function getDbCoordIdForSid(sid) {
         var m = sid && sid.match(/^DB(\d+)-S\d+$/);
         return m ? parseInt(m[1]) : 0;
     }
 
-    // 設備下拉選單value三類："CALC" / "DB:{n}" / Modbus coord id (數字字串) / "0" 表全部
+    // 設備下拉選單value四類："CALC" / "DMD" / "DB:{n}" / Modbus coord id (數字字串) / "0" 表全部
     function parseDeviceValue(v) {
         if (v === 'CALC') return { kind: 'calc' };
+        if (v === 'DMD')  return { kind: 'dmd' };
         if (typeof v === 'string' && v.indexOf('DB:') === 0) {
             var n = parseInt(v.substring(3));
             return isNaN(n) ? { kind: 'all' } : { kind: 'db', id: n };
@@ -72,9 +74,10 @@
         return coord ? coord.id : 0;
     }
 
-    // 從 SID 反推「設備下拉值」（Modbus / DB:N / CALC / '0'=未知）
+    // 從 SID 反推「設備下拉值」（Modbus / DB:N / CALC / DMD / '0'=未知）
     function findDeviceValueForSid(sid) {
         if (isCalcSid(sid)) return 'CALC';
+        if (isDmdSid(sid))  return 'DMD';
         if (isDbSid(sid))   return 'DB:' + getDbCoordIdForSid(sid);
         var nDbId = findCoordForSid(sid);
         return nDbId > 0 ? String(nDbId) : '0';
@@ -102,6 +105,7 @@
 
     function getSubDeviceNameForSid(sid) {
         if (isCalcSid(sid)) return t('conditionctrl.name.calc_points');
+        if (isDmdSid(sid))  return t('conditionctrl.name.demand_points');
         if (isDbSid(sid)) {
             var dbId = getDbCoordIdForSid(sid);
             var dbCoord = allDbCoords.find(function (c) { return c.id === dbId; });
@@ -154,8 +158,8 @@
         coordSelectEl.value = deviceVal;
         var dv = parseDeviceValue(deviceVal);
 
-        // CALC / DB 來源都沒有子設備概念
-        if (dv.kind === 'calc' || dv.kind === 'db') {
+        // CALC / DMD / DB 來源都沒有子設備概念
+        if (dv.kind === 'calc' || dv.kind === 'dmd' || dv.kind === 'db') {
             subDeviceColEl.classList.add('d-none');
             pointColEl.classList.remove('col-md-2');
             pointColEl.classList.add('col-md-4');
@@ -287,6 +291,8 @@
         var pts;
         if (dv.kind === 'calc') {
             pts = allPoints.filter(function (p) { return isCalcSid(p.sid); });
+        } else if (dv.kind === 'dmd') {
+            pts = allPoints.filter(function (p) { return isDmdSid(p.sid); });
         } else if (dv.kind === 'db') {
             pts = allPoints.filter(function (p) { return isDbSid(p.sid) && getDbCoordIdForSid(p.sid) === dv.id; });
         } else if (dv.kind === 'modbus') {
@@ -300,6 +306,11 @@
             });
         } else {
             pts = allPoints;
+        }
+
+        // 需量虛擬點位（DMD-）唯讀，控制點下拉一律排除
+        if (selectEl === controlPoint) {
+            pts = pts.filter(function (p) { return !window.PointGrouping.isDmdSid(p.sid); });
         }
 
         pts.forEach(function (p) {

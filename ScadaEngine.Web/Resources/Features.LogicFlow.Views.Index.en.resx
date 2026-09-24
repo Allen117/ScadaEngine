@@ -246,4 +246,8 @@ Automatically connect a constant 0 to return pressure (p_ret)?</value></data>
   <data name="logicflow.pp.hist.invalid" xml:space="preserve"><value>Offset must be an integer between 1 and 43200 minutes (up to 30 days)</value></data>
   <data name="logicflow.hist.badge" xml:space="preserve"><value>⏱ -{n}m</value></data>
   <data name="logicflow.hist.badge_tip" xml:space="preserve"><value>Reads the historical value from {n} minutes ago; treated as Bad if no data is found</value></data>
+  <data name="logicflow.pp.demand_points" xml:space="preserve"><value>Demand Points</value></data>
+  <data name="logicflow.pp.option.demand_point" xml:space="preserve"><value>Demand Points</value></data>
+  <data name="logicflow.pp.option.demand_point_desc" xml:space="preserve"><value>15-min circuit demand (kW, read-only)</value></data>
+  <data name="logicflow.pp.title_select_demand_point" xml:space="preserve"><value>Select Demand Point</value></data>
 </root>

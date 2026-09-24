@@ -25,9 +25,16 @@
         var isOfDev   = function (sid, nId) { var n = getSidPfx(sid); return n >= nId * 65536 && n < (nId + 1) * 65536; };
         allPoints.forEach(function (p) {
             if (isCalcSid(p.sid)) {
-                var grp = p.groupName || t('history.coordinator.calc');
+                // calcLabel 由 Razor 注入（此處執行時 i18n 字典尚未 fetch 完成，t() 會漏回 raw key）
+                var grp = p.groupName || cfg.calcLabel || '';
                 p.deviceLabel = grp;
-                p.fullName = grp + ' / ' + p.name;
+                p.fullName = grp ? grp + ' / ' + p.name : p.name;
+                return;
+            }
+            if (window.PointGrouping.isDmdSid(p.sid)) {
+                // 需量點名已帶「需量」後綴、側欄另有獨立需量桶 — 不加前綴
+                p.deviceLabel = '';
+                p.fullName = p.name;
                 return;
             }
             var szLabel = '';

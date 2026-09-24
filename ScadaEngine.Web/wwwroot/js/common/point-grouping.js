@@ -8,13 +8,13 @@
 //
 // SID 格式：{CoordinatorId*65536 + ModbusId*256 + 1}-S{N}
 //   → 數字前綴 = CoordinatorId*65536 + ModbusId*256 + 1，可逆
-//   計算點位 SID 以 'CALC-' 開頭；DB 來源 'DB{n}-S{n}'；OPC 'OPC{n}-S{n}'
+//   計算點位 SID 以 'CALC-' 開頭；DB 來源 'DB{n}-S{n}'；OPC 'OPC{n}-S{n}'；需量 'DMD-{kWhSID}'
 //
 // 主入口：window.PointGrouping
 //   parseCoord(d)            → 吸收 Hungarian / camelCase 兩種欄位命名，
 //                              回傳 { id, modbusIds:[], deviceNames:[], name }
 //   getSidPrefix(sid)        → 數字前綴（非 modbus 點位回 -1）
-//   isCalcSid / isDbSid / isOpcSid(sid)
+//   isCalcSid / isDbSid / isOpcSid / isDmdSid(sid)
 //   isMultiId(coord)         → 該 Coordinator 是否多站號
 //   coordContainsSid(sid,c)  → sid 是否屬於此 Coordinator（不分子站號）
 //   subOfSid(sid, coord)     → 多站號時回 { mid, idx, subName }；單站號 / 找不到回 null
@@ -54,6 +54,7 @@
     function isCalcSid(sid) { return !!sid && String(sid).indexOf('CALC-') === 0; }
     function isDbSid(sid) { return !!sid && /^DB\d+-S\d+$/.test(sid); }
     function isOpcSid(sid) { return !!sid && /^OPC\d+-S\d+$/.test(sid); }
+    function isDmdSid(sid) { return !!sid && String(sid).indexOf('DMD-') === 0; }   // 需量虛擬點位 DMD-{kWhSID}
 
     function isMultiId(coord) {
         return parseCoord(coord).modbusIds.length > 1;
@@ -65,7 +66,7 @@
 
     // sid 是否屬於此 Coordinator（含其所有子站號，不細分）
     function coordContainsSid(sid, coord) {
-        if (isCalcSid(sid) || isDbSid(sid) || isOpcSid(sid)) return false;
+        if (isCalcSid(sid) || isDbSid(sid) || isOpcSid(sid) || isDmdSid(sid)) return false;
         var c = parseCoord(coord);
         var pfx = getSidPrefix(sid);
         return pfx >= c.id * 65536 && pfx < (c.id + 1) * 65536;
@@ -151,6 +152,7 @@
         isCalcSid: isCalcSid,
         isDbSid: isDbSid,
         isOpcSid: isOpcSid,
+        isDmdSid: isDmdSid,
         isMultiId: isMultiId,
         subRangeBase: subRangeBase,
         coordContainsSid: coordContainsSid,

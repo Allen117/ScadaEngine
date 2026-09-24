@@ -115,4 +115,6 @@
 
   <data name="conditionctrl.name.calc_points" xml:space="preserve"><value>Calculated Points</value></data>
   <data name="conditionctrl.name.db_source" xml:space="preserve"><value>DB Source</value></data>
+  <data name="conditionctrl.name.demand_points" xml:space="preserve"><value>Demand Points</value></data>
+  <data name="conditionctrl.option.demand" xml:space="preserve"><value>Demand Points</value></data>
 </root>

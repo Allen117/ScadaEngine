@@ -344,6 +344,15 @@
                             </div>
                             <i class="fas fa-chevron-right text-muted" style="font-size:12px;"></i>
                         </div>
+                        @* 需量虛擬點位（唯讀）— output 節點時由 ppShowStep0 隱藏 *@
+                        <div id="ppStep0Dmd" class="pp-list-item" onclick="window._lf.ppShowDmdStep()" style="cursor:pointer;padding:14px 16px;">
+                            <i class="fas fa-bolt text-danger" style="font-size:18px;"></i>
+                            <div style="flex:1;">
+                                <div class="pp-point-name" style="font-size:14px;">@Localizer["logicflow.pp.option.demand_point"]</div>
+                                <div class="pp-point-sid">@Localizer["logicflow.pp.option.demand_point_desc"]</div>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted" style="font-size:12px;"></i>
+                        </div>
                     </div>
                 </div>
                 <!-- Step 1: 設備清單 -->

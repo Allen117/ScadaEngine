@@ -47,28 +47,5 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
-  <data name="alarm.error.sid_required" xml:space="preserve"><value>SID cannot be empty</value></data>
-  <data name="alarm.error.group_id_required" xml:space="preserve"><value>GroupID cannot be empty</value></data>
-  <data name="alarm.error.label_required" xml:space="preserve"><value>Label cannot be empty</value></data>
-  <data name="alarm.error.max_severity_range" xml:space="preserve"><value>Maximum severity must be between 0 and 3</value></data>
-  <data name="alarm.error.save_failed" xml:space="preserve"><value>Save failed</value></data>
-  <data name="alarm.error.toggle_failed" xml:space="preserve"><value>Toggle failed</value></data>
-  <data name="alarm.error.rule_not_found" xml:space="preserve"><value>Rule not found</value></data>
-  <data name="alarm.error.group_not_found" xml:space="preserve"><value>Group not found</value></data>
-  <data name="alarm.success.rule_saved" xml:space="preserve"><value>Alarm rule saved</value></data>
-  <data name="alarm.success.saved" xml:space="preserve"><value>Saved</value></data>
-  <data name="alarm.success.deleted" xml:space="preserve"><value>Deleted</value></data>
-  <data name="alarm.error.smtp_host_required" xml:space="preserve"><value>SMTP host cannot be empty</value></data>
-  <data name="alarm.error.from_address_required" xml:space="preserve"><value>From address cannot be empty</value></data>
-  <data name="alarm.error.group_name_required" xml:space="preserve"><value>Group identifier cannot be empty</value></data>
-  <data name="alarm.error.email_required" xml:space="preserve"><value>Email cannot be empty</value></data>
-  <data name="alarm.error.group_required" xml:space="preserve"><value>Group not specified</value></data>
-  <data name="alarm.error.recipient_not_found" xml:space="preserve"><value>Recipient not found</value></data>
-  <data name="alarm.error.phone_required" xml:space="preserve"><value>Phone number cannot be empty</value></data>
-  <data name="alarm.error.phone_invalid" xml:space="preserve"><value>Invalid phone number (digits with optional leading +, 8-15 digits)</value></data>
-  <data name="alarm.error.target_not_found" xml:space="preserve"><value>Number not found</value></data>
-  <data name="alarm.error.mqtt_not_connected" xml:space="preserve"><value>MQTT not connected; command cannot reach Engine</value></data>
-  <data name="alarm.success.saved_restart_engine" xml:space="preserve"><value>Saved. Restart Engine to take effect.</value></data>
-  <data name="alarm.success.sms_rescan_sent" xml:space="preserve"><value>Rescan command sent; check the status card shortly.</value></data>
-  <data name="alarm.demand.point_suffix" xml:space="preserve"><value>Demand</value></data>
+  <data name="history.demand.point_suffix" xml:space="preserve"><value>需量</value></data>
 </root>

@@ -420,7 +420,7 @@
                 p._deviceLabel = p.szGroupName || szCalcDefaultLabel;
                 return;
             }
-            if (_isDbPoint(p.szSid) || _isOpcPoint(p.szSid)) {
+            if (_isDbPoint(p.szSid) || _isOpcPoint(p.szSid) || _isDmdPoint(p.szSid)) {
                 p._deviceLabel = p.szGroupName || '';
                 return;
             }
@@ -435,10 +435,11 @@
         });
     }
 
-    // 以下四個 helper 委派共用層 window.PointGrouping（分群解析單一真相）
+    // 以下 helper 委派共用層 window.PointGrouping（分群解析單一真相）
     function _isCalcPoint(sid) { return window.PointGrouping.isCalcSid(sid); }
     function _isDbPoint(sid) { return window.PointGrouping.isDbSid(sid); }
     function _isOpcPoint(sid) { return window.PointGrouping.isOpcSid(sid); }
+    function _isDmdPoint(sid) { return window.PointGrouping.isDmdSid(sid); }
     function _getSidPrefix(sid) { return window.PointGrouping.getSidPrefix(sid); }
     function _isPointOfDevice(sid, nDevId) {
         if (nDevId === CALC_DEV_ID) return _isCalcPoint(sid);
@@ -473,9 +474,10 @@
         _pkRenderDeviceList();
     }
 
-    // ── DB / OPC UA 來源（依 Coordinator 群組兩層瀏覽）──
+    // ── DB / OPC UA / 需量 來源（依群組兩層瀏覽；需量僅一組「需量」群）──
 
     function _pkIsExtMatch(sid) {
+        if (_pickerSourceType === 'dmd') return _isDmdPoint(sid);
         return _pickerSourceType === 'db' ? _isDbPoint(sid) : _isOpcPoint(sid);
     }
 
@@ -501,8 +503,8 @@
         document.getElementById('cpPkStep2').style.display = 'none';
         document.getElementById('cpPkTitle').textContent = t('calcpoint.pk.title_select_device');
 
-        var szIcon = type === 'db' ? 'fa-database' : 'fa-network-wired';
-        var szColor = type === 'db' ? '#198754' : '#6f42c1';
+        var szIcon = type === 'db' ? 'fa-database' : (type === 'dmd' ? 'fa-bolt' : 'fa-network-wired');
+        var szColor = type === 'db' ? '#198754' : (type === 'dmd' ? '#dc3545' : '#6f42c1');
         var container = document.getElementById('cpPkDeviceList');
         if (keys.length === 0) {
             container.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x d-block mb-2"></i>' + escapeHtml(t('calcpoint.pk.no_points')) + '</div>';
@@ -527,7 +529,7 @@
         _pickerSelectedSid = null;
         document.getElementById('cpPkDevName').textContent = g || t('calcpoint.pk.ungrouped');
         document.getElementById('cpPkDevIcon').className =
-            'fas ' + (_pickerSourceType === 'db' ? 'fa-database' : 'fa-network-wired') + ' me-1';
+            'fas ' + (_pickerSourceType === 'db' ? 'fa-database' : (_pickerSourceType === 'dmd' ? 'fa-bolt' : 'fa-network-wired')) + ' me-1';
         _pkShowPointList(t('calcpoint.pk.title_select_point'));
     }
 
@@ -732,7 +734,7 @@
     function _pkRenderPoints(keyword) {
         var szQ = keyword.trim().toLowerCase();
         var filtered = (_pickerPoints || []).filter(function (p) {
-            if (_pickerSourceType === 'db' || _pickerSourceType === 'opc') {
+            if (_pickerSourceType === 'db' || _pickerSourceType === 'opc' || _pickerSourceType === 'dmd') {
                 if (!_pkIsExtMatch(p.szSid)) return false;
                 if (_pickerExtGroup != null && (p.szGroupName || '') !== _pickerExtGroup) return false;
             } else if (_pickerDevId === CALC_DEV_ID) {
@@ -811,7 +813,7 @@
     }
 
     function pkGoBack() {
-        if (_pickerSourceType === 'db' || _pickerSourceType === 'opc') {
+        if (_pickerSourceType === 'db' || _pickerSourceType === 'opc' || _pickerSourceType === 'dmd') {
             pkShowExtStep(_pickerSourceType);
             return;
         }

@@ -141,4 +141,5 @@
   <data name="history.excel.summary.col.std_dev" xml:space="preserve"><value>標準差</value></data>
   <data name="history.excel.summary.col.diff" xml:space="preserve"><value>差值</value></data>
   <data name="history.excel.filename" xml:space="preserve"><value>歷史趨勢</value></data>
+  <data name="history.coordinator.demand" xml:space="preserve"><value>需量</value></data>
 </root>

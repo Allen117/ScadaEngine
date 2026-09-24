@@ -91,6 +91,11 @@ public class AlarmSettingController : Controller
             .Select(p => new ModbusPointModel { szSID = p.szSID, szName = p.szName, szUnit = p.szUnit ?? string.Empty });
         pointList.AddRange(opcUaPoints);
 
+        // 合併需量虛擬點位（DMD-{kWhSID}，供上限警報規則）
+        var szDemandSuffix = _l["alarm.demand.point_suffix"].Value;
+        pointList.AddRange((await _dataRepository.GetDemandPointInfosAsync())
+            .Select(d => new ModbusPointModel { szSID = $"DMD-{d.szSID}", szName = $"{d.szName} {szDemandSuffix}", szUnit = "kW" }));
+
         var rules = (await _alarmRuleService.GetAllRulesAsync()).ToList();
         var lineTargets = (await _lineTargetService.GetAllAsync()).ToList();
 

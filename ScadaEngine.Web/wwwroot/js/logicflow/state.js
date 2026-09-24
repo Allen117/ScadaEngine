@@ -8,6 +8,7 @@
     S.API = '/LogicFlow/api';
     S.PP_CALC_DEV_ID = -999;
     S.PP_DB_DEV_ID   = -998;
+    S.PP_DMD_DEV_ID  = -997;   // 需量虛擬點位（DMD-{kWhSID}，唯讀 — output 節點不可綁）
 
     // ── 節點 metadata ──
     S.NODE_META = {

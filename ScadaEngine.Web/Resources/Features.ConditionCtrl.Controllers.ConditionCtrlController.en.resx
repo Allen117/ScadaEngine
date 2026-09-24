@@ -49,4 +49,5 @@
 
   <data name="conditionctrl.api.save_success" xml:space="preserve"><value>{0} rule(s) saved</value></data>
   <data name="conditionctrl.api.save_failed" xml:space="preserve"><value>Save failed. See Engine logs.</value></data>
+  <data name="conditionctrl.demand.point_suffix" xml:space="preserve"><value>Demand</value></data>
 </root>

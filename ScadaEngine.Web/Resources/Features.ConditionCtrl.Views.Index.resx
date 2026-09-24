@@ -115,4 +115,6 @@
 
   <data name="conditionctrl.name.calc_points" xml:space="preserve"><value>計算點位</value></data>
   <data name="conditionctrl.name.db_source" xml:space="preserve"><value>DB 來源</value></data>
+  <data name="conditionctrl.name.demand_points" xml:space="preserve"><value>需量點位</value></data>
+  <data name="conditionctrl.option.demand" xml:space="preserve"><value>需量點位</value></data>
 </root>

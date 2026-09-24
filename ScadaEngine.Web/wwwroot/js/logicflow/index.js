@@ -30,6 +30,7 @@
         ppBackToStep0: S.ppBackToStep0,
         ppSelectCalcGroup: S.ppSelectCalcGroup,
         ppShowDbStep: S.ppShowDbStep,
+        ppShowDmdStep: S.ppShowDmdStep,
         ppSelectDbCoordinator: S.ppSelectDbCoordinator,
         ppHistToggle: S.ppHistToggle,
         alignLeft: S.alignLeft,

@@ -29,6 +29,7 @@ let szPickedDeviceGroup = null;  // Modbus 站號內 Device 分群篩選（null=
 const CALC_DEVICE_ID    = -999; // 計算點位的虛擬設備 ID
 const DB_DEVICE_ID      = -998; // DB 來源點位的虛擬設備 ID
 const CIRCUIT_DEVICE_ID = -997; // 能源迴路的虛擬設備 ID（plan 2026-07-23 迴路指標）
+const DMD_DEVICE_ID     = -996; // 需量虛擬點位的虛擬設備 ID（DMD-{kWhSID}）
 
 // ---- 能源迴路資料源（plan 2026-07-23）----
 let arrAllCircuits    = null;   // 快取迴路清單（含虛擬節點）
@@ -58,11 +59,17 @@ function isDbPoint(szSid) {
     return window.PointGrouping.isDbSid(szSid);
 }
 
+function isDmdPoint(szSid) {
+    return window.PointGrouping.isDmdSid(szSid);
+}
+
 function isPointOfDevice(szSid, nDevId) {
     if (nDevId === CALC_DEVICE_ID) return isCalcPoint(szSid);
     if (nDevId === DB_DEVICE_ID)   return isDbPoint(szSid);
+    if (nDevId === DMD_DEVICE_ID)  return isDmdPoint(szSid);
     if (isCalcPoint(szSid)) return false;
     if (isDbPoint(szSid))   return false;
+    if (isDmdPoint(szSid))  return false;
     const nPfx = getSidNumericPrefix(szSid);
     return nPfx >= nDevId * 65536 && nPfx < (nDevId + 1) * 65536;
 }
@@ -248,6 +255,10 @@ function _enrichPointsWithDeviceLabel() {
             p.szDeviceLabel = p.szGroupName || t('designer.picker.source.calc');
             return;
         }
+        if (isDmdPoint(p.szSid)) {
+            p.szDeviceLabel = p.szGroupName || t('designer.picker.source.demand');
+            return;
+        }
         let szLabel = '';
         for (const d of arrAllDevices) {
             if (!isPointOfDevice(p.szSid, d.nId)) continue;
@@ -388,6 +399,25 @@ function _showCalcPointsFlat() {
     document.getElementById('ppModalTitle').textContent = t('designer.picker.title.calc_point');
     document.getElementById('ppDeviceName').textContent = t('designer.picker.source.calc');
     document.getElementById('ppDeviceIcon').className = 'fas fa-calculator me-1';
+    document.getElementById('ppPointSearch').value = '';
+    document.getElementById('btnConfirmPoint').disabled = true;
+    _renderFilteredPoints('');
+}
+
+// ---- 需量虛擬點位（DMD-{kWhSID}，數量少 → 免群組層直接平鋪）----
+function showDemandPointStep() {
+    nPickedDevId     = DMD_DEVICE_ID;
+    nPickedModbusId  = null;
+    szPickedSid      = null;
+    nPickedCalcGroup = null;
+    szPickedDbGroup  = null;
+    nPickedCircuitId = null;
+    document.getElementById('ppStep0').style.display = 'none';
+    document.getElementById('ppStep1').style.display = 'none';
+    document.getElementById('ppStep2').style.display = '';
+    document.getElementById('ppModalTitle').textContent = t('designer.picker.title.demand_point');
+    document.getElementById('ppDeviceName').textContent = t('designer.picker.source.demand');
+    document.getElementById('ppDeviceIcon').className = 'fas fa-bolt me-1';
     document.getElementById('ppPointSearch').value = '';
     document.getElementById('btnConfirmPoint').disabled = true;
     _renderFilteredPoints('');
@@ -579,6 +609,11 @@ function _showPickerForBoundSid(szBoundSid) {
         szPickedSid     = szBoundSid;
         szPickedDbGroup = point.szGroupName || null;
         szDevLabel      = point.szGroupName || t('designer.picker.db_source_default');
+    } else if (isDmdPoint(szBoundSid)) {
+        nPickedDevId    = DMD_DEVICE_ID;
+        nPickedModbusId = null;
+        szPickedSid     = szBoundSid;
+        szDevLabel      = point.szGroupName || t('designer.picker.source.demand');
     } else {
         for (const d of arrAllDevices) {
             if (!isPointOfDevice(szBoundSid, d.nId)) continue;
@@ -603,7 +638,9 @@ function _showPickerForBoundSid(szBoundSid) {
     }
 
     document.getElementById('ppDeviceName').textContent = szDevLabel;
-    document.getElementById('ppDeviceIcon').className = isCalcPoint(szBoundSid) ? 'fas fa-calculator me-1' : (isDbPoint(szBoundSid) ? 'fas fa-database me-1' : 'fas fa-server me-1');
+    document.getElementById('ppDeviceIcon').className = isCalcPoint(szBoundSid) ? 'fas fa-calculator me-1'
+        : (isDbPoint(szBoundSid) ? 'fas fa-database me-1'
+        : (isDmdPoint(szBoundSid) ? 'fas fa-bolt me-1' : 'fas fa-server me-1'));
     document.getElementById('ppStep0').style.display = 'none';
     document.getElementById('ppStep1').style.display = 'none';
     document.getElementById('ppStep2').style.display = '';
@@ -803,6 +840,9 @@ function goBackToDevices() {
         // DB 來源：返回 Coordinator 清單
         szPickedDbGroup = null;
         showDbPointStep();
+    } else if (nPickedDevId === DMD_DEVICE_ID) {
+        // 需量：無群組層，直接回來源選擇
+        goBackToStep0();
     } else {
         document.getElementById('ppStep0').style.display = 'none';
         document.getElementById('ppStep1').style.display = '';
@@ -830,6 +870,9 @@ function _renderFilteredPoints(szKeyword) {
             // DB 來源點位：依 Coordinator 群組篩選（null=全部 DB 點位）
             if (!isDbPoint(p.szSid)) return false;
             if (szPickedDbGroup != null && (p.szGroupName || '') !== szPickedDbGroup) return false;
+        } else if (nPickedDevId === DMD_DEVICE_ID) {
+            // 需量虛擬點位（平鋪，無群組層）
+            if (!isDmdPoint(p.szSid)) return false;
         } else if (nPickedModbusId != null) {
             const nPfx = getSidNumericPrefix(p.szSid);
             const base = nPickedDevId * 65536 + nPickedModbusId * 256;

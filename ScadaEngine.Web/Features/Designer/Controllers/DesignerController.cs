@@ -68,6 +68,9 @@ public class DesignerController : Controller
         var opcUaPoints    = await _repository.GetAllOpcUaPointsAsync();
         var opcUaCoordinators = await _repository.GetAllOpcUaCoordinatorsAsync();
         var opcUaCoordNameMap = opcUaCoordinators.ToDictionary(c => c.Id, c => c.szName);
+        var demandPoints   = await _repository.GetDemandPointInfosAsync();
+        var szDemandGroup  = _l["designer.points.demand_group"].Value;
+        var szDemandSuffix = _l["designer.points.demand_suffix"].Value;
 
         // szDeviceGroup：Modbus 站號內子設備分群（Tag.Device 投影）；其餘來源本就有自己的群組欄（szGroupName），此欄留 null
         var allPoints = modbusPoints.Select(p => new
@@ -107,6 +110,16 @@ public class DesignerController : Controller
             szGroupName   = opcUaCoordNameMap.TryGetValue(p.nCoordinatorId, out var szCoordName)
                 ? (string.IsNullOrEmpty(p.szDeviceName) ? szCoordName : $"{szCoordName}/{p.szDeviceName}")
                 : "OPCUA",
+            szDeviceGroup = (string?)null
+        })).Concat(demandPoints.Select(d => new
+        {
+            // 需量虛擬點位（Engine DemandCalculatorService 三路發布，SID = DMD-{kWhSID}）
+            szSid         = $"DMD-{d.szSID}",
+            szName        = $"{d.szName} {szDemandSuffix}",
+            szUnit        = "kW",
+            fMin          = 0f,
+            fMax          = 100f,
+            szGroupName   = szDemandGroup,
             szDeviceGroup = (string?)null
         }));
 

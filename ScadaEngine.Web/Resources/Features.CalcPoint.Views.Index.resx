@@ -143,4 +143,6 @@
   <data name="calcpoint.msg.delete_failed_default" xml:space="preserve"><value>刪除失敗</value></data>
   <data name="calcpoint.msg.network_error" xml:space="preserve"><value>網路錯誤</value></data>
   <data name="calcpoint.msg.calculating" xml:space="preserve"><value>計算中…</value></data>
+  <data name="calcpoint.pk.source.demand" xml:space="preserve"><value>需量點位</value></data>
+  <data name="calcpoint.pk.source.demand_sub" xml:space="preserve"><value>電表迴路 15 分鐘需量（kW）</value></data>
 </root>

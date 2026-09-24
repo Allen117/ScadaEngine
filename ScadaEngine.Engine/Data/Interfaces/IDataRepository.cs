@@ -367,6 +367,13 @@ public interface IDataRepository
     /// <summary>取得所有 IsDemandEnabled=1 的電表/迴路（Name + kWh SID），供 Web 下拉選單用</summary>
     Task<IEnumerable<DemandCircuitModel>> GetCircuitsWithDemandAsync();
 
+    /// <summary>
+    /// 取得需量虛擬點位資訊：啟用需量的 kWh SID（去重）＋對應電表/迴路名稱。
+    /// 同一 kWh SID 被多個迴路引用時取名稱最小者（MIN(Name)），與 GetDemandSidsAsync 的 SID 集合一致。
+    /// 供 Engine 組虛擬點位名稱（DMD-{kWhSID}）與 Web 各選點器清單共用。
+    /// </summary>
+    Task<IEnumerable<DemandCircuitModel>> GetDemandPointInfosAsync();
+
     /// <summary>取得指定 kWh SID 今日的即時需量（最新一筆）與今日最大值</summary>
     Task<TodayDemandModel?> GetTodayDemandAsync(string szDemandSID);
 

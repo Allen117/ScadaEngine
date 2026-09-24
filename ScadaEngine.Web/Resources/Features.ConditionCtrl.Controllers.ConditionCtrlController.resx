@@ -49,4 +49,5 @@
 
   <data name="conditionctrl.api.save_success" xml:space="preserve"><value>已儲存 {0} 筆規則</value></data>
   <data name="conditionctrl.api.save_failed" xml:space="preserve"><value>儲存失敗，請查看 Engine 日誌</value></data>
+  <data name="conditionctrl.demand.point_suffix" xml:space="preserve"><value>需量</value></data>
 </root>

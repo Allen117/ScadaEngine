@@ -226,4 +226,5 @@
   <data name="alarm.alert.phone_invalid" xml:space="preserve"><value>Invalid phone number (digits with optional leading +, 8-15 digits)</value></data>
   <data name="alarm.confirm.delete_sms_target" xml:space="preserve"><value>Delete this SMS number?</value></data>
   <data name="alarm.toast.saved" xml:space="preserve"><value>Saved</value></data>
+  <data name="alarm.option.demand_point" xml:space="preserve"><value>Demand Points</value></data>
 </root>

@@ -143,4 +143,6 @@
   <data name="calcpoint.msg.delete_failed_default" xml:space="preserve"><value>Delete failed</value></data>
   <data name="calcpoint.msg.network_error" xml:space="preserve"><value>Network error</value></data>
   <data name="calcpoint.msg.calculating" xml:space="preserve"><value>Calculating…</value></data>
+  <data name="calcpoint.pk.source.demand" xml:space="preserve"><value>Demand Points</value></data>
+  <data name="calcpoint.pk.source.demand_sub" xml:space="preserve"><value>15-min circuit demand (kW)</value></data>
 </root>

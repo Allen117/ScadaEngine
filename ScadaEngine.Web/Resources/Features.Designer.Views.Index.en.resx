@@ -531,4 +531,7 @@
   <data name="designer.cmetric.fill_row_mismatch" xml:space="preserve"><value>Note: row label "{row}" differs from circuit name "{name}" — please verify the content to fill</value></data>
   <data name="designer.cmetric.fill_btn_skip" xml:space="preserve"><value>Skip</value></data>
   <data name="designer.cmetric.fill_btn_apply" xml:space="preserve"><value>Fill Selected</value></data>
+  <data name="designer.picker.source.demand" xml:space="preserve"><value>Demand Points</value></data>
+  <data name="designer.picker.source.demand_desc" xml:space="preserve"><value>15-min circuit demand (kW), updated every minute</value></data>
+  <data name="designer.picker.title.demand_point" xml:space="preserve"><value>Select Demand Point</value></data>
 </root>

@@ -70,4 +70,5 @@
   <data name="alarm.error.mqtt_not_connected" xml:space="preserve"><value>MQTT 未連線，命令無法送達 Engine</value></data>
   <data name="alarm.success.saved_restart_engine" xml:space="preserve"><value>已儲存，重啟 Engine 後生效</value></data>
   <data name="alarm.success.sms_rescan_sent" xml:space="preserve"><value>重掃命令已送出，稍後請看狀態卡</value></data>
+  <data name="alarm.demand.point_suffix" xml:space="preserve"><value>需量</value></data>
 </root>
