@@ -406,6 +406,9 @@ if exist "%_PYDST%\python.exe" (
 :PY_DONE
 echo.
 sc create ScadaEngineService binPath= "\"C:\SCADA\Engine\App\ScadaEngine.Engine.exe\"" DisplayName= "\"SCADA Engine Service\"" start= auto
+:: sc create is a no-op when the service already exists (upgrade); force start type back
+:: to auto so a previously disabled service doesn't survive the reinstall and block net start
+sc config ScadaEngineService start= auto >nul
 sc description ScadaEngineService "Industrial SCADA data collection engine"
 sc failure ScadaEngineService reset= 86400 actions= restart/5000/restart/10000/restart/30000
 echo Engine installed.
@@ -417,6 +420,7 @@ echo.
 if exist "C:\SCADA\Web\App" for %%F in ("C:\SCADA\Web\App\*") do del /Q "%%F" >nul 2>&1
 xcopy /E /I /Y "%~dp0Web\App" "C:\SCADA\Web\App"
 sc create ScadaWebService binPath= "\"C:\SCADA\Web\App\ScadaEngine.Web.exe\"" DisplayName= "\"SCADA Web Service\"" start= auto
+sc config ScadaWebService start= auto >nul
 sc description ScadaWebService "SCADA Web Dashboard (http://0.0.0.0:5038)"
 sc failure ScadaWebService reset= 86400 actions= restart/5000/restart/10000/restart/30000
 echo Web installed.
@@ -427,6 +431,7 @@ echo.
 :: net48 x86 bridge; exe path is hard-coded in Engine as C:\SCADA\LicenseBridge\ (no \App subfolder)
 xcopy /E /I /Y "%~dp0LicenseBridge\App" "C:\SCADA\LicenseBridge"
 sc create ScadaEngineLicense binPath= "\"C:\SCADA\LicenseBridge\ScadaEngine.LicenseBridge.exe\"" DisplayName= "\"SCADA Engine License Bridge\"" start= auto
+sc config ScadaEngineLicense start= auto >nul
 sc description ScadaEngineLicense "32-bit HASP verification bridge (Named Pipe)"
 sc failure ScadaEngineLicense reset= 86400 actions= restart/5000/restart/10000/restart/30000
 echo License Bridge installed.
@@ -663,6 +668,9 @@ if %errorLevel% NEQ 0 (
     sc description %_SVC% "SCADA realtime data Modbus TCP gateway (FC4 input registers, float32)"
     sc failure %_SVC% reset= 86400 actions= restart/5000/restart/10000/restart/30000
 )
+:: upgrade path skips the create block above; force start type back to auto so a
+:: previously disabled service doesn't block the net start below
+sc config %_SVC% start= auto >nul
 
 echo [5/6] Opening firewall for ports %MODBUS_PORT% (Modbus) and %WEB_PORT% (Web)...
 netsh advfirewall firewall delete rule name="SCADA Modbus Gateway TCP" >nul 2>&1
