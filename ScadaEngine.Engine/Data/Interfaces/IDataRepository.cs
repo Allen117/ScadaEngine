@@ -391,6 +391,33 @@ public interface IDataRepository
 
     #endregion
 
+    #region 迴路用電虛擬點位（NRGD-/NRGM-{circuitId}）
+
+    /// <summary>
+    /// 取得全部 EnergyCircuit 迴路 Id + Name（含虛擬節點），
+    /// 供 Engine 組虛擬點位名稱與 Web 警報選點器「迴路用電」清單共用。
+    /// </summary>
+    Task<IEnumerable<DemandCircuitModel>> GetAllEnergyCircuitInfosAsync();
+
+    /// <summary>
+    /// 一次撈出 EnergyCircuit 全樹節點（Id/ParentId/Name/SID/MaxKwh/Sign），
+    /// 供記憶體展開各迴路葉子與有效 sign（語意同 Web EnergyCircuitService.GetLeavesUnderAsync）。
+    /// </summary>
+    Task<IEnumerable<EnergyCircuitNodeModel>> GetAllEnergyCircuitNodesAsync();
+
+    /// <summary>
+    /// 取指定 SID 在四個時點（日初 / 月初 / 期別起日 / 現在）各自的最近一筆 Quality=1 HistoryData 值，
+    /// 套 staleness window（距 boundary 超過 nMaxStalenessHours 視為 null）。
+    /// 語意同 EnergyLeafAggregator.GetBoundaryValuesAsync / Web WidgetAccumulationService meter 模式。
+    /// </summary>
+    Task<(double? dDayStart, double? dMonthStart, double? dPeriodStart, double? dNow)> GetEnergyBoundaryValuesAsync(
+        string szSID, DateTime dtDayStart, DateTime dtMonthStart, DateTime dtPeriodStart, DateTime dtNow, int nMaxStalenessHours);
+
+    /// <summary>取得 BillingPeriods 全部自訂期別 rows，供 Common BillingPeriodResolver 推導當前期別（NRGP- 本月電度期界）</summary>
+    Task<IEnumerable<BillingPeriodModel>> GetBillingPeriodRowsAsync();
+
+    #endregion
+
     /// <summary>
     /// 釋放資源
     /// </summary>

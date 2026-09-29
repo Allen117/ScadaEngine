@@ -71,4 +71,7 @@
   <data name="alarm.success.saved_restart_engine" xml:space="preserve"><value>Saved. Restart Engine to take effect.</value></data>
   <data name="alarm.success.sms_rescan_sent" xml:space="preserve"><value>Rescan command sent; check the status card shortly.</value></data>
   <data name="alarm.demand.point_suffix" xml:space="preserve"><value>Demand</value></data>
+  <data name="alarm.nrg.daily_suffix" xml:space="preserve"><value>Daily kWh</value></data>
+  <data name="alarm.nrg.monthly_suffix" xml:space="preserve"><value>Monthly kWh</value></data>
+  <data name="alarm.nrg.period_suffix" xml:space="preserve"><value>Period kWh</value></data>
 </root>

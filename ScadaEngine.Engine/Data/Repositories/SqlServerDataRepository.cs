@@ -2673,6 +2673,130 @@ public class SqlServerDataRepository : IDataRepository, IDisposable
 
     #endregion
 
+    #region 迴路用電虛擬點位（NRGD-/NRGM-{circuitId}）
+
+    public async Task<IEnumerable<DemandCircuitModel>> GetAllEnergyCircuitInfosAsync()
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+            const string szSql = @"
+                SELECT Id AS nId, Name AS szName
+                FROM EnergyCircuit
+                ORDER BY Name";
+            return await connection.QueryAsync<DemandCircuitModel>(szSql);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "取得全部迴路清單失敗");
+            return Enumerable.Empty<DemandCircuitModel>();
+        }
+    }
+
+    public async Task<IEnumerable<EnergyCircuitNodeModel>> GetAllEnergyCircuitNodesAsync()
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+            const string szSql = @"
+                SELECT Id       AS nId,
+                       ParentId AS nParentId,
+                       Name     AS szName,
+                       SID      AS szSID,
+                       MaxKwh   AS dMaxKwh,
+                       [Sign]   AS nSign
+                FROM EnergyCircuit";
+            return await connection.QueryAsync<EnergyCircuitNodeModel>(szSql);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "取得 EnergyCircuit 全樹失敗");
+            return Enumerable.Empty<EnergyCircuitNodeModel>();
+        }
+    }
+
+    public async Task<(double? dDayStart, double? dMonthStart, double? dPeriodStart, double? dNow)> GetEnergyBoundaryValuesAsync(
+        string szSID, DateTime dtDayStart, DateTime dtMonthStart, DateTime dtPeriodStart, DateTime dtNow, int nMaxStalenessHours)
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+            // 四時點各取最近一筆（OUTER APPLY TOP 1 seek），語意同 EnergyLeafAggregator.GetBoundaryValuesAsync
+            const string szSql = @"
+                SELECT b.idx, ba.Value FROM (VALUES (0, @tDay), (1, @tMonth), (2, @tPeriod), (3, @tNow)) AS b(idx, BoundaryTime)
+                OUTER APPLY (
+                    SELECT TOP 1 Value FROM HistoryData WITH (NOLOCK)
+                    WHERE  SID = @sid
+                       AND Timestamp <= b.BoundaryTime
+                       AND Timestamp >= DATEADD(HOUR, -@maxStalenessHours, b.BoundaryTime)
+                       AND Quality = 1
+                    ORDER BY Timestamp DESC
+                ) ba
+                ORDER BY b.idx";
+
+            var rows = await connection.QueryAsync<(int idx, double? Value)>(szSql, new
+            {
+                sid = szSID,
+                tDay = dtDayStart,
+                tMonth = dtMonthStart,
+                tPeriod = dtPeriodStart,
+                tNow = dtNow,
+                maxStalenessHours = nMaxStalenessHours
+            });
+
+            double? dDay = null, dMonth = null, dPeriod = null, dNowVal = null;
+            foreach (var r in rows)
+            {
+                if (r.idx == 0) dDay = r.Value;
+                else if (r.idx == 1) dMonth = r.Value;
+                else if (r.idx == 2) dPeriod = r.Value;
+                else if (r.idx == 3) dNowVal = r.Value;
+            }
+            return (dDay, dMonth, dPeriod, dNowVal);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "取得迴路用電邊界值失敗: SID={SID}", szSID);
+            return (null, null, null, null);
+        }
+    }
+
+    public async Task<IEnumerable<BillingPeriodModel>> GetBillingPeriodRowsAsync()
+    {
+        if (string.IsNullOrEmpty(_szConnectionString))
+            await InitializeAsync();
+
+        try
+        {
+            using var connection = new SqlConnection(_szConnectionString);
+            await connection.OpenAsync();
+            const string szSql = @"
+                SELECT PeriodYear AS nPeriodYear, PeriodMonth AS nPeriodMonth,
+                       StartDate AS dtStartDate, EndDate AS dtEndDate, UpdatedAt AS dtUpdatedAt
+                FROM   BillingPeriods";
+            return await connection.QueryAsync<BillingPeriodModel>(szSql);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "取得電費月結週期 rows 失敗");
+            return Enumerable.Empty<BillingPeriodModel>();
+        }
+    }
+
+    #endregion
+
     /// <summary>
     /// 釋放資源
     /// </summary>

@@ -60,6 +60,13 @@
         rules!.Select(r => new { id = r.nId, sid = r.szSID, pointName = r.szPointName ?? r.szSID })
     );
     var diLabelMapJson = System.Text.Json.JsonSerializer.Serialize(diLabelMap);
+    var calcGroupMap = ViewBag.CalcGroupMap as Dictionary<string, string> ?? new Dictionary<string, string>();
+    var calcGroupsJson = System.Text.Json.JsonSerializer.Serialize(calcGroupMap);
+    var circuits = ViewBag.Circuits as List<ScadaEngine.Engine.Models.DemandCircuitModel>
+                   ?? new List<ScadaEngine.Engine.Models.DemandCircuitModel>();
+    var circuitsJson = System.Text.Json.JsonSerializer.Serialize(
+        circuits.Select(c => new { id = c.nId, name = c.szName })
+    );
 }
 
 <link rel="stylesheet" href="~/css/alarmsetting.css" asp-append-version="true" />
@@ -283,7 +290,7 @@
                         </select>
                     </div>
                     <div class="col-md-4 d-none" id="subDeviceCol">
-                        <label class="form-label">@Localizer["alarm.field.sub_device"]</label>
+                        <label class="form-label" id="subDeviceLabel">@Localizer["alarm.field.sub_device"]</label>
                         <select class="form-select" id="selSubDevice" onchange="window._alarm.onSubDeviceChange()">
                             <option value="">@Localizer["alarm.select.sub_device_placeholder"]</option>
                         </select>
@@ -828,7 +835,9 @@
             smsTargets: @Html.Raw(smsTargetsJson),
             smsSenderConfig: @Html.Raw(smsSenderConfigJson),
             alarmRulesForRouting: @Html.Raw(alarmRulesForRoutingJson),
-            diLabels: @Html.Raw(diLabelMapJson)
+            diLabels: @Html.Raw(diLabelMapJson),
+            calcGroups: @Html.Raw(calcGroupsJson),
+            circuits: @Html.Raw(circuitsJson)
         };
     </script>
     <script src="~/js/common/point-grouping.js" asp-append-version="true"></script>

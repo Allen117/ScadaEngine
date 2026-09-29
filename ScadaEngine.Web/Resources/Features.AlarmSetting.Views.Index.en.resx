@@ -227,4 +227,10 @@
   <data name="alarm.confirm.delete_sms_target" xml:space="preserve"><value>Delete this SMS number?</value></data>
   <data name="alarm.toast.saved" xml:space="preserve"><value>Saved</value></data>
   <data name="alarm.option.demand_point" xml:space="preserve"><value>Demand Points</value></data>
+  <data name="alarm.option.nrg_point" xml:space="preserve"><value>Circuit Energy</value></data>
+  <data name="alarm.option.ungrouped" xml:space="preserve"><value>Ungrouped</value></data>
+  <data name="alarm.field.calc_group" xml:space="preserve"><value>Group</value></data>
+  <data name="alarm.field.circuit" xml:space="preserve"><value>Circuit</value></data>
+  <data name="alarm.select.group_placeholder" xml:space="preserve"><value>-- Select a group --</value></data>
+  <data name="alarm.select.circuit_placeholder" xml:space="preserve"><value>-- Select a circuit --</value></data>
 </root>

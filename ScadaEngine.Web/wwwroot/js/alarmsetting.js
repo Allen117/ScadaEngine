@@ -13,6 +13,8 @@
     var _smsTargets = window._alarmInitData.smsTargets || [];
     var _smsSenderConfig = window._alarmInitData.smsSenderConfig || {};
     var _alarmRulesForRouting = window._alarmInitData.alarmRulesForRouting || [];
+    var _calcGroups = window._alarmInitData.calcGroups || {};   // SID → 群組名（計算點兩層瀏覽）
+    var _circuits = window._alarmInitData.circuits || [];       // 迴路清單（迴路用電 NRGD-/NRGM-/NRGP-）
 
     // 由 Designer 設定取得 SID 對應的 DI ON/OFF 標籤；找不到則回傳預設 ON/OFF
     function getDiLabelsForSid(sid) {
@@ -52,10 +54,74 @@
 
     var CALC_DEVICE_ID = -999;
     var DMD_DEVICE_ID = -998;   // 需量虛擬點位（DMD-{kWhSID}）
+    var NRG_DEVICE_ID = -997;   // 迴路用電虛擬點位（NRGD-/NRGM-/NRGP-{circuitId}）
+    var CALC_UNGROUPED = '__ungrouped__';   // 計算點「未分組」桶的下拉 value（避免與真實群組名撞名）
 
-    // isCalcSid / isDmdSid 委派共用層 window.PointGrouping（分群解析單一真相）
+    // isCalcSid / isDmdSid / isNrgSid 委派共用層 window.PointGrouping（分群解析單一真相）
     function isCalcSid(sid) { return window.PointGrouping.isCalcSid(sid); }
     function isDmdSid(sid) { return window.PointGrouping.isDmdSid(sid); }
+    function isNrgSid(sid) { return window.PointGrouping.isNrgSid(sid); }
+
+    // ── 計算點群組（兩層瀏覽）──
+
+    function calcGroupOfSid(sid) {
+        var g = _calcGroups[sid];
+        return g ? String(g).trim() : '';
+    }
+
+    // 盤點計算點群組：names = 有名群組（排序）、hasUngrouped = 是否有未分組點位
+    function getCalcGroupInfo() {
+        var names = {};
+        var hasUngrouped = false;
+        _points.forEach(function (p) {
+            if (!isCalcSid(p.sid)) return;
+            var g = calcGroupOfSid(p.sid);
+            if (g) names[g] = true;
+            else hasUngrouped = true;
+        });
+        return { names: Object.keys(names).sort(), hasUngrouped: hasUngrouped };
+    }
+
+    function filterCalcPointsByGroup(groupValue) {
+        return _points.filter(function (p) {
+            if (!isCalcSid(p.sid)) return false;
+            var g = calcGroupOfSid(p.sid);
+            return groupValue === CALC_UNGROUPED ? !g : g === groupValue;
+        });
+    }
+
+    // 第二層下拉共用三種語意（子設備 / 計算點群組 / 迴路），依當前設備切 label
+    function setSubDeviceLabel(mode) {
+        var label = document.getElementById('subDeviceLabel');
+        if (!label) return;
+        if (mode === 'calc') label.textContent = t('alarm.field.calc_group');
+        else if (mode === 'nrg') label.textContent = t('alarm.field.circuit');
+        else label.textContent = t('alarm.field.sub_device');
+    }
+
+    // 填第二層下拉（value/text 成對），並套 placeholder
+    function fillSubDropdown(placeholderKey, items) {
+        var selSub = document.getElementById('selSubDevice');
+        selSub.innerHTML = '<option value="">' + t(placeholderKey) + '</option>';
+        items.forEach(function (it) {
+            var opt = document.createElement('option');
+            opt.value = it.value;
+            opt.textContent = it.text;
+            selSub.appendChild(opt);
+        });
+    }
+
+    // ── 迴路用電（NRGD-/NRGM-）──
+
+    function circuitIdOfNrgSid(sid) {
+        return parseInt(String(sid).substring(5), 10);   // 'NRGD-' / 'NRGM-' / 'NRGP-' 後綴即迴路 Id
+    }
+
+    function filterNrgPointsByCircuit(nCircuitId) {
+        return _points.filter(function (p) {
+            return isNrgSid(p.sid) && circuitIdOfNrgSid(p.sid) === nCircuitId;
+        });
+    }
 
     // ── 多 ID 設備判斷 ──
 
@@ -107,8 +173,12 @@
     // ── 設備標籤 ──
 
     function getDeviceLabelForSid(sid) {
-        if (isCalcSid(sid)) return t('alarm.option.calc_point');
+        if (isCalcSid(sid)) {
+            var g = calcGroupOfSid(sid);
+            return g ? t('alarm.option.calc_point') + ' - ' + g : t('alarm.option.calc_point');
+        }
         if (isDmdSid(sid)) return t('alarm.option.demand_point');
+        if (isNrgSid(sid)) return t('alarm.option.nrg_point');
         var coord = findCoordForSid(sid);
         if (!coord) return '';
         if (isMultiIdCoord(coord)) {
@@ -242,6 +312,13 @@
             dmdOpt.textContent = t('alarm.option.demand_point');
             sel.appendChild(dmdOpt);
         }
+        // 迴路用電虛擬點位（有迴路才顯示）
+        if (_circuits.length > 0) {
+            var nrgOpt = document.createElement('option');
+            nrgOpt.value = NRG_DEVICE_ID;
+            nrgOpt.textContent = t('alarm.option.nrg_point');
+            sel.appendChild(nrgOpt);
+        }
     }
 
     function onCoordChange() {
@@ -257,9 +334,20 @@
         }
 
         if (nDbId === CALC_DEVICE_ID) {
-            showSubDeviceCol(false);
-            var calcPts = _points.filter(function (p) { return isCalcSid(p.sid); });
-            fillPointDropdown(calcPts);
+            var groupInfo = getCalcGroupInfo();
+            if (groupInfo.names.length > 0) {
+                // 有群組 → 兩層瀏覽（沿用子設備欄，標籤改「群組」）；未分組點位歸「未分組」桶
+                setSubDeviceLabel('calc');
+                showSubDeviceCol(true);
+                var groupItems = groupInfo.names.map(function (g) { return { value: g, text: g }; });
+                if (groupInfo.hasUngrouped)
+                    groupItems.push({ value: CALC_UNGROUPED, text: t('alarm.option.ungrouped') });
+                fillSubDropdown('alarm.select.group_placeholder', groupItems);
+            } else {
+                // 全部未分組 → 維持平鋪清單（不多一層無意義的下拉）
+                showSubDeviceCol(false);
+                fillPointDropdown(_points.filter(function (p) { return isCalcSid(p.sid); }));
+            }
             return;
         }
 
@@ -269,9 +357,19 @@
             return;
         }
 
+        if (nDbId === NRG_DEVICE_ID) {
+            setSubDeviceLabel('nrg');
+            showSubDeviceCol(true);
+            fillSubDropdown('alarm.select.circuit_placeholder', _circuits.map(function (c) {
+                return { value: c.id, text: c.name };
+            }));
+            return;
+        }
+
         var coord = _coordinators.find(function (c) { return c.id === nDbId; });
 
         if (coord && isMultiIdCoord(coord)) {
+            setSubDeviceLabel('sub');
             showSubDeviceCol(true);
             selSub.innerHTML = '<option value="">' + t('alarm.select.sub_device_placeholder') + '</option>';
             getSubDevices(coord).forEach(function (s) {
@@ -288,9 +386,21 @@
 
     function onSubDeviceChange() {
         var nDbId = parseInt(document.getElementById('selCoord').value) || 0;
-        var nSubId = parseInt(document.getElementById('selSubDevice').value);
+        var subValue = document.getElementById('selSubDevice').value;
         document.getElementById('txtSid').value = '';
 
+        if (nDbId === CALC_DEVICE_ID) {
+            fillPointDropdown(subValue ? filterCalcPointsByGroup(subValue) : []);
+            return;
+        }
+
+        if (nDbId === NRG_DEVICE_ID) {
+            var nCircuitId = parseInt(subValue);
+            fillPointDropdown(!isNaN(nCircuitId) ? filterNrgPointsByCircuit(nCircuitId) : []);
+            return;
+        }
+
+        var nSubId = parseInt(subValue);
         if (!isNaN(nSubId)) {
             fillPointDropdown(filterPointsBySubDevice(nDbId, nSubId));
         } else {
@@ -307,9 +417,33 @@
     function setupSelectorsForSid(sid) {
         if (isCalcSid(sid)) {
             document.getElementById('selCoord').value = CALC_DEVICE_ID;
-            showSubDeviceCol(false);
-            var calcPts = _points.filter(function (p) { return isCalcSid(p.sid); });
-            fillPointDropdown(calcPts);
+            var groupInfo = getCalcGroupInfo();
+            if (groupInfo.names.length > 0) {
+                // 兩層瀏覽：還原群組選取（無群組點位 → 未分組桶）
+                onCoordChange();
+                var groupValue = calcGroupOfSid(sid) || CALC_UNGROUPED;
+                document.getElementById('selSubDevice').value = groupValue;
+                fillPointDropdown(filterCalcPointsByGroup(groupValue));
+            } else {
+                showSubDeviceCol(false);
+                fillPointDropdown(_points.filter(function (p) { return isCalcSid(p.sid); }));
+            }
+            document.getElementById('selPoint').value = sid;
+            document.getElementById('txtSid').value = sid;
+            applyDiLabelsForSid(sid);
+            return;
+        }
+
+        if (isNrgSid(sid)) {
+            document.getElementById('selCoord').value = NRG_DEVICE_ID;
+            setSubDeviceLabel('nrg');
+            showSubDeviceCol(true);
+            fillSubDropdown('alarm.select.circuit_placeholder', _circuits.map(function (c) {
+                return { value: c.id, text: c.name };
+            }));
+            var nCircuitId = circuitIdOfNrgSid(sid);
+            document.getElementById('selSubDevice').value = nCircuitId;
+            fillPointDropdown(filterNrgPointsByCircuit(nCircuitId));
             document.getElementById('selPoint').value = sid;
             document.getElementById('txtSid').value = sid;
             applyDiLabelsForSid(sid);
@@ -337,6 +471,7 @@
         document.getElementById('selCoord').value = coord.id;
 
         if (isMultiIdCoord(coord)) {
+            setSubDeviceLabel('sub');
             showSubDeviceCol(true);
             var selSub = document.getElementById('selSubDevice');
             selSub.innerHTML = '<option value="">' + t('alarm.select.sub_device_placeholder') + '</option>';

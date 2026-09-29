@@ -710,6 +710,7 @@
 | 迴路用電 | Circuit Energy | 選點器設備選項（NRGD-/NRGM- 虛擬點位） |
 | 每日用電 | Daily kWh | 迴路用電點位後綴（曆日，今日 00:00 起） |
 | 每月用電 | Monthly kWh | 迴路用電點位後綴（曆月，非電費期別） |
+| 本月電度 | Period kWh | 迴路用電點位後綴（電費期別，同 Designer 迴路指標） |
 | 群組 / 未分組 | Group / Ungrouped | 計算點兩層瀏覽 |
 | 迴路 / 請選擇迴路 / 請選擇群組 | Circuit / Select a circuit / Select a group | 第二層下拉 |
 | 測試發送 | Test Send | Line 按鈕 |

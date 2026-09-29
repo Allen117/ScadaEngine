@@ -8,13 +8,14 @@
 //
 // SID 格式：{CoordinatorId*65536 + ModbusId*256 + 1}-S{N}
 //   → 數字前綴 = CoordinatorId*65536 + ModbusId*256 + 1，可逆
-//   計算點位 SID 以 'CALC-' 開頭；DB 來源 'DB{n}-S{n}'；OPC 'OPC{n}-S{n}'；需量 'DMD-{kWhSID}'
+//   計算點位 SID 以 'CALC-' 開頭；DB 來源 'DB{n}-S{n}'；OPC 'OPC{n}-S{n}'；需量 'DMD-{kWhSID}'；
+//   迴路用電 'NRGD-{circuitId}'（每日）/ 'NRGM-{circuitId}'（每月）/ 'NRGP-{circuitId}'（本月電度，期別）
 //
 // 主入口：window.PointGrouping
 //   parseCoord(d)            → 吸收 Hungarian / camelCase 兩種欄位命名，
 //                              回傳 { id, modbusIds:[], deviceNames:[], name }
 //   getSidPrefix(sid)        → 數字前綴（非 modbus 點位回 -1）
-//   isCalcSid / isDbSid / isOpcSid / isDmdSid(sid)
+//   isCalcSid / isDbSid / isOpcSid / isDmdSid / isNrgSid(sid)
 //   isMultiId(coord)         → 該 Coordinator 是否多站號
 //   coordContainsSid(sid,c)  → sid 是否屬於此 Coordinator（不分子站號）
 //   subOfSid(sid, coord)     → 多站號時回 { mid, idx, subName }；單站號 / 找不到回 null
@@ -55,6 +56,7 @@
     function isDbSid(sid) { return !!sid && /^DB\d+-S\d+$/.test(sid); }
     function isOpcSid(sid) { return !!sid && /^OPC\d+-S\d+$/.test(sid); }
     function isDmdSid(sid) { return !!sid && String(sid).indexOf('DMD-') === 0; }   // 需量虛擬點位 DMD-{kWhSID}
+    function isNrgSid(sid) { return !!sid && /^NRG[DMP]-/.test(sid); }              // 迴路用電虛擬點位 NRGD-/NRGM-/NRGP-{circuitId}
 
     function isMultiId(coord) {
         return parseCoord(coord).modbusIds.length > 1;
@@ -66,7 +68,7 @@
 
     // sid 是否屬於此 Coordinator（含其所有子站號，不細分）
     function coordContainsSid(sid, coord) {
-        if (isCalcSid(sid) || isDbSid(sid) || isOpcSid(sid) || isDmdSid(sid)) return false;
+        if (isCalcSid(sid) || isDbSid(sid) || isOpcSid(sid) || isDmdSid(sid) || isNrgSid(sid)) return false;
         var c = parseCoord(coord);
         var pfx = getSidPrefix(sid);
         return pfx >= c.id * 65536 && pfx < (c.id + 1) * 65536;
@@ -153,6 +155,7 @@
         isDbSid: isDbSid,
         isOpcSid: isOpcSid,
         isDmdSid: isDmdSid,
+        isNrgSid: isNrgSid,
         isMultiId: isMultiId,
         subRangeBase: subRangeBase,
         coordContainsSid: coordContainsSid,

@@ -75,11 +75,13 @@ public class AlarmSettingController : Controller
             })
             .ToList();
 
-        // 合併計算點位
-        var calcPoints = (await _dataRepository.GetAllCalculatedPointsAsync())
+        // 合併計算點位（另備 SID→群組 map 供選點器兩層瀏覽，不動 ModbusPointModel）
+        var calcPointModels = (await _dataRepository.GetAllCalculatedPointsAsync())
             .Where(c => c.isEnabled)
-            .Select(c => new ModbusPointModel { szSID = c.szSID, szName = c.szName, szUnit = c.szUnit });
-        pointList.AddRange(calcPoints);
+            .ToList();
+        pointList.AddRange(calcPointModels
+            .Select(c => new ModbusPointModel { szSID = c.szSID, szName = c.szName, szUnit = c.szUnit }));
+        var calcGroupMap = calcPointModels.ToDictionary(c => c.szSID, c => c.szGroupName ?? string.Empty);
 
         // 合併 DB 來源點位
         var dbPoints = (await _dataRepository.GetAllDbPointsAsync())
@@ -95,6 +97,18 @@ public class AlarmSettingController : Controller
         var szDemandSuffix = _l["alarm.demand.point_suffix"].Value;
         pointList.AddRange((await _dataRepository.GetDemandPointInfosAsync())
             .Select(d => new ModbusPointModel { szSID = $"DMD-{d.szSID}", szName = $"{d.szName} {szDemandSuffix}", szUnit = "kW" }));
+
+        // 合併迴路用電虛擬點位（NRGD-/NRGM-/NRGP-{circuitId}，全部迴路含虛擬節點，Engine 每 5 分鐘發布）
+        var szNrgDailySuffix = _l["alarm.nrg.daily_suffix"].Value;
+        var szNrgMonthlySuffix = _l["alarm.nrg.monthly_suffix"].Value;
+        var szNrgPeriodSuffix = _l["alarm.nrg.period_suffix"].Value;
+        var circuits = (await _dataRepository.GetAllEnergyCircuitInfosAsync()).ToList();
+        foreach (var c in circuits)
+        {
+            pointList.Add(new ModbusPointModel { szSID = $"NRGD-{c.nId}", szName = $"{c.szName} {szNrgDailySuffix}", szUnit = "kWh" });
+            pointList.Add(new ModbusPointModel { szSID = $"NRGM-{c.nId}", szName = $"{c.szName} {szNrgMonthlySuffix}", szUnit = "kWh" });
+            pointList.Add(new ModbusPointModel { szSID = $"NRGP-{c.nId}", szName = $"{c.szName} {szNrgPeriodSuffix}", szUnit = "kWh" });
+        }
 
         var rules = (await _alarmRuleService.GetAllRulesAsync()).ToList();
         var lineTargets = (await _lineTargetService.GetAllAsync()).ToList();
@@ -143,6 +157,8 @@ public class AlarmSettingController : Controller
         ViewBag.SmsTargets = smsTargets;
         ViewBag.SmsSenderConfig = smsSenderConfig;
         ViewBag.DiLabelMap = diLabelMap;
+        ViewBag.CalcGroupMap = calcGroupMap;
+        ViewBag.Circuits = circuits;
 
         return View();
     }

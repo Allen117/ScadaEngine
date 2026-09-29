@@ -71,4 +71,7 @@
   <data name="alarm.success.saved_restart_engine" xml:space="preserve"><value>已儲存，重啟 Engine 後生效</value></data>
   <data name="alarm.success.sms_rescan_sent" xml:space="preserve"><value>重掃命令已送出，稍後請看狀態卡</value></data>
   <data name="alarm.demand.point_suffix" xml:space="preserve"><value>需量</value></data>
+  <data name="alarm.nrg.daily_suffix" xml:space="preserve"><value>每日用電</value></data>
+  <data name="alarm.nrg.monthly_suffix" xml:space="preserve"><value>每月用電</value></data>
+  <data name="alarm.nrg.period_suffix" xml:space="preserve"><value>本月電度</value></data>
 </root>
