@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<!-- Recipe: /EMS 首頁（EMS 綠）— 五棟辦公大樓（運航/24Hr/一般/第一訓練/備勤），台電總表 = 五棟加總。
+     自洽：今日長條逐時（00~15 時）加總 = 圓餅五棟加總 = 10,691.0 kWh；YoY 子項差異加總 = 總表差異。 -->
+<html lang="zh-TW">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>能源管理 - SCADA 監控系統</title>
+
+    <link href="{{WWWROOT}}/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{WWWROOT}}/lib/font-awesome/css/all.min.css">
+    <link rel="stylesheet" href="{{WWWROOT}}/css/navbar-submenu.css">
+    <link rel="stylesheet" href="{{WWWROOT}}/css/ems.css">
+
+    <!-- 與 _Layout.cshtml 同步的自訂樣式 -->
+    <style>
+        html, body { overflow-x: hidden; }
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        .navbar { box-shadow: 0 2px 4px rgba(0,0,0,.1); }
+        .navbar .nav-link { white-space: nowrap; }
+        .navbar-collapse { flex-wrap: nowrap; }
+        .footer {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 0;
+            margin-top: auto;
+        }
+        main { min-height: calc(100vh - 140px); }
+        .card {
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        .btn-primary { background: linear-gradient(45deg, #007bff, #0056b3); border: none; }
+        .text-primary { color: #007bff !important; }
+        *, *::before, *::after { transition: none !important; animation: none !important; }
+    </style>
+
+    <script>
+    // ── 模擬時鐘：固定 2026-09-09 15:42:10 ─────────────────────
+    (function () {
+        var RealDate = Date;
+        var target = new RealDate(2026, 8, 9, 15, 42, 10).getTime();
+        var offset = target - RealDate.now();
+        function MockDate() {
+            if (arguments.length === 0) return new RealDate(RealDate.now() + offset);
+            return new (Function.prototype.bind.apply(RealDate, [null].concat([].slice.call(arguments))))();
+        }
+        MockDate.prototype = RealDate.prototype;
+        MockDate.now = function () { return RealDate.now() + offset; };
+        MockDate.parse = RealDate.parse;
+        MockDate.UTC = RealDate.UTC;
+        window.Date = MockDate;
+    })();
+
+    // ── 模擬 API：攔截 fetch，餵前端與正式後端相同格式的假資料 ──
+    (function () {
+        var NOW_MIN = 15 * 60 + 42; // 15:42
+
+        function pad2(n) { return n < 10 ? '0' + n : String(n); }
+
+        // 今日需量曲線（每分鐘一點）：辦公型單峰，24Hr 大樓提供夜間基載 ~370 kW，
+        // 上午 11:00 尖峰 995.0 kW，目前 812.4 kW
+        function buildTrend() {
+            var ctrl = [
+                [0, 372], [120, 352], [300, 366], [390, 470], [420, 560],
+                [480, 724], [540, 858], [600, 930], [640, 975], [660, 995],
+                [690, 940], [720, 902], [730, 845], [780, 952], [810, 934],
+                [900, 880], [930, 835], [942, 812.4]
+            ];
+            var pts = [];
+            for (var m = 0; m <= NOW_MIN; m++) {
+                var i = 0;
+                while (i < ctrl.length - 1 && ctrl[i + 1][0] < m) i++;
+                var a = ctrl[i], b = ctrl[Math.min(i + 1, ctrl.length - 1)];
+                var v = (b[0] === a[0]) ? a[1]
+                    : a[1] + (b[1] - a[1]) * (m - a[0]) / (b[0] - a[0]);
+                v += Math.sin(m * 0.73) * 3.5 + Math.sin(m * 0.171) * 2.2; // 自然抖動
+                if (m !== 660) v = Math.min(v, 993.5);
+                if (m === 660) v = 995.0;
+                if (m === NOW_MIN) v = 812.4;
+                pts.push({ t: pad2(Math.floor(m / 60)) + ':' + pad2(m % 60), v: Math.round(v * 10) / 10, q: 1 });
+            }
+            return pts;
+        }
+
+        // 今日逐時 kWh：00~15 時已完成（16 時之後為未來 → 0）。
+        // 加總 = 10,691（= 圓餅五棟加總 = YoY 本期總表）
+        var HOUR_LABELS = [], HOUR_VALUES = [
+            372, 360, 352, 356, 366, 402, 470, 612,
+            790, 930, 980, 995, 902, 918, 952, 934,
+            0, 0, 0, 0, 0, 0, 0, 0
+        ];
+        for (var h = 0; h < 24; h++) HOUR_LABELS.push(pad2(h) + ':00');
+
+        var MOCK = {
+            '/EMS/api/main-meter-info': function () {
+                return {
+                    hasMainMeter: true,
+                    mode: 'aggregated',
+                    name: '台電總表',
+                    voltage: { unit: 'kV' },
+                    current: { unit: 'A' },
+                    power: { unit: 'kW' },
+                    powerFactor: { unit: '' }
+                };
+            },
+            '/EMS/api/main-meter-values': function () {
+                // 11.4 kV、812.4 kW、PF 0.96 → I = P / (√3·V·PF) ≈ 42.86 A
+                return { voltage: 11.4, current: 42.86, power: 812.4, powerFactor: 0.96 };
+            },
+            '/EMS/api/demand-circuits': function () {
+                return [
+                    { id: 1, name: '台電總表' },
+                    { id: 2, name: '運航大樓' },
+                    { id: 3, name: '第二訓練大樓-24Hr' },
+                    { id: 4, name: '第一訓練大樓' },
+                    { id: 5, name: '備勤大樓' },
+                    { id: 6, name: '第二訓練大樓-一般' }
+                ];
+            },
+            '/EMS/api/main-meter': function () {
+                return { hasMainMeter: true, id: 1, name: '台電總表', hasChildren: true };
+            },
+            '/EMS/api/demand-today': function () {
+                return { hasData: true, currentKW: 812.4, maxKW: 995.0, maxAt: '11:00', quality: 1 };
+            },
+            '/EMS/api/demand-trend': buildTrend,
+            '/EMS/api/circuit-energy': function () {
+                return { labels: HOUR_LABELS, values: HOUR_VALUES };
+            },
+            '/EMS/api/main-meter-breakdown': function () {
+                return {
+                    hasMainMeter: true,
+                    meterName: '台電總表',
+                    items: [
+                        { id: 2, name: '運航大樓',            kwh: 3462.8 },
+                        { id: 3, name: '第二訓練大樓-24Hr',   kwh: 2683.5 },
+                        { id: 4, name: '第一訓練大樓',        kwh: 1764.0 },
+                        { id: 5, name: '備勤大樓',            kwh: 1560.9 },
+                        { id: 6, name: '第二訓練大樓-一般',   kwh: 1219.8 }
+                    ]
+                };
+            },
+            '/EMS/api/main-meter-yoy': function () {
+                return {
+                    hasMainMeter: true,
+                    rows: [
+                        { id: 1, name: '台電總表',            isMainMeter: true,  currentKwh: 10691.0, lastYearKwh: 10812.6, diffKwh: -121.6, pctChange: -1.1 },
+                        { id: 2, name: '運航大樓',            isMainMeter: false, currentKwh: 3462.8,  lastYearKwh: 3402.5,  diffKwh: 60.3,   pctChange: 1.8 },
+                        { id: 3, name: '第二訓練大樓-24Hr',   isMainMeter: false, currentKwh: 2683.5,  lastYearKwh: 2758.9,  diffKwh: -75.4,  pctChange: -2.7 },
+                        { id: 4, name: '第一訓練大樓',        isMainMeter: false, currentKwh: 1764.0,  lastYearKwh: 1839.6,  diffKwh: -75.6,  pctChange: -4.1 },
+                        { id: 5, name: '備勤大樓',            isMainMeter: false, currentKwh: 1560.9,  lastYearKwh: 1523.4,  diffKwh: 37.5,   pctChange: 2.5 },
+                        { id: 6, name: '第二訓練大樓-一般',   isMainMeter: false, currentKwh: 1219.8,  lastYearKwh: 1288.2,  diffKwh: -68.4,  pctChange: -5.3 }
+                    ]
+                };
+            }
+        };
+
+        var realFetch = window.fetch;
+        window.fetch = function (url, opts) {
+            var path = String(url).split('?')[0];
+            if (MOCK[path]) {
+                return Promise.resolve(new Response(JSON.stringify(MOCK[path]()), {
+                    status: 200,
+                    headers: { 'Content-Type': 'application/json' }
+                }));
+            }
+            return realFetch.apply(this, arguments);
+        };
+    })();
+    </script>
+</head>
+<body class="d-flex flex-column ems-mode">
+    <!-- 導覽列（EMS 模式） -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-leaf me-2"></i>
+                EMS 能源管理
+            </a>
+            <div class="collapse navbar-collapse show" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button"><i class="fas fa-plug me-1"></i>迴路資訊</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button"><i class="fas fa-file-alt me-1"></i>報表查詢</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-newspaper me-1"></i>能源日報</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-bullseye me-1"></i>能源基準</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button"><i class="fas fa-cog me-1"></i>能管設定</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button"><i class="fas fa-chart-line me-1"></i>歷史資料</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav flex-shrink-0 ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-arrow-left me-1"></i>回 SCADA</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-search me-1"></i><span class="d-none d-lg-inline">搜尋</span>
+                            <span class="gs-nav-kbd d-none d-xl-inline ms-1"><kbd>Ctrl</kbd> <kbd>K</kbd></span>
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button"><i class="fas fa-globe me-1"></i><span>台灣</span></a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button"><i class="fas fa-user me-1"></i>admin</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要內容：/EMS Index -->
+    <main role="main" class="flex-grow-1">
+        <div class="ems-hub">
+            <div class="container-fluid mt-3">
+                <div class="row g-3">
+
+                    <!-- 主要電表資訊寬幅卡片 -->
+                    <div class="col-12" id="mainMeterCardWrap" style="display:none;" data-notbound="未設定">
+                        <div class="card shadow-sm">
+                            <div class="card-header py-2 d-flex justify-content-between align-items-center"
+                                 style="background:#43a047;color:#fff;">
+                                <span><i class="fas fa-star me-1"></i>主要電表資訊</span>
+                                <span id="mainMeterName" class="small"></span>
+                            </div>
+                            <div class="card-body py-3">
+                                <div class="row g-3 text-center">
+                                    <div class="col-6 col-md-3">
+                                        <div class="small text-muted mb-1">
+                                            <i class="fas fa-bolt me-1"></i>電壓
+                                            <span id="mmVoltageName" class="d-block text-truncate"></span>
+                                        </div>
+                                        <span id="mmVoltageValue" class="fw-bold" style="font-size:1.6rem;line-height:1;color:#2e7d32;">--</span>
+                                        <span id="mmVoltageUnit" class="small text-muted"></span>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="small text-muted mb-1">
+                                            <i class="fas fa-wave-square me-1"></i>電流
+                                            <span id="mmCurrentName" class="d-block text-truncate"></span>
+                                        </div>
+                                        <span id="mmCurrentValue" class="fw-bold" style="font-size:1.6rem;line-height:1;color:#2e7d32;">--</span>
+                                        <span id="mmCurrentUnit" class="small text-muted"></span>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="small text-muted mb-1">
+                                            <i class="fas fa-plug me-1"></i>功率
+                                            <span id="mmPowerName" class="d-block text-truncate"></span>
+                                        </div>
+                                        <span id="mmPowerValue" class="fw-bold" style="font-size:1.6rem;line-height:1;color:#2e7d32;">--</span>
+                                        <span id="mmPowerUnit" class="small text-muted"></span>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="small text-muted mb-1">
+                                            <i class="fas fa-percentage me-1"></i>功因
+                                            <span id="mmPowerFactorName" class="d-block text-truncate"></span>
+                                        </div>
+                                        <span id="mmPowerFactorValue" class="fw-bold" style="font-size:1.6rem;line-height:1;color:#2e7d32;">--</span>
+                                        <span id="mmPowerFactorUnit" class="small text-muted"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 今日即時需量卡片 -->
+                    <div class="col-md-6 col-lg-5 col-xl-4">
+                        <div class="card shadow-sm">
+                            <div class="card-header py-2" style="background:#43a047;color:#fff;">
+                                <i class="fas fa-tachometer-alt me-1"></i>今日即時需量
+                            </div>
+                            <div class="card-body pb-2">
+                                <select id="demandCircuitSelect" class="form-select form-select-sm mb-2">
+                                    <option value="">載入中...</option>
+                                </select>
+                                <div class="d-flex align-items-center justify-content-center gap-2 py-1">
+                                    <span id="demandCurrentKW" class="fw-bold"
+                                          style="font-size:1.8rem;line-height:1;color:#2e7d32;">--</span>
+                                    <span class="small text-muted">kW</span>
+                                    <span id="demandStatusDot" data-bs-toggle="tooltip" data-bs-original-title=""
+                                          style="width:9px;height:9px;border-radius:50%;background:#bdbdbd;flex-shrink:0;cursor:default;"></span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-baseline px-1 mt-1 mb-2">
+                                    <span class="small text-muted">今日最高需量</span>
+                                    <span>
+                                        <span id="demandMaxKW" class="small fw-semibold text-danger">--</span>
+                                        <span id="demandMaxAt" class="small text-muted"></span>
+                                    </span>
+                                </div>
+                                <div style="height:90px;position:relative;">
+                                    <canvas id="demandTrendChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 主要電表用電長條圖卡片 -->
+                    <div class="col-md-6 col-lg-7 col-xl-8">
+                        <div class="card shadow-sm h-100 d-flex flex-column">
+                            <div class="card-header py-2 d-flex justify-content-between align-items-center flex-wrap gap-2"
+                                 style="background:#43a047;color:#fff;">
+                                <span>
+                                    <i class="fas fa-chart-bar me-1"></i>主要電表用電
+                                    <span id="barMeterName" class="small ms-1 opacity-75"></span>
+                                </span>
+                                <span class="d-flex align-items-center gap-2">
+                                    <span class="btn-group btn-group-sm ems-gran-group" role="group" id="barGranGroup">
+                                        <button type="button" class="btn ems-gran-btn active" data-gran="hour">日</button>
+                                        <button type="button" class="btn ems-gran-btn" data-gran="day">月</button>
+                                        <button type="button" class="btn ems-gran-btn" data-gran="month">年</button>
+                                    </span>
+                                    <input type="date" id="barPivotDate" class="form-control form-control-sm ems-hub-picker" />
+                                    <input type="month" id="barPivotMonth" class="form-control form-control-sm ems-hub-picker" style="display:none;" />
+                                    <input type="number" id="barPivotYear" min="2000" max="2100" class="form-control form-control-sm ems-hub-picker" style="display:none;" />
+                                </span>
+                            </div>
+                            <div class="card-body p-2 flex-grow-1">
+                                <div id="barEmpty" class="ems-hub-empty" style="display:none;"></div>
+                                <div id="barChartWrap" class="ems-hub-chart-wrap">
+                                    <canvas id="mainMeterBarChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 子迴路用電圓餅圖卡片 -->
+                    <div class="col-md-6 col-lg-5 col-xl-4">
+                        <div class="card shadow-sm h-100 d-flex flex-column">
+                            <div class="card-header py-2 d-flex justify-content-between align-items-center flex-wrap gap-2"
+                                 style="background:#43a047;color:#fff;">
+                                <span><i class="fas fa-chart-pie me-1"></i>子迴路用電占比</span>
+                                <span class="d-flex align-items-center gap-2">
+                                    <span class="btn-group btn-group-sm ems-gran-group" role="group" id="pdGranGroup">
+                                        <button type="button" class="btn ems-gran-btn active" data-gran="hour">日</button>
+                                        <button type="button" class="btn ems-gran-btn" data-gran="day">月</button>
+                                        <button type="button" class="btn ems-gran-btn" data-gran="month">年</button>
+                                    </span>
+                                    <input type="date" id="pdPivotDate" class="form-control form-control-sm ems-hub-picker" />
+                                    <input type="month" id="pdPivotMonth" class="form-control form-control-sm ems-hub-picker" style="display:none;" />
+                                    <input type="number" id="pdPivotYear" min="2000" max="2100" class="form-control form-control-sm ems-hub-picker" style="display:none;" />
+                                </span>
+                            </div>
+                            <div class="card-body p-2 flex-grow-1">
+                                <div id="pieEmpty" class="ems-hub-empty" style="display:none;"></div>
+                                <div id="pieChartWrap" class="ems-hub-chart-wrap">
+                                    <canvas id="mainMeterPieChart"></canvas>
+                                </div>
+                                <div id="pieNegNote" class="small text-muted mt-1"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 去年同期比較表卡片 -->
+                    <div class="col-md-6 col-lg-7 col-xl-8">
+                        <div class="card shadow-sm h-100 d-flex flex-column">
+                            <div class="card-header py-2 d-flex justify-content-between align-items-center flex-wrap gap-2"
+                                 style="background:#43a047;color:#fff;">
+                                <span><i class="fas fa-balance-scale me-1"></i>去年同期比較</span>
+                                <span id="yoyPeriodText" class="small opacity-75"></span>
+                            </div>
+                            <div class="card-body p-2 flex-grow-1">
+                                <div id="yoyEmpty" class="ems-hub-empty" style="display:none;"></div>
+                                <div id="yoyTableWrap" class="table-responsive">
+                                    <table class="table table-sm table-hover align-middle mb-0 ems-yoy-table">
+                                        <thead>
+                                            <tr>
+                                                <th>迴路</th>
+                                                <th class="text-end" id="yoyThCurrent">本期 kWh</th>
+                                                <th class="text-end" id="yoyThLastYear">去年同期 kWh</th>
+                                                <th class="text-end">差異 kWh</th>
+                                                <th class="text-end">增減 %</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="yoyTableBody">
+                                            <tr><td colspan="5" class="text-center text-muted py-3">載入中...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 頁腳 -->
+    <footer class="footer mt-auto">
+        <div class="container-fluid">
+            <div class="d-flex flex-wrap justify-content-between align-items-center">
+                <span class="me-3 d-inline-flex align-items-center">
+                    <svg class="footer-logo" viewBox="0 0 510 120" role="img" aria-label="SCADA 智慧能源管理平台">
+                        <path class="footer-logo-star" d="M57 4 L70 47 L101 60 L70 73 L57 116 L44 73 L13 60 L44 47 Z" />
+                        <path class="footer-logo-spark" d="M100 12 L104 24 L116 28 L104 32 L100 44 L96 32 L84 28 L96 24 Z" />
+                        <text class="footer-logo-word" x="138" y="80" textLength="340" lengthAdjust="spacingAndGlyphs">JOULARIS</text>
+                    </svg>
+                </span>
+                <span class="me-3 d-inline-flex align-items-center">
+                    <i class="fas fa-code me-1"></i>版本 2.2.3
+                    <img src="{{WWWROOT}}/images/itri-logo.svg" alt="ITRI" style="height:18px;vertical-align:middle;" class="ms-2" />
+                </span>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{{WWWROOT}}/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (function () {
+            function updateClock() {
+                var now = new Date();
+                var pad = function (n) { return n.toString().padStart(2, '0'); };
+                var s = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) +
+                    ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+                var el = document.getElementById('serverClock');
+                if (el) el.textContent = s;
+            }
+            updateClock();
+            setInterval(updateClock, 1000);
+        })();
+    </script>
+    <script src="{{WWWROOT}}/lib/chartjs/chart.umd.min.js"></script>
+    <script>if (window.Chart) { Chart.defaults.animation = false; }</script>
+    <script src="{{WWWROOT}}/js/ems.js"></script>
+    <script src="{{WWWROOT}}/js/ems-hub-energy.js"></script>
+</body>
+</html>
