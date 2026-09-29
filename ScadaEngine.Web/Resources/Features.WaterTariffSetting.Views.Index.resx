@@ -52,7 +52,6 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
   <data name="watertariff.title" xml:space="preserve"><value>水費設定</value></data>
-  <data name="watertariff.breadcrumb.energy" xml:space="preserve"><value>能源管理</value></data>
   <data name="watertariff.select.title" xml:space="preserve"><value>費率方案版本</value></data>
   <data name="watertariff.select.plan" xml:space="preserve"><value>方案版本</value></data>
   <data name="watertariff.button.add_version" xml:space="preserve"><value>新增方案版本</value></data>

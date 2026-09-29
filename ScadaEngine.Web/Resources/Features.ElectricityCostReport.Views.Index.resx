@@ -52,7 +52,6 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
   <data name="costreport.title" xml:space="preserve"><value>電費報表</value></data>
-  <data name="costreport.breadcrumb.energy" xml:space="preserve"><value>能源管理</value></data>
 
   <data name="costreport.filter.title" xml:space="preserve"><value>查詢條件</value></data>
   <data name="costreport.filter.circuit" xml:space="preserve"><value>迴路</value></data>

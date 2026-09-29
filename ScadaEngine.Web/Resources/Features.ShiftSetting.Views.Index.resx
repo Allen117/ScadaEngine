@@ -52,7 +52,6 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
   <data name="shiftsetting.title" xml:space="preserve"><value>班別設定</value></data>
-  <data name="shiftsetting.breadcrumb.energy" xml:space="preserve"><value>能源管理</value></data>
   <data name="shiftsetting.card.title" xml:space="preserve"><value>班別清單</value></data>
   <data name="shiftsetting.button.add" xml:space="preserve"><value>新增班別</value></data>
   <data name="shiftsetting.button.save" xml:space="preserve"><value>儲存</value></data>

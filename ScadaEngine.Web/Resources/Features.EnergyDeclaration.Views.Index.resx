@@ -52,7 +52,6 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
   <data name="energydeclaration.title" xml:space="preserve"><value>能源申報</value></data>
-  <data name="energydeclaration.breadcrumb.energy" xml:space="preserve"><value>能源管理</value></data>
 
   <data name="energydeclaration.config.title" xml:space="preserve"><value>申報報表設定</value></data>
   <data name="energydeclaration.config.col_name" xml:space="preserve"><value>報表名稱</value></data>

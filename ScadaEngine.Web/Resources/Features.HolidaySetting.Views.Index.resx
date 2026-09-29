@@ -52,7 +52,6 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
   <data name="holidaysetting.title" xml:space="preserve"><value>國定假日設定</value></data>
-  <data name="holidaysetting.breadcrumb.energy" xml:space="preserve"><value>能源管理</value></data>
   <data name="holidaysetting.loading" xml:space="preserve"><value>載入中…</value></data>
 
   <data name="holidaysetting.legend.holiday" xml:space="preserve"><value>國定假日（離峰日計價）</value></data>

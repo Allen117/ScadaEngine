@@ -48,7 +48,6 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
   <data name="chilledwater.title" xml:space="preserve"><value>Chilled Water Circuit Settings</value></data>
-  <data name="chilledwater.subtitle" xml:space="preserve"><value>Energy Management</value></data>
   <data name="chilledwater.tree.header" xml:space="preserve"><value>Circuit Hierarchy</value></data>
   <data name="chilledwater.tree.loading" xml:space="preserve"><value>Loading...</value></data>
   <data name="chilledwater.tree.empty" xml:space="preserve"><value>No circuits yet — click the + button to add one</value></data>

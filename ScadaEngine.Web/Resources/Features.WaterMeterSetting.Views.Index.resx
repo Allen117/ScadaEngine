@@ -53,7 +53,6 @@
 
   <!-- 頁面 -->
   <data name="watermeter.title" xml:space="preserve"><value>自來水表/迴路設定</value></data>
-  <data name="watermeter.subtitle" xml:space="preserve"><value>用水管理</value></data>
 
   <!-- 樹狀清單 -->
   <data name="watermeter.tree.header" xml:space="preserve"><value>迴路階層</value></data>

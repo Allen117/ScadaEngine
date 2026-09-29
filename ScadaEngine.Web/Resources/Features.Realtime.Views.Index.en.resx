@@ -70,7 +70,7 @@
 
   <data name="realtime.empty.no_data" xml:space="preserve"><value>No realtime data; please check the MQTT connection.</value></data>
 
-  <data name="realtime.footer.note" xml:space="preserve"><value>Auto-refresh: 3s | Topic: SCADA/Realtime/+</value></data>
+  <data name="realtime.footer.note" xml:space="preserve"><value>Auto-refresh: 3s</value></data>
   <data name="realtime.footer.last_update" xml:space="preserve"><value>Last update</value></data>
 
   <data name="realtime.alert.refresh_failed" xml:space="preserve"><value>Refresh failed: {0}</value></data>

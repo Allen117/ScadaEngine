@@ -48,7 +48,6 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
   <data name="logicflow.title" xml:space="preserve"><value>Logic Flow</value></data>
-  <data name="logicflow.subtitle" xml:space="preserve"><value>LogicFlow Management</value></data>
   <data name="logicflow.tree.header" xml:space="preserve"><value>Logic List</value></data>
   <data name="logicflow.tree.loading" xml:space="preserve"><value>Loading...</value></data>
   <data name="logicflow.tree.empty" xml:space="preserve"><value>No logic items. Click the plus icon above to add.</value></data>

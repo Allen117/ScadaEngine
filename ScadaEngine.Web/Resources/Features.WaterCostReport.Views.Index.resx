@@ -52,7 +52,6 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
   <data name="watercostreport.title" xml:space="preserve"><value>水費報表</value></data>
-  <data name="watercostreport.breadcrumb.energy" xml:space="preserve"><value>能源管理</value></data>
   <data name="watercostreport.filter.title" xml:space="preserve"><value>查詢條件</value></data>
   <data name="watercostreport.filter.circuit" xml:space="preserve"><value>自來水表迴路</value></data>
   <data name="watercostreport.filter.month_start" xml:space="preserve"><value>起始期別</value></data>

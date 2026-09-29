@@ -52,7 +52,6 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
   <data name="energyreport.title" xml:space="preserve"><value>Energy Report</value></data>
-  <data name="energyreport.breadcrumb.energy" xml:space="preserve"><value>Energy Management</value></data>
 
   <data name="energyreport.filter.title" xml:space="preserve"><value>Query Conditions</value></data>
   <data name="energyreport.filter.circuit" xml:space="preserve"><value>Circuit</value></data>

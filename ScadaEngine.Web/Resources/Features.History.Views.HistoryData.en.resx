@@ -48,11 +48,9 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
   <data name="history.title" xml:space="preserve"><value>Historical Trend</value></data>
-  <data name="history.source" xml:space="preserve"><value>Source: HistoryData</value></data>
 
   <data name="history.coordinator.title" xml:space="preserve"><value>Devices</value></data>
   <data name="history.coordinator.calc" xml:space="preserve"><value>Calculated Points</value></data>
-  <data name="history.coordinator.ungrouped" xml:space="preserve"><value>Ungrouped</value></data>
   <data name="history.coordinator.ungrouped" xml:space="preserve"><value>Ungrouped</value></data>
   <data name="history.coordinator.empty" xml:space="preserve"><value>No devices</value></data>
 

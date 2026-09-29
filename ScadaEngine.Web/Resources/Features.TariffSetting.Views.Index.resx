@@ -52,7 +52,6 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
   <data name="tariffsetting.title" xml:space="preserve"><value>電費設定</value></data>
-  <data name="tariffsetting.breadcrumb.energy" xml:space="preserve"><value>能源管理</value></data>
 
   <data name="tariffsetting.card.active_plan" xml:space="preserve"><value>目前採用方案</value></data>
   <data name="tariffsetting.card.no_active" xml:space="preserve"><value>尚未選擇</value></data>

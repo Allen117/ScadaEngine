@@ -49,7 +49,6 @@
 
   <!-- ============ 頁面基本 ============ -->
   <data name="logicflow.title" xml:space="preserve"><value>流程圖控制</value></data>
-  <data name="logicflow.subtitle" xml:space="preserve"><value>LogicFlow 管理</value></data>
   <data name="logicflow.tree.header" xml:space="preserve"><value>邏輯清單</value></data>
   <data name="logicflow.tree.loading" xml:space="preserve"><value>載入中...</value></data>
   <data name="logicflow.tree.empty" xml:space="preserve"><value>尚無邏輯項目，請點擊上方加號新增</value></data>

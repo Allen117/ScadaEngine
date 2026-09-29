@@ -70,7 +70,7 @@
 
   <data name="realtime.empty.no_data" xml:space="preserve"><value>尚無即時資料，請確認 MQTT 連線狀態</value></data>
 
-  <data name="realtime.footer.note" xml:space="preserve"><value>自動更新週期: 3 秒 | 訂閱主題: SCADA/Realtime/+</value></data>
+  <data name="realtime.footer.note" xml:space="preserve"><value>自動更新週期: 3 秒</value></data>
   <data name="realtime.footer.last_update" xml:space="preserve"><value>最後更新</value></data>
 
   <data name="realtime.alert.refresh_failed" xml:space="preserve"><value>更新資料失敗: {0}</value></data>

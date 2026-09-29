@@ -52,7 +52,6 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
   <data name="energydeclaration.title" xml:space="preserve"><value>Energy Declaration</value></data>
-  <data name="energydeclaration.breadcrumb.energy" xml:space="preserve"><value>Energy Management</value></data>
 
   <data name="energydeclaration.config.title" xml:space="preserve"><value>Declaration Report Settings</value></data>
   <data name="energydeclaration.config.col_name" xml:space="preserve"><value>Report Name</value></data>

@@ -48,7 +48,6 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
   <data name="conditionctrl.title" xml:space="preserve"><value>條件控制</value></data>
-  <data name="conditionctrl.subtitle" xml:space="preserve"><value>條件控制設定</value></data>
 
   <data name="conditionctrl.card.add_rule" xml:space="preserve"><value>新增條件控制規則</value></data>
   <data name="conditionctrl.card.rule_list" xml:space="preserve"><value>條件控制規則清單</value></data>

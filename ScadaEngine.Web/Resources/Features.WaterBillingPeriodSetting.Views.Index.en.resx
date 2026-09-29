@@ -52,7 +52,6 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
   <data name="waterbillingperiod.title" xml:space="preserve"><value>Water Billing Cycle Settings</value></data>
-  <data name="waterbillingperiod.breadcrumb.energy" xml:space="preserve"><value>Energy Management</value></data>
   <data name="waterbillingperiod.hint.overview" xml:space="preserve"><value>Set the water-bill start/end dates for each billing period (month); periods without custom settings default to starting the day after the previous period ends, lasting one month (calendar month if nothing is customized). Changes take effect immediately — all monthly water views (Water Usage Report / Water Cost Report / EMS water meter cards) are split by billing period, and historical monthly reports are recalculated with the new settings.</value></data>
   <data name="waterbillingperiod.hint.independent" xml:space="preserve"><value>This page affects water usage and water cost only. Because the water utility and the power utility read meters on different dates, the water billing cycle and the electricity billing cycle are configured independently — changes here do not affect electricity periods.</value></data>
   <data name="waterbillingperiod.hint.gap_overlap" xml:space="preserve"><value>Gaps or overlaps between periods are allowed (warning only): water usage in a gap is not counted in any period, and usage in an overlap is counted in both periods.</value></data>

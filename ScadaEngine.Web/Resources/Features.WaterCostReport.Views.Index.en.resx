@@ -52,7 +52,6 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
   <data name="watercostreport.title" xml:space="preserve"><value>Water Cost Report</value></data>
-  <data name="watercostreport.breadcrumb.energy" xml:space="preserve"><value>Energy Management</value></data>
   <data name="watercostreport.filter.title" xml:space="preserve"><value>Query Conditions</value></data>
   <data name="watercostreport.filter.circuit" xml:space="preserve"><value>Water Meter Circuit</value></data>
   <data name="watercostreport.filter.month_start" xml:space="preserve"><value>From Period</value></data>

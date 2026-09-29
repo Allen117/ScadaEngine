@@ -51,7 +51,6 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <data name="gasmeter.title" xml:space="preserve"><value>Gas Meter / Circuit</value></data>
-  <data name="gasmeter.subtitle" xml:space="preserve"><value>Gas Management</value></data>
   <data name="gasmeter.tree.header" xml:space="preserve"><value>Circuit Hierarchy</value></data>
   <data name="gasmeter.tree.add_root" xml:space="preserve"><value>Add Meter/Circuit</value></data>
   <data name="gasmeter.tree.loading" xml:space="preserve"><value>Loading...</value></data>
