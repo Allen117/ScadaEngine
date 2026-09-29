@@ -102,6 +102,25 @@
   <data name="designer.widget.coolingTower" xml:space="preserve"><value>冷卻水塔</value></data>
   <data name="designer.widget.ahuFan" xml:space="preserve"><value>空調箱風扇</value></data>
   <data name="designer.widget.chiller" xml:space="preserve"><value>冰機</value></data>
+  <data name="designer.widget.trendChart" xml:space="preserve"><value>即時曲線</value></data>
+  <data name="designer.widget_tooltip.trendChart" xml:space="preserve"><value>拖曳至畫布以新增即時曲線；綁一個點位，執行期呈現會自己往左滾動的「近 N 分鐘」趨勢</value></data>
+  <data name="designer.default.trendChart_title" xml:space="preserve"><value>即時曲線</value></data>
+  <data name="designer.prop.trend.window_min" xml:space="preserve"><value>時間窗（分鐘）</value></data>
+  <data name="designer.prop.trend.window_badge" xml:space="preserve"><value>近 {0} 分鐘</value></data>
+  <data name="designer.prop.trend.sample_sec" xml:space="preserve"><value>畫點間隔（秒）</value></data>
+  <data name="designer.prop.trend.point_count_hint" xml:space="preserve"><value>約 {0} 點</value></data>
+  <data name="designer.prop.trend.capped_hint" xml:space="preserve"><value>已達 {0} 點上限，畫點間隔自動放大為 {1} 秒</value></data>
+  <data name="designer.prop.trend.y_max" xml:space="preserve"><value>Y 軸上限</value></data>
+  <data name="designer.prop.trend.y_min" xml:space="preserve"><value>Y 軸下限</value></data>
+  <data name="designer.prop.trend.y_auto_hint" xml:space="preserve"><value>留空＝自動（依資料範圍上下各留 10%）</value></data>
+  <data name="designer.prop.trend.auto" xml:space="preserve"><value>自動</value></data>
+  <data name="designer.prop.trend.grid_count" xml:space="preserve"><value>格線數</value></data>
+  <data name="designer.prop.trend.unit" xml:space="preserve"><value>單位</value></data>
+  <data name="designer.prop.trend.line_color" xml:space="preserve"><value>線色</value></data>
+  <data name="designer.prop.trend.line_width" xml:space="preserve"><value>線寬</value></data>
+  <data name="designer.prop.trend.grid_color" xml:space="preserve"><value>格線色</value></data>
+  <data name="designer.prop.trend.border_color" xml:space="preserve"><value>邊框色</value></data>
+  <data name="designer.prop.trend.show_legend" xml:space="preserve"><value>顯示圖例</value></data>
   <data name="designer.widget.image" xml:space="preserve"><value>圖片/動畫</value></data>
   <data name="designer.widget_tooltip.image" xml:space="preserve"><value>拖曳至畫布以新增自訂圖片/動畫（GIF）；可綁定點位，依狀態切換動畫圖與靜止圖</value></data>
   <data name="designer.default.image_title" xml:space="preserve"><value>圖片/動畫</value></data>

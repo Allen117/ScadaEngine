@@ -244,3 +244,35 @@
     user-select: none;
     z-index: 12;
 }
+
+/* ========== 即時曲線 widget（滾動趨勢圖） ==========
+   外框由 render.js inline 套使用者設定的背景/邊框色；此處只管版面。
+   box 必須滿版且 position:relative —— Chart.js responsive 是量「canvas 的父容器」，
+   父容器沒有明確高度時圖會塌成 0 或無限長高。 */
+.scada-trend {
+    overflow: hidden;
+}
+.scada-trend .scada-trend-box {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    border-radius: 4px;
+    overflow: hidden;
+}
+.scada-trend .scada-trend-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+/* 未綁定點位（例如整頁複製後 szSid 被清空）：不建 Chart、不查 DB，只給提示 */
+.scada-trend .scada-trend-unbound {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: #dc3545;
+    pointer-events: none;
+}

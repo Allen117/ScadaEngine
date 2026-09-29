@@ -108,8 +108,15 @@
             canvas.style.background      = '#ffffff';
         }
 
+        // 整塊重建畫布前先銷毀既有 Chart.js 實例，否則舊 canvas 被移除、實例與其
+        // resize listener 仍留著 → 切幾次頁就洩漏（24h 不關的圖控站會真的發作）
+        destroyAllTrendCharts();
+
         canvas.innerHTML = '';
         (page.arrWidgetState || []).forEach(function (ws) { renderScadaWidget(canvas, ws); });
+
+        // 即時曲線的 Chart 實例必須等 widget 都進了 DOM 才建（Chart.js 要量容器尺寸）
+        initTrendCharts(canvas);
 
         if (lastData.length > 0) updateScadaWidgets(lastData);
         fetchAndUpdateAccumulations();   // 換頁立即載入累積值，不等 30 秒輪詢
@@ -171,6 +178,10 @@
         wrap.style.transform = 'translate(-50%, -50%) scale(' + fScale + ')';
         wrap.style.width  = nCanvasW + 'px';
         wrap.style.height = nCanvasH + 'px';
+
+        // canvas 是 bitmap，被 transform: scale 放大就模糊 → 把曲線的 devicePixelRatio
+        // 反算成最終顯示解析度（plan 決策 4）
+        applyTrendChartScale(fScale);
     }
 
     window.addEventListener('resize', _applyCanvasScale);

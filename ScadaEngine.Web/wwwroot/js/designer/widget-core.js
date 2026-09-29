@@ -45,8 +45,8 @@ canvas.addEventListener('drop', e => {
     x = Math.max(0, x);
     y = Math.max(0, y);
 
-    if (szType === 'gauge' || szType === 'controlBtn' || szType === 'realtimeValue' || szType === 'diPoint' || szType === 'aoPoint' || szType === 'doPoint') {
-        // 儀錶板 / 控制按鈕 / AI點位 / DI點位 / AO點位 需先選擇綁定點位
+    if (szType === 'gauge' || szType === 'controlBtn' || szType === 'realtimeValue' || szType === 'diPoint' || szType === 'aoPoint' || szType === 'doPoint' || szType === 'trendChart') {
+        // 儀錶板 / 控制按鈕 / AI點位 / DI點位 / AO點位 / 即時曲線 需先選擇綁定點位
         openPointPicker(x, y, szType);
     } else {
         createWidget(szType, x, y);
@@ -113,11 +113,12 @@ function renderWidget(el) {
                     : szType === 'ahuFan'         ? buildAhuFanHtml(props, 'stop')
                     : szType === 'chiller'        ? buildChillerHtml(props, 'stop')
                     : szType === 'image'          ? buildImageHtml(props, 'run')
+                    : szType === 'trendChart'     ? buildTrendChartHtml(props)
                     : buildGaugeHtml(props);
 
     // hover tooltip（controlBtn / realtimeValue）
     const szPointLabel = props.szPointName || props.szCid || '';
-    const bShowTooltip = (szType === 'controlBtn' || szType === 'realtimeValue' || szType === 'diPoint' || szType === 'aoPoint' || szType === 'doPoint') && szPointLabel;
+    const bShowTooltip = (szType === 'controlBtn' || szType === 'realtimeValue' || szType === 'diPoint' || szType === 'aoPoint' || szType === 'doPoint' || szType === 'trendChart') && szPointLabel;
     const szTooltipHtml = bShowTooltip
         ? `<div class="widget-hover-tooltip">${escHtml(szPointLabel)}</div>` : '';
 
@@ -147,6 +148,10 @@ function renderWidget(el) {
         el.classList.add('widget-do');
     } else if (szType === 'pipe') {
         el.classList.add('widget-pipe');
+    } else if (szType === 'trendChart') {
+        // 曲線自帶邊框/背景，widget-body 的 padding 會讓編輯期尺寸與執行期不一致 → 由 CSS 歸零
+        el.classList.add('widget-trend');
+        el.classList.toggle('widget-transparent', !props.szBgColor || props.szBgColor === 'transparent');
     } else if ('szBgColor' in props) {
         const isBgTransparent = !props.szBgColor || props.szBgColor === 'transparent';
         el.classList.toggle('widget-transparent', isBgTransparent);

@@ -188,6 +188,106 @@ function renderPropPanel(el) {
                    oninput="setProp('szBgColor', this.value)">
         </div>
         `;
+    } else if (szType === 'trendChart') {
+        const szSidLabel = props.szPointName
+            ? `<span style="font-size:12px;color:#c8c8c8;">${escHtml(props.szPointName)}</span>`
+            : szUnboundLabel;
+        const isBgTransparent = !props.szBgColor || props.szBgColor === 'transparent';
+        const szBgColorVal    = isBgTransparent ? '#ffffff' : props.szBgColor;
+
+        // 時間窗以「分鐘」呈現（現場講「看近 30 分鐘」而非 1800 秒），props 仍存秒
+        const nWinSec  = props.nWindowSec || 1800;
+        const nWinMin  = Math.max(1, Math.round(nWinSec / 60));
+        const nSmpSec  = props.nSampleSec || 5;
+
+        szHtml += `
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.bound_sid'))}</label>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                ${szSidLabel}
+                <button class="btn btn-outline-primary btn-sm py-0 px-2" style="font-size:11px;"
+                        onclick="rerouteTrendChartPoint()">
+                    <i class="fas fa-exchange-alt me-1"></i>${escHtml(t('designer.prop.reselect'))}
+                </button>
+            </div>
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.trend.window_min'))}</label>
+            <input type="number" value="${nWinMin}" min="1" max="1440" step="1"
+                   oninput="setProp('nWindowSec', Math.max(60, (+this.value || 1) * 60))">
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.trend.sample_sec'))}</label>
+            <input type="number" value="${nSmpSec}" min="1" max="600" step="1"
+                   oninput="setProp('nSampleSec', Math.max(1, +this.value || 1))">
+        </div>
+        <div id="trendPtHint" style="font-size:10px;margin:-2px 0 6px;">${_buildTrendPointHint(props)}</div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.trend.y_max'))}</label>
+            <input type="number" value="${props.fYMax != null ? props.fYMax : ''}" step="any"
+                   placeholder="${escHtml(t('designer.prop.trend.auto'))}"
+                   oninput="setProp('fYMax', this.value === '' ? null : +this.value)">
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.trend.y_min'))}</label>
+            <input type="number" value="${props.fYMin != null ? props.fYMin : ''}" step="any"
+                   placeholder="${escHtml(t('designer.prop.trend.auto'))}"
+                   oninput="setProp('fYMin', this.value === '' ? null : +this.value)">
+        </div>
+        <div style="font-size:10px;color:#888;margin:-2px 0 6px;">${escHtml(t('designer.prop.trend.y_auto_hint'))}</div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.trend.grid_count'))}</label>
+            <input type="number" value="${props.nGridCount != null ? props.nGridCount : 5}" min="0" max="10" step="1"
+                   oninput="setProp('nGridCount', Math.max(0, Math.min(10, +this.value || 0)))">
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.trend.unit'))}</label>
+            <input type="text" value="${escHtml(props.szUnit || '')}"
+                   oninput="setProp('szUnit', this.value)">
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.trend.line_color'))}</label>
+            <input type="color" value="${props.szLineColor || '#0d6efd'}"
+                   oninput="setProp('szLineColor', this.value)">
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.trend.line_width'))}</label>
+            <input type="number" value="${props.nLineWidth || 2}" min="1" max="6" step="1"
+                   oninput="setProp('nLineWidth', Math.max(1, Math.min(6, +this.value || 1)))">
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.trend.grid_color'))}</label>
+            <input type="color" value="${props.szGridColor || '#f0f0f0'}"
+                   oninput="setProp('szGridColor', this.value)">
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.trend.border_color'))}</label>
+            <input type="color" value="${props.szBorderColor || '#dee2e6'}"
+                   oninput="setProp('szBorderColor', this.value)">
+        </div>
+        <div class="prop-group">
+            <label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;
+                          text-transform:none;letter-spacing:0;">
+                <input type="checkbox" style="cursor:pointer;width:auto;"
+                       ${props.isShowLegend ? 'checked' : ''}
+                       onchange="setProp('isShowLegend', this.checked)">
+                ${escHtml(t('designer.prop.trend.show_legend'))}
+            </label>
+        </div>
+        <div class="prop-group">
+            <label>${escHtml(t('designer.prop.background_color'))}</label>
+            <label style="display:inline-flex;align-items:center;gap:3px;font-size:11px;color:#9d9d9d;
+                          font-weight:normal;text-transform:none;letter-spacing:0;cursor:pointer;margin-top:4px;white-space:nowrap;">
+                <input type="checkbox" style="cursor:pointer;width:auto;"
+                       ${isBgTransparent ? 'checked' : ''}
+                       onchange="onTrendBgTransparentChange(this.checked)">
+                ${escHtml(t('designer.prop.transparent_bg'))}
+            </label>
+            <input type="color" id="trendBgPicker" value="${szBgColorVal}"
+                   style="width:100%;margin-top:4px;${isBgTransparent ? 'display:none;' : ''}"
+                   oninput="setProp('szBgColor', this.value)">
+        </div>
+        `;
     } else if (szType === 'controlBtn') {
         const szCidLabel = props.szPointName
             ? `<span style="font-size:12px;color:#c8c8c8;">${escHtml(props.szPointName)}</span>`
@@ -1405,6 +1505,11 @@ function setProp(szKey, val) {
     if (selectedEl.dataset.type === 'diPoint' && szKey === 'szDisplayMode') {
         renderPropPanel(selectedEl);
     }
+    // 即時曲線：時間窗 / 畫點間隔改變會影響「點數」提示與是否觸及硬上限，需重繪面板。
+    // ⚠️ 不可對每個 key 都重繪 —— 會在打字中途把 input 換掉、游標跳掉。
+    if (selectedEl.dataset.type === 'trendChart' && (szKey === 'nWindowSec' || szKey === 'nSampleSec')) {
+        _renderTrendHintOnly(selectedEl);
+    }
     // table 第一次鎖定時重新渲染屬性面板（讓寬高 input 變 readonly + 出現說明）
     if (bJustLockedTable) {
         renderPropPanel(selectedEl);
@@ -1844,6 +1949,32 @@ function createGaugeWithPoint(point, x, y) {
     selectWidget(el);
 }
 
+function createTrendChartWithPoint(point, x, y) {
+    const def  = WIDGET_DEFS['trendChart'];
+    const szId = 'w' + (++nWidgetCounter);
+    const szFullName = point.szDeviceLabel ? point.szDeviceLabel + ' / ' + point.szName : point.szName;
+
+    const el = document.createElement('div');
+    el.id           = szId;
+    el.className    = 'canvas-widget';
+    el.dataset.type = 'trendChart';
+    el.style.left   = x + 'px';
+    el.style.top    = y + 'px';
+    el.style.width  = def.nDefaultW + 'px';
+    el.style.height = def.nDefaultH + 'px';
+    el.widgetProps  = {
+        ...getWidgetDefaultProps(el.dataset.type),
+        szSid:       point.szSid,
+        szPointName: szFullName,
+        szTitle:     szFullName,
+        szUnit:      point.szUnit || ''
+    };
+
+    renderWidget(el);
+    canvas.appendChild(el);
+    selectWidget(el);
+}
+
 function createControlBtnWithPoint(point, x, y) {
     const def  = WIDGET_DEFS['controlBtn'];
     const szId = 'w' + (++nWidgetCounter);
@@ -2038,6 +2169,39 @@ function onGaugeBgTransparentChange(isChecked) {
         if (picker) picker.style.display = 'none';
     } else {
         const picker = document.getElementById('gaugeBgPicker');
+        const szColor = picker ? picker.value : '#ffffff';
+        setProp('szBgColor', szColor);
+        if (picker) picker.style.display = '';
+    }
+}
+
+// 即時曲線「點數」提示文字（時間窗 ÷ 畫點間隔；觸及硬上限時改為警示色並說明實際間隔）。
+// 與執行期共用 window.TrendWindow，避免面板說 360 點、實際畫 720 點。
+function _buildTrendPointHint(props) {
+    const nWinSec = props.nWindowSec || 1800;
+    const nSmpSec = props.nSampleSec || 5;
+    if (window.TrendWindow.isCapped(nWinSec, nSmpSec)) {
+        const nEffSmp = window.TrendWindow.effectiveSampleSec(nWinSec, nSmpSec);
+        return `<span style="color:#ffc107;"><i class="fas fa-exclamation-triangle me-1"></i>` +
+               escHtml(t('designer.prop.trend.capped_hint', { 0: window.TrendWindow.MAX_POINTS, 1: nEffSmp })) + `</span>`;
+    }
+    return `<span style="color:#888;">` +
+           escHtml(t('designer.prop.trend.point_count_hint', { 0: window.TrendWindow.pointCount(nWinSec, nSmpSec) })) + `</span>`;
+}
+
+// 只換提示文字，不重繪整個面板 —— 面板重繪會在使用者打字中途把 input 換掉、游標跳回開頭
+function _renderTrendHintOnly(el) {
+    const hint = document.getElementById('trendPtHint');
+    if (hint) hint.innerHTML = _buildTrendPointHint(el.widgetProps);
+}
+
+function onTrendBgTransparentChange(isChecked) {
+    if (isChecked) {
+        setProp('szBgColor', 'transparent');
+        const picker = document.getElementById('trendBgPicker');
+        if (picker) picker.style.display = 'none';
+    } else {
+        const picker = document.getElementById('trendBgPicker');
         const szColor = picker ? picker.value : '#ffffff';
         setProp('szBgColor', szColor);
         if (picker) picker.style.display = '';

@@ -1064,6 +1064,11 @@ function confirmPointPick() {
             selectedEl.widgetProps.szCid       = point.szSid;
             selectedEl.widgetProps.szPointName = szFullName;
             selectedEl.widgetProps.szTitle     = szFullName;
+        } else if (szType === 'trendChart') {
+            selectedEl.widgetProps.szSid       = point.szSid;
+            selectedEl.widgetProps.szPointName = szFullName;
+            selectedEl.widgetProps.szTitle     = szFullName;
+            selectedEl.widgetProps.szUnit      = point.szUnit || '';
         } else if (szType === 'pump' || szType === 'coolingTower' || szType === 'ahuFan' || szType === 'chiller') {
             // 馬達型設備多綁定欄位（pump 與三種新設備共用同一 slot 機制）
             if (_pumpPickerSlot) {
@@ -1134,6 +1139,8 @@ function confirmPointPick() {
             createAoPointWithPoint(point, pendingGaugeX, pendingGaugeY);
         } else if (szPickerWidgetType === 'doPoint') {
             createDoPointWithPoint(point, pendingGaugeX, pendingGaugeY);
+        } else if (szPickerWidgetType === 'trendChart') {
+            createTrendChartWithPoint(point, pendingGaugeX, pendingGaugeY);
         } else {
             createGaugeWithPoint(point, pendingGaugeX, pendingGaugeY);
         }
@@ -1273,6 +1280,20 @@ async function rerouteDoPointPoint() {
     pendingGaugeX      = -1;
     pendingGaugeY      = -1;
     szPickerWidgetType = 'doPoint';
+    szPickedSid        = null;
+    nPickedDevId       = -1;
+    try {
+        await _ensurePickerData();
+        _showPickerForBoundSid(_getBoundSidFromWidget(selectedEl));
+    } catch (_) { /* 已在 _ensurePickerData 顯示 alert */ }
+}
+
+// 從屬性面板「重選」呼叫（trendChart）
+async function rerouteTrendChartPoint() {
+    if (!selectedEl || selectedEl.dataset.type !== 'trendChart') return;
+    pendingGaugeX      = -1;
+    pendingGaugeY      = -1;
+    szPickerWidgetType = 'trendChart';
     szPickedSid        = null;
     nPickedDevId       = -1;
     try {

@@ -187,6 +187,15 @@
                     <span>@Localizer["designer.widget.gauge"]</span>
                 </div>
 
+                <!-- 即時曲線（滾動趨勢圖） -->
+                <div class="widget-lib-item"
+                     draggable="true"
+                     data-widget-type="trendChart"
+                     title="@Localizer["designer.widget_tooltip.trendChart"]">
+                    <i class="fas fa-chart-line" style="color:#4dabf7;"></i>
+                    <span>@Localizer["designer.widget.trendChart"]</span>
+                </div>
+
                 <!-- 文字 -->
                 <div class="widget-lib-item"
                      draggable="true"
@@ -606,6 +615,8 @@
 <script src="~/js/common/motor-equip-svg.js" asp-append-version="true"></script>
 <script src="~/js/common/pipe-svg.js" asp-append-version="true"></script>
 <script src="~/js/common/image-widget.js" asp-append-version="true"></script>
+@* 即時曲線點數計算：Designer 屬性面板提示與 ScadaPage 執行期共用同一份算法 *@
+<script src="~/js/common/trend-window.js" asp-append-version="true"></script>
 <script src="~/js/designer/state.js" asp-append-version="true"></script>
 <script src="~/js/designer/widget-defs.js" asp-append-version="true"></script>
 <script src="~/js/designer/widget-core.js" asp-append-version="true"></script>

@@ -90,6 +90,14 @@
         })();
         return _scheduleCacheLoading;
     }
+    // ── 即時曲線（trendChart widget）Chart.js 實例表 ──
+    // key = widget 容器的 DOM id。selectScadaPage() 會整塊重建畫布 DOM；Chart.js 實例
+    // 若不 destroy，舊 canvas 被移除但實例仍在、resize listener 仍掛著 → 切幾次頁就洩漏。
+    // 24h 不關的圖控站上這類洩漏會真的發作，故生命週期集中在此管理（widget-trend.js 操作）。
+    var _trendCharts = {};
+    var _nTrendSeq   = 0;                 // widget 容器 id 流水號
+    var TREND_BACKFILL_CONCURRENCY = 3;   // 首載 backfill 併發上限（一頁 N 張圖不可同時打 DB）
+
     function _pageHasScheduleDi(page) {
         if (!page || !page.arrWidgetState) return false;
         return page.arrWidgetState.some(function (ws) {

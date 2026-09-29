@@ -786,6 +786,11 @@ main { padding: 0 !important; min-height: 0 !important; }
 .canvas-widget.widget-ao .widget-body,
 .canvas-widget.widget-do .widget-body { cursor: move; overflow: visible; padding: 0; }
 
+/* ========== 即時曲線元件（body 滿版，編輯期尺寸 = 執行期尺寸） ==========
+   曲線自帶邊框 / 背景 / 格線，widget-body 預設的 4px padding + overflow:auto
+   會讓編輯期看到的繪圖區比執行期小 8px、且拖小時冒出捲軸。一律歸零。 */
+.canvas-widget.widget-trend .widget-body { padding: 0; overflow: hidden; }
+
 /* ========== 管路流動元件（隱藏 header，body 可拖移） ========== */
 .canvas-widget.widget-pipe {
     overflow: visible;

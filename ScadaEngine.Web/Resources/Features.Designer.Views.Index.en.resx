@@ -103,6 +103,25 @@
   <data name="designer.widget.coolingTower" xml:space="preserve"><value>Cooling Tower</value></data>
   <data name="designer.widget.ahuFan" xml:space="preserve"><value>AHU Fan</value></data>
   <data name="designer.widget.chiller" xml:space="preserve"><value>Chiller</value></data>
+  <data name="designer.widget.trendChart" xml:space="preserve"><value>Realtime Trend</value></data>
+  <data name="designer.widget_tooltip.trendChart" xml:space="preserve"><value>Drag to canvas to add a realtime trend; bind one point and it scrolls left on its own showing the last N minutes at runtime</value></data>
+  <data name="designer.default.trendChart_title" xml:space="preserve"><value>Realtime Trend</value></data>
+  <data name="designer.prop.trend.window_min" xml:space="preserve"><value>Time Window (min)</value></data>
+  <data name="designer.prop.trend.window_badge" xml:space="preserve"><value>Last {0} min</value></data>
+  <data name="designer.prop.trend.sample_sec" xml:space="preserve"><value>Plot Interval (sec)</value></data>
+  <data name="designer.prop.trend.point_count_hint" xml:space="preserve"><value>About {0} points</value></data>
+  <data name="designer.prop.trend.capped_hint" xml:space="preserve"><value>{0}-point cap reached; plot interval raised to {1} sec</value></data>
+  <data name="designer.prop.trend.y_max" xml:space="preserve"><value>Y Max</value></data>
+  <data name="designer.prop.trend.y_min" xml:space="preserve"><value>Y Min</value></data>
+  <data name="designer.prop.trend.y_auto_hint" xml:space="preserve"><value>Leave blank = auto (10% headroom above and below the data range)</value></data>
+  <data name="designer.prop.trend.auto" xml:space="preserve"><value>Auto</value></data>
+  <data name="designer.prop.trend.grid_count" xml:space="preserve"><value>Grid Lines</value></data>
+  <data name="designer.prop.trend.unit" xml:space="preserve"><value>Unit</value></data>
+  <data name="designer.prop.trend.line_color" xml:space="preserve"><value>Line Color</value></data>
+  <data name="designer.prop.trend.line_width" xml:space="preserve"><value>Line Width</value></data>
+  <data name="designer.prop.trend.grid_color" xml:space="preserve"><value>Grid Color</value></data>
+  <data name="designer.prop.trend.border_color" xml:space="preserve"><value>Border Color</value></data>
+  <data name="designer.prop.trend.show_legend" xml:space="preserve"><value>Show Legend</value></data>
   <data name="designer.widget.image" xml:space="preserve"><value>Image / GIF</value></data>
   <data name="designer.widget_tooltip.image" xml:space="preserve"><value>Drag to canvas to add a custom image / GIF; bind a point to switch between the animated and still image by state</value></data>
   <data name="designer.default.image_title" xml:space="preserve"><value>Image / GIF</value></data>

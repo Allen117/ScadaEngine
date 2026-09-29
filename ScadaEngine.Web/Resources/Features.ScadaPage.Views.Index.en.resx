@@ -70,6 +70,7 @@
   <!-- DI point schedule binding (plan 2026-05-26-di-point-bind-schedule) -->
   <data name="scadapage.di.schedule_not_found" xml:space="preserve"><value>Schedule not found</value></data>
   <data name="scadapage.di.schedule_label" xml:space="preserve"><value>Schedule</value></data>
+  <data name="scadapage.trend.unbound" xml:space="preserve"><value>No point bound</value></data>
 
   <!-- AI point accumulation mode badge (plan 2026-07-14-scadapage-accumulation-widget) -->
   <data name="scadapage.acc.day_badge" xml:space="preserve"><value>DAY</value></data>

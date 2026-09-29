@@ -372,6 +372,17 @@
 | zh-TW | en | 備註 |
 |---|---|---|
 | 歷史趨勢圖 | Historical Trend | |
+| 即時曲線 | Realtime Trend | Designer trendChart widget（滾動趨勢圖） |
+| 時間窗 | Time Window | 曲線呈現「近 N 分鐘」的長度 |
+| 畫點間隔 | Plot Interval | 每幾秒畫一個點 |
+| 格線數 | Grid Lines | Y 軸區隔線條數 |
+| 線寬 | Line Width | |
+| 線色 | Line Color | |
+| 格線色 | Grid Color | |
+| Y 軸上限 | Y Max | 留空＝自動 |
+| Y 軸下限 | Y Min | 留空＝自動 |
+| 自動 | Auto | Y 軸範圍留空時的顯示字 |
+| 顯示圖例 | Show Legend | |
 | 點位選取 | Select Points | |
 | 待查詢清單 | Query List | |
 | 加入待查詢清單 | Add to Query List | |

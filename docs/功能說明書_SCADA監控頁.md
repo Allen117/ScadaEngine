@@ -10,6 +10,7 @@ SCADA 監控頁是本系統的**核心即時視覺化操控介面**，讓使用�
 - **控制指令發送**：透過 `/api/control/write` API 下達 MQTT 控制指令寫入設備
 - **頁面樹導覽**：多頁面、多層級的樹狀結構切換
 - **權限控制**：按頁面粒度控制「可檢視 / 可操控」權限
+- **即時曲線**：畫面上可擺放會自己往左滾動的「近 N 分鐘」趨勢圖（`trendChart` widget，§7.4 (13)）—— 掛載時 backfill 補滿、之後複用同一份每秒即時值 append，穩態零 DB 查詢
 
 > **新增同型設備的畫面**：Designer 頁面樹支援**整頁複製貼上**（右鍵「複製此頁」/「貼上為子頁面」），複製出的頁面版面全同、**點位綁定全清空**，只要重綁點位即可。與畫布上 `Ctrl+C`/`Ctrl+V`（元件層級、**保留**綁定）是兩回事 → [功能說明書_圖面與邏輯複製.md](功能說明書_圖面與邏輯複製.md)
 - **警報著色**：結合警報規則，超限時自動變色提示
@@ -51,6 +52,8 @@ Views/Shared/
 └── _Layout.cshtml                ← 共用版面配置
 
 wwwroot/
+├── js/common/trend-window.js     ← 即時曲線時間窗／點數計算（Designer 與 ScadaPage 共用單一真相）
+├── lib/chartjs/                  ← Chart.js 4.4.0 + date-fns adapter（即時曲線與歷史趨勢頁共用）
 ├── css/scadapage.css             ← 元件互動樣式（hover 標籤、警報脈動、泵旋轉、按鈕 3D 效果）
 └── js/scadapage/                 ← 核心渲染引擎模組群（2026-08 由單體 scadapage.js 拆分）
     ├── state.js                  ← 共享狀態 + 跨模組 helper（最先載入）
@@ -59,6 +62,7 @@ wwwroot/
     ├── widget-pipe.js            ← 管路流動元件（圖形共用 common/pipe-svg.js）
     ├── widget-motor.js           ← 馬達型設備（冷卻塔/風扇/冰機）
     ├── widget-table.js           ← Table Widget
+    ├── widget-trend.js           ← 即時曲線（滾動趨勢圖）Chart.js 生命週期 / backfill / append
     ├── ctx-menus-points.js       ← 趨勢/AO/DO 右鍵選單與控制寫入
     ├── ctx-menus-equip.js        ← 泵浦/馬達右鍵選單與控制寫入
     ├── circuit-metric.js         ← 30 秒慢輪詢（SID 累積量 + 迴路指標）
@@ -576,6 +580,34 @@ props：`szAnimSrc / szStillSrc / szBindMode / szSid / szPointName / fThreshold 
 
 > **儲存設計（plan 2026-09-18）**：GIF 不塞進頁 `WidgetStateJson`（會膨脹、同圖多份），改以 `ScadaDesignAsset` 去重表 + URL 引用。孤兒資產（widget 刪除後）目前 append-only 不即時回收，日後如需要再補離線 GC。
 
+#### (13) trendChart — 即時曲線（滾動趨勢圖）
+
+**用途**：在監控畫面上直接呈現單一點位「近 N 分鐘」的**會自己往左滾動**的曲線。與 `/History/Trend`（查詢式、要按下查詢才畫）語意不同 —— 這是右端進、左端出的即時滾動圖。對應南亞大里標案 2-7 即時曲線。
+
+**一 widget 一點位**（plan 2026-09-29 決策 2）：`szSid` 單值，要看多個點位就拉多張圖並列，不做單圖多筆疊圖。資料層維持 per-SID，日後要擴 `arrSeries` 是加法不是改寫。
+
+props：`szSid / szPointName / szUnit / nWindowSec（時間窗秒數，預設 1800）/ nSampleSec（畫點間隔秒，預設 5）/ fYMin / fYMax（null＝自動）/ nGridCount（Y 軸區隔線數，預設 5）/ szLineColor / nLineWidth / szBgColor / szBorderColor / szGridColor / isShowLegend`。
+
+**資料來源分兩段（plan 決策 1）—— 穩態下整頁零 DB 查詢**：
+
+1. **掛載時 backfill 一次**：`GET /api/history/data?szSID=…&szStart=now-N&szEnd=now&nInterval=0` 補滿時間窗 → 開頁曲線**一開始就是滿的**，不是從空白慢慢長。一頁 N 張圖限流 **3 併發**（`TREND_BACKFILL_CONCURRENCY`），避免首載尖峰打 DB。失敗不重試。
+2. **之後只靠既有每秒 `/api/realtime/latest`**：`updateScadaWidgets` 末尾掃 `.scada-trend[data-sid]` → `pushTrendPoint()` append，再 `tickTrendCharts()` 統一推進 x 軸 min/max、丟棄超窗舊點、`chart.update('none')`。**不做週期性 DB 查詢**（即時值本來就已經在前端手上，再查 DB 是重複做功）。
+
+**誠實呈現故障（plan 決策 3）**：append 以**點位自身 timestamp** 去重，時間沒前進就拒收。Engine 停擺時曲線停在最後有效時間，不會畫出一條「持續有值」的平直假線 —— 把故障畫成正常比沒有曲線更糟。品質 BAD 期間插入 `y=null` + `spanGaps:false` 呈現斷點，不用 0 或前值補。
+
+**點數護欄（plan 決策 7）**：點數 = 時間窗 ÷ 畫點間隔，硬上限 **3600 點**。超過時自動放大畫點間隔（不截時間窗），Designer 屬性面板同步顯示被放大後的實際間隔。算法在 `wwwroot/js/common/trend-window.js`（`window.TrendWindow`），Designer 與執行期共用同一份，避免面板說 360 點、實際畫 720 點。
+
+**縮放清晰度（plan 決策 4）**：畫布用 `transform: scale`（刻意避開 CSS zoom 放大系統游標），canvas 是 bitmap 被 CSS 放大就模糊 → `_applyCanvasScale()` 尾端呼叫 `applyTrendChartScale(fScale)`，把 `options.devicePixelRatio` 設為 `window.devicePixelRatio × fScale` 後 `resize()`，直接以最終顯示解析度渲染 bitmap。Chart.js 事件座標走 `getBoundingClientRect`（已含 transform），tooltip 命中不需額外補償。
+
+**生命週期（plan 決策 5）**：實例存 `state.js` 的 `_trendCharts`（key = widget 容器 DOM id）。`renderScadaCanvas` 會整塊重建畫布 DOM，故重建前一律 `destroyAllTrendCharts()`；實例不 destroy 會留下 resize listener，切幾次頁就洩漏（24h 不關的圖控站會真的發作）。Chart 實例必須等 widget 都 append 進 DOM 之後才由 `initTrendCharts(canvas)` 統一建立（Chart.js 要量得到容器尺寸）。
+
+- Designer 編輯期**畫固定假波形**（SVG，不連線、不輪詢、不查 DB；plan 決策 6）：格線數／線色／線寬／邊框色／Y 軸範圍／時間窗即時反映，左上角顯示綁定點位名。`.widget-trend .widget-body` padding 歸零，讓編輯期尺寸 = 執行期尺寸
+- 拖入畫布**先開 picker 選點位**（同 gauge / AI 點位）；屬性面板「重選」走 `rerouteTrendChartPoint()`
+- 整頁複製（page-clipboard）時 `szSid` / `szPointName` 由既有前綴規則自動清空 → 執行期顯示「未綁定點位」，不建 Chart、不查 DB
+- 右鍵可「加入趨勢圖清單」（`onTrendContextMenu`，與其他 widget 一致）
+
+> **重繪節奏調校**：資料收集固定跟著 1 秒即時輪詢，畫面重繪由 `widget-trend.js` 的 `TREND_REDRAW_MS`（預設 1000）控制。一頁多圖若實測 CPU 吃緊，把它調大即可（資料完整性不受影響）。
+
 #### 畫布共通編輯操作（選取 / 移動 / 對齊）
 
 Designer 畫布上所有元件共用一套選取與定位規則（widget-core.js / canvas.js）：
@@ -586,7 +618,7 @@ Designer 畫布上所有元件共用一套選取與定位規則（widget-core.js
 - **多選群組寬高同步**：選取 ≥ 2 個元件（Shift 連選 / 框選 / `Ctrl+A` 全選）時，屬性面板改為群組面板，顯示選取數與**寬 / 高**兩欄；輸入任一欄即**同步套用到所有選取元件**（各自尊重尺寸鎖定與最小值 —— 折線管路、鎖定尺寸的表格會略過）。`renderMultiSelectPropPanel` / `setSizeMulti`，寬高規則與單選共用 `_applySizeTo`。剃除到剩 1 個時自動切回單選屬性面板。
 - **文字元件選取即編輯**：選取 `text` 靜態文字元件時，屬性面板自動 focus 並全選「文字內容」欄，可直接輸入取代（與表格儲存格點選 focus 行為一致）。（`renderPropPanel` text 分支 → `txtContentInput`）
 
-> **元件庫分類（Designer）**：元件庫改為三類 — 顯示元件（表格 / 儀錶板 / 文字）、點位與控制（控制按鈕 / AI / DI / AO / DO）、設備與動畫（水泵 / 管路 / 冷卻水塔 / 空調箱風扇 / 冰機 / 圖片動畫）。各類獨立捲動（`.widget-cat-items` overflow-y:auto），`.designer-outer` 釘視窗高使面板本身不捲，避免 100% 時多餘的整體捲軸。
+> **元件庫分類（Designer）**：元件庫改為三類 — 顯示元件（表格 / 儀錶板 / 即時曲線 / 文字）、點位與控制（控制按鈕 / AI / DI / AO / DO）、設備與動畫（水泵 / 管路 / 冷卻水塔 / 空調箱風扇 / 冰機 / 圖片動畫）。各類獨立捲動（`.widget-cat-items` overflow-y:auto），`.designer-outer` 釘視窗高使面板本身不捲，避免 100% 時多餘的整體捲軸。
 
 ---
 
@@ -602,10 +634,11 @@ Designer 畫布上所有元件共用一套選取與定位規則（widget-core.js
 ### Widget 更新邏輯 (`updateScadaWidgets`)
 
 ```
-建立三個索引 Map：
+建立四個索引 Map：
     sidMap         → { SID: 數值(float) }（有效數值）
     sidValueMap    → { SID: 原始值 }（含 '--'）
     sidQualityMap  → { SID: 品質(大寫) }
+    sidTsMap       → { SID: 點位自身 timestamp }（即時曲線 append 去重用）
 
 依序更新各類 Widget：
     ├─ .scada-gauge        → 重建 SVG（含警報色判定）
@@ -614,8 +647,11 @@ Designer 畫布上所有元件共用一套選取與定位規則（widget-core.js
     ├─ .scada-pump         → 比對 stateKey 決定是否重建 SVG / 僅更新 Gauge
     ├─ .scada-pipe         → 依 bindMode（DI ON/OFF｜類比 vs 閾值｜Bad）比對 pipeKey 決定是否重建
     ├─ .scada-image        → 依 bindMode（DI ON/OFF｜類比 vs 閾值｜Bad）比對 _imgState 切換 GIF/靜止圖
-    └─ .scada-table td[data-sid] → 逐格更新文字與色彩
+    ├─ .scada-table td[data-sid] → 逐格更新文字與色彩
+    └─ .scada-trend[data-sid] → pushTrendPoint() append 新點，末尾 tickTrendCharts() 推進時間窗並重繪
 ```
+
+> **即時曲線的 append 路徑**：`pushTrendPoint(el.id, sidTsMap[sid], sidValueMap[sid], sidQualityMap[sid])` 以**點位自身 timestamp** 判斷是否前進 —— 沒前進就拒收（Engine 停擺不灌重複假點）；未滿畫點間隔也拒收；品質 BAD 插入 `y=null` 形成斷點。所有圖 append 完才由 `tickTrendCharts()` 統一推進 x 軸、丟棄超窗舊點、每張圖只 `update('none')` 一次。**穩態下不再查 DB**（backfill 只在 widget 掛載時做一次）。詳見 §7.4 (13)。
 
 ### 品質處理
 - `BAD`：Gauge 顯示「斷線」、RT Value 顯示紅色「斷線」、DI/Pump 顯示紅色「斷線」
@@ -719,6 +755,8 @@ Designer 畫布上所有元件共用一套選取與定位規則（widget-core.js
 4. 使用者手動切換到「歷史趨勢」頁面即可查看
 5. 重複加入時 Toast 提示「選取的點位已在趨勢圖清單中」
 
+> **與即時曲線 widget 的分工**：本節的「趨勢圖」是把點位丟給 `/History/Trend` 做**查詢式**回顧（任意時間區間、多點疊圖、Excel 匯出）。畫面上要**持續滾動的即時曲線**請用 §7.4 (13) 的 `trendChart` widget —— 兩者資料來源不同（查詢 vs backfill + 即時 append），互不取代。`trendChart` 自己也支援右鍵加入趨勢圖清單。
+
 ---
 
 ## 12. 畫布等比縮放
@@ -727,9 +765,10 @@ Designer 畫布上所有元件共用一套選取與定位規則（widget-core.js
 1. 計算可用空間（父容器寬高 - 24px 邊距）
 2. 取得畫布設計尺寸（`nCanvasW × nCanvasH`）
 3. 計算縮放比例：`Math.min(可用寬 / 畫布寬, 可用高 / 畫布高)`
-4. 使用 CSS `zoom` 屬性等比縮放
+4. 以 `transform: translate(-50%,-50%) scale(fScale)` 等比縮放（**刻意不用 CSS `zoom`** —— Chromium 下 zoom 會連系統游標一起放大，F11 全螢幕 `fScale > 1` 時游標進入畫布會忽然變大）
 5. 設定 `overflow: hidden` 防止溢出
-6. 監聽 `window.resize` 自動重算
+6. 監聽 `window.resize` 自動重算；側欄／警報面板摺疊動畫另由 `ResizeObserver` 每影格重算
+7. 尾端呼叫 `applyTrendChartScale(fScale)` 把即時曲線的 `devicePixelRatio` 反算為最終顯示解析度（canvas 是 bitmap，被 CSS 放大會模糊；見 §7.4 (13)）
 
 ---
 
@@ -814,6 +853,8 @@ Designer 畫布上所有元件共用一套選取與定位規則（widget-core.js
 | `Designer` 功能 | 提供已發布設計資料 (`/Designer/Load`) |
 | `Realtime` 功能 | 提供即時數據 (`/api/realtime/latest`) |
 | `AlarmSetting` 功能 | 提供警報規則 (`/api/alarm-rules`) |
+| `History` 功能 | 即時曲線掛載時 backfill 時間窗 (`/api/history/data`，每個 widget 只打一次) |
+| Chart.js 4.4.0 + date-fns adapter | 即時曲線繪製（`lib/chartjs/`，與歷史趨勢頁共用同一份） |
 | Bootstrap 5 | Alert 元件（Toast） |
 | Font Awesome 6 | 圖示（按鈕、選單、樹節點） |
 | localStorage | 趨勢圖預載資料 (`SCADA_TREND_PRELOAD`) |

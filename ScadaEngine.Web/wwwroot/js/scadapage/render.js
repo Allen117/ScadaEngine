@@ -283,6 +283,26 @@
                     _motorPromptSetTemp(el);
                 });
             }
+        } else if (ws.szType === 'trendChart') {
+            // 即時曲線（滾動趨勢圖）— 這裡只佈好容器與 canvas，真正的 Chart 實例由
+            // renderScadaCanvas 在整批 widget 都 append 完之後統一 initTrendCharts() 建立
+            // （Chart.js 需要 canvas 已在 DOM 內才量得到容器尺寸）
+            var p = ws.props || {};
+            el.id = 'scadaTrend' + (++_nTrendSeq);
+            el.dataset.sid = p.szSid || '';
+            el.classList.add('scada-trend');
+            el._trendProps = p;
+            var szTrendBg     = (p.szBgColor && p.szBgColor !== 'transparent') ? p.szBgColor : 'transparent';
+            var szTrendBorder = p.szBorderColor || '#dee2e6';
+            el.innerHTML =
+                '<div class="scada-trend-box" style="background:' + szTrendBg + ';' +
+                    'border:1px solid ' + szTrendBorder + ';">' +
+                    '<canvas class="scada-trend-canvas"></canvas>' +
+                    '<div class="scada-trend-unbound" style="display:none;">' +
+                        '<i class="fas fa-unlink me-1"></i>' + escViewHtml(t('scadapage.trend.unbound')) +
+                    '</div>' +
+                '</div>';
+            if (p.szSid) el.addEventListener('contextmenu', function (ev) { onTrendContextMenu(ev, el.dataset.sid); });
         } else if (ws.szType === 'image') {
             // 圖片/動畫（自訂 GIF）— 綁定條件成立播 GIF、不成立顯示靜止圖（plan 2026-09-18）
             var p = ws.props || {};
@@ -326,10 +346,12 @@
         var sidValueMap = {};
         var sidQualityMap = {};
         var sidIsAutoMap = {};
+        var sidTsMap = {};          // 點位自身時間戳（即時曲線去重用，見 widget-trend.js）
         data.forEach(function (item) {
             if (item.sid) {
                 sidValueMap[item.sid] = item.value;
                 sidQualityMap[item.sid] = (item.quality || '').toUpperCase();
+                sidTsMap[item.sid] = item.timestamp;
                 if (item.value !== '--' && item.value !== null && item.value !== undefined) {
                     var fParsed = parseFloat(item.value);
                     if (!isNaN(fParsed)) sidMap[item.sid] = fParsed;
@@ -755,6 +777,15 @@
                 }
             }
         });
+
+        // 更新即時曲線：append 新點（以點位自身 timestamp 去重）後統一推進時間窗、重繪。
+        // 穩態下這是曲線唯一的資料來源 —— backfill 只在 widget 掛載時做一次，不週期查 DB。
+        document.querySelectorAll('.scada-trend[data-sid]').forEach(function (el) {
+            var sid = el.dataset.sid;
+            if (!sid) return;
+            pushTrendPoint(el.id, sidTsMap[sid], sidValueMap[sid], sidQualityMap[sid]);
+        });
+        tickTrendCharts();
 
         // 更新所有控制元件（AO/DO/Pump x2）右上角的 M 角標
         // 必須放在 pump rerender 之後，因 pump 換 innerHTML 會新建 badge DOM

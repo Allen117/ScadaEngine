@@ -58,6 +58,30 @@ const WIDGET_DEFS = {
             szLowColor:  '#fd7e14'
         }
     },
+    trendChart: {
+        szLabel: '即時曲線',
+        szIcon: 'fas fa-chart-line',
+        nDefaultW: 420,
+        nDefaultH: 240,
+        nMinW: 200, nMinH: 120,
+        defaultProps: {
+            szTitle:       '__i18n__:designer.default.trendChart_title',
+            szSid:         '',
+            szPointName:   '',
+            szUnit:        '',
+            nWindowSec:    1800,        // 時間窗：近 30 分鐘
+            nSampleSec:    5,           // 畫點間隔（秒）→ 360 點
+            fYMin:         null,        // null = 自動（Chart.js autoscale + 10% grace）
+            fYMax:         null,
+            nGridCount:    5,           // Y 軸區隔線數（Chart.js ticks.count）
+            szLineColor:   '#0d6efd',
+            nLineWidth:    2,
+            szBgColor:     'transparent',
+            szBorderColor: '#dee2e6',
+            szGridColor:   '#f0f0f0',
+            isShowLegend:  false
+        }
+    },
     text: {
         szLabel: '文字',
         szIcon: 'fas fa-font',
@@ -704,6 +728,79 @@ function buildGaugeHtml(props) {
         <text x="100" y="140" text-anchor="middle" font-size="11" fill="#868e96"
               font-family="'Segoe UI',sans-serif">${props.szTitle}</text>
     </svg></div>`;
+}
+
+// ============================================================
+// 即時曲線 HTML（Designer 預覽 — 固定假波形，不連線、不輪詢、不查 DB）
+// ============================================================
+// 編輯期只需回答「這張圖多大、什麼顏色、Y 軸怎麼切」，不需要真資料（plan 決策 6）。
+// 用 SVG 而非 Chart.js：免相依、resize 時靠 preserveAspectRatio="none" 自動自適應，
+// 線寬與格線靠 vector-effect="non-scaling-stroke" 不隨拉伸變形。
+const TREND_FAKE_WAVE_SEGMENTS = 60;
+
+function buildTrendChartHtml(props) {
+    const szBg     = (props.szBgColor && props.szBgColor !== 'transparent') ? props.szBgColor : 'transparent';
+    const szBorder = props.szBorderColor || '#dee2e6';
+    const szGrid   = props.szGridColor   || '#f0f0f0';
+    const szLine   = props.szLineColor   || '#0d6efd';
+    const nLineW   = Math.max(1, props.nLineWidth || 2);
+    const nGrid    = Math.max(0, Math.min(10, props.nGridCount != null ? props.nGridCount : 5));
+
+    // 水平格線（等分，不含上下邊界）
+    let szGridHtml = '';
+    for (let i = 1; i <= nGrid; i++) {
+        const y = (100 * i / (nGrid + 1)).toFixed(2);
+        szGridHtml += `<line x1="0" y1="${y}" x2="100" y2="${y}" stroke="${szGrid}"
+                             stroke-width="1" vector-effect="non-scaling-stroke"/>`;
+    }
+
+    // 假波形：兩個不同週期的正弦疊加，看起來像現場訊號而非規律測試波
+    const arrPts = [];
+    for (let i = 0; i <= TREND_FAKE_WAVE_SEGMENTS; i++) {
+        const x = 100 * i / TREND_FAKE_WAVE_SEGMENTS;
+        const f = Math.sin(i * 0.38) * 0.62 + Math.sin(i * 0.11 + 1.1) * 0.3;
+        // SVG y 軸向下，故 50 - f*波幅
+        arrPts.push(x.toFixed(2) + ',' + (50 - f * 34).toFixed(2));
+    }
+
+    // 綁定標籤（左上）
+    const szBindBadge = props.szPointName
+        ? `<div style="position:absolute;top:2px;left:5px;font-size:9px;color:${szLine};opacity:.9;
+                       max-width:70%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+                       pointer-events:none;"><i class="fas fa-link" style="font-size:8px;margin-right:2px;"></i>${escHtml(props.szPointName)}</div>`
+        : `<div style="position:absolute;top:2px;left:5px;font-size:9px;color:#dc3545;pointer-events:none;">
+               <i class="fas fa-unlink me-1"></i>${escHtml(t('designer.widget.unbound_sid'))}</div>`;
+
+    // 警報小鈴鐺（與 gauge / realtimeValue 一致）
+    const szAlarmBadge = hasAlarmRule(props.szSid)
+        ? `<div style="position:absolute;top:2px;right:4px;font-size:9px;color:#dc3545;opacity:.7;">
+               <i class="fas fa-bell"></i></div>`
+        : '';
+
+    // Y 軸上下限標籤（右側；留空顯示「自動」）+ 時間窗標籤（左下）
+    const szAuto  = escHtml(t('designer.prop.trend.auto'));
+    const szYMax  = (props.fYMax != null && props.fYMax !== '') ? escHtml(String(props.fYMax)) : szAuto;
+    const szYMin  = (props.fYMin != null && props.fYMin !== '') ? escHtml(String(props.fYMin)) : szAuto;
+    const szUnit  = props.szUnit ? ' ' + escHtml(props.szUnit) : '';
+    const nWinMin = Math.max(1, Math.round((props.nWindowSec || 1800) / 60));
+    const szAxisStyle = 'position:absolute;font-size:8px;color:#868e96;pointer-events:none;';
+
+    return `<div style="position:relative;width:100%;height:100%;box-sizing:border-box;
+                        background:${szBg};border:1px solid ${szBorder};border-radius:4px;overflow:hidden;">
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none"
+             xmlns="http://www.w3.org/2000/svg"
+             style="position:absolute;inset:0;width:100%;height:100%;display:block;">
+            ${szGridHtml}
+            <polyline points="${arrPts.join(' ')}" fill="none" stroke="${szLine}"
+                      stroke-width="${nLineW}" stroke-linejoin="round" stroke-linecap="round"
+                      vector-effect="non-scaling-stroke"/>
+        </svg>
+        ${szBindBadge}
+        ${szAlarmBadge}
+        <div style="${szAxisStyle}top:14px;right:5px;">${szYMax}${szUnit}</div>
+        <div style="${szAxisStyle}bottom:3px;right:5px;">${szYMin}${szUnit}</div>
+        <div style="${szAxisStyle}bottom:3px;left:5px;">${escHtml(t('designer.prop.trend.window_badge', { 0: nWinMin }))}</div>
+    </div>`;
 }
 
 // ============================================================
