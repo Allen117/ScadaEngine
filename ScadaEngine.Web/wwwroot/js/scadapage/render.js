@@ -297,7 +297,7 @@
             el.innerHTML =
                 '<div class="scada-trend-box" style="background:' + szTrendBg + ';' +
                     'border:1px solid ' + szTrendBorder + ';">' +
-                    '<canvas class="scada-trend-canvas"></canvas>' +
+                    '<div class="scada-trend-plot"><canvas class="scada-trend-canvas"></canvas></div>' +
                     '<div class="scada-trend-unbound" style="display:none;">' +
                         '<i class="fas fa-unlink me-1"></i>' + escViewHtml(t('scadapage.trend.unbound')) +
                     '</div>' +

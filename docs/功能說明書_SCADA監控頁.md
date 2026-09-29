@@ -599,7 +599,7 @@ props：`szSid / szPointName / szUnit / nWindowSec（時間窗秒數，預設 18
 
 **點數護欄（plan 決策 7）**：點數 = 時間窗 ÷ 畫點間隔，硬上限 **3600 點**。超過時自動放大畫點間隔（不截時間窗），Designer 屬性面板同步顯示被放大後的實際間隔。算法在 `wwwroot/js/common/trend-window.js`（`window.TrendWindow`），Designer 與執行期共用同一份，避免面板說 360 點、實際畫 720 點。
 
-**縮放清晰度（plan 決策 4）**：畫布用 `transform: scale`（刻意避開 CSS zoom 放大系統游標），canvas 是 bitmap 被 CSS 放大就模糊 → `_applyCanvasScale()` 尾端呼叫 `applyTrendChartScale(fScale)`，把 `options.devicePixelRatio` 設為 `window.devicePixelRatio × fScale` 後 `resize()`，直接以最終顯示解析度渲染 bitmap。Chart.js 事件座標走 `getBoundingClientRect`（已含 transform），tooltip 命中不需額外補償。
+**縮放清晰度（plan 決策 4，2026-09-29 修正）**：畫布用 `transform: scale`（刻意避開 CSS zoom 放大系統游標），canvas 是 bitmap，只要 bitmap 與螢幕像素不是「整數尺寸 + 整數起點」一對一，瀏覽器就會整張重取樣而發糊。初版把 `devicePixelRatio` 設為 `window.devicePixelRatio × fScale`，但 Chart.js 會把寬高 floor 成整數、`translate(-50%, -50%)` 又讓起點落在小數像素（實測 525px bitmap 攤在 525.36 裝置像素、起點 x=331.68），格線與文字被抹成 2px 灰邊。現做法：canvas 外包一層 `.scada-trend-plot`，由 `_trendSnapPlot()` 設 `scale(1/fScale)` 抵銷畫布縮放，使 canvas 以螢幕原生 DPR 渲染；plot 尺寸取「× DPR 恰為整數」的整數 CSS px（`_trendFitPx`），再以 `translate` 把起點吸附到整數裝置像素。字級 / 線寬 / 內距改由 `_trendApplyScaleOpts()` 乘上 fScale，外觀仍與 Designer 設計尺寸等比（格線維持 1px）。`applyTrendChartScale(fScale)` 每次都重新吸附（側欄收合等位移也會改變起點小數）。Chart.js 事件座標走 `offsetX`（元素本地座標），抵銷後即 chart 座標，tooltip 命中不需補償。
 
 **生命週期（plan 決策 5）**：實例存 `state.js` 的 `_trendCharts`（key = widget 容器 DOM id）。`renderScadaCanvas` 會整塊重建畫布 DOM，故重建前一律 `destroyAllTrendCharts()`；實例不 destroy 會留下 resize listener，切幾次頁就洩漏（24h 不關的圖控站會真的發作）。Chart 實例必須等 widget 都 append 進 DOM 之後才由 `initTrendCharts(canvas)` 統一建立（Chart.js 要量得到容器尺寸）。
 
@@ -777,7 +777,7 @@ Designer 畫布上所有元件共用一套選取與定位規則（widget-core.js
 4. 以 `transform: translate(-50%,-50%) scale(fScale)` 等比縮放（**刻意不用 CSS `zoom`** —— Chromium 下 zoom 會連系統游標一起放大，F11 全螢幕 `fScale > 1` 時游標進入畫布會忽然變大）
 5. 設定 `overflow: hidden` 防止溢出
 6. 監聽 `window.resize` 自動重算；側欄／警報面板摺疊動畫另由 `ResizeObserver` 每影格重算
-7. 尾端呼叫 `applyTrendChartScale(fScale)` 把即時曲線的 `devicePixelRatio` 反算為最終顯示解析度（canvas 是 bitmap，被 CSS 放大會模糊；見 §7.4 (13)）
+7. 尾端呼叫 `applyTrendChartScale(fScale)` 讓即時曲線的 canvas 抵銷畫布縮放並吸附到整數裝置像素（canvas 是 bitmap，被 CSS 縮放會模糊；見 §7.4 (13)）
 
 ---
 

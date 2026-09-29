@@ -99,6 +99,9 @@
         if (props.fYMax != null && props.fYMax !== '') yScale.max = +props.fYMax;
         if (yScale.min == null && yScale.max == null) yScale.grace = '10%';
 
+        // Chart.js responsive 量的是 plot 層 → 建 Chart 前先把 plot 定好螢幕像素尺寸
+        _trendSnapPlot(el, _trendScale);
+
         var chart = new Chart(cv.getContext('2d'), {
             type: 'line',
             data: {
@@ -124,9 +127,8 @@
                 // data 已是排序好的 {x,y}，關掉 parsing / 標記 normalized 省掉每次 update 的重解析
                 parsing: false,
                 normalized: true,
-                // transform: scale 下 canvas 是 bitmap，被 CSS 放大就模糊 →
-                // 直接以「最終顯示解析度」渲染 bitmap 根治（plan 決策 4）
-                devicePixelRatio: (window.devicePixelRatio || 1) * _trendScale,
+                // devicePixelRatio 不指定（= 螢幕原生 DPR）：canvas 已由 plot 層抵銷畫布縮放，
+                // 以螢幕像素 1:1 渲染；字級 / 線寬另由 _trendApplyScaleOpts 乘上縮放倍率
                 interaction: { mode: 'nearest', axis: 'x', intersect: false },
                 layout: { padding: { top: 4, right: 6, bottom: 0, left: 0 } },
                 plugins: {
@@ -160,9 +162,14 @@
             }
         });
 
+        var nLineWidth = Math.max(1, props.nLineWidth || 2);
+        _trendApplyScaleOpts(chart, _trendScale, nLineWidth);
+        chart.update('none');
+
         _trendCharts[el.id] = {
             chart:      chart,
             el:         el,
+            nLineWidth: nLineWidth,
             szSid:      szSid,
             nWindowSec: nWindowSec,
             // 允許 10% 抖動：Engine 每 5 秒一筆時，5.0s/4.9s 交替不該被丟掉一半
@@ -327,20 +334,76 @@
     // 畫布等比縮放（transform: scale）下的清晰度
     // ============================================================
     // 畫布用 transform: scale（刻意避開 CSS zoom 放大系統游標）。canvas 是 bitmap，
-    // 被 CSS 放大就模糊 → 把 devicePixelRatio 反算成最終顯示解析度即可根治。
-    // Chart.js 事件座標走 getBoundingClientRect（已含 transform），tooltip 命中不需補償。
+    // 只要 bitmap 與螢幕像素不是「整數尺寸 + 整數起點」一對一，瀏覽器就會整張重取樣 → 糊。
+    // 舊做法把 devicePixelRatio 乘上縮放倍率，但 Chart.js 會把尺寸 floor 成整數、
+    // translate(-50%) 又讓起點落在小數像素（實測 525px bitmap 攤在 525.36px、起點 x=331.68），
+    // 格線與文字全被抹成 2px 灰邊。
+    // 現做法：plot 層 scale(1/fScale) 抵銷畫布縮放，canvas 以螢幕像素渲染，
+    // 尺寸取「× DPR 恰為整數」的整數 CSS px，再以 translate 把起點吸附到整數裝置像素。
+    // Chart.js 事件座標走 offsetX（元素本地座標），抵銷後即 chart 座標，tooltip 命中不需補償。
     function applyTrendChartScale(fScale) {
         if (!isFinite(fScale) || fScale <= 0) fScale = 1;
         _trendScale = fScale;
-        var fTarget = (window.devicePixelRatio || 1) * fScale;
         for (var szId in _trendCharts) {
             var entry = _trendCharts[szId];
             if (!entry || !entry.chart) continue;
-            if (entry.chart.options.devicePixelRatio === fTarget) continue;
-            entry.chart.options.devicePixelRatio = fTarget;
+            // 即使倍率沒變也要重新吸附：側欄收合等會讓畫布位移、起點小數改變
             try {
-                entry.chart.resize();          // 重新以新 DPR 配置 bitmap 尺寸
+                _trendSnapPlot(entry.el, fScale);
+                _trendApplyScaleOpts(entry.chart, fScale, entry.nLineWidth);
+                entry.chart.resize();          // 依 plot 新尺寸重配 bitmap
                 entry.chart.update('none');
             } catch (_) { /* canvas 已被移除 */ }
         }
+    }
+
+    // plot 層：抵銷畫布縮放 + 尺寸 / 起點吸附到整數裝置像素
+    function _trendSnapPlot(el, fScale) {
+        var box  = el.querySelector('.scada-trend-box');
+        var plot = el.querySelector('.scada-trend-plot');
+        if (!box || !plot || box.clientWidth <= 0) return;   // 尚未顯示，量不到尺寸
+        var fDpr = window.devicePixelRatio || 1;
+        var fInv = 1 / fScale;
+        plot.style.width     = _trendFitPx(box.clientWidth  * fScale, fDpr) + 'px';
+        plot.style.height    = _trendFitPx(box.clientHeight * fScale, fDpr) + 'px';
+        plot.style.transform = 'scale(' + fInv + ')';
+        var r  = plot.getBoundingClientRect();
+        var dx = (Math.round(r.left * fDpr) - r.left * fDpr) / fDpr;   // 螢幕 CSS px
+        var dy = (Math.round(r.top  * fDpr) - r.top  * fDpr) / fDpr;
+        // translate 寫在 scale 前，單位是 box 座標（會再被畫布放大 fScale 倍）→ 除回去
+        if (dx || dy) {
+            plot.style.transform = 'translate(' + (dx * fInv) + 'px,' + (dy * fInv) + 'px) scale(' + fInv + ')';
+        }
+    }
+
+    // 取 ≤ fCss 的整數 CSS px，且 × DPR 恰為整數（Chart.js 會把 canvas 寬高 floor 成整數，
+    // DPR 1.25 / 1.5 時若乘出小數，bitmap 與顯示差零點幾像素仍會重取樣）。找不到就退回 floor。
+    function _trendFitPx(fCss, fDpr) {
+        var n = Math.floor(fCss);
+        for (var k = 0; k < 8 && n - k > 0; k++) {
+            var fDev = (n - k) * fDpr;
+            if (Math.abs(fDev - Math.round(fDev)) < 0.01) return n - k;
+        }
+        return n;
+    }
+
+    // canvas 改以螢幕像素渲染後，字級 / 線寬 / 內距要自己乘上畫布縮放倍率，
+    // 外觀才與 Designer 設計尺寸等比（格線維持 1px，縮放後反而最銳利）
+    function _trendApplyScaleOpts(chart, fScale, nLineWidth) {
+        var o  = chart.config.options;
+        var fS = fScale;
+        o.layout.padding = { top: 4 * fS, right: 6 * fS, bottom: 0, left: 0 };
+        o.scales.x.ticks.font    = { size: 9 * fS };
+        o.scales.y.ticks.font    = { size: 9 * fS };
+        o.scales.x.ticks.padding = 3 * fS;
+        o.scales.y.ticks.padding = 3 * fS;
+        var lbl = o.plugins.legend.labels;
+        lbl.font = { size: 10 * fS }; lbl.boxWidth = 10 * fS; lbl.boxHeight = 2 * fS;
+        var tip = o.plugins.tooltip;
+        tip.titleFont = { size: 12 * fS, weight: 'bold' };
+        tip.bodyFont  = { size: 12 * fS };
+        tip.padding   = 6 * fS;
+        var ds = chart.data.datasets[0];
+        ds.borderWidth    = nLineWidth * fS;
+        ds.pointHitRadius = 6 * fS;
     }

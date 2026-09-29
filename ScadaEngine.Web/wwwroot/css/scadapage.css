@@ -260,6 +260,16 @@
     border-radius: 4px;
     overflow: hidden;
 }
+/* plot 層抵銷畫布 transform: scale，讓 canvas 以螢幕像素 1:1 渲染（尺寸 / transform 由
+   widget-trend.js _trendSnapPlot 動態設定）；此處預設值 = 尚未套用前的滿版狀態 */
+.scada-trend .scada-trend-plot {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    transform-origin: 0 0;
+}
 .scada-trend .scada-trend-canvas {
     display: block;
     width: 100%;
