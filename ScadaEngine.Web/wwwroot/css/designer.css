@@ -80,14 +80,15 @@ main { padding: 0 !important; min-height: 0 !important; }
     flex-shrink: 0;
 }
 
+/* 元件庫項目：單行列表選單（小 icon 前綴 + 名稱），一屏可見項目數比舊版「大圖示在上、文字在下」卡片多 */
 .widget-lib-item {
-    padding: 14px 8px;
+    padding: 5px 10px;
     color: #c8c8c8;
     cursor: grab;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     border-bottom: 1px solid #2e2e2e;
     transition: background 0.12s;
     user-select: none;
@@ -103,8 +104,26 @@ main { padding: 0 !important; min-height: 0 !important; }
     background: #444;
 }
 
-.widget-lib-item i { font-size: 22px; }
-.widget-lib-item span { font-size: 11px; }
+/* 前綴 icon 固定 18px 寬欄對齊；SVG 以 CSS 覆寫 markup 上的 width/height，
+   height:auto 依各自 viewBox 保持原比例（管路 28×16 不被壓成正方形） */
+.widget-lib-item i {
+    flex: 0 0 18px;
+    font-size: 14px !important;   /* 覆寫個別項目 markup 上的 inline font-size（如圖片項 22px） */
+    text-align: center;
+}
+.widget-lib-item svg {
+    flex: 0 0 18px;
+    width: 18px;
+    height: auto;
+    max-height: 18px;
+}
+.widget-lib-item span {
+    min-width: 0;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 
 /* ── 元件庫分類（三類：顯示 / 點位與控制 / 設備與動畫）──
    各類自成一區並獨立捲動：當某類元件過多（或瀏覽器放大）超出該區高度時，

@@ -75,7 +75,7 @@
         var nWindowSec = Math.max(60, parseInt(props.nWindowSec, 10) || 1800);
         var nSampleSec = window.TrendWindow.effectiveSampleSec(nWindowSec, props.nSampleSec);
         var szLine     = props.szLineColor || '#0d6efd';
-        var szGrid     = props.szGridColor || '#f0f0f0';
+        var szGrid     = props.szGridColor || '#cccccc';
         var nGridCount = Math.max(0, Math.min(10, props.nGridCount != null ? props.nGridCount : 5));
         var szUnit     = props.szUnit || '';
         var szLabel    = props.szPointName || props.szTitle || szSid;

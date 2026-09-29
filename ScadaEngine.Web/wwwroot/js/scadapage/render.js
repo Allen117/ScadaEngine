@@ -293,7 +293,7 @@
             el.classList.add('scada-trend');
             el._trendProps = p;
             var szTrendBg     = (p.szBgColor && p.szBgColor !== 'transparent') ? p.szBgColor : 'transparent';
-            var szTrendBorder = p.szBorderColor || '#dee2e6';
+            var szTrendBorder = p.szBorderColor || '#000000';
             el.innerHTML =
                 '<div class="scada-trend-box" style="background:' + szTrendBg + ';' +
                     'border:1px solid ' + szTrendBorder + ';">' +

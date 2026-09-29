@@ -588,6 +588,8 @@ props：`szAnimSrc / szStillSrc / szBindMode / szSid / szPointName / fThreshold 
 
 props：`szSid / szPointName / szUnit / nWindowSec（時間窗秒數，預設 1800）/ nSampleSec（畫點間隔秒，預設 5）/ fYMin / fYMax（null＝自動）/ nGridCount（Y 軸區隔線數，預設 5）/ szLineColor / nLineWidth / szBgColor / szBorderColor / szGridColor / isShowLegend`。
 
+**預設配色（2026-09-29 起）**：白底 `#ffffff`、灰格線 `#cccccc`、黑框 `#000000`、藍線 `#0d6efd`，仿現場報表外觀，拖到深色底圖上格線仍清楚。`defaultProps` 與三處 `||` fallback（Designer `buildTrendChartHtml`、ScadaPage `widget-trend.js` 格線、`render.js` 邊框）同值，不存在兩套預設；既有已存檔 widget 的 props 已寫死顏色，外觀不受影響。
+
 **資料來源分兩段（plan 決策 1）—— 穩態下整頁零 DB 查詢**：
 
 1. **掛載時 backfill 一次**：`GET /api/history/data?szSID=…&szStart=now-N&szEnd=now&nInterval=0` 補滿時間窗 → 開頁曲線**一開始就是滿的**，不是從空白慢慢長。一頁 N 張圖限流 **3 併發**（`TREND_BACKFILL_CONCURRENCY`），避免首載尖峰打 DB。失敗不重試。
@@ -602,7 +604,7 @@ props：`szSid / szPointName / szUnit / nWindowSec（時間窗秒數，預設 18
 **生命週期（plan 決策 5）**：實例存 `state.js` 的 `_trendCharts`（key = widget 容器 DOM id）。`renderScadaCanvas` 會整塊重建畫布 DOM，故重建前一律 `destroyAllTrendCharts()`；實例不 destroy 會留下 resize listener，切幾次頁就洩漏（24h 不關的圖控站會真的發作）。Chart 實例必須等 widget 都 append 進 DOM 之後才由 `initTrendCharts(canvas)` 統一建立（Chart.js 要量得到容器尺寸）。
 
 - Designer 編輯期**畫固定假波形**（SVG，不連線、不輪詢、不查 DB；plan 決策 6）：格線數／線色／線寬／邊框色／Y 軸範圍／時間窗即時反映，左上角顯示綁定點位名。`.widget-trend .widget-body` padding 歸零，讓編輯期尺寸 = 執行期尺寸
-- 拖入畫布**先開 picker 選點位**（同 gauge / AI 點位）；屬性面板「重選」走 `rerouteTrendChartPoint()`
+- 拖入畫布**先開 picker 選點位**（同 gauge / AI 點位）；屬性面板「重選」或**雙擊畫布上的元件**皆走 `rerouteTrendChartPoint()`
 - 整頁複製（page-clipboard）時 `szSid` / `szPointName` 由既有前綴規則自動清空 → 執行期顯示「未綁定點位」，不建 Chart、不查 DB
 - 右鍵可「加入趨勢圖清單」（`onTrendContextMenu`，與其他 widget 一致）
 
@@ -617,8 +619,15 @@ Designer 畫布上所有元件共用一套選取與定位規則（widget-core.js
 - **智慧對齊線**：拖曳 / 縮放時自動偵測鄰近元件的**左 / 中 / 右**與**上 / 中 / 下**，距離 ≤ 6px（`ALIGN_SNAP`）即吸附對齊並畫出洋紅參考線（`.designer-align-guide`）；多選群組以整體 bounding box 對齊。放開滑鼠即清除參考線。（`computeAlignGuides` / `drawAlignGuides`）
 - **多選群組寬高同步**：選取 ≥ 2 個元件（Shift 連選 / 框選 / `Ctrl+A` 全選）時，屬性面板改為群組面板，顯示選取數與**寬 / 高**兩欄；輸入任一欄即**同步套用到所有選取元件**（各自尊重尺寸鎖定與最小值 —— 折線管路、鎖定尺寸的表格會略過）。`renderMultiSelectPropPanel` / `setSizeMulti`，寬高規則與單選共用 `_applySizeTo`。剃除到剩 1 個時自動切回單選屬性面板。
 - **文字元件選取即編輯**：選取 `text` 靜態文字元件時，屬性面板自動 focus 並全選「文字內容」欄，可直接輸入取代（與表格儲存格點選 focus 行為一致）。（`renderPropPanel` text 分支 → `txtContentInput`）
+- **雙擊快編**（2026-09-29）：
+  - **單一綁定元件**（儀錶板 / 控制按鈕 / AI / DI / AO / DO 點位 / 即時曲線）雙擊 → 直接開點位 picker，已綁定時自動定位到原 SID（DI 綁排程時停在排程分頁、AI 綁迴路時停在迴路分頁）。實作為 `onWidgetDblClick` 型別對照表 `WIDGET_DBLCLICK_REROUTE` 呼叫既有 `rerouteXxxPoint()`，與屬性面板「重選」同一條路徑
+  - **文字元件**雙擊 → focus「文字內容」欄並全選，直接打字即覆蓋
+  - **多綁定元件**（水泵 / 冷卻水塔 / 空調箱風扇 / 冰機 / 管路 / 圖片 / 表格）雙擊不動作 —— 無法推斷要改哪個綁定欄位，請用屬性面板各欄位的「重選」
+  - 多選狀態下雙擊某元件 → 先收斂為單選該元件再開 picker（`rerouteXxxPoint` 以 `selectedEl` 為作用對象）；按住 Ctrl / Shift 的雙擊、雙擊縮放把手／刪除鈕／管路節點不觸發
+  - `renderWidget` 每次改屬性都會重跑，dblclick 以 `el._isDblClickBound` 旗標確保每個元素只綁一次（否則改幾次屬性後雙擊會連開多次 picker）
 
 > **元件庫分類（Designer）**：元件庫改為三類 — 顯示元件（表格 / 儀錶板 / 即時曲線 / 文字）、點位與控制（控制按鈕 / AI / DI / AO / DO）、設備與動畫（水泵 / 管路 / 冷卻水塔 / 空調箱風扇 / 冰機 / 圖片動畫）。各類獨立捲動（`.widget-cat-items` overflow-y:auto），`.designer-outer` 釘視窗高使面板本身不捲，避免 100% 時多餘的整體捲軸。
+> 每項為**單行列表選單**（2026-09-29）：左側 18px 寬小 icon 前綴 + 右側名稱，行高約 29px（舊版為大圖示在上、文字在下的兩行卡片）。純 CSS 改版（`.widget-lib-item` row 排列），Index.cshtml markup 不變：Font Awesome icon 統一 14px（`!important` 蓋過個別項目 inline 字級），inline SVG 以 CSS 覆寫為寬 18px、`height:auto` 依各自 viewBox 保持原比例（管路 28×16 不變形）。拖放行為不變。
 
 ---
 

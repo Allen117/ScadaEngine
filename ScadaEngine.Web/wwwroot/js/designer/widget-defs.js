@@ -76,9 +76,9 @@ const WIDGET_DEFS = {
             nGridCount:    5,           // Y 軸區隔線數（Chart.js ticks.count）
             szLineColor:   '#0d6efd',
             nLineWidth:    2,
-            szBgColor:     'transparent',
-            szBorderColor: '#dee2e6',
-            szGridColor:   '#f0f0f0',
+            szBgColor:     '#ffffff',
+            szBorderColor: '#000000',
+            szGridColor:   '#cccccc',
             isShowLegend:  false
         }
     },
@@ -474,6 +474,9 @@ function renderTextWidget(el) {
 
     // 點選選取（支援 Ctrl 多選）
     el.addEventListener('mousedown', (ev) => onWidgetMouseDown(ev, el));
+
+    // 雙擊 → focus 屬性面板文字內容欄
+    bindWidgetDblClick(el);
 }
 
 // ============================================================
@@ -740,8 +743,8 @@ const TREND_FAKE_WAVE_SEGMENTS = 60;
 
 function buildTrendChartHtml(props) {
     const szBg     = (props.szBgColor && props.szBgColor !== 'transparent') ? props.szBgColor : 'transparent';
-    const szBorder = props.szBorderColor || '#dee2e6';
-    const szGrid   = props.szGridColor   || '#f0f0f0';
+    const szBorder = props.szBorderColor || '#000000';
+    const szGrid   = props.szGridColor   || '#cccccc';
     const szLine   = props.szLineColor   || '#0d6efd';
     const nLineW   = Math.max(1, props.nLineWidth || 2);
     const nGrid    = Math.max(0, Math.min(10, props.nGridCount != null ? props.nGridCount : 5));

@@ -195,6 +195,9 @@ function renderWidget(el) {
     // 點選選取（支援 Ctrl 多選）
     el.addEventListener('mousedown', (ev) => onWidgetMouseDown(ev, el));
 
+    // 雙擊快速綁定點位
+    bindWidgetDblClick(el);
+
     // 折線管路：Ctrl+點擊管身插入節點（限已選取；未選取時 Ctrl 仍走多選）
     // + 節點手把（拖曳折彎 / Ctrl+點擊或右鍵刪除）
     if (szType === 'pipe') {
@@ -278,6 +281,53 @@ function onWidgetMouseDown(ev, el) {
     }
     if (!selectedWidgetIds.has(el.id)) { clearWidgetSelection(); selectedWidgetIds.add(el.id); updateWidgetSelectionVisual(); }
     selectWidget(el);
+}
+
+// ============================================================
+// 雙擊快編：單一綁定元件 → 開點位 picker；文字 → focus 文字內容欄
+// 多綁定元件（水泵/冷卻水塔/風扇/冰機/管路/圖片/表格）無法推斷要改哪個欄位，雙擊不動作
+// ============================================================
+const WIDGET_DBLCLICK_REROUTE = {
+    gauge:         () => rerouteGaugePoint(),
+    controlBtn:    () => rerouteControlBtnPoint(),
+    realtimeValue: () => rerouteRealtimeValuePoint(),
+    diPoint:       () => rerouteDiPointPoint(),
+    aoPoint:       () => rerouteAoPointPoint(),
+    doPoint:       () => rerouteDoPointPoint(),
+    trendChart:    () => rerouteTrendChartPoint()
+};
+
+// renderWidget 每次改屬性都會重跑，dblclick 以旗標確保同一元素只綁一次（否則雙擊會連開多次 picker）
+function bindWidgetDblClick(el) {
+    if (el._isDblClickBound) return;
+    el._isDblClickBound = true;
+    el.addEventListener('dblclick', (ev) => onWidgetDblClick(ev, el));
+}
+
+function onWidgetDblClick(ev, el) {
+    if (ev.ctrlKey || ev.shiftKey) return;   // Ctrl / Shift 屬多選操作
+    if (ev.target.closest('.resize-knob, .widget-del, .text-del-btn, .pipe-node')) return;
+    const szType = el.dataset.type;
+    const fnReroute = WIDGET_DBLCLICK_REROUTE[szType];
+    if (!fnReroute && szType !== 'text') return;
+    ev.preventDefault();
+    ev.stopPropagation();
+
+    // reroute 系列皆以 selectedEl 為作用對象，多選中雙擊須先收斂為單選
+    if (selectedEl !== el || selectedWidgetIds.size !== 1) {
+        clearWidgetSelection();
+        selectedWidgetIds.add(el.id);
+        updateWidgetSelectionVisual();
+        selectWidget(el);
+    }
+
+    if (fnReroute) { fnReroute(); return; }
+
+    // 文字：屬性面板於 selectWidget 同步重建，focus 排到下一幀確保落在新節點
+    requestAnimationFrame(() => {
+        const ta = document.getElementById('txtContentInput');
+        if (ta) { ta.focus(); ta.select(); }
+    });
 }
 
 // 多選外觀更新（不做完整 re-render）
