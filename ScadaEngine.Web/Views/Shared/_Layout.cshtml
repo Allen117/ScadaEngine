@@ -319,26 +319,27 @@
                                         }
                                         @if (canAccess("/HolidaySetting") || canAccess("/ShiftSetting") || canAccess("/EmsCardSetting") || canAccess("/DailyReportSetting"))
                                         {
-                                            @if (canAccess("/ChilledWaterSystem") || canAccess("/EnergyMeter") || canAccess("/BillingPeriodSetting") || canAccess("/TariffSetting") || canAccess("/WaterMeterSetting") || canAccess("/WaterBillingPeriodSetting") || canAccess("/WaterTariffSetting") || canAccess("/GasMeterSetting") || canAccess("/GasBillingPeriodSetting") || canAccess("/GasTariffSetting"))
-                                            {
-                                                <li><hr class="dropdown-divider"></li>
-                                            }
-                                        }
-                                        @if (canAccess("/HolidaySetting"))
-                                        {
-                                            <li><a class="dropdown-item" href="/HolidaySetting"><i class="fas fa-calendar-day me-2"></i>@Localizer["layout.menu.holiday_setting"]</a></li>
-                                        }
-                                        @if (canAccess("/ShiftSetting"))
-                                        {
-                                            <li><a class="dropdown-item" href="/ShiftSetting"><i class="fas fa-user-clock me-2"></i>@Localizer["layout.menu.shift_setting"]</a></li>
-                                        }
-                                        @if (canAccess("/EmsCardSetting"))
-                                        {
-                                            <li><a class="dropdown-item" href="/EmsCardSetting"><i class="fas fa-th-large me-2"></i>@Localizer["layout.menu.ems_card_setting"]</a></li>
-                                        }
-                                        @if (canAccess("/DailyReportSetting"))
-                                        {
-                                            <li><a class="dropdown-item" href="/DailyReportSetting"><i class="fas fa-envelope-open-text me-2"></i>@Localizer["layout.menu.daily_report_setting"]</a></li>
+                                            <li class="dropdown-submenu">
+                                                <a class="dropdown-item dropdown-toggle" href="#" role="button"><i class="fas fa-sliders-h me-2"></i>@Localizer["layout.menu.group_general_settings"]</a>
+                                                <ul class="dropdown-menu">
+                                                    @if (canAccess("/HolidaySetting"))
+                                                    {
+                                                        <li><a class="dropdown-item" href="/HolidaySetting"><i class="fas fa-calendar-day me-2"></i>@Localizer["layout.menu.holiday_setting"]</a></li>
+                                                    }
+                                                    @if (canAccess("/ShiftSetting"))
+                                                    {
+                                                        <li><a class="dropdown-item" href="/ShiftSetting"><i class="fas fa-user-clock me-2"></i>@Localizer["layout.menu.shift_setting"]</a></li>
+                                                    }
+                                                    @if (canAccess("/EmsCardSetting"))
+                                                    {
+                                                        <li><a class="dropdown-item" href="/EmsCardSetting"><i class="fas fa-th-large me-2"></i>@Localizer["layout.menu.ems_card_setting"]</a></li>
+                                                    }
+                                                    @if (canAccess("/DailyReportSetting"))
+                                                    {
+                                                        <li><a class="dropdown-item" href="/DailyReportSetting"><i class="fas fa-envelope-open-text me-2"></i>@Localizer["layout.menu.daily_report_setting"]</a></li>
+                                                    }
+                                                </ul>
+                                            </li>
                                         }
                                     </ul>
                                 </li>
