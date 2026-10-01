@@ -319,6 +319,7 @@
             var szImgInit = p.szBindMode ? 'stop' : 'run';
             el.dataset._imgState = szImgInit;
             el.innerHTML = ImageWidget.build(p, szImgInit, '');
+            if (p.szSid) el.addEventListener('contextmenu', function (ev) { onTrendContextMenu(ev, el.dataset.sid); });
         }
         canvas.appendChild(el);
     }
@@ -390,6 +391,12 @@
             var _gLowColor  = el.dataset.szLowColor  || '#fd7e14';
             function getGaugeAlarmColor(fVal) {
                 if (!_rule) return null;
+                // 有前置條件 → 看 Engine 實際 active 警報（前端不知道閘門 / 延遲狀態）
+                if (_ruleUsesActiveAlarm(_rule)) {
+                    if (_rule.isAlarmHigh && _isActiveAlarm(sid, 'high')) return _gHighColor;
+                    if (_rule.isAlarmLow  && _isActiveAlarm(sid, 'low'))  return _gLowColor;
+                    return null;
+                }
                 if (_rule.isAlarmHigh && fVal >= ((_rule.dAlarmHighValue || 80) - (_rule.dDeadbandHigh || 0))) return _gHighColor;
                 if (_rule.isAlarmLow  && fVal <= ((_rule.dAlarmLowValue  || 20) + (_rule.dDeadbandLow  || 0))) return _gLowColor;
                 return null;
@@ -422,6 +429,11 @@
             var _szLowColor  = el.dataset.szLowColor  || '#fd7e14';
             function getAlarmColor(fVal) {
                 if (!_rtRule) return null;
+                if (_ruleUsesActiveAlarm(_rtRule)) {
+                    if (_rtRule.isAlarmHigh && _isActiveAlarm(sid, 'high')) return _szHighColor;
+                    if (_rtRule.isAlarmLow  && _isActiveAlarm(sid, 'low'))  return _szLowColor;
+                    return null;
+                }
                 if (_rtRule.isAlarmHigh && fVal >= ((_rtRule.dAlarmHighValue || 80) - (_rtRule.dDeadbandHigh || 0))) return _szHighColor;
                 if (_rtRule.isAlarmLow  && fVal <= ((_rtRule.dAlarmLowValue  || 20) + (_rtRule.dDeadbandLow  || 0))) return _szLowColor;
                 return null;
@@ -504,6 +516,8 @@
                     || (typeof raw === 'string' && raw.toUpperCase() === 'ON')
                     || parseFloat(raw) >= 1);
                 var _diRule = _alarmRuleMap[sid];
+                // 有前置條件 → 以實際 active 警報決定是否著警報色（觸發狀態對齊目前狀態即可上色）
+                var _diUseActive = _ruleUsesActiveAlarm(_diRule);
                 el.innerHTML = buildDiPointViewHtml({
                     szDisplayMode: el.dataset.szDisplayMode || 'indicator',
                     szOnColor: el.dataset.szOnColor || '#28a745', szOffColor: el.dataset.szOffColor || '#6c757d',
@@ -511,8 +525,8 @@
                     nIndicatorSize: parseInt(el.dataset.nIndicatorSize) || 28,
                     nFontSize: parseInt(el.dataset.nFontSize) || 24,
                     szBgColor: el.dataset.szBgColor || 'transparent', szTitle: hoverTitle(el, sid),
-                    isAlarmEnabled: _diRule?.isDiAlarm || false,
-                    szAlarmTrigger: _diRule?.szDiTriggerState || 'ON',
+                    isAlarmEnabled: _diUseActive ? (!!_diRule.isDiAlarm && _isActiveAlarm(sid, 'di')) : (_diRule?.isDiAlarm || false),
+                    szAlarmTrigger: _diUseActive ? (bIsOn ? 'ON' : 'OFF') : (_diRule?.szDiTriggerState || 'ON'),
                     szAlarmColor: el.dataset.szAlarmColor || '#dc3545'
                 }, bIsOn);
             }
@@ -755,8 +769,10 @@
                 var _tdDiRule = _alarmRuleMap[sid];
                 var _tdDiAlarmColor = td.dataset.szAlarmColor || '#dc3545';
                 if (_tdDiRule?.isDiAlarm) {
-                    var isDiAlarming = (_tdDiRule.szDiTriggerState === 'ON' && bIsOn)
-                                    || (_tdDiRule.szDiTriggerState === 'OFF' && !bIsOn);
+                    var isDiAlarming = _ruleUsesActiveAlarm(_tdDiRule)
+                        ? _isActiveAlarm(sid, 'di')
+                        : (_tdDiRule.szDiTriggerState === 'ON' && bIsOn)
+                          || (_tdDiRule.szDiTriggerState === 'OFF' && !bIsOn);
                     td.style.color = isDiAlarming ? _tdDiAlarmColor : szOrigColor;
                 } else {
                     td.style.color = szOrigColor;
@@ -771,7 +787,10 @@
                     var _tdHighColor = td.dataset.szHighColor || '#dc3545';
                     var _tdLowColor  = td.dataset.szLowColor  || '#fd7e14';
                     var szColor = szOrigColor;
-                    if (_tdAiRule) {
+                    if (_tdAiRule && _ruleUsesActiveAlarm(_tdAiRule)) {
+                        if (_tdAiRule.isAlarmHigh && _isActiveAlarm(sid, 'high')) szColor = _tdHighColor;
+                        else if (_tdAiRule.isAlarmLow && _isActiveAlarm(sid, 'low')) szColor = _tdLowColor;
+                    } else if (_tdAiRule) {
                         if (_tdAiRule.isAlarmHigh && fVal >= ((_tdAiRule.dAlarmHighValue || 80) - (_tdAiRule.dDeadbandHigh || 0))) {
                             szColor = _tdHighColor;
                         } else if (_tdAiRule.isAlarmLow && fVal <= ((_tdAiRule.dAlarmLowValue || 20) + (_tdAiRule.dDeadbandLow || 0))) {
@@ -794,6 +813,7 @@
             pushTrendPoint(el.id, sidTsMap[sid], sidValueMap[sid], sidQualityMap[sid]);
         });
         tickTrendCharts();
+        _quickTrendOnData(sidTsMap, sidValueMap, sidQualityMap);
 
         // 更新所有控制元件（AO/DO/Pump x2）右上角的 M 角標
         // 必須放在 pump rerender 之後，因 pump 換 innerHTML 會新建 badge DOM

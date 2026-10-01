@@ -1,0 +1,52 @@
+/* 共用點位選擇器（js/common/point-picker.js）— 流程比照 Designer picker，淺色版面配合一般頁面 */
+.pp-modal .modal-header { padding: 10px 16px; }
+.pp-modal .modal-title  { font-size: 14px; display: flex; align-items: center; }
+.pp-modal .modal-body   { padding: 12px 16px; }
+.pp-modal .modal-footer { padding: 8px 16px; gap: 8px; }
+
+.pp-nav { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.pp-back {
+    background: none;
+    border: none;
+    color: var(--bs-primary);
+    font-size: 12px;
+    cursor: pointer;
+    padding: 0 6px 0 0;
+}
+.pp-back:hover { text-decoration: underline; }
+.pp-crumb { font-size: 12px; font-weight: 600; color: #495057; }
+
+.pp-list { max-height: 320px; overflow-y: auto; }
+
+.pp-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    margin-bottom: 2px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background .1s;
+}
+.pp-item:hover    { background: #f1f3f5; }
+.pp-item.selected { background: #cfe2ff; }
+.pp-item-lg       { padding: 12px 14px; }
+.pp-item-lg .pp-item-icon { font-size: 18px; }
+.pp-item-sub-row  { padding-left: 28px; background: #f8f9fa; }
+.pp-item-icon { font-size: 14px; flex-shrink: 0; width: 18px; text-align: center; }
+.pp-item-dot  { font-size: 6px; color: #20c997; flex-shrink: 0; }
+.pp-item-text { flex: 1; min-width: 0; }
+.pp-item-name { font-size: 13px; color: #212529; }
+.pp-item-sub  { font-size: 11px; color: #6c757d; }
+.pp-item-chev { font-size: 11px; color: #adb5bd; transition: transform .2s; }
+.pp-item-dev  { font-size: 11px; color: var(--bs-primary); }
+.pp-item-slash { color: #adb5bd; margin: 0 4px; }
+.pp-item-unit { font-size: 11px; color: #b58100; margin-left: auto; white-space: nowrap; }
+
+.pp-empty {
+    color: #868e96;
+    font-size: 12px;
+    text-align: center;
+    padding: 20px;
+}
+.pp-empty i { font-size: 24px; display: block; margin-bottom: 8px; }

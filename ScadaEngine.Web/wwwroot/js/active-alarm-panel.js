@@ -66,6 +66,8 @@
                 }
                 lastAlarms = json.data || [];
                 render(lastAlarms);
+                // 廣播給 ScadaPage 著色（有前置條件的規則改看實際 active 警報）
+                try { window.dispatchEvent(new CustomEvent('scada:active-alarms', { detail: lastAlarms })); } catch (_) { /* 舊瀏覽器 */ }
             })
             .catch(function () {
                 showConnWarn(t('alarm.panel.no_connection'));

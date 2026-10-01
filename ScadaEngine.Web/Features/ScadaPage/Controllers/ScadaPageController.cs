@@ -18,6 +18,8 @@ public class ScadaPageController : Controller
 
         // 傳遞權限資料給前端 JS
         ViewData["IsAdmin"] = isAdmin;
+        // 右鍵「歷史趨勢（開新頁）」依 /HistoryData 頁權限顯示
+        ViewData["CanHistory"] = PermissionService.CanAccessPage(User, "/HistoryData");
         ViewData["ScadaPagePermissions"] = isAdmin
             ? "{}"
             : JsonSerializer.Serialize(permData.scadaPages);

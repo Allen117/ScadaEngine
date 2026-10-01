@@ -210,7 +210,23 @@
           "_comment": "DI OFF 狀態的顯示名稱，例如 '停止'" },
         { "Name": "Remarks",           "Type": "nvarchar", "Length": 200, "Nullable": true },
         { "Name": "CreatedAt",         "Type": "datetime", "Nullable": false, "Default": "getdate()" },
-        { "Name": "UpdatedAt",         "Type": "datetime", "Nullable": true }
+        { "Name": "UpdatedAt",         "Type": "datetime", "Nullable": true },
+        { "Name": "IsPrecondition",    "Type": "bit",      "Nullable": false, "Default": 0,
+          "_comment": "前置條件（連鎖遮蔽）開關：成立且持續 PreDelaySec 秒後才判斷本點高/低/DI 警報" },
+        { "Name": "PreSID",            "Type": "nvarchar", "Length": 100, "Nullable": true,
+          "_comment": "前置條件點位 SID（不可等於本點；DMD-/NRG* 虛擬點不可用）" },
+        { "Name": "PreOperator",       "Type": "nvarchar", "Length": 10,  "Nullable": true,
+          "_comment": "GE / GT / LE / LT / EQ / NE（比 PreValue）或 ON / OFF（DI）" },
+        { "Name": "PreValue",          "Type": "float",    "Nullable": true },
+        { "Name": "PreDelaySec",       "Type": "int",      "Nullable": false, "Default": 0,
+          "_comment": "前置條件須連續成立秒數，0 = 立即" },
+        { "Name": "RecoveryNotifyLine",  "Type": "bit",    "Nullable": false, "Default": 1,
+          "_comment": "警報恢復（含前置條件不成立造成的清除）是否發 Line 恢復通知" },
+        { "Name": "RecoveryNotifyEmail", "Type": "bit",    "Nullable": false, "Default": 1 },
+        { "Name": "RecoveryNotifySms",   "Type": "bit",    "Nullable": false, "Default": 1,
+          "_comment": "另受 SmsSetting 全域恢復通知開關（SendRecovery）約束（AND）" },
+        { "Name": "AlarmDelaySec",     "Type": "int",      "Nullable": false, "Default": 0,
+          "_comment": "本點警報 on-delay：越限連續 N 秒才觸發（高/低/DI 各自計時），0 = 立即；恢復立即" }
       ]
     },
     {

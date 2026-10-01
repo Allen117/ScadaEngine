@@ -84,4 +84,26 @@
   <data name="scadapage.cmetric.demand_kw" xml:space="preserve"><value>Real-time Demand</value></data>
   <data name="scadapage.cmetric.unit_cost" xml:space="preserve"><value>NT$</value></data>
   <data name="scadapage.cmetric.estimated" xml:space="preserve"><value> (estimated)</value></data>
+  <data name="scadapage.ctx.alarm_setting" xml:space="preserve"><value>Alarm Settings…</value></data>
+  <data name="scadapage.ctx.history_new_tab" xml:space="preserve"><value>Historical Trend (new tab)</value></data>
+  <data name="scadapage.ctx.quick_trend" xml:space="preserve"><value>Quick Trend (1 hour)</value></data>
+  <data name="scadapage.ctx.add_trend_queue" xml:space="preserve"><value>Add to Trend List</value></data>
+  <data name="scadapage.alarm_edit.title_add" xml:space="preserve"><value>Add Alarm Rule</value></data>
+  <data name="scadapage.alarm_edit.title_edit" xml:space="preserve"><value>Edit Alarm Rule</value></data>
+  <data name="scadapage.alarm_edit.point" xml:space="preserve"><value>Point:</value></data>
+  <data name="scadapage.alarm_edit.delete" xml:space="preserve"><value>Delete Rule</value></data>
+  <data name="scadapage.alarm_edit.cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="scadapage.alarm_edit.save" xml:space="preserve"><value>Save</value></data>
+  <data name="scadapage.alarm_edit.saved" xml:space="preserve"><value>Alarm rule saved</value></data>
+  <data name="scadapage.alarm_edit.deleted" xml:space="preserve"><value>Alarm rule deleted</value></data>
+  <data name="scadapage.alarm_edit.save_failed" xml:space="preserve"><value>Save failed</value></data>
+  <data name="scadapage.alarm_edit.delete_failed" xml:space="preserve"><value>Delete failed</value></data>
+  <data name="scadapage.alarm_edit.confirm_delete" xml:space="preserve"><value>Delete the alarm rule for this point?</value></data>
+  <data name="scadapage.qt.range_15m" xml:space="preserve"><value>15 min</value></data>
+  <data name="scadapage.qt.range_1h" xml:space="preserve"><value>1 hr</value></data>
+  <data name="scadapage.qt.range_8h" xml:space="preserve"><value>8 hr</value></data>
+  <data name="scadapage.qt.close" xml:space="preserve"><value>Close</value></data>
+  <data name="scadapage.qt.loading" xml:space="preserve"><value>Loading…</value></data>
+  <data name="scadapage.qt.no_data" xml:space="preserve"><value>No data in this range</value></data>
+  <data name="scadapage.qt.load_failed" xml:space="preserve"><value>Failed to load history</value></data>
 </root>

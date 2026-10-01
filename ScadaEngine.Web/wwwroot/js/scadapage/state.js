@@ -57,6 +57,18 @@
         } catch (_) { /* ignore */ }
     }
 
+    // ── 實際 active 警報（key = SID:high / SID:low / SID:di）──
+    // 有前置條件的規則前端不知道 Engine 閘門 / 延遲狀態，自算門檻必錯 → 著色改看實際 active 警報。
+    // 資料沿用 active-alarm-panel.js 的 3 秒輪詢（廣播 scada:active-alarms 事件），不另開輪詢。
+    var _activeAlarmKeys = new Set();
+    window.addEventListener('scada:active-alarms', function (ev) {
+        var set = new Set();
+        (ev.detail || []).forEach(function (a) { if (a && a.sid) set.add(a.sid + ':' + a.type); });
+        _activeAlarmKeys = set;
+    });
+    function _ruleUsesActiveAlarm(rule) { return !!(rule && rule.isPrecondition); }
+    function _isActiveAlarm(sid, szType) { return _activeAlarmKeys.has(sid + ':' + szType); }
+
     // ── 手動控制值快取 ──
     var _aoManualValueMap = {};
     async function _loadManualControlValues() {

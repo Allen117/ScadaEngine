@@ -1,0 +1,222 @@
+@*
+    警報規則表單（高 / 低 / DI / 警報延遲 / 前置條件 / 備註 / 啟用）— AlarmSetting 頁 #ruleModal 與 ScadaPage 右鍵「警報設定」彈窗共用。
+    邏輯在 wwwroot/js/common/alarm-rule-form.js（window.AlarmRuleForm）；點位選擇不在本 partial（各頁自行處理）。
+    一頁只放一份（元素以 id 定位）。
+    view-data "ArfHideRecoveryNotify" = true → 不顯示「恢復通知」三通道勾選（ScadaPage 彈窗；
+    通知屬警報設定頁管理範圍，隱藏時存檔沿用規則既有值）。
+*@
+@{
+    var isHideRecoveryNotify = ViewData["ArfHideRecoveryNotify"] is true;
+}
+<div id="alarmRuleForm">
+    <!-- 上限警報 -->
+    <div class="row mb-3 align-items-center">
+        <div class="col-md-2">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="chkAlarmHigh"
+                       onchange="window.AlarmRuleForm.toggleSection('high')">
+                <label class="form-check-label fw-bold" for="chkAlarmHigh">@Localizer["arf.toggle.alarm_high"]</label>
+            </div>
+        </div>
+        <div class="col-md-3" id="secHighValue">
+            <label class="form-label">@Localizer["arf.field.threshold"]</label>
+            <input type="number" class="form-control" id="txtAlarmHighValue" step="any" />
+        </div>
+        <div class="col-md-3" id="secHighDeadband">
+            <label class="form-label">@Localizer["arf.field.deadband"]</label>
+            <input type="number" class="form-control" id="txtDeadbandHigh" step="any" value="0" />
+        </div>
+        <div class="col-md-3" id="secHighSeverity">
+            <label class="form-label">@Localizer["arf.field.severity"]</label>
+            <select class="form-select" id="selHighSeverity">
+                <option value="0">@Localizer["arf.severity.critical"]</option>
+                <option value="1" selected>@Localizer["arf.severity.high"]</option>
+                <option value="2">@Localizer["arf.severity.medium"]</option>
+                <option value="3">@Localizer["arf.severity.low"]</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- 下限警報 -->
+    <div class="row mb-3 align-items-center">
+        <div class="col-md-2">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="chkAlarmLow"
+                       onchange="window.AlarmRuleForm.toggleSection('low')">
+                <label class="form-check-label fw-bold" for="chkAlarmLow">@Localizer["arf.toggle.alarm_low"]</label>
+            </div>
+        </div>
+        <div class="col-md-3" id="secLowValue">
+            <label class="form-label">@Localizer["arf.field.threshold"]</label>
+            <input type="number" class="form-control" id="txtAlarmLowValue" step="any" />
+        </div>
+        <div class="col-md-3" id="secLowDeadband">
+            <label class="form-label">@Localizer["arf.field.deadband"]</label>
+            <input type="number" class="form-control" id="txtDeadbandLow" step="any" value="0" />
+        </div>
+        <div class="col-md-3" id="secLowSeverity">
+            <label class="form-label">@Localizer["arf.field.severity"]</label>
+            <select class="form-select" id="selLowSeverity">
+                <option value="0">@Localizer["arf.severity.critical"]</option>
+                <option value="1" selected>@Localizer["arf.severity.high"]</option>
+                <option value="2">@Localizer["arf.severity.medium"]</option>
+                <option value="3">@Localizer["arf.severity.low"]</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- DI 警報 -->
+    <div class="row mb-3 align-items-center">
+        <div class="col-md-2">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="chkDiAlarm"
+                       onchange="window.AlarmRuleForm.toggleSection('di')">
+                <label class="form-check-label fw-bold" for="chkDiAlarm">@Localizer["arf.toggle.alarm_di"]</label>
+            </div>
+        </div>
+        <div class="col-md-3" id="secDiTrigger">
+            <label class="form-label">@Localizer["arf.field.trigger_state"]</label>
+            <select class="form-select" id="selDiTrigger">
+                <option value="ON">ON</option>
+                <option value="OFF">OFF</option>
+            </select>
+        </div>
+        <div class="col-md-3" id="secDiSeverity">
+            <label class="form-label">@Localizer["arf.field.severity"]</label>
+            <select class="form-select" id="selDiSeverity">
+                <option value="0">@Localizer["arf.severity.critical"]</option>
+                <option value="1" selected>@Localizer["arf.severity.high"]</option>
+                <option value="2">@Localizer["arf.severity.medium"]</option>
+                <option value="3">@Localizer["arf.severity.low"]</option>
+            </select>
+        </div>
+    </div>
+    <div class="row mb-3" id="secDiLabels" style="display:none;">
+        <div class="col-md-2"></div>
+        <div class="col-md-3">
+            <label class="form-label">@Localizer["arf.field.on_label"]</label>
+            <input type="text" class="form-control" id="txtDiOnLabel" placeholder="ON" maxlength="50" readonly />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">@Localizer["arf.field.off_label"]</label>
+            <input type="text" class="form-control" id="txtDiOffLabel" placeholder="OFF" maxlength="50" readonly />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label d-block">&nbsp;</label>
+            <small class="text-muted"><i class="fas fa-info-circle me-1"></i>@Localizer["arf.di_labels.hint"]</small>
+        </div>
+    </div>
+
+    <!-- 本點警報延遲（on-delay） -->
+    <div class="row mb-3 align-items-center">
+        <div class="col-md-2">
+            <label class="form-label fw-bold mb-0" for="txtAlarmDelaySec">@Localizer["arf.field.alarm_delay"]</label>
+        </div>
+        <div class="col-md-3">
+            <div class="input-group">
+                <input type="number" class="form-control" id="txtAlarmDelaySec" min="0" max="86400" step="1" value="0" />
+                <span class="input-group-text">@Localizer["arf.unit.sec"]</span>
+            </div>
+        </div>
+        <div class="col-md-7">
+            <small class="text-muted"><i class="fas fa-info-circle me-1"></i>@Localizer["arf.alarm_delay.hint"]</small>
+        </div>
+    </div>
+
+    @if (!isHideRecoveryNotify)
+    {
+        <!-- 恢復通知（各通道；一般恢復與前置條件不成立造成的清除皆適用） -->
+        <div class="row mb-3 align-items-center">
+            <div class="col-md-2">
+                <span class="form-label fw-bold mb-0">@Localizer["arf.field.recovery_notify"]</span>
+            </div>
+            <div class="col-md-4">
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="chkRecoveryNotifyLine" checked>
+                    <label class="form-check-label" for="chkRecoveryNotifyLine">Line</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="chkRecoveryNotifyEmail" checked>
+                    <label class="form-check-label" for="chkRecoveryNotifyEmail">Email</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="chkRecoveryNotifySms" checked>
+                    <label class="form-check-label" for="chkRecoveryNotifySms">@Localizer["arf.channel.sms"]</label>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <small class="text-muted"><i class="fas fa-info-circle me-1"></i>@Localizer["arf.recovery_notify.hint"]</small>
+            </div>
+        </div>
+    }
+
+    <hr />
+
+    <!-- 前置條件（連鎖遮蔽） -->
+    <div class="row mb-2 align-items-center">
+        <div class="col-12">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="chkPrecondition"
+                       onchange="window.AlarmRuleForm.toggleSection('pre')">
+                <label class="form-check-label fw-bold" for="chkPrecondition">@Localizer["arf.toggle.precondition"]</label>
+                <small class="text-muted ms-2">@Localizer["arf.precondition.hint"]</small>
+            </div>
+        </div>
+    </div>
+    <div id="secPrecondition" style="display:none;">
+        <div class="row mb-3">
+            <div class="col-md-5">
+                <label class="form-label" for="btnPickPrePoint">@Localizer["arf.field.pre_point"]</label>
+                @* 點位挑選比照 Designer 綁定點位（來源 → 設備 → 點位），共用 js/common/point-picker.js *@
+                <input type="hidden" id="txtPreSid" />
+                <div class="input-group">
+                    <span class="form-control text-truncate" id="arfPrePointName"></span>
+                    <button type="button" class="btn btn-outline-primary" id="btnPickPrePoint"
+                            onclick="window.AlarmRuleForm.pickPrePoint()">
+                        <i class="fas fa-crosshairs me-1"></i>@Localizer["arf.pre_point.pick"]
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label" for="selPreOperator">@Localizer["arf.field.pre_operator"]</label>
+                <select class="form-select" id="selPreOperator" onchange="window.AlarmRuleForm.toggleSection('pre')">
+                    <option value="GE">&ge;</option>
+                    <option value="GT">&gt;</option>
+                    <option value="LE">&le;</option>
+                    <option value="LT">&lt;</option>
+                    <option value="EQ">=</option>
+                    <option value="NE">&ne;</option>
+                    <option value="ON">ON</option>
+                    <option value="OFF">OFF</option>
+                </select>
+            </div>
+            <div class="col-md-2" id="secPreValue">
+                <label class="form-label" for="txtPreValue">@Localizer["arf.field.pre_value"]</label>
+                <input type="number" class="form-control" id="txtPreValue" step="any" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="txtPreDelaySec">@Localizer["arf.field.pre_delay"]</label>
+                <div class="input-group">
+                    <input type="number" class="form-control" id="txtPreDelaySec" min="0" max="86400" step="1" value="0" />
+                    <span class="input-group-text">@Localizer["arf.unit.sec"]</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr />
+
+    <div class="row mb-3">
+        <div class="col-md-8">
+            <label class="form-label" for="txtRemarks">@Localizer["arf.field.remarks"]</label>
+            <input type="text" class="form-control" id="txtRemarks" maxlength="200" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">@Localizer["arf.field.enabled"]</label>
+            <div class="form-check form-switch mt-2">
+                <input class="form-check-input" type="checkbox" id="chkEnabled" checked>
+                <label class="form-check-label" for="chkEnabled">@Localizer["arf.field.is_enabled"]</label>
+            </div>
+        </div>
+    </div>
+</div>

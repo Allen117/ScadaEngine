@@ -416,6 +416,8 @@ Engine 啟動時讀取 `DatabaseSchema/DatabaseSchema.json`，對每張表檢查
 - **規則來源**：AlarmRules 資料表（每 60 秒自動重載）
 - **規則索引**：`ConcurrentDictionary<SID, AlarmRuleModel>`
 - **狀態追蹤**：`ConcurrentDictionary<"{SID}:{type}", AlarmState>`
+- **最新值快取**：`_latestValues`（全點位，前置條件判斷 X 的值 + tick 補判本點用；啟動時由 LatestData 預填）
+- **前置條件閘門 / on-delay**：`_gates`（key = 規則 SID）、`_onDelays`（key = `SID:type`），見 §7.7
 
 ### 7.2 初始化流程
 
@@ -423,7 +425,9 @@ Engine 啟動時讀取 `DatabaseSchema/DatabaseSchema.json`，對每張表檢查
 InitializeAsync()
   ├─ 從 AlarmRules 表載入所有啟用規則（IsEnabled=1）
   ├─ 從 EventLog 表還原活躍警報狀態（ClearedAt IS NULL）
-  └─ 啟動 60 秒定期重載計時器
+  ├─ 由 LatestData 預填最新值快取（避免變動才推的前置點位被當「無資料」→ 閘門關閉）
+  ├─ 啟動 60 秒定期重載計時器
+  └─ 啟動 1 秒延遲 / 前置條件 tick
 ```
 
 ### 7.3 支援的警報類型
@@ -461,7 +465,7 @@ InitializeAsync()
 ```
 
 **觸發時**：寫入 EventLog（OccurredAt=現在, ClearedAt=NULL）
-**恢復時**：更新 EventLog（ClearedAt=現在）
+**恢復時**：更新 EventLog（ClearedAt=現在）— **只關同 SID + 同 Operator 那一列**（`ClearEventByOperatorAsync`）。2026-10-01 前用 `ClearEventAsync(SID)` 不分 Operator，高警報恢復會把同 SID 仍在警報中的低 / DI 列一併關掉（記憶體狀態卻仍 active），已修正
 **確認時**：更新 EventLog（IsAcknowledged=true, AcknowledgedBy=操作人員）
 
 ### 7.5 嚴重度等級
@@ -475,7 +479,33 @@ InitializeAsync()
 
 ### 7.6 品質門檻
 
-只有 Quality="Good" 的資料才會進行警報評估。Bad 品質的資料直接跳過，避免因通訊異常產生假警報。
+只有 Quality="Good" 的資料才會進行警報評估。Bad 品質的資料直接跳過，避免因通訊異常產生假警報。（Bad 值仍寫入最新值快取：作為前置點位時 Bad = 條件不成立。）
+
+### 7.7 前置條件（連鎖遮蔽）與警報延遲
+
+規則欄位：`IsPrecondition / PreSID / PreOperator / PreValue / PreDelaySec` + `AlarmDelaySec` + `RecoveryNotify{Line,Email,Sms}`（使用面說明見 [功能說明書_警報設定.md](功能說明書_警報設定.md) §9.4 §9.5）。
+
+**單一規則評估流程**（`EvaluateRuleAsync`，同 SID 以 `SemaphoreSlim` 序列化，資料批次與 tick 不會重複觸發）：
+
+```
+1. 前置條件閘門（有設定才有）：以 _latestValues[PreSID] 更新 AlarmPreconditionGate
+     Closed  → 本點 on-delay 歸零 + 清除本點所有 active 警報（ClearEventByOperator + MQTT clear，
+               恢復通知同一般恢復 → NotifyRecoveryAsync）→ 結束
+     Pending → on-delay 歸零；只允許「已 active 且仍越限 → 維持」或「回正常 → 恢復」，不觸發新警報
+     Open    → 往下
+2. 本點值 Bad / 無資料 → 結束
+3. 高 / 低 / DI 各自：越限 → OnDelayTimer 連續滿 AlarmDelaySec 才觸發（已 active 者不受影響）；回正常立即恢復
+```
+
+**恢復通知**（`NotifyRecoveryAsync`，一般恢復與前置清除共用）：依規則 `RecoveryNotifyLine / Email / Sms` 分通道決定是否派送（預設全開 = 舊行為）；簡訊服務內部另檢查 `SmsSetting.SendRecovery`，兩者皆開才發。
+
+**1 秒 tick**（`TickAsync`）：只掃「有前置條件 或 `AlarmDelaySec > 0`」的規則，用 `_latestValues` 中本點與 X 的最新值重評。評估器本是「被推資料才算」，DB / OPC UA 只推變動值 → 延遲期滿當下值沒變就不會被評估，tick 補上這個缺口（≤ 2 秒內觸發）。舊規則（無前置、無延遲）零額外成本、行為不變。
+
+**規則重載**：`SyncGatesAndTimers()` 只在該規則的前置設定（PreSID / 運算子 / 比較值 / 持續秒數）**有變**時重建閘門（延遲重新起算）；未變者沿用，避免 60 秒定期重載或改別條規則打斷計時。規則刪除 / 關閉前置條件即移除閘門。
+
+純邏輯類（可注入時間、單元測試 `ScadaEngine.Tests/Alarm/AlarmPreconditionGateTests.cs`）：
+- `OnDelayTimer` — 「條件連續成立 N 秒」計時器（閘門延遲與本點 on-delay 共用）
+- `AlarmPreconditionGate` — 運算子判定 + 閘門三態；`RecoveryNotifyPlan` — 恢復通知三通道旗標分派
 
 ---
 

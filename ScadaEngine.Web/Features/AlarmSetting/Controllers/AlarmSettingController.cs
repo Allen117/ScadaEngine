@@ -317,12 +317,22 @@ public class AlarmSettingController : Controller
         return Ok(rules);
     }
 
-    /// <summary>新增或更新規則</summary>
+    /// <summary>取得單一 SID 的規則（ScadaPage 右鍵警報設定彈窗用）；無規則回 rule = null</summary>
+    [HttpGet("~/api/alarm-rules/by-sid/{sid}")]
+    public async Task<IActionResult> GetRuleBySid(string sid)
+    {
+        var rule = await _alarmRuleService.GetRuleBySidAsync(sid);
+        return Ok(new { success = true, rule });
+    }
+
+    /// <summary>新增或更新規則（僅 Admin / Engineer）</summary>
     [HttpPost("~/api/alarm-rules")]
+    [Authorize(Roles = "Admin,Engineer")]
     public async Task<IActionResult> SaveRule([FromBody] AlarmRuleSaveDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.sid))
-            return BadRequest(new { success = false, message = _l["alarm.error.sid_required"].Value });
+        var szErrorKey = AlarmRuleService.ValidateRule(dto);
+        if (szErrorKey != null)
+            return BadRequest(new { success = false, message = _l[szErrorKey].Value });
 
         var isSuccess = await _alarmRuleService.SaveRuleAsync(dto);
         if (isSuccess)
@@ -331,8 +341,9 @@ public class AlarmSettingController : Controller
         return StatusCode(500, new { success = false, message = _l["alarm.error.save_failed"].Value });
     }
 
-    /// <summary>刪除規則</summary>
+    /// <summary>刪除規則（僅 Admin / Engineer）</summary>
     [HttpDelete("~/api/alarm-rules/{id}")]
+    [Authorize(Roles = "Admin,Engineer")]
     public async Task<IActionResult> DeleteRule(int id)
     {
         var isSuccess = await _alarmRuleService.DeleteRuleAsync(id);

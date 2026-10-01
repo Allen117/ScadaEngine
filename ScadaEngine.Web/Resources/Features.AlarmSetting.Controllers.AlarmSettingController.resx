@@ -74,4 +74,10 @@
   <data name="alarm.nrg.daily_suffix" xml:space="preserve"><value>每日用電</value></data>
   <data name="alarm.nrg.monthly_suffix" xml:space="preserve"><value>每月用電</value></data>
   <data name="alarm.nrg.period_suffix" xml:space="preserve"><value>本月電度</value></data>
+  <data name="alarm.error.delay_range" xml:space="preserve"><value>延遲秒數需介於 0 ~ 86400</value></data>
+  <data name="alarm.error.pre_sid_required" xml:space="preserve"><value>請選擇前置條件點位</value></data>
+  <data name="alarm.error.pre_sid_self" xml:space="preserve"><value>前置條件點位不可為本點</value></data>
+  <data name="alarm.error.pre_sid_virtual" xml:space="preserve"><value>需量 / 迴路用電虛擬點位不可作為前置條件</value></data>
+  <data name="alarm.error.pre_operator_invalid" xml:space="preserve"><value>前置條件運算子無效</value></data>
+  <data name="alarm.error.pre_value_required" xml:space="preserve"><value>請輸入前置條件比較值</value></data>
 </root>

@@ -25,11 +25,11 @@
         };
     }
 
-    // 將指定 SID 的 Designer DI 標籤套到 Modal 唯讀欄位
+    // 將指定 SID 的 Designer DI 標籤套到表單唯讀欄位，並告知共用表單本點 SID（前置點位排除自己）
     function applyDiLabelsForSid(sid) {
         var labels = getDiLabelsForSid(sid);
-        document.getElementById('txtDiOnLabel').value = labels.onLabel;
-        document.getElementById('txtDiOffLabel').value = labels.offLabel;
+        window.AlarmRuleForm.setDiLabels(labels.onLabel, labels.offLabel);
+        window.AlarmRuleForm.setSelfSid(sid);
     }
 
     function severityLabel(n) {
@@ -244,9 +244,9 @@
             renderSmsTable();
         }
 
-        toggleSection('high');
-        toggleSection('low');
-        toggleSection('di');
+        // 共用規則表單：前置點位候選 = 本頁全部點位（虛擬點由 AlarmRuleForm 排除）
+        window.AlarmRuleForm.setPoints(_points);
+        window.AlarmRuleForm.reset();
 
         // Tab 切換時換按鈕
         var rulesTabBtn = document.getElementById('tab-rules-btn');
@@ -495,21 +495,7 @@
     }
 
     function toggleSection(type) {
-        var isChecked;
-        var ids;
-        if (type === 'high') {
-            isChecked = document.getElementById('chkAlarmHigh').checked;
-            ids = ['secHighValue', 'secHighDeadband', 'secHighSeverity'];
-        } else if (type === 'low') {
-            isChecked = document.getElementById('chkAlarmLow').checked;
-            ids = ['secLowValue', 'secLowDeadband', 'secLowSeverity'];
-        } else {
-            isChecked = document.getElementById('chkDiAlarm').checked;
-            ids = ['secDiTrigger', 'secDiSeverity', 'secDiLabels'];
-        }
-        ids.forEach(function (id) {
-            document.getElementById(id).style.display = isChecked ? '' : 'none';
-        });
+        window.AlarmRuleForm.toggleSection(type);
     }
 
     function severityBadge(n) {
@@ -555,6 +541,7 @@
                 + '<td>' + highHtml + '</td>'
                 + '<td>' + lowHtml + '</td>'
                 + '<td>' + diHtml + '</td>'
+                + '<td>' + preconditionHtml(r) + '</td>'
                 + '<td>' + escHtml(r.remarks) + '</td>'
                 + '<td>'
                 + '<button class="btn btn-sm btn-outline-primary me-1" onclick="window._alarm.editRule(' + r.id + ')"><i class="fas fa-pen"></i></button>'
@@ -562,6 +549,22 @@
                 + '</td></tr>';
         });
         tbody.innerHTML = html;
+    }
+
+    // 前置條件 / 警報延遲摘要欄；前置點位已不存在時標紅警示（警報會被永久遮蔽）
+    function preconditionHtml(r) {
+        var parts = [];
+        var sum = window.AlarmRuleForm.preconditionSummary(r);
+        if (sum.text) {
+            parts.push(sum.isMissing
+                ? '<span class="alarm-tag alarm-tag-pre-missing" title="' + escHtml(t('arf.summary.missing')) + '">'
+                    + '<i class="fas fa-exclamation-triangle me-1"></i>' + escHtml(sum.text) + '</span>'
+                : '<span class="alarm-tag alarm-tag-pre">' + escHtml(sum.text) + '</span>');
+        }
+        if (r.alarmDelaySec > 0) {
+            parts.push('<span class="alarm-tag alarm-tag-off">' + escHtml(t('alarm.rule.delay_tag', { sec: r.alarmDelaySec })) + '</span>');
+        }
+        return parts.length ? parts.join(' ') : '<span class="alarm-tag alarm-tag-off">-</span>';
     }
 
     function escHtml(s) {
@@ -579,24 +582,8 @@
         document.getElementById('selSubDevice').innerHTML = '<option value="">' + t('alarm.select.sub_device_placeholder') + '</option>';
         document.getElementById('selPoint').innerHTML = '<option value="">' + t('alarm.select.point_placeholder') + '</option>';
         document.getElementById('txtSid').value = '';
-        document.getElementById('chkAlarmHigh').checked = false;
-        document.getElementById('txtAlarmHighValue').value = '';
-        document.getElementById('txtDeadbandHigh').value = '0';
-        document.getElementById('selHighSeverity').value = '1';
-        document.getElementById('chkAlarmLow').checked = false;
-        document.getElementById('txtAlarmLowValue').value = '';
-        document.getElementById('txtDeadbandLow').value = '0';
-        document.getElementById('selLowSeverity').value = '1';
-        document.getElementById('chkDiAlarm').checked = false;
-        document.getElementById('selDiTrigger').value = 'ON';
-        document.getElementById('selDiSeverity').value = '1';
-        document.getElementById('txtDiOnLabel').value = 'ON';
-        document.getElementById('txtDiOffLabel').value = 'OFF';
-        document.getElementById('txtRemarks').value = '';
-        document.getElementById('chkEnabled').checked = true;
-        toggleSection('high');
-        toggleSection('low');
-        toggleSection('di');
+        window.AlarmRuleForm.setSelfSid('');
+        window.AlarmRuleForm.reset();
         _modal.show();
     }
 
@@ -607,69 +594,19 @@
         document.getElementById('ruleModalTitle').textContent = t('alarm.modal.title_edit');
         document.getElementById('editId').value = rule.id;
 
+        window.AlarmRuleForm.fill(rule);
+        // 選點器還原（內含 applyDiLabelsForSid：ON/OFF 標籤一律以 Designer 設定為準，覆蓋規則中過時的快照）
         setupSelectorsForSid(rule.sid);
-
-        document.getElementById('chkAlarmHigh').checked = rule.isAlarmHigh;
-        document.getElementById('txtAlarmHighValue').value = rule.alarmHighValue != null ? rule.alarmHighValue : '';
-        document.getElementById('txtDeadbandHigh').value = rule.deadbandHigh != null ? rule.deadbandHigh : 0;
-        document.getElementById('selHighSeverity').value = rule.alarmHighSeverity;
-
-        document.getElementById('chkAlarmLow').checked = rule.isAlarmLow;
-        document.getElementById('txtAlarmLowValue').value = rule.alarmLowValue != null ? rule.alarmLowValue : '';
-        document.getElementById('txtDeadbandLow').value = rule.deadbandLow != null ? rule.deadbandLow : 0;
-        document.getElementById('selLowSeverity').value = rule.alarmLowSeverity;
-
-        document.getElementById('chkDiAlarm').checked = rule.isDiAlarm;
-        document.getElementById('selDiTrigger').value = rule.diTriggerState || 'ON';
-        document.getElementById('selDiSeverity').value = rule.diAlarmSeverity;
-        // ON/OFF 標籤一律以 Designer 設定為準（覆蓋規則中過時的快照）
-        applyDiLabelsForSid(rule.sid);
-
-        document.getElementById('txtRemarks').value = rule.remarks || '';
-        document.getElementById('chkEnabled').checked = rule.isEnabled;
-
-        toggleSection('high');
-        toggleSection('low');
-        toggleSection('di');
         _modal.show();
     }
 
     function save() {
         var sid = document.getElementById('txtSid').value.trim();
-        if (!sid) { alert(t('alarm.alert.select_point')); return; }
+        var dto = window.AlarmRuleForm.read(sid, document.getElementById('editId').value);
+        var szErr = window.AlarmRuleForm.validate(dto);
+        if (szErr) { alert(szErr); return; }
 
-        var isHigh = document.getElementById('chkAlarmHigh').checked;
-        var isLow = document.getElementById('chkAlarmLow').checked;
-        var isDi = document.getElementById('chkDiAlarm').checked;
-
-        var editId = document.getElementById('editId').value;
-
-        var dto = {
-            id: editId ? parseInt(editId) : null,
-            sid: sid,
-            isEnabled: document.getElementById('chkEnabled').checked,
-            isAlarmHigh: isHigh,
-            alarmHighValue: isHigh ? parseFloat(document.getElementById('txtAlarmHighValue').value) || null : null,
-            deadbandHigh: isHigh ? parseFloat(document.getElementById('txtDeadbandHigh').value) || 0 : 0,
-            alarmHighSeverity: isHigh ? parseInt(document.getElementById('selHighSeverity').value) : 1,
-            isAlarmLow: isLow,
-            alarmLowValue: isLow ? parseFloat(document.getElementById('txtAlarmLowValue').value) || null : null,
-            deadbandLow: isLow ? parseFloat(document.getElementById('txtDeadbandLow').value) || 0 : 0,
-            alarmLowSeverity: isLow ? parseInt(document.getElementById('selLowSeverity').value) : 1,
-            isDiAlarm: isDi,
-            diTriggerState: isDi ? document.getElementById('selDiTrigger').value : null,
-            diAlarmSeverity: isDi ? parseInt(document.getElementById('selDiSeverity').value) : 1,
-            diOnLabel: isDi ? document.getElementById('txtDiOnLabel').value.trim() || null : null,
-            diOffLabel: isDi ? document.getElementById('txtDiOffLabel').value.trim() || null : null,
-            remarks: document.getElementById('txtRemarks').value.trim()
-        };
-
-        fetch('/api/alarm-rules', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dto)
-        })
-        .then(function (r) { return r.json(); })
+        window.AlarmRuleForm.save(dto)
         .then(function (res) {
             if (res.success) {
                 _modal.hide();
@@ -684,8 +621,7 @@
     function deleteRule(id) {
         if (!confirm(t('alarm.confirm.delete_rule'))) return;
 
-        fetch('/api/alarm-rules/' + id, { method: 'DELETE' })
-        .then(function (r) { return r.json(); })
+        window.AlarmRuleForm.remove(id)
         .then(function (res) {
             if (res.success) location.reload();
             else alert(res.message || t('alarm.alert.delete_failed'));
@@ -697,37 +633,17 @@
         var rule = _rules.find(function (r) { return r.id === id; });
         if (!rule) return;
 
-        var dto = {
-            id: rule.id,
-            sid: rule.sid,
-            isEnabled: isEnabled,
-            isAlarmHigh: rule.isAlarmHigh,
-            alarmHighValue: rule.alarmHighValue,
-            deadbandHigh: rule.deadbandHigh,
-            alarmHighSeverity: rule.alarmHighSeverity,
-            isAlarmLow: rule.isAlarmLow,
-            alarmLowValue: rule.alarmLowValue,
-            deadbandLow: rule.deadbandLow,
-            alarmLowSeverity: rule.alarmLowSeverity,
-            isDiAlarm: rule.isDiAlarm,
-            diTriggerState: rule.diTriggerState,
-            diAlarmSeverity: rule.diAlarmSeverity,
-            diOnLabel: rule.diOnLabel,
-            diOffLabel: rule.diOffLabel,
-            remarks: rule.remarks
-        };
+        // 整條規則原樣帶回（含前置條件 / 延遲欄位），只改啟用旗標
+        var dto = Object.assign({}, rule, { isEnabled: isEnabled });
 
-        fetch('/api/alarm-rules', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dto)
-        })
-        .then(function (r) { return r.json(); })
+        window.AlarmRuleForm.save(dto)
         .then(function (res) {
             if (res.success) {
                 rule.isEnabled = isEnabled;
-                renderTable();
+            } else {
+                alert(res.message || t('alarm.alert.save_failed'));
             }
+            renderTable();
         });
     }
 

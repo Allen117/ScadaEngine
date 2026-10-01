@@ -74,4 +74,10 @@
   <data name="alarm.nrg.daily_suffix" xml:space="preserve"><value>Daily kWh</value></data>
   <data name="alarm.nrg.monthly_suffix" xml:space="preserve"><value>Monthly kWh</value></data>
   <data name="alarm.nrg.period_suffix" xml:space="preserve"><value>Period kWh</value></data>
+  <data name="alarm.error.delay_range" xml:space="preserve"><value>Delay must be between 0 and 86400 seconds</value></data>
+  <data name="alarm.error.pre_sid_required" xml:space="preserve"><value>Please select a precondition point</value></data>
+  <data name="alarm.error.pre_sid_self" xml:space="preserve"><value>The precondition point cannot be the alarm point itself</value></data>
+  <data name="alarm.error.pre_sid_virtual" xml:space="preserve"><value>Demand / circuit energy virtual points cannot be used as a precondition</value></data>
+  <data name="alarm.error.pre_operator_invalid" xml:space="preserve"><value>Invalid precondition operator</value></data>
+  <data name="alarm.error.pre_value_required" xml:space="preserve"><value>Please enter the precondition comparison value</value></data>
 </root>

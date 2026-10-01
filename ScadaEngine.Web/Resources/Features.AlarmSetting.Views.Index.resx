@@ -233,4 +233,6 @@
   <data name="alarm.field.circuit" xml:space="preserve"><value>迴路</value></data>
   <data name="alarm.select.group_placeholder" xml:space="preserve"><value>-- 請選擇群組 --</value></data>
   <data name="alarm.select.circuit_placeholder" xml:space="preserve"><value>-- 請選擇迴路 --</value></data>
+  <data name="alarm.col.precondition" xml:space="preserve"><value>前置條件 / 延遲</value></data>
+  <data name="alarm.rule.delay_tag" xml:space="preserve"><value>延遲 {sec}s</value></data>
 </root>

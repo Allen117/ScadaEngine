@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="arf.toggle.alarm_high" xml:space="preserve"><value>上限警報</value></data>
+  <data name="arf.toggle.alarm_low" xml:space="preserve"><value>下限警報</value></data>
+  <data name="arf.toggle.alarm_di" xml:space="preserve"><value>DI 警報</value></data>
+  <data name="arf.field.threshold" xml:space="preserve"><value>閾值</value></data>
+  <data name="arf.field.deadband" xml:space="preserve"><value>死區</value></data>
+  <data name="arf.field.severity" xml:space="preserve"><value>嚴重程度</value></data>
+  <data name="arf.severity.critical" xml:space="preserve"><value>緊急</value></data>
+  <data name="arf.severity.high" xml:space="preserve"><value>高</value></data>
+  <data name="arf.severity.medium" xml:space="preserve"><value>中</value></data>
+  <data name="arf.severity.low" xml:space="preserve"><value>低</value></data>
+  <data name="arf.field.trigger_state" xml:space="preserve"><value>觸發狀態</value></data>
+  <data name="arf.field.on_label" xml:space="preserve"><value>ON 標籤</value></data>
+  <data name="arf.field.off_label" xml:space="preserve"><value>OFF 標籤</value></data>
+  <data name="arf.di_labels.hint" xml:space="preserve"><value>由 Designer DI 點位設定自動帶入</value></data>
+  <data name="arf.field.alarm_delay" xml:space="preserve"><value>警報延遲</value></data>
+  <data name="arf.unit.sec" xml:space="preserve"><value>秒</value></data>
+  <data name="arf.alarm_delay.hint" xml:space="preserve"><value>越限須持續滿 N 秒才觸發（高 / 低 / DI 各自計時），0 = 立即；恢復一律立即</value></data>
+  <data name="arf.toggle.precondition" xml:space="preserve"><value>前置條件</value></data>
+  <data name="arf.precondition.hint" xml:space="preserve"><value>另一點位條件成立並持續 N 秒後，才判斷本點警報</value></data>
+  <data name="arf.field.pre_point" xml:space="preserve"><value>前置點位</value></data>
+  <data name="arf.field.pre_operator" xml:space="preserve"><value>條件</value></data>
+  <data name="arf.field.pre_value" xml:space="preserve"><value>比較值</value></data>
+  <data name="arf.field.pre_delay" xml:space="preserve"><value>持續</value></data>
+  <data name="arf.channel.sms" xml:space="preserve"><value>簡訊</value></data>
+  <data name="arf.field.remarks" xml:space="preserve"><value>備註</value></data>
+  <data name="arf.field.enabled" xml:space="preserve"><value>啟用</value></data>
+  <data name="arf.field.is_enabled" xml:space="preserve"><value>啟用此規則</value></data>
+  <data name="arf.pre_point.not_found" xml:space="preserve"><value>找不到此點位</value></data>
+  <data name="arf.error.select_point" xml:space="preserve"><value>請選擇點位</value></data>
+  <data name="arf.error.delay_range" xml:space="preserve"><value>延遲秒數需介於 0 ~ 86400</value></data>
+  <data name="arf.error.pre_sid_required" xml:space="preserve"><value>請選擇前置條件點位</value></data>
+  <data name="arf.error.pre_sid_self" xml:space="preserve"><value>前置條件點位不可為本點</value></data>
+  <data name="arf.error.pre_sid_virtual" xml:space="preserve"><value>需量 / 迴路用電虛擬點位不可作為前置條件</value></data>
+  <data name="arf.error.pre_sid_unknown" xml:space="preserve"><value>前置條件點位不存在，請從清單選擇</value></data>
+  <data name="arf.error.pre_value_required" xml:space="preserve"><value>請輸入前置條件比較值</value></data>
+  <data name="arf.error.forbidden" xml:space="preserve"><value>權限不足：僅管理員 / 工程師可修改警報規則</value></data>
+  <data name="arf.summary" xml:space="preserve"><value>前置：{point} {cond} 持續 {sec}s</value></data>
+  <data name="arf.summary.missing" xml:space="preserve"><value>前置點位不存在，警報將一直被遮蔽</value></data>
+  <data name="arf.pre_point.pick" xml:space="preserve"><value>選擇點位</value></data>
+  <data name="arf.pre_point.none" xml:space="preserve"><value>尚未選擇點位</value></data>
+  <data name="pp.source.opc" xml:space="preserve"><value>OPC UA 點位</value></data>
+  <data name="pp.source.opc_desc" xml:space="preserve"><value>從 OPC UA Server 讀取的點位</value></data>
+  <data name="pp.title.opc_source" xml:space="preserve"><value>選擇 OPC UA 來源</value></data>
+  <data name="arf.field.recovery_notify" xml:space="preserve"><value>恢復通知</value></data>
+  <data name="arf.recovery_notify.hint" xml:space="preserve"><value>警報恢復時要發通知的通道（含前置條件不成立造成的清除）；簡訊另需「簡訊設定」的恢復通知開關也開啟</value></data>
+</root>

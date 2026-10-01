@@ -233,4 +233,6 @@
   <data name="alarm.field.circuit" xml:space="preserve"><value>Circuit</value></data>
   <data name="alarm.select.group_placeholder" xml:space="preserve"><value>-- Select a group --</value></data>
   <data name="alarm.select.circuit_placeholder" xml:space="preserve"><value>-- Select a circuit --</value></data>
+  <data name="alarm.col.precondition" xml:space="preserve"><value>Precondition / Delay</value></data>
+  <data name="alarm.rule.delay_tag" xml:space="preserve"><value>Delay {sec}s</value></data>
 </root>

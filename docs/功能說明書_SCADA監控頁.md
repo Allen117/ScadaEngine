@@ -63,7 +63,9 @@ wwwroot/
     ├── widget-motor.js           ← 馬達型設備（冷卻塔/風扇/冰機）
     ├── widget-table.js           ← Table Widget
     ├── widget-trend.js           ← 即時曲線（滾動趨勢圖）Chart.js 生命週期 / backfill / append
-    ├── ctx-menus-points.js       ← 趨勢/AO/DO 右鍵選單與控制寫入
+    ├── ctx-menus-points.js       ← 點位右鍵選單（警報設定/歷史趨勢/快速趨勢/趨勢清單）+ AO/DO 右鍵與控制寫入
+    ├── alarm-quick-edit.js       ← 右鍵「警報設定…」就地彈窗（表單共用 common/alarm-rule-form.js）
+    ├── quick-trend.js            ← 右鍵「快速趨勢」浮動小窗（backfill + 每秒即時接續）
     ├── ctx-menus-equip.js        ← 泵浦/馬達右鍵選單與控制寫入
     ├── circuit-metric.js         ← 30 秒慢輪詢（SID 累積量 + 迴路指標）
     ├── tree.js                   ← 頁面樹/切頁/畫布縮放/側欄收合
@@ -101,7 +103,7 @@ wwwroot/
         ├─ Pump 頻率設定           → POST /api/control/write { cidFreqSet, value:Hz值 }
         ├─ Pump 頻率切自動         → POST /api/control/write { cidFreqSet, mode:"auto" }
         ├─ Pump Gauge 拖拽         → mouseup 時 POST /api/control/write { cid, value:Hz值 }
-        └─ 右鍵「趨勢圖」         → 寫入 localStorage，導向歷史趨勢頁
+        └─ 非控制點右鍵選單       → 警報設定… / 歷史趨勢（開新頁）/ 快速趨勢 / 加入趨勢圖清單（§8 點位右鍵選單）
 ```
 
 ---
@@ -606,7 +608,7 @@ props：`szSid / szPointName / szUnit / nWindowSec（時間窗秒數，預設 18
 - Designer 編輯期**畫固定假波形**（SVG，不連線、不輪詢、不查 DB；plan 決策 6）：格線數／線色／線寬／邊框色／Y 軸範圍／時間窗即時反映，左上角顯示綁定點位名。`.widget-trend .widget-body` padding 歸零，讓編輯期尺寸 = 執行期尺寸
 - 拖入畫布**先開 picker 選點位**（同 gauge / AI 點位）；屬性面板「重選」或**雙擊畫布上的元件**皆走 `rerouteTrendChartPoint()`
 - 整頁複製（page-clipboard）時 `szSid` / `szPointName` 由既有前綴規則自動清空 → 執行期顯示「未綁定點位」，不建 Chart、不查 DB
-- 右鍵可「加入趨勢圖清單」（`onTrendContextMenu`，與其他 widget 一致）
+- 右鍵為點位選單（`onTrendContextMenu`，與其他 widget 一致，見 §8 點位右鍵選單）
 
 > **重繪節奏調校**：資料收集固定跟著 1 秒即時輪詢，畫面重繪由 `widget-trend.js` 的 `TREND_REDRAW_MS`（預設 1000）控制。一頁多圖若實測 CPU 吃緊，把它調大即可（資料完整性不受影響）。
 
@@ -671,6 +673,23 @@ Designer 畫布上所有元件共用一套選取與定位規則（widget-core.js
 - AI 點位：高限觸發 → `szHighColor` (紅)、低限觸發 → `szLowColor` (橘)
 - DI 點位：觸發條件 (ON/OFF) 匹配時 → `szAlarmColor` (紅) + 脈動動畫
 - Deadband 計算：`fVal >= (dAlarmHighValue - dDeadbandHigh)` 或 `fVal <= (dAlarmLowValue + dDeadbandLow)`
+- **有前置條件的規則（`isPrecondition`）改看實際 active 警報**（2026-10-01）：前端不知道 Engine 閘門 / 延遲計時狀態，自算門檻會「被遮蔽卻仍著紅」。改由 `state.js` 的 `_activeAlarmKeys`（`SID:high|low|di`）判斷，資料來自 `active-alarm-panel.js` 既有 3 秒輪詢廣播的 `scada:active-alarms` 事件（不另開輪詢），故此類規則著色有最多 3 秒延遲。無前置條件的規則維持前端自算（行為不變）
+- 本點警報延遲（`AlarmDelaySec`）不影響前端著色：越限當下即上色，Engine 端滿延遲才寫 EventLog / 通知
+
+### 點位右鍵選單（非控制點）
+
+適用：gauge / table 資料格 / realtimeValue（SID 模式）/ diPoint（SID 模式）/ pipe / image / trendChart（已綁點位者）。選單頂端顯示點位名稱，項目：
+
+| 項目 | 顯示條件 | 行為 |
+|------|----------|------|
+| 警報設定… | Admin / Engineer（`window._isAdmin`） | 開 `#scadaAlarmModal`（`_AlarmRuleForm` partial，與 AlarmSetting 頁同一份表單）：`GET /api/alarm-rules/by-sid/{sid}` 有規則則編輯、無則新增；SID 固定為該點，標頭只顯示點位名稱（不帶 SID）；可刪除；DI ON/OFF 標籤取本頁 widget 設定；前置點位以共用選點器（比照 Designer 綁定點位）挑選。**「恢復通知」Line / Email / 簡訊勾選不在此彈窗顯示**（partial view-data `ArfHideRecoveryNotify`），統一在警報設定頁管理，彈窗存檔沿用規則既有值（新規則用預設 開 / 開 / 開）。存檔 / 刪除後 `_loadAlarmRules()` 刷新著色規則。server 端 POST/DELETE 另有角色檢查（User 打 API 回 403） |
+| 歷史趨勢（開新頁） | 有 `/HistoryData` 頁權限（`window._canHistory`，Controller 以 `PermissionService.CanAccessPage` 注入） | `window.open('/HistoryData?sid=…&hours=1')`，歷史頁自動帶入點位、設好時間並查詢 |
+| 快速趨勢（1 小時） | 能看本頁即可 | 開浮動小窗（見下） |
+| 加入趨勢圖清單 | 全部 | 原行為：寫 `localStorage['SCADA_TREND_PRELOAD']` 佇列 |
+
+**設備類元件（泵浦 / 冷卻水塔 / 空調箱風扇 / 冰機）右鍵**：無控制權限且未綁任何監控點位時，選單沒有項目 → 直接不顯示（2026-10-01 修正：原本會冒出空白小方塊）。
+
+**快速趨勢浮窗**（`quick-trend.js`）：fixed 掛 body（不在畫布 `transform: scale` 內）、標題列可拖曳、一次一窗（再點別的點即替換內容）。時間範圍 15 分 / 1 時（預設）/ 8 時；開窗或切範圍時 `GET /api/history/data` backfill 一次（8 時用 `nInterval=1` 分鐘取樣，避免撞 5000 筆上限），之後由 `updateScadaWidgets` 每秒呼叫 `_quickTrendOnData()` 接續即時值並推進時間窗（同即時曲線：以點位自身 timestamp 去重、品質 BAD 斷線不補值）。有歷史頁權限時標題列另有「開新頁看歷史趨勢」按鈕。**切頁（`selectScadaPage`）自動關窗**。
 
 ---
 

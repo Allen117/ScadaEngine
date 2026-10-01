@@ -6,6 +6,7 @@
 @* asp-append-version：檔案內容 hash 進 query string，改版後瀏覽器不會吃到舊快取 CSS *@
 <link rel="stylesheet" href="~/css/scadapage.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/active-alarm-panel.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/point-picker.css" asp-append-version="true" />
 
 <div class="container-fluid mt-4">
 
@@ -72,11 +73,45 @@
 
 </div>
 
+@if (ViewData["IsAdmin"] is true)
+{
+    @* 右鍵「警報設定…」就地彈窗（僅 Admin / Engineer）；表單本體與 AlarmSetting 頁共用 partial *@
+    <div class="modal fade" id="scadaAlarmModal" tabindex="-1" aria-labelledby="scadaAlarmModalTitle">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-bell me-2 text-danger"></i><span id="scadaAlarmModalTitle"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <span class="text-muted me-1">@Localizer["scadapage.alarm_edit.point"]</span>
+                        <strong id="scadaAlarmPointLabel"></strong>
+                    </div>
+                    @* 恢復通知（Line/Email/簡訊）屬警報設定頁管理，彈窗不顯示（存檔沿用規則既有值） *@
+                    <partial name="~/Features/AlarmSetting/Views/_AlarmRuleForm.cshtml"
+                             view-data="@(new ViewDataDictionary(ViewData) { { "ArfHideRecoveryNotify", true } })" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-danger me-auto" id="btnScadaAlarmDelete" onclick="_alarmQuickDelete()">
+                        <i class="fas fa-trash me-1"></i>@Localizer["scadapage.alarm_edit.delete"]
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["scadapage.alarm_edit.cancel"]</button>
+                    <button type="button" class="btn btn-primary" onclick="_alarmQuickSave()">
+                        <i class="fas fa-save me-1"></i>@Localizer["scadapage.alarm_edit.save"]
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @section Scripts {
     <script>
         // 權限資料（由 Controller 注入，供外部 JS 讀取）
         window._isAdmin = @Html.Raw(ViewData["IsAdmin"]?.ToString().ToLower() ?? "false");
         window._scadaPagePerms = @Html.Raw(ViewData["ScadaPagePermissions"] ?? "{}");
+        window._canHistory = @Html.Raw(ViewData["CanHistory"]?.ToString().ToLower() ?? "false");
     </script>
     @* asp-append-version：檔案內容 hash 進 query string，改版後瀏覽器不會吃到舊快取 JS *@
     <script src="~/js/common/schedule-eval.js" asp-append-version="true"></script>
@@ -87,6 +122,9 @@
     <script src="~/lib/chartjs/chart.umd.min.js"></script>
     <script src="~/lib/chartjs/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="~/js/common/trend-window.js" asp-append-version="true"></script>
+    <script src="~/js/common/point-grouping.js" asp-append-version="true"></script>
+    <script src="~/js/common/point-picker.js" asp-append-version="true"></script>
+    <script src="~/js/common/alarm-rule-form.js" asp-append-version="true"></script>
     @* js/scadapage/ 模組群（原單體 scadapage.js 拆分）：state 必須最先、index 必須最後，中間順序不敏感 *@
     <script src="~/js/scadapage/state.js" asp-append-version="true"></script>
     <script src="~/js/scadapage/widget-trend.js" asp-append-version="true"></script>
@@ -97,6 +135,8 @@
     <script src="~/js/scadapage/widget-table.js" asp-append-version="true"></script>
     <script src="~/js/scadapage/ctx-menus-points.js" asp-append-version="true"></script>
     <script src="~/js/scadapage/ctx-menus-equip.js" asp-append-version="true"></script>
+    <script src="~/js/scadapage/alarm-quick-edit.js" asp-append-version="true"></script>
+    <script src="~/js/scadapage/quick-trend.js" asp-append-version="true"></script>
     <script src="~/js/scadapage/circuit-metric.js" asp-append-version="true"></script>
     <script src="~/js/scadapage/tree.js" asp-append-version="true"></script>
     <script src="~/js/scadapage/render.js" asp-append-version="true"></script>

@@ -906,6 +906,50 @@
                 ? '<i class="fas fa-chevron-up me-1"></i>' + t('history.table.button.collapse')
                 : '<i class="fas fa-chevron-down me-1"></i>' + t('history.table.button.expand');
         });
+
+        // ── 深連結（ScadaPage 右鍵「歷史趨勢」開新分頁）──
+        // /HistoryData?sid=A&sid=B&hours=1  或  ?sid=A&start=yyyy-MM-ddTHH:mm&end=yyyy-MM-ddTHH:mm
+        // 帶入待查詢清單 + 設好時間 + 自動查詢；時間參數缺 / 無效 → 預設近 1 小時
+        (function applyDeepLink() {
+            var qs = new URLSearchParams(location.search);
+            var sids = [];
+            qs.getAll('sid').forEach(function (v) {
+                (v || '').split(',').forEach(function (s) {
+                    s = s.trim();
+                    if (s && sids.indexOf(s) < 0) sids.push(s);
+                });
+            });
+            if (!sids.length) return;
+
+            addToBasket(sids.map(function (sid) {
+                var match = allPoints.find(function (p) { return p.sid === sid; });
+                return {
+                    sid:  sid,
+                    name: match ? (match.fullName || match.name) : sid,
+                    unit: match ? match.unit : ''
+                };
+            }));
+
+            var start = qs.get('start') ? new Date(qs.get('start').replace(' ', 'T')) : null;
+            var end   = qs.get('end')   ? new Date(qs.get('end').replace(' ', 'T'))   : null;
+            if (!start || !end || isNaN(start) || isNaN(end) || start >= end) {
+                var h = parseFloat(qs.get('hours'));
+                if (!(h > 0)) h = 1;
+                end = ceilToMinute(new Date());
+                start = new Date(end - h * 3600000);
+            }
+            if (dtStart._flatpickr) {
+                dtStart._flatpickr.setDate(start, true);
+                dtEnd._flatpickr.setDate(end, true);
+            } else {
+                dtStart.value = fmtDtLocal(start);
+                dtEnd.value   = fmtDtLocal(end);
+            }
+
+            // 查詢結果標題 / 提示走 i18n，等字典載入後再查
+            if (window.i18n && window.i18n.ready) window.i18n.ready(doQuery);
+            else doQuery();
+        })();
     });
 
     // ── 對外介面（供 onclick 等屬性呼叫）──────────────────────────────────

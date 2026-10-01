@@ -169,6 +169,9 @@
             menu.appendChild(btnRow);
         }
 
+        // 無控制權限且未綁任何監控點位 → 選單沒有項目，直接不顯示（避免冒出空白小方塊）
+        if (!menu.children.length) return;
+
         document.body.appendChild(menu);
         _positionContextMenu(menu, e.clientX, e.clientY);
         _pumpContextMenu = menu;
@@ -390,6 +393,9 @@
             });
             menu.appendChild(btnRow);
         }
+
+        // 無控制權限且未綁任何監控點位 → 選單沒有項目，直接不顯示（避免冒出空白小方塊）
+        if (!menu.children.length) return;
 
         document.body.appendChild(menu);
         _positionContextMenu(menu, e.clientX, e.clientY);

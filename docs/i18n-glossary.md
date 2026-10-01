@@ -401,6 +401,9 @@
 | 雙軸 | Dual | axis mode |
 | 單軸 | Single | axis mode |
 | 統計摘要 | Summary | Excel sheet 名 |
+| 快速趨勢 | Quick Trend | ScadaPage 右鍵浮動小窗 |
+| 歷史趨勢（開新頁） | Historical Trend (new tab) | ScadaPage 右鍵 |
+| 加入趨勢圖清單 | Add to Trend List | ScadaPage 右鍵 |
 
 ## 事件記錄
 
@@ -741,6 +744,11 @@
 | 通知摘要 | Notification Summary | EventLog |
 | 通知通道 | Notify Channel | EventLog 欄位 |
 | 收件人數 | Recipients | 表格欄位 |
+| 前置條件 | Precondition | 規則欄位（連鎖遮蔽：另一點位條件成立 N 秒才判斷本點警報） |
+| 前置點位 | Precondition Point | 前置條件綁定的點位 |
+| 持續 | Hold For | 前置條件須連續成立秒數 |
+| 警報延遲 | Alarm Delay | 本點 on-delay（越限持續 N 秒才觸發） |
+| 恢復通知 | Clear Notification | 規則欄位：恢復時發送的通道（Line / Email / 簡訊勾選） |
 
 ## 畫面設計 (Designer)
 

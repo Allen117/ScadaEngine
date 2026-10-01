@@ -80,6 +80,7 @@
         // 冪等防護：dblclick 會觸發兩次 click，避免重複 renderScadaCanvas 造成畫布閃動跳大小
         if (scadaCurrentId === szId) return;
         scadaCurrentId = szId;
+        _quickTrendClose();   // 快速趨勢窗綁的是上一頁的點位，切頁即關
         renderScadaPageTree();
         var page = findScadaPage(szId);
         if (!page) return;

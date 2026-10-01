@@ -26,7 +26,11 @@
             isDiAlarm = r.isDiAlarm, diTriggerState = r.szDiTriggerState,
             diAlarmSeverity = r.nDiAlarmSeverity,
             diOnLabel = r.szDiOnLabel ?? "", diOffLabel = r.szDiOffLabel ?? "",
-            remarks = r.szRemarks ?? ""
+            remarks = r.szRemarks ?? "",
+            isPrecondition = r.isPrecondition, preSid = r.szPreSID, preOperator = r.szPreOperator,
+            preValue = r.dPreValue, preDelaySec = r.nPreDelaySec,
+            recoveryNotifyLine = r.isRecoveryNotifyLine, recoveryNotifyEmail = r.isRecoveryNotifyEmail,
+            recoveryNotifySms = r.isRecoveryNotifySms, alarmDelaySec = r.nAlarmDelaySec
         })
     );
     var lineTargetsJson = System.Text.Json.JsonSerializer.Serialize(
@@ -70,6 +74,7 @@
 }
 
 <link rel="stylesheet" href="~/css/alarmsetting.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/point-picker.css" asp-append-version="true" />
 
 <div class="container-fluid mt-4">
 
@@ -140,6 +145,7 @@
                                     <th>@Localizer["alarm.col.alarm_high"]</th>
                                     <th>@Localizer["alarm.col.alarm_low"]</th>
                                     <th>@Localizer["alarm.col.alarm_di"]</th>
+                                    <th>@Localizer["alarm.col.precondition"]</th>
                                     <th>@Localizer["alarm.col.remarks"]</th>
                                     <th style="width:120px">@Localizer["alarm.col.actions"]</th>
                                 </tr>
@@ -305,119 +311,8 @@
 
                 <hr />
 
-                <!-- 上限警報 -->
-                <div class="row mb-3 align-items-center">
-                    <div class="col-md-2">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="chkAlarmHigh"
-                                   onchange="window._alarm.toggleSection('high')">
-                            <label class="form-check-label fw-bold">@Localizer["alarm.toggle.alarm_high"]</label>
-                        </div>
-                    </div>
-                    <div class="col-md-3" id="secHighValue">
-                        <label class="form-label">@Localizer["alarm.field.threshold"]</label>
-                        <input type="number" class="form-control" id="txtAlarmHighValue" step="any" />
-                    </div>
-                    <div class="col-md-3" id="secHighDeadband">
-                        <label class="form-label">@Localizer["alarm.field.deadband"]</label>
-                        <input type="number" class="form-control" id="txtDeadbandHigh" step="any" value="0" />
-                    </div>
-                    <div class="col-md-3" id="secHighSeverity">
-                        <label class="form-label">@Localizer["alarm.field.severity"]</label>
-                        <select class="form-select" id="selHighSeverity">
-                            <option value="0">@Localizer["alarm.severity.critical"]</option>
-                            <option value="1" selected>@Localizer["alarm.severity.high"]</option>
-                            <option value="2">@Localizer["alarm.severity.medium"]</option>
-                            <option value="3">@Localizer["alarm.severity.low"]</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- 下限警報 -->
-                <div class="row mb-3 align-items-center">
-                    <div class="col-md-2">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="chkAlarmLow"
-                                   onchange="window._alarm.toggleSection('low')">
-                            <label class="form-check-label fw-bold">@Localizer["alarm.toggle.alarm_low"]</label>
-                        </div>
-                    </div>
-                    <div class="col-md-3" id="secLowValue">
-                        <label class="form-label">@Localizer["alarm.field.threshold"]</label>
-                        <input type="number" class="form-control" id="txtAlarmLowValue" step="any" />
-                    </div>
-                    <div class="col-md-3" id="secLowDeadband">
-                        <label class="form-label">@Localizer["alarm.field.deadband"]</label>
-                        <input type="number" class="form-control" id="txtDeadbandLow" step="any" value="0" />
-                    </div>
-                    <div class="col-md-3" id="secLowSeverity">
-                        <label class="form-label">@Localizer["alarm.field.severity"]</label>
-                        <select class="form-select" id="selLowSeverity">
-                            <option value="0">@Localizer["alarm.severity.critical"]</option>
-                            <option value="1" selected>@Localizer["alarm.severity.high"]</option>
-                            <option value="2">@Localizer["alarm.severity.medium"]</option>
-                            <option value="3">@Localizer["alarm.severity.low"]</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- DI 警報 -->
-                <div class="row mb-3 align-items-center">
-                    <div class="col-md-2">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="chkDiAlarm"
-                                   onchange="window._alarm.toggleSection('di')">
-                            <label class="form-check-label fw-bold">@Localizer["alarm.toggle.alarm_di"]</label>
-                        </div>
-                    </div>
-                    <div class="col-md-3" id="secDiTrigger">
-                        <label class="form-label">@Localizer["alarm.field.trigger_state"]</label>
-                        <select class="form-select" id="selDiTrigger">
-                            <option value="ON">ON</option>
-                            <option value="OFF">OFF</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3" id="secDiSeverity">
-                        <label class="form-label">@Localizer["alarm.field.severity"]</label>
-                        <select class="form-select" id="selDiSeverity">
-                            <option value="0">@Localizer["alarm.severity.critical"]</option>
-                            <option value="1" selected>@Localizer["alarm.severity.high"]</option>
-                            <option value="2">@Localizer["alarm.severity.medium"]</option>
-                            <option value="3">@Localizer["alarm.severity.low"]</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="row mb-3" id="secDiLabels" style="display:none;">
-                    <div class="col-md-2"></div>
-                    <div class="col-md-3">
-                        <label class="form-label">@Localizer["alarm.field.on_label"]</label>
-                        <input type="text" class="form-control" id="txtDiOnLabel" placeholder="ON" maxlength="50" readonly />
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">@Localizer["alarm.field.off_label"]</label>
-                        <input type="text" class="form-control" id="txtDiOffLabel" placeholder="OFF" maxlength="50" readonly />
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label d-block">&nbsp;</label>
-                        <small class="text-muted"><i class="fas fa-info-circle me-1"></i>@Localizer["alarm.di_labels.hint"]</small>
-                    </div>
-                </div>
-
-                <hr />
-
-                <div class="row mb-3">
-                    <div class="col-md-8">
-                        <label class="form-label">@Localizer["alarm.field.remarks"]</label>
-                        <input type="text" class="form-control" id="txtRemarks" maxlength="200" />
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">@Localizer["alarm.col.enabled"]</label>
-                        <div class="form-check form-switch mt-2">
-                            <input class="form-check-input" type="checkbox" id="chkEnabled" checked>
-                            <label class="form-check-label">@Localizer["alarm.field.is_enabled"]</label>
-                        </div>
-                    </div>
-                </div>
+                @* 規則表單本體（與 ScadaPage 右鍵警報彈窗共用） *@
+                <partial name="~/Features/AlarmSetting/Views/_AlarmRuleForm.cshtml" />
 
             </div>
             <div class="modal-footer">
@@ -841,5 +736,7 @@
         };
     </script>
     <script src="~/js/common/point-grouping.js" asp-append-version="true"></script>
+    <script src="~/js/common/point-picker.js" asp-append-version="true"></script>
+    <script src="~/js/common/alarm-rule-form.js" asp-append-version="true"></script>
     <script src="~/js/alarmsetting.js" asp-append-version="true"></script>
 }

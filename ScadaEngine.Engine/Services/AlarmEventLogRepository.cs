@@ -51,7 +51,16 @@ public class AlarmEventLogRepository
                        DiAlarmSeverity  AS nDiAlarmSeverity,
                        DiOnLabel        AS szDiOnLabel,
                        DiOffLabel       AS szDiOffLabel,
-                       Remarks          AS szRemarks
+                       Remarks          AS szRemarks,
+                       IsPrecondition   AS isPrecondition,
+                       PreSID           AS szPreSID,
+                       PreOperator      AS szPreOperator,
+                       PreValue         AS dPreValue,
+                       PreDelaySec      AS nPreDelaySec,
+                       RecoveryNotifyLine  AS isRecoveryNotifyLine,
+                       RecoveryNotifyEmail AS isRecoveryNotifyEmail,
+                       RecoveryNotifySms   AS isRecoveryNotifySms,
+                       AlarmDelaySec    AS nAlarmDelaySec
                 FROM AlarmRules
                 WHERE IsEnabled = 1";
 
@@ -142,7 +151,7 @@ public class AlarmEventLogRepository
 
     /// <summary>
     /// 標記指定 SID + 特定 Operator 類型 的未恢復事件為已恢復
-    /// 用於規則被刪除/停用後，清除孤立的警報事件（避免誤清同 SID 但其他類型仍在警報中的事件）
+    /// 用於一般恢復、前置條件解除清除、規則被刪除/停用後清除孤立事件（避免誤清同 SID 但其他類型仍在警報中的事件）
     /// nOperator: 2=high, 3=low, 4=di
     /// </summary>
     public async Task<bool> ClearEventByOperatorAsync(string szSID, byte nOperator)
@@ -162,14 +171,14 @@ public class AlarmEventLogRepository
             var nAffected = await connection.ExecuteAsync(szSql, new { SID = szSID, Operator = nOperator });
 
             if (nAffected > 0)
-                _logger.LogInformation("孤立警報已清除: SID={SID}, Operator={Operator}, 更新 {Count} 筆",
+                _logger.LogInformation("警報事件已恢復: SID={SID}, Operator={Operator}, 更新 {Count} 筆",
                     szSID, nOperator, nAffected);
 
             return nAffected > 0;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "清除孤立警報失敗: SID={SID}, Operator={Operator}", szSID, nOperator);
+            _logger.LogError(ex, "標記警報事件恢復失敗: SID={SID}, Operator={Operator}", szSID, nOperator);
             return false;
         }
     }

@@ -56,7 +56,8 @@
         showControlToast('\u5df2\u52a0\u5165\u8da8\u52e2\u5716\u6e05\u55ae\uff1a' + names);
     }
 
-    // ── 趨勢圖右鍵選單 ──
+    // ── 點位右鍵選單（非控制點：gauge / table cell / realtimeValue / diPoint / pipe / image / trendChart）──
+    // 警報設定（Admin / Engineer）/ 歷史趨勢開新頁（有 /HistoryData 權限）/ 快速趨勢 / 加入趨勢圖清單
     var _trendContextMenu = null;
 
     function _removeTrendContextMenu() {
@@ -72,17 +73,38 @@
         var menu = document.createElement('div');
         menu.style.cssText = 'position:fixed;z-index:99999;' +
             'background:#fff;border:1px solid #dee2e6;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.15);' +
-            'min-width:140px;padding:4px 0;font-size:13px;';
+            'min-width:200px;max-width:320px;padding:4px 0;font-size:13px;';
 
-        var row = document.createElement('div');
-        row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 10px;margin:2px 4px;cursor:pointer;' +
-            'transition:background .1s;';
-        row.innerHTML = '<i class="fas fa-chart-line" style="color:#0d6efd;width:16px;text-align:center;font-size:13px;"></i>' +
-                         '<span>\u8da8\u52e2\u5716</span>';
-        row.addEventListener('mouseenter', function () { row.style.background = '#f0f0f0'; });
-        row.addEventListener('mouseleave', function () { row.style.background = ''; });
-        row.addEventListener('click', function () { _removeTrendContextMenu(); _addToTrendQueue([info]); });
-        menu.appendChild(row);
+        // 標頭：點位名稱（讓使用者確認右鍵打到的是哪一點）
+        var head = document.createElement('div');
+        head.style.cssText = 'padding:4px 12px 6px;color:#6c757d;font-size:12px;border-bottom:1px solid #f0f0f0;' +
+            'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+        head.textContent = info.name;
+        head.title = info.name;
+        menu.appendChild(head);
+
+        function addRow(szIcon, szColor, szLabel, fnClick) {
+            var row = document.createElement('div');
+            row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 10px;margin:2px 4px;cursor:pointer;' +
+                'border-radius:4px;transition:background .1s;';
+            row.innerHTML = '<i class="fas ' + szIcon + '" style="color:' + szColor + ';width:16px;text-align:center;font-size:13px;"></i>' +
+                             '<span>' + escViewHtml(szLabel) + '</span>';
+            row.addEventListener('mouseenter', function () { row.style.background = '#f0f0f0'; });
+            row.addEventListener('mouseleave', function () { row.style.background = ''; });
+            row.addEventListener('click', function () { _removeTrendContextMenu(); fnClick(); });
+            menu.appendChild(row);
+        }
+
+        if (window._isAdmin) {
+            addRow('fa-bell', '#dc3545', t('scadapage.ctx.alarm_setting'), function () { _openAlarmQuickEdit(info); });
+        }
+        if (window._canHistory) {
+            addRow('fa-external-link-alt', '#0d6efd', t('scadapage.ctx.history_new_tab'), function () {
+                window.open('/HistoryData?sid=' + encodeURIComponent(szSid) + '&hours=1', '_blank', 'noopener');
+            });
+        }
+        addRow('fa-chart-area', '#198754', t('scadapage.ctx.quick_trend'), function () { _openQuickTrend(info); });
+        addRow('fa-chart-line', '#6c757d', t('scadapage.ctx.add_trend_queue'), function () { _addToTrendQueue([info]); });
 
         document.body.appendChild(menu);
         _positionContextMenu(menu, e.clientX, e.clientY);

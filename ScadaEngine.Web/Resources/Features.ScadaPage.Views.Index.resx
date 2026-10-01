@@ -84,4 +84,26 @@
   <data name="scadapage.cmetric.demand_kw" xml:space="preserve"><value>即時需量</value></data>
   <data name="scadapage.cmetric.unit_cost" xml:space="preserve"><value>元</value></data>
   <data name="scadapage.cmetric.estimated" xml:space="preserve"><value>（估算）</value></data>
+  <data name="scadapage.ctx.alarm_setting" xml:space="preserve"><value>警報設定…</value></data>
+  <data name="scadapage.ctx.history_new_tab" xml:space="preserve"><value>歷史趨勢（開新頁）</value></data>
+  <data name="scadapage.ctx.quick_trend" xml:space="preserve"><value>快速趨勢（1 小時）</value></data>
+  <data name="scadapage.ctx.add_trend_queue" xml:space="preserve"><value>加入趨勢圖清單</value></data>
+  <data name="scadapage.alarm_edit.title_add" xml:space="preserve"><value>新增警報規則</value></data>
+  <data name="scadapage.alarm_edit.title_edit" xml:space="preserve"><value>編輯警報規則</value></data>
+  <data name="scadapage.alarm_edit.point" xml:space="preserve"><value>點位：</value></data>
+  <data name="scadapage.alarm_edit.delete" xml:space="preserve"><value>刪除規則</value></data>
+  <data name="scadapage.alarm_edit.cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="scadapage.alarm_edit.save" xml:space="preserve"><value>儲存</value></data>
+  <data name="scadapage.alarm_edit.saved" xml:space="preserve"><value>警報規則已儲存</value></data>
+  <data name="scadapage.alarm_edit.deleted" xml:space="preserve"><value>警報規則已刪除</value></data>
+  <data name="scadapage.alarm_edit.save_failed" xml:space="preserve"><value>儲存失敗</value></data>
+  <data name="scadapage.alarm_edit.delete_failed" xml:space="preserve"><value>刪除失敗</value></data>
+  <data name="scadapage.alarm_edit.confirm_delete" xml:space="preserve"><value>確定要刪除此點位的警報規則？</value></data>
+  <data name="scadapage.qt.range_15m" xml:space="preserve"><value>15 分</value></data>
+  <data name="scadapage.qt.range_1h" xml:space="preserve"><value>1 時</value></data>
+  <data name="scadapage.qt.range_8h" xml:space="preserve"><value>8 時</value></data>
+  <data name="scadapage.qt.close" xml:space="preserve"><value>關閉</value></data>
+  <data name="scadapage.qt.loading" xml:space="preserve"><value>載入中…</value></data>
+  <data name="scadapage.qt.no_data" xml:space="preserve"><value>此區間無資料</value></data>
+  <data name="scadapage.qt.load_failed" xml:space="preserve"><value>歷史資料載入失敗</value></data>
 </root>

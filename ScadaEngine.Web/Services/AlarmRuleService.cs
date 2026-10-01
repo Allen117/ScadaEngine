@@ -57,7 +57,16 @@ namespace ScadaEngine.Web.Services
                            DiAlarmSeverity  AS nDiAlarmSeverity,
                            DiOnLabel        AS szDiOnLabel,
                            DiOffLabel       AS szDiOffLabel,
-                           Remarks          AS szRemarks
+                           Remarks          AS szRemarks,
+                           IsPrecondition   AS isPrecondition,
+                           PreSID           AS szPreSID,
+                           PreOperator      AS szPreOperator,
+                           PreValue         AS dPreValue,
+                           PreDelaySec      AS nPreDelaySec,
+                           RecoveryNotifyLine  AS isRecoveryNotifyLine,
+                           RecoveryNotifyEmail AS isRecoveryNotifyEmail,
+                           RecoveryNotifySms   AS isRecoveryNotifySms,
+                           AlarmDelaySec    AS nAlarmDelaySec
                     FROM AlarmRules
                     WHERE IsEnabled = 1";
 
@@ -98,6 +107,15 @@ namespace ScadaEngine.Web.Services
                            r.DiOnLabel        AS szDiOnLabel,
                            r.DiOffLabel       AS szDiOffLabel,
                            r.Remarks          AS szRemarks,
+                           r.IsPrecondition   AS isPrecondition,
+                           r.PreSID           AS szPreSID,
+                           r.PreOperator      AS szPreOperator,
+                           r.PreValue         AS dPreValue,
+                           r.PreDelaySec      AS nPreDelaySec,
+                           r.RecoveryNotifyLine  AS isRecoveryNotifyLine,
+                           r.RecoveryNotifyEmail AS isRecoveryNotifyEmail,
+                           r.RecoveryNotifySms   AS isRecoveryNotifySms,
+                           r.AlarmDelaySec    AS nAlarmDelaySec,
                            COALESCE(p.Name, cp.Name) AS szPointName
                     FROM AlarmRules r
                     LEFT JOIN ModbusPoints p ON r.SID = p.SID
@@ -114,6 +132,60 @@ namespace ScadaEngine.Web.Services
                 return Enumerable.Empty<AlarmRuleModel>();
             }
         }
+
+        /// <summary>
+        /// 取得單一 SID 的規則（ScadaPage 右鍵「警報設定」彈窗載入用）；無規則回 null
+        /// </summary>
+        public async Task<AlarmRuleModel?> GetRuleBySidAsync(string szSID)
+        {
+            var rules = await GetAllRulesAsync();
+            return rules.FirstOrDefault(r => string.Equals(r.szSID, szSID, StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>前置條件 / 延遲秒數上限（1 天）</summary>
+        public const int MaxDelaySec = 86400;
+
+        /// <summary>
+        /// 驗證規則 DTO，回傳錯誤訊息 resx key；通過回 null。
+        /// 前置條件：點位必填、不可等於本點、不可為 DMD-/NRG* 虛擬點（平時不進 Engine 評估器，閘門會永遠關閉）、
+        /// 運算子白名單、比較運算子須有比較值；延遲 0 ~ 86400 秒。
+        /// </summary>
+        public static string? ValidateRule(AlarmRuleSaveDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.sid))
+                return "alarm.error.sid_required";
+            if (dto.alarmDelaySec < 0 || dto.alarmDelaySec > MaxDelaySec)
+                return "alarm.error.delay_range";
+            if (!dto.isPrecondition)
+                return null;
+
+            var szPreSid = dto.preSid?.Trim() ?? string.Empty;
+            if (szPreSid.Length == 0)
+                return "alarm.error.pre_sid_required";
+            if (string.Equals(szPreSid, dto.sid.Trim(), StringComparison.OrdinalIgnoreCase))
+                return "alarm.error.pre_sid_self";
+            if (IsVirtualSid(szPreSid))
+                return "alarm.error.pre_sid_virtual";
+
+            var szOp = dto.preOperator?.Trim().ToUpperInvariant() ?? string.Empty;
+            if (!ValidPreOperators.Contains(szOp))
+                return "alarm.error.pre_operator_invalid";
+            if (szOp != "ON" && szOp != "OFF" && !dto.preValue.HasValue)
+                return "alarm.error.pre_value_required";
+            if (dto.preDelaySec < 0 || dto.preDelaySec > MaxDelaySec)
+                return "alarm.error.delay_range";
+            return null;
+        }
+
+        /// <summary>前置條件運算子白名單（與 Engine AlarmPreconditionGate.ValidOperators 一致）</summary>
+        public static readonly string[] ValidPreOperators = ["GE", "GT", "LE", "LT", "EQ", "NE", "ON", "OFF"];
+
+        /// <summary>需量 / 迴路用電虛擬點位（Engine 另行發布，平時不進警報評估器）</summary>
+        public static bool IsVirtualSid(string szSid)
+            => szSid.StartsWith("DMD-", StringComparison.OrdinalIgnoreCase)
+            || szSid.StartsWith("NRGD-", StringComparison.OrdinalIgnoreCase)
+            || szSid.StartsWith("NRGM-", StringComparison.OrdinalIgnoreCase)
+            || szSid.StartsWith("NRGP-", StringComparison.OrdinalIgnoreCase);
 
         /// <summary>
         /// 新增或更新規則（UPSERT by SID）
@@ -137,7 +209,12 @@ namespace ScadaEngine.Web.Services
                             IsDiAlarm = @IsDiAlarm, DiTriggerState = @DiTriggerState,
                             DiAlarmSeverity = @DiAlarmSeverity,
                             DiOnLabel = @DiOnLabel, DiOffLabel = @DiOffLabel,
-                            Remarks = @Remarks, UpdatedAt = GETDATE()
+                            Remarks = @Remarks,
+                            IsPrecondition = @IsPrecondition, PreSID = @PreSID, PreOperator = @PreOperator,
+                            PreValue = @PreValue, PreDelaySec = @PreDelaySec,
+                            RecoveryNotifyLine = @RecoveryNotifyLine, RecoveryNotifyEmail = @RecoveryNotifyEmail,
+                            RecoveryNotifySms = @RecoveryNotifySms, AlarmDelaySec = @AlarmDelaySec,
+                            UpdatedAt = GETDATE()
                         WHERE Id = @Id";
                 }
                 else
@@ -153,17 +230,26 @@ namespace ScadaEngine.Web.Services
                                 IsDiAlarm = @IsDiAlarm, DiTriggerState = @DiTriggerState,
                                 DiAlarmSeverity = @DiAlarmSeverity,
                                 DiOnLabel = @DiOnLabel, DiOffLabel = @DiOffLabel,
-                                Remarks = @Remarks, UpdatedAt = GETDATE()
+                                Remarks = @Remarks,
+                                IsPrecondition = @IsPrecondition, PreSID = @PreSID, PreOperator = @PreOperator,
+                                PreValue = @PreValue, PreDelaySec = @PreDelaySec,
+                                RecoveryNotifyLine = @RecoveryNotifyLine, RecoveryNotifyEmail = @RecoveryNotifyEmail,
+                                RecoveryNotifySms = @RecoveryNotifySms, AlarmDelaySec = @AlarmDelaySec,
+                                UpdatedAt = GETDATE()
                             WHERE SID = @SID
                         ELSE
                             INSERT INTO AlarmRules
                                 (SID, IsEnabled, IsAlarmHigh, AlarmHighValue, DeadbandHigh, AlarmHighSeverity,
                                  IsAlarmLow, AlarmLowValue, DeadbandLow, AlarmLowSeverity,
-                                 IsDiAlarm, DiTriggerState, DiAlarmSeverity, DiOnLabel, DiOffLabel, Remarks)
+                                 IsDiAlarm, DiTriggerState, DiAlarmSeverity, DiOnLabel, DiOffLabel, Remarks,
+                                 IsPrecondition, PreSID, PreOperator, PreValue, PreDelaySec,
+                                 RecoveryNotifyLine, RecoveryNotifyEmail, RecoveryNotifySms, AlarmDelaySec)
                             VALUES
                                 (@SID, @IsEnabled, @IsAlarmHigh, @AlarmHighValue, @DeadbandHigh, @AlarmHighSeverity,
                                  @IsAlarmLow, @AlarmLowValue, @DeadbandLow, @AlarmLowSeverity,
-                                 @IsDiAlarm, @DiTriggerState, @DiAlarmSeverity, @DiOnLabel, @DiOffLabel, @Remarks)";
+                                 @IsDiAlarm, @DiTriggerState, @DiAlarmSeverity, @DiOnLabel, @DiOffLabel, @Remarks,
+                                 @IsPrecondition, @PreSID, @PreOperator, @PreValue, @PreDelaySec,
+                                 @RecoveryNotifyLine, @RecoveryNotifyEmail, @RecoveryNotifySms, @AlarmDelaySec)";
                 }
 
                 using var connection = new SqlConnection(_szConnectionString);
@@ -186,7 +272,16 @@ namespace ScadaEngine.Web.Services
                     DiAlarmSeverity  = (byte)dto.diAlarmSeverity,
                     DiOnLabel        = dto.diOnLabel,
                     DiOffLabel       = dto.diOffLabel,
-                    Remarks          = dto.remarks
+                    Remarks          = dto.remarks,
+                    IsPrecondition   = dto.isPrecondition,
+                    PreSID           = string.IsNullOrWhiteSpace(dto.preSid) ? null : dto.preSid.Trim(),
+                    PreOperator      = string.IsNullOrWhiteSpace(dto.preOperator) ? null : dto.preOperator.Trim().ToUpperInvariant(),
+                    PreValue         = dto.preValue,
+                    PreDelaySec      = dto.preDelaySec,
+                    RecoveryNotifyLine  = dto.recoveryNotifyLine,
+                    RecoveryNotifyEmail = dto.recoveryNotifyEmail,
+                    RecoveryNotifySms   = dto.recoveryNotifySms,
+                    AlarmDelaySec    = dto.alarmDelaySec
                 });
 
                 _logger.LogInformation("儲存警報規則: SID={SID}, Affected={Count}", dto.sid, nAffected);

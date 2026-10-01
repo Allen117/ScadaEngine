@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="arf.toggle.alarm_high" xml:space="preserve"><value>High Alarm</value></data>
+  <data name="arf.toggle.alarm_low" xml:space="preserve"><value>Low Alarm</value></data>
+  <data name="arf.toggle.alarm_di" xml:space="preserve"><value>DI Alarm</value></data>
+  <data name="arf.field.threshold" xml:space="preserve"><value>Threshold</value></data>
+  <data name="arf.field.deadband" xml:space="preserve"><value>Deadband</value></data>
+  <data name="arf.field.severity" xml:space="preserve"><value>Severity</value></data>
+  <data name="arf.severity.critical" xml:space="preserve"><value>Critical</value></data>
+  <data name="arf.severity.high" xml:space="preserve"><value>High</value></data>
+  <data name="arf.severity.medium" xml:space="preserve"><value>Medium</value></data>
+  <data name="arf.severity.low" xml:space="preserve"><value>Low</value></data>
+  <data name="arf.field.trigger_state" xml:space="preserve"><value>Trigger State</value></data>
+  <data name="arf.field.on_label" xml:space="preserve"><value>ON Label</value></data>
+  <data name="arf.field.off_label" xml:space="preserve"><value>OFF Label</value></data>
+  <data name="arf.di_labels.hint" xml:space="preserve"><value>Auto-populated from Designer DI point settings</value></data>
+  <data name="arf.field.alarm_delay" xml:space="preserve"><value>Alarm Delay</value></data>
+  <data name="arf.unit.sec" xml:space="preserve"><value>sec</value></data>
+  <data name="arf.alarm_delay.hint" xml:space="preserve"><value>Out-of-limit must persist N seconds before triggering (High / Low / DI timed separately); 0 = immediate; clearing is always immediate</value></data>
+  <data name="arf.toggle.precondition" xml:space="preserve"><value>Precondition</value></data>
+  <data name="arf.precondition.hint" xml:space="preserve"><value>Evaluate this point's alarms only after another point's condition has held for N seconds</value></data>
+  <data name="arf.field.pre_point" xml:space="preserve"><value>Precondition Point</value></data>
+  <data name="arf.field.pre_operator" xml:space="preserve"><value>Condition</value></data>
+  <data name="arf.field.pre_value" xml:space="preserve"><value>Value</value></data>
+  <data name="arf.field.pre_delay" xml:space="preserve"><value>Hold For</value></data>
+  <data name="arf.channel.sms" xml:space="preserve"><value>SMS</value></data>
+  <data name="arf.field.remarks" xml:space="preserve"><value>Remarks</value></data>
+  <data name="arf.field.enabled" xml:space="preserve"><value>Enabled</value></data>
+  <data name="arf.field.is_enabled" xml:space="preserve"><value>Enable this rule</value></data>
+  <data name="arf.pre_point.not_found" xml:space="preserve"><value>Point not found</value></data>
+  <data name="arf.error.select_point" xml:space="preserve"><value>Please select a point</value></data>
+  <data name="arf.error.delay_range" xml:space="preserve"><value>Delay must be between 0 and 86400 seconds</value></data>
+  <data name="arf.error.pre_sid_required" xml:space="preserve"><value>Please select a precondition point</value></data>
+  <data name="arf.error.pre_sid_self" xml:space="preserve"><value>The precondition point cannot be the alarm point itself</value></data>
+  <data name="arf.error.pre_sid_virtual" xml:space="preserve"><value>Demand / circuit energy virtual points cannot be used as a precondition</value></data>
+  <data name="arf.error.pre_sid_unknown" xml:space="preserve"><value>Precondition point not found. Please pick one from the list</value></data>
+  <data name="arf.error.pre_value_required" xml:space="preserve"><value>Please enter the precondition comparison value</value></data>
+  <data name="arf.error.forbidden" xml:space="preserve"><value>Permission denied: only Admin / Engineer can modify alarm rules</value></data>
+  <data name="arf.summary" xml:space="preserve"><value>Precondition: {point} {cond} for {sec}s</value></data>
+  <data name="arf.summary.missing" xml:space="preserve"><value>Precondition point missing; alarms will stay suppressed</value></data>
+  <data name="arf.pre_point.pick" xml:space="preserve"><value>Select Point</value></data>
+  <data name="arf.pre_point.none" xml:space="preserve"><value>No point selected</value></data>
+  <data name="pp.source.opc" xml:space="preserve"><value>OPC UA Points</value></data>
+  <data name="pp.source.opc_desc" xml:space="preserve"><value>Points read from OPC UA servers</value></data>
+  <data name="pp.title.opc_source" xml:space="preserve"><value>Select OPC UA Source</value></data>
+  <data name="arf.field.recovery_notify" xml:space="preserve"><value>Clear Notification</value></data>
+  <data name="arf.recovery_notify.hint" xml:space="preserve"><value>Channels notified when the alarm clears (including clears caused by the precondition dropping); SMS also requires the SMS settings' recovery switch</value></data>
+</root>
