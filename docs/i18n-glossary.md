@@ -150,6 +150,10 @@
 | 條件 | Condition | 警報判定運算子 |
 | 超過上限 | exceeds upper limit | high 警報訊息 |
 | 低於下限 | below lower limit | low 警報訊息 |
+| 警報音 | Alarm Sound | _Layout 頂端列鈴鐺 |
+| 消音 | Silence | 停止目前警報音，新警報仍會再響（≠ 確認） |
+| 暫時靜音 | Snooze | N 分鐘內一律不響，到期自動恢復 |
+| 取消靜音 | Unmute | 清除消音 / 暫時靜音 |
 
 ## 數據品質
 
