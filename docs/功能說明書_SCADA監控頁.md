@@ -809,6 +809,8 @@ Designer 畫布上所有元件共用一套選取與定位規則（widget-core.js
 ### Hover 標籤
 所有 Widget 的 `.scada-hover-label` 預設 `display:none`，hover 時 `display:block`。
 
+**標籤文字 fallback（2026-10-01）**：綁點元件（儀表 / 即時值 / 累積值 / DI / 管路）的 hover 文字以 Designer 填的 `szTitle` 優先；**未填標題時改用點位名稱**（即時輪詢 `/api/realtime/latest` 的 `name`，由 `updateScadaWidgets()` 內 `hoverTitle()` 決定），讓每個綁點元件滑過都看得到點名。表格 SID 儲存格則以原生 `title` 屬性顯示點位名稱。名稱在第一次輪詢（≤1 秒；累積值為 30 秒輪詢）後才帶入。AO / DO / 控制鈕原本即以 `szPointName → szTitle → CID` 顯示，不變。
+
 ### 動畫
 
 | 動畫名稱 | 效果 | 用途 |

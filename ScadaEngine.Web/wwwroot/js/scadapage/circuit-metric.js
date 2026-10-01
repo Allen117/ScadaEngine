@@ -149,7 +149,7 @@
             nFontSize:   parseInt(el.dataset.nFontSize) || 28,
             szFontColor: el.dataset.szFontColor || '#212529',
             szUnit:      el.dataset.accUnit || el.dataset.szUnit || '',
-            szTitle:     _accTooltipTitle(el.dataset.szTitle || '', el.dataset.valueMode),
+            szTitle:     _accTooltipTitle(el.dataset.szTitle || (el.dataset.sid ? _findPointInfo(el.dataset.sid).name : ''), el.dataset.valueMode),
             szBgColor:   el.dataset.szBgColor || 'transparent'
         };
         if (!r || r.dValue == null) {

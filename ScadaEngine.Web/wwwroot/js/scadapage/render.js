@@ -347,11 +347,13 @@
         var sidQualityMap = {};
         var sidIsAutoMap = {};
         var sidTsMap = {};          // 點位自身時間戳（即時曲線去重用，見 widget-trend.js）
+        var sidNameMap = {};        // 點位名稱（hover 標籤 fallback 用）
         data.forEach(function (item) {
             if (item.sid) {
                 sidValueMap[item.sid] = item.value;
                 sidQualityMap[item.sid] = (item.quality || '').toUpperCase();
                 sidTsMap[item.sid] = item.timestamp;
+                if (item.name) sidNameMap[item.sid] = item.name;
                 if (item.value !== '--' && item.value !== null && item.value !== undefined) {
                     var fParsed = parseFloat(item.value);
                     if (!isNaN(fParsed)) sidMap[item.sid] = fParsed;
@@ -373,6 +375,11 @@
             return sidQualityMap[sid] === 'BAD';
         }
 
+        // hover 標籤文字：設計時填的標題優先，未填改用點位名稱（讓每個綁點元件滑過都看得到點名）
+        function hoverTitle(el, sid) {
+            return el.dataset.szTitle || sidNameMap[sid] || '';
+        }
+
         // 更新 Gauge
         document.querySelectorAll('.scada-gauge[data-sid]').forEach(function (el) {
             var sid = el.dataset.sid;
@@ -392,14 +399,14 @@
                 el.innerHTML = buildGaugeHtml({
                     fValue: 0, fMin: parseFloat(el.dataset.fMin) || 0, fMax: parseFloat(el.dataset.fMax) || 100,
                     szUnit: el.dataset.szUnit || '', szColor: el.dataset.szColor || '#00c0ff',
-                    szTitle: el.dataset.szTitle || '', szBgColor: el.dataset.szBgColor || 'transparent', isOffline: true
+                    szTitle: hoverTitle(el, sid), szBgColor: el.dataset.szBgColor || 'transparent', isOffline: true
                 });
             } else if (sidMap[sid] !== undefined) {
                 var fVal = sidMap[sid];
                 el.innerHTML = buildGaugeHtml({
                     fValue: fVal, fMin: parseFloat(el.dataset.fMin) || 0, fMax: parseFloat(el.dataset.fMax) || 100,
                     szUnit: el.dataset.szUnit || '', szColor: el.dataset.szColor || '#00c0ff',
-                    szTitle: el.dataset.szTitle || '', szBgColor: el.dataset.szBgColor || 'transparent',
+                    szTitle: hoverTitle(el, sid), szBgColor: el.dataset.szBgColor || 'transparent',
                     szAlarmOverride: getGaugeAlarmColor(fVal)
                 });
             }
@@ -423,7 +430,7 @@
             if (isBadQuality(sid)) {
                 el.innerHTML = buildRealtimeValueViewHtml({
                     nFontSize: parseInt(el.dataset.nFontSize) || 28, szFontColor: '#dc3545',
-                    szUnit: '', szTitle: el.dataset.szTitle || '', szBgColor: el.dataset.szBgColor || 'transparent'
+                    szUnit: '', szTitle: hoverTitle(el, sid), szBgColor: el.dataset.szBgColor || 'transparent'
                 }, '\u65b7\u7dda');
             } else if (sidMap[sid] !== undefined) {
                 var fVal = sidMap[sid];
@@ -431,14 +438,14 @@
                 el.innerHTML = buildRealtimeValueViewHtml({
                     nFontSize: parseInt(el.dataset.nFontSize) || 28,
                     szFontColor: szAlmClr || (el.dataset.szFontColor || '#212529'),
-                    szUnit: el.dataset.szUnit || '', szTitle: el.dataset.szTitle || '',
+                    szUnit: el.dataset.szUnit || '', szTitle: hoverTitle(el, sid),
                     szBgColor: el.dataset.szBgColor || 'transparent'
                 }, Number(fVal).toFixed(2));
             } else if (sidValueMap[sid] !== undefined) {
                 el.innerHTML = buildRealtimeValueViewHtml({
                     nFontSize: parseInt(el.dataset.nFontSize) || 28,
                     szFontColor: el.dataset.szFontColor || '#212529',
-                    szUnit: el.dataset.szUnit || '', szTitle: el.dataset.szTitle || '',
+                    szUnit: el.dataset.szUnit || '', szTitle: hoverTitle(el, sid),
                     szBgColor: el.dataset.szBgColor || 'transparent'
                 }, '--');
             }
@@ -503,7 +510,7 @@
                     szOnLabel: el.dataset.szOnLabel || 'ON', szOffLabel: el.dataset.szOffLabel || 'OFF',
                     nIndicatorSize: parseInt(el.dataset.nIndicatorSize) || 28,
                     nFontSize: parseInt(el.dataset.nFontSize) || 24,
-                    szBgColor: el.dataset.szBgColor || 'transparent', szTitle: el.dataset.szTitle || '',
+                    szBgColor: el.dataset.szBgColor || 'transparent', szTitle: hoverTitle(el, sid),
                     isAlarmEnabled: _diRule?.isDiAlarm || false,
                     szAlarmTrigger: _diRule?.szDiTriggerState || 'ON',
                     szAlarmColor: el.dataset.szAlarmColor || '#dc3545'
@@ -685,7 +692,7 @@
                 szFlowColor: el.dataset.szFlowColor, szStopColor: el.dataset.szStopColor,
                 szBadColor: el.dataset.szBadColor, nSpeed: el.dataset.nSpeed,
                 szDir: el.dataset.szDir, szBgColor: el.dataset.szBgColor,
-                szTitle: el.dataset.szTitle, arrPoints: arrPipePts
+                szTitle: hoverTitle(el, sid), arrPoints: arrPipePts
             }, szState, szValueText, parseInt(el.style.width), parseInt(el.style.height));
         });
 
@@ -728,6 +735,7 @@
             var sid = td.dataset.sid;
             if (!sid) return;
             var szPT = td.dataset.pointType || 'AI';
+            if (!td.title && sidNameMap[sid]) td.title = sidNameMap[sid];   // 儲存格 hover 顯示點位名稱
             var szOrigColor = td.dataset.origColor || '#444';
 
             if (isBadQuality(sid)) {
