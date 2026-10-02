@@ -360,7 +360,10 @@ public class ElectricityCostService
 
         var config = await _tariffService.GetConfigAsync();
         var period = await _billingPeriodService.GetCurrentPeriodAsync(DateTime.Today);
-        var plan = TariffSettingService.SelectPlanForDate(config, period.dtStart);
+        // 本期中途才首次採用（生效日晚於本期起日）時起日查無方案 → 退回今日採用方案，
+        // 否則卡片顯示「尚未選擇方案」，而報表（逐日選版）卻已有生效日之後的金額
+        var plan = TariffSettingService.SelectPlanForDate(config, period.dtStart)
+            ?? TariffSettingService.SelectPlanForDate(config, DateTime.Today);
         if (plan == null) return dto;   // hasPlan = false
 
         dto.hasPlan = true;
