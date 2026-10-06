@@ -6,8 +6,16 @@
     /** DB 有 Coordinator 但 JSON 已移除的名稱（小寫）— 顯示「設定檔已移除」、隱藏點位設定與刪除按鈕 */
     var aMissingConfig = (window._modbusMissingConfig || []).map(function (s) { return String(s).toLowerCase(); });
 
+    /** 設備名稱 → { ip, port }（來自 JSON；設定檔已移除者查不到 → 顯示空白） */
+    var endpoints = window._modbusEndpoints || {};
+
     var nCurrentIndex = -1;
     var nCurrentSubIndex = -1;
+
+    function endpointOf(szName) {
+        var e = szName ? endpoints[szName] : null;
+        return { ip: e ? (e.ip || '') : '', port: (e && e.port != null) ? String(e.port) : '' };
+    }
 
     function clearAllActive() {
         document.querySelectorAll('.coordinator-item, .coordinator-toggle, .sub-item')
@@ -23,8 +31,10 @@
         document.getElementById('detailTitle').innerHTML =
             '<i class="fas fa-info-circle me-1"></i>' + t('modbuscoordinator.card.device_detail') + ' — ' + (c.szName || '');
 
-        document.getElementById('fieldId').value             = c.Id;
+        var ep = endpointOf(c.szName);
         document.getElementById('fieldName').value           = c.szName || '';
+        document.getElementById('fieldIp').value             = ep.ip;
+        document.getElementById('fieldPort').value           = ep.port;
         document.getElementById('fieldModbusID').value       = c.szModbusID || '';
         document.getElementById('fieldDelayTime').value      = c.nDelayTime;
         document.getElementById('fieldMonitorEnabled').value = c.isMonitorEnabled ? t('modbuscoordinator.value.yes') : t('modbuscoordinator.value.no');
@@ -42,7 +52,9 @@
         document.getElementById('detailTitle').innerHTML =
             '<i class="fas fa-microchip me-1"></i>' + t('modbuscoordinator.card.device_info') + ' — ' + modbusId;
 
-        document.getElementById('subFieldId').value       = id;
+        var ep = endpointOf((coordinators[index] || {}).szName);
+        document.getElementById('subFieldIp').value       = ep.ip;
+        document.getElementById('subFieldPort').value     = ep.port;
         document.getElementById('subFieldModbusID').value = modbusId;
         document.getElementById('subFieldName').value     = name || '';
         document.getElementById('saveStatus').style.display = 'none';

@@ -58,7 +58,8 @@
 
   <data name="modbuscoordinator.badge.disabled" xml:space="preserve"><value>停用</value></data>
 
-  <data name="modbuscoordinator.label.id" xml:space="preserve"><value>Id</value></data>
+  <data name="modbuscoordinator.label.ip" xml:space="preserve"><value>IP（設備位址）</value></data>
+  <data name="modbuscoordinator.label.port" xml:space="preserve"><value>Port（連接埠）</value></data>
   <data name="modbuscoordinator.label.name" xml:space="preserve"><value>Name（設備名稱）</value></data>
   <data name="modbuscoordinator.label.modbus_id" xml:space="preserve"><value>ModbusID</value></data>
   <data name="modbuscoordinator.label.delay_time" xml:space="preserve"><value>DelayTime（延遲時間 ms）</value></data>

@@ -83,6 +83,24 @@ public class ModbusConfigFileService
     }
 
     /// <summary>
+    /// 只讀取設備層連線端點（IP / Port），不解析點位 — 清單頁右側詳情顯示用；檔案不存在回傳 null
+    /// </summary>
+    public async Task<(string szIp, int nPort)?> GetEndpointAsync(string szCoordinatorName)
+    {
+        var szFilePath = _io.ResolveConfigFilePath(SourceConfigFileIo.MODBUS_SECTION, szCoordinatorName);
+        if (szFilePath == null || !File.Exists(szFilePath))
+            return null;
+
+        var (szJson, _) = await SourceConfigFileIo.ReadAllTextDetectEncodingAsync(szFilePath);
+        var root = JsonNode.Parse(szJson);
+        if (root == null) return null;
+
+        return (
+            root["IP"]?.ToString() ?? string.Empty,
+            int.TryParse(root["Port"]?.ToString(), out var nPort) ? nPort : 502);
+    }
+
+    /// <summary>
     /// 原地更新點位欄位並原子寫回。存檔前重讀原檔驗證結構（數量、DataType）未變，不合即拒絕。
     /// 無任何欄位變更時不寫檔（不觸發 Engine 重載）。
     /// </summary>

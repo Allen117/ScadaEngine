@@ -8,6 +8,7 @@
     var missingConfigNames = ViewBag.MissingConfigNames as List<string> ?? new List<string>();
     var missingSet = new HashSet<string>(missingConfigNames, StringComparer.OrdinalIgnoreCase);
     var pendingConfigNames = ViewBag.PendingConfigNames as List<string> ?? new List<string>();
+    var endpoints = ViewBag.Endpoints as Dictionary<string, object> ?? new Dictionary<string, object>();
 }
 
 <link rel="stylesheet" href="~/css/modbuscoordinator.css" />
@@ -140,12 +141,16 @@
                         <!-- 完整欄位（單一 ModbusID 時顯示） -->
                         <div id="fullDetail" class="row g-3">
                             <div class="col-md-6">
-                                <label class="form-label fw-bold text-muted small">@Localizer["modbuscoordinator.label.id"]</label>
-                                <input type="text" class="form-control form-control-sm" id="fieldId" readonly />
-                            </div>
-                            <div class="col-md-6">
                                 <label class="form-label fw-bold text-muted small">@Localizer["modbuscoordinator.label.name"]</label>
                                 <input type="text" class="form-control form-control-sm" id="fieldName" readonly />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold text-muted small">@Localizer["modbuscoordinator.label.ip"]</label>
+                                <input type="text" class="form-control form-control-sm" id="fieldIp" readonly />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold text-muted small">@Localizer["modbuscoordinator.label.port"]</label>
+                                <input type="text" class="form-control form-control-sm" id="fieldPort" readonly />
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold text-muted small">@Localizer["modbuscoordinator.label.modbus_id"]</label>
@@ -163,9 +168,13 @@
 
                         <!-- 子項目欄位（子選單項目點擊時顯示） -->
                         <div id="subDetail" class="row g-3" style="display:none;">
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold text-muted small">@Localizer["modbuscoordinator.label.id"]</label>
-                                <input type="text" class="form-control form-control-sm" id="subFieldId" readonly />
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold text-muted small">@Localizer["modbuscoordinator.label.ip"]</label>
+                                <input type="text" class="form-control form-control-sm" id="subFieldIp" readonly />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold text-muted small">@Localizer["modbuscoordinator.label.port"]</label>
+                                <input type="text" class="form-control form-control-sm" id="subFieldPort" readonly />
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold text-muted small">@Localizer["modbuscoordinator.label.modbus_id"]</label>
@@ -248,6 +257,8 @@
     <script>
         window._modbusCoordinatorData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model));
         window._modbusMissingConfig = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(missingConfigNames));
+        // 設備名稱 → { ip, port }（來自各設備 JSON；設定檔已移除者不在內）
+        window._modbusEndpoints = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(endpoints));
     </script>
     <script src="~/js/common/source-excel-import.js" asp-append-version="true"></script>
     <script src="~/js/modbuscoordinator.js" asp-append-version="true"></script>

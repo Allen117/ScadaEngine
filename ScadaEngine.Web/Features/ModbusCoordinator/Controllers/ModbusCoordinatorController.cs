@@ -58,6 +58,16 @@ public class ModbusCoordinatorController : Controller
             .OrderBy(n => n, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
+        // 右側詳情顯示 IP / Port：DB 的 ModbusCoordinator 表沒有連線端點，從各設備 JSON 讀（設定檔已移除者無資料）
+        var endpoints = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+        foreach (var c in coordinators)
+        {
+            var endpoint = await _configFileService.GetEndpointAsync(c.szName);
+            if (endpoint.HasValue)
+                endpoints[c.szName] = new { ip = endpoint.Value.szIp, port = endpoint.Value.nPort };
+        }
+        ViewBag.Endpoints = endpoints;
+
         ViewBag.SourceExcel = new SourceExcelImportViewModel
         {
             BaseUrl = "/ModbusCoordinator",

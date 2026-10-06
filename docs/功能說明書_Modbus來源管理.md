@@ -4,6 +4,8 @@
 
 `/ModbusCoordinator` 頁面顯示 Engine 端 Modbus 設備登記（左側清單 + 右側詳情雙欄佈局），並提供兩項編輯能力：
 
+右側詳情顯示 Name / **IP / Port** / ModbusID / DelayTime / MonitorEnabled（不顯示 DB 自增 Id）。IP / Port 不在 `ModbusCoordinator` 表內，由 Controller 以 `ModbusConfigFileService.GetEndpointAsync` 逐台讀設備 JSON 頂層 `IP` / `Port`，以 `window._modbusEndpoints`（名稱 → `{ip, port}`）帶給前端；「設定檔已移除」的設備查不到則留空。多站號子項目也顯示同一台的 IP / Port。
+
 1. **子設備名稱編輯**：多站號（ModbusID 逗號分隔）設備可為每個站號取名（寫 `ModbusCoordinator.DeviceName`，主權在 DB）
 2. **點位熱編輯**（限 Admin）：選擇設備後，右側詳情卡片標題列出現「點位設定」按鈕，點擊彈出 Modal 視窗，原地編輯設備 JSON 內點位的 Name / Address / DataType / Ratio / Unit / Min / Max / **子設備（Device）**，存檔後 **不需重啟 Engine**，數秒內以新設定採集
 3. **站號內子設備分群（Tag.Device）**：一顆 PLC（單一站號）內放多台設備時，可為每個點位標註所屬子設備做分群，讓點位選擇器可展開瀏覽（見 §站號內子設備分群）
