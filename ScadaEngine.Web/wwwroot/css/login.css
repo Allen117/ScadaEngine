@@ -51,19 +51,24 @@ body {
 }
 
 .login-brand-title {
-    font-size: 1.35rem;
-    font-weight: 700;
-    color: var(--login-text);
     margin: 0;
-    letter-spacing: 0.5px;
+    line-height: 0;
+}
+
+/* 品牌 Logo 圖（images/joularis-logo.png，透明底 882×240） */
+.login-brand-logo {
+    display: block;
+    width: 100%;
+    max-width: 300px;
+    height: auto;
+    margin: 0 auto;
 }
 
 .login-brand-subtitle {
-    font-size: 0.85rem;
+    font-size: 0.95rem;
     color: var(--login-cyan-dark);
-    margin-top: 0.25rem;
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
+    margin-top: 0.5rem;
+    letter-spacing: 2px;
     font-weight: 500;
 }
 
@@ -81,21 +86,32 @@ body {
     padding: 2rem 1.75rem !important;
 }
 
-/* 登入標題 */
-.login-title {
+/* 登入標題區：標題 + 提示句 + 短底線（取代原閃電圖示） */
+.login-title-block {
     text-align: center;
     margin-bottom: 1.75rem;
-    color: var(--login-text);
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.6rem;
 }
 
-.login-title i {
-    color: var(--login-cyan);
-    font-size: 1.1em;
+.login-title {
+    color: var(--login-text);
+    font-weight: 600;
+    margin: 0;
+}
+
+.login-title-hint {
+    color: var(--login-text-muted);
+    font-size: 0.9rem;
+    margin: 0.4rem 0 0;
+}
+
+.login-title-hint::after {
+    content: "";
+    display: block;
+    width: 40px;
+    height: 3px;
+    margin: 0.75rem auto 0;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--login-cyan), var(--login-mint));
 }
 
 /* 表單樣式 */
@@ -188,60 +204,6 @@ body {
     display: block;
 }
 
-/* 卡片下方特色圖示橫排 */
-.login-features {
-    display: flex;
-    justify-content: space-between;
-    gap: 0.75rem;
-    margin-top: 1.5rem;
-    padding: 0 0.25rem;
-}
-
-.login-feature {
-    flex: 1;
-    text-align: center;
-    color: var(--login-text-muted);
-}
-
-.login-feature-icon {
-    width: 64px;
-    height: 64px;
-    margin: 0 auto 0.6rem;
-    border-radius: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, var(--login-cyan), var(--login-mint));
-    box-shadow: 0 6px 14px rgba(8, 145, 178, 0.26);
-    transition: all 0.3s ease;
-}
-
-.login-feature-icon i {
-    font-size: 1.75rem;
-    color: #ffffff;
-}
-
-/* 若改用 SVG/PNG：<img> 會自動吃此尺寸 */
-.login-feature-icon img,
-.login-feature-icon svg {
-    width: 32px;
-    height: 32px;
-    object-fit: contain;
-    filter: brightness(0) invert(1); /* 把彩色/單色 SVG 強制轉成白色，與 FA 風格一致 */
-}
-
-.login-feature:hover .login-feature-icon {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(8, 145, 178, 0.36);
-}
-
-.login-feature-label {
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: #475569;
-    letter-spacing: 0.2px;
-}
-
 /* 動畫 */
 @keyframes spin {
     0% { transform: rotate(0deg); }
@@ -275,13 +237,13 @@ body {
         opacity: 0.7;
     }
 
-    .login-brand-title {
-        font-size: 1.1rem;
+    .login-brand-logo {
+        max-width: 240px;
     }
 
     .login-brand-subtitle {
-        font-size: 0.7rem;
-        letter-spacing: 1px;
+        font-size: 0.8rem;
+        letter-spacing: 1.5px;
     }
 
     .login-card .card-body {
@@ -292,35 +254,8 @@ body {
         font-size: 1.25rem;
     }
 
-    .login-features {
-        gap: 0.4rem;
-        margin-top: 1.25rem;
+    .login-title-hint {
+        font-size: 0.82rem;
     }
 
-    .login-feature-icon {
-        width: 54px;
-        height: 54px;
-        border-radius: 14px;
-    }
-
-    .login-feature-icon i {
-        font-size: 1.4rem;
-    }
-
-    .login-feature-icon img,
-    .login-feature-icon svg {
-        width: 28px;
-        height: 28px;
-    }
-
-    .login-feature-label {
-        font-size: 0.78rem;
-    }
-}
-
-/* 極小螢幕 ≤360px：隱藏特色圖示節省空間 */
-@media (max-width: 360px) {
-    .login-features {
-        display: none;
-    }
 }

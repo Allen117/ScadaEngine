@@ -5,18 +5,24 @@
 }
 
 <div class="login-shell">
-    <!-- 品牌區：系統名 + 副標 -->
+    <!-- 品牌區：JOULARIS Logo 圖 + 副標 -->
     <div class="login-brand">
-        <h1 class="login-brand-title">JOULARIS 智慧能源管理平台</h1>
-        <div class="login-brand-subtitle">AI-Powered Energy Intelligence</div>
+        <h1 class="login-brand-title">
+            <img src="~/images/joularis-logo.png"
+                 alt="JOULARIS 智慧能源管理平台"
+                 class="login-brand-logo"
+                 asp-append-version="true" />
+        </h1>
+        <div class="login-brand-subtitle">智慧能源管理平台</div>
     </div>
 
     <div class="card login-card">
         <div class="card-body">
-            <h2 class="login-title fs-3">
-                <i class="fas fa-bolt"></i>
-                系統登入
-            </h2>
+            <!-- 登入標題 + 提示句：明確告知此處輸入帳號密碼 -->
+            <div class="login-title-block">
+                <h2 class="login-title fs-3">系統登入</h2>
+                <p class="login-title-hint">請輸入帳號與密碼</p>
+            </div>
 
             @if (ViewData["SetupHint"] as bool? == true)
             {
@@ -92,22 +98,6 @@
                     </button>
                 </div>
             </form>
-        </div>
-    </div>
-
-    <!-- 卡片下方特色圖示橫排 -->
-    <div class="login-features">
-        <div class="login-feature">
-            <div class="login-feature-icon"><i class="fas fa-tachometer-alt"></i></div>
-            <div class="login-feature-label">即時監控</div>
-        </div>
-        <div class="login-feature">
-            <div class="login-feature-icon"><i class="fas fa-brain"></i></div>
-            <div class="login-feature-label">AI 分析</div>
-        </div>
-        <div class="login-feature">
-            <div class="login-feature-icon"><i class="fas fa-leaf"></i></div>
-            <div class="login-feature-label">節能優化</div>
         </div>
     </div>
 </div>
