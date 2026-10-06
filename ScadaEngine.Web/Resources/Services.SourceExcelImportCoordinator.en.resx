@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="srcxl.svc.folder_not_configured" xml:space="preserve"><value>Config folder not configured (appsettings {0}:WatchedFolder)</value></data>
+  <data name="srcxl.svc.file_unreadable" xml:space="preserve"><value>Cannot read the Excel file; make sure it is a valid .xlsx / .xlsm</value></data>
+  <data name="srcxl.svc.no_sheets" xml:space="preserve"><value>The workbook contains no worksheets</value></data>
+  <data name="srcxl.svc.preview_expired" xml:space="preserve"><value>Preview expired or not found; please upload again</value></data>
+  <data name="srcxl.svc.preview_user_mismatch" xml:space="preserve"><value>This preview belongs to another user; please upload again</value></data>
+  <data name="srcxl.svc.invalid_selection" xml:space="preserve"><value>Selected items are not part of the preview: {0}</value></data>
+  <data name="srcxl.svc.sheet_has_errors" xml:space="preserve"><value>Worksheet "{0}" has errors and cannot be imported</value></data>
+  <data name="srcxl.svc.sid_shift_unacknowledged" xml:space="preserve"><value>"{0}" will shift SIDs; tick "I understand history and control mappings will be misaligned" first</value></data>
+  <data name="srcxl.svc.changed_since_preview" xml:space="preserve"><value>The following configs changed after the preview; please upload again: {0}</value></data>
+  <data name="srcxl.svc.commit_success" xml:space="preserve"><value>Imported {0} and deleted {1} config(s); the Engine applies them within seconds</value></data>
+  <data name="srcxl.svc.nothing_selected" xml:space="preserve"><value>Nothing selected</value></data>
+  <data name="srcxl.svc.delete_not_found" xml:space="preserve"><value>Config file "{0}" not found</value></data>
+  <data name="srcxl.svc.delete_success" xml:space="preserve"><value>Removed config "{0}" (backed up in _deleted; polling stops, DB rows and history are kept)</value></data>
+  <data name="srcxl.svc.write_failed" xml:space="preserve"><value>Write failed: {0}</value></data>
+  <data name="srcxl.svc.existing_unreadable" xml:space="preserve"><value>Existing config file cannot be parsed; it will be fully overwritten</value></data>
+  <data name="srcxl.issue.format" xml:space="preserve"><value>Row {0}, column {1}: {2}</value></data>
+  <data name="srcxl.err.sheet_name_invalid" xml:space="preserve"><value>Worksheet name is not a valid file name (illegal characters or "..")</value></data>
+  <data name="srcxl.err.no_points" xml:space="preserve"><value>No point rows found</value></data>
+  <data name="srcxl.err.header_ip_required" xml:space="preserve"><value>IP is required and must not contain spaces</value></data>
+  <data name="srcxl.err.header_port_invalid" xml:space="preserve"><value>Port must be an integer between 1 and 65535</value></data>
+  <data name="srcxl.err.header_modbusid_required" xml:space="preserve"><value>ModbusID is required (comma-separated for multiple stations)</value></data>
+  <data name="srcxl.err.header_modbusid_invalid" xml:space="preserve"><value>ModbusID must be integers 0–255 (comma-separated)</value></data>
+  <data name="srcxl.err.header_timeout_invalid" xml:space="preserve"><value>ConnectTimeout must be a positive integer (ms)</value></data>
+  <data name="srcxl.err.header_polling_invalid" xml:space="preserve"><value>PollingInterval must be a positive integer (ms)</value></data>
+  <data name="srcxl.err.header_monitor_invalid" xml:space="preserve"><value>MonitorEnabled must be TRUE or FALSE</value></data>
+  <data name="srcxl.err.name_too_long" xml:space="preserve"><value>Name must not exceed {0} characters</value></data>
+  <data name="srcxl.err.unit_too_long" xml:space="preserve"><value>Unit must not exceed {0} characters</value></data>
+  <data name="srcxl.err.address_invalid" xml:space="preserve"><value>Invalid address (5-digit 0xxxx/1xxxx/3xxxx/4xxxx or 6-digit extended form)</value></data>
+  <data name="srcxl.err.datatype_unsupported" xml:space="preserve"><value>Unsupported DataType (use one from the drop-down list)</value></data>
+  <data name="srcxl.err.bit_type_needs_register" xml:space="preserve"><value>BIT types require a Holding (4xxxx) / Input (3xxxx) register address</value></data>
+  <data name="srcxl.err.numeric_required" xml:space="preserve"><value>{0} must be numeric</value></data>
+  <data name="srcxl.err.too_many_points" xml:space="preserve"><value>More than the maximum of {0} points</value></data>
+  <data name="srcxl.warn.blank_row_skipped" xml:space="preserve"><value>Name is blank; row skipped</value></data>
+</root>

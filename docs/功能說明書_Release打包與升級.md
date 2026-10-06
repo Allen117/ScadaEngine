@@ -21,15 +21,16 @@ SCADA_Release_yyyyMMdd_HHmm\
 
 Engine 的三個資料夾 `Modbus` / `DBPoint` / `OpcUaPoint` 裝的是**各站台自有的現場資料**（裝置點位定義），**不是產品**。但 `dotnet publish` 會依 [ScadaEngine.Engine.csproj](../ScadaEngine.Engine/ScadaEngine.Engine.csproj) 的 `CopyToOutputDirectory`，把 repo 內開發用的 `*.json` / `*.json.example` 一起帶進 `Engine\App`。若不處理，這些 dev 檔案會隨 release **外流到客戶伺服器**（首裝直接落地；升級因 `xcopy /Y` 只加不刪也會殘留）。
 
-因此 `BuildRelease.ps1` 在 publish 之後，會把這三個資料夾**清空、只回填 Excel 產生工具（`*.xlsm`）**：
+因此 `BuildRelease.ps1` 在 publish 之後，會把這三個資料夾**清空、只回填範本／產生工具**：
 
 | 資料夾 | 保留（進包） | 移除（不進包） |
 |--------|-------------|----------------|
-| `Modbus/` | `Modbus通訊檔案產生工具.xlsm` | 所有 `*.json` 裝置定義 |
-| `DBPoint/` | `DB通訊檔案產生工具.xlsm` | `*.json`、`*.sql` 測試檔 |
+| `Modbus/` | `Modbus範本.xlsx`（空白 Excel 範本） | 所有 `*.json` 裝置定義 |
+| `DBPoint/` | `DB來源範本.xlsx`（空白 Excel 範本） | `*.json`、`*.sql` 測試檔 |
 | `OpcUaPoint/` | `OPCUA通訊檔案產生工具.xlsm` | `*.json`、`*.json.example` 範例 |
 
-- 保留 `*.xlsm`：現場工程師用它產生裝置定義檔（見 docs/功能說明書_DB來源管理.md、_OPCUA通訊.md）。
+- Modbus / DBPoint 保留 `*.xlsx` 範本：現場工程師用任何能編輯 xlsx 的軟體填好後，到 Web「Modbus 來源」「DB 來源」頁**匯入 Excel**（預覽差異 → 確認 → 自動生效），不再需要 Office 與巨集；舊 `*.xlsm` 巨集已於 2026-10 移除（舊 xlsm 檔仍可直接上傳）。見 docs/功能說明書_Modbus來源管理.md §4.1、_DB來源管理.md §8.4
+- OpcUaPoint 仍保留 `*.xlsm` 產生工具（見 docs/功能說明書_OPCUA通訊.md）。
 - 不帶 `*.json.example`：範例對現場無用，只增雜訊。
 - **資料夾本身保留**（含工具）：`Install.bat` 靠「`C:\SCADA\Engine\App\Modbus` 資料夾是否存在」判斷升級與否（見下節），空目錄也必須在，否則第二次安裝會被誤判成首裝。
 
@@ -51,7 +52,7 @@ Install.bat 以 **`C:\SCADA\Engine\App\Modbus` 資料夾是否存在**為哨兵�
 
 | 項目 | 升級後 |
 |------|--------|
-| Modbus / DBPoint 現場裝置定義 | **保留現場版**（release 空資料夾不會蓋掉；xlsm 工具則更新為新版） |
+| Modbus / DBPoint 現場裝置定義 | **保留現場版**（release 空資料夾不會蓋掉；`*.xlsx` 範本更新為新版；舊版殘留的 `*.xlsm` 放著無害）；Web 匯入功能建立的 `_deleted/` 備份子資料夾隨整個資料夾一起備份／還原 |
 | OpcUaPoint 現場定義 | **保留現場版**（不在備份清單，但 release 不帶 json、xcopy 不刪，故原封不動） |
 | dbSetting.json / MqttSetting.json | **保留現場版** |
 | 程式執行檔、wwwroot | 換成 release 新版 |
@@ -63,7 +64,7 @@ Install.bat 以 **`C:\SCADA\Engine\App\Modbus` 資料夾是否存在**為哨兵�
 
 ### 首次安裝（`_IS_UPGRADE=0`）
 
-無備份/還原；release 包內容直接落地。Modbus / DBPoint / OpcUaPoint 只有 `*.xlsm` 工具、無任何裝置定義 → 現場工程師用工具產生 `*.json` 後放入對應資料夾。
+無備份/還原；release 包內容直接落地。Modbus / DBPoint 只有 `*.xlsx` 空白範本、OpcUaPoint 只有 `*.xlsm` 工具，無任何裝置定義 → Modbus / DB 由現場工程師填範本後在 Web 匯入（自動寫 `*.json`、免重啟）；OPC UA 用工具產生 `*.json` 後放入對應資料夾。
 
 ## 四、ModbusServer Gateway（獨立）
 

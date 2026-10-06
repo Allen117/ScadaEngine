@@ -1,19 +1,23 @@
+@using ScadaEngine.Web.Features.Shared.Models
 @{
     ViewData["Title"] = Localizer["dbcoord.title"].Value;
     Layout = "~/Views/Shared/_Layout.cshtml";
     var coordinatorListJson = ViewBag.CoordinatorListJson as string ?? "[]";
+    var sourceExcel = ViewBag.SourceExcel as SourceExcelImportViewModel ?? new SourceExcelImportViewModel { BaseUrl = "/DbCoordinator", Kind = "dbpoint" };
 }
 
 <link rel="stylesheet" href="~/css/dbcoordinator.css" asp-append-version="true" />
 
 <div class="container-fluid mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
         <h4 class="mb-0"><i class="fas fa-database me-2"></i>@Localizer["dbcoord.title"]</h4>
-        <div>
-            <button class="btn btn-secondary me-2" id="btnRefreshPage" onclick="window._dbCoord.refreshPage()">
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            <!-- Excel 匯入 / 匯出 / 範本（共用 partial，含預覽與確認 Modal；提交後自動通知 Engine 重載） -->
+            <partial name="~/Features/Shared/Views/_SourceExcelImport.cshtml" model="sourceExcel" />
+            <button class="btn btn-secondary btn-sm" id="btnRefreshPage" onclick="window._dbCoord.refreshPage()">
                 <i class="fas fa-sync me-1"></i>@Localizer["dbcoord.btn.refresh_page"]
             </button>
-            <button class="btn btn-primary" id="btnReloadEngine" onclick="window._dbCoord.reloadEngine()">
+            <button class="btn btn-primary btn-sm" id="btnReloadEngine" onclick="window._dbCoord.reloadEngine()">
                 <i class="fas fa-bolt me-1"></i>@Localizer["dbcoord.btn.reload_engine"]
             </button>
         </div>
@@ -33,13 +37,21 @@
         <!-- 右側詳情 -->
         <div class="col-md-9">
             <div class="card shadow-sm h-100">
-                <div class="card-header bg-light d-flex align-items-center">
+                <div class="card-header bg-light d-flex align-items-center justify-content-between">
                     <h6 class="mb-0" id="detailTitle">
                         <i class="fas fa-info-circle me-1"></i>
                         @Localizer["dbcoord.card.device_detail"]
                     </h6>
+                    <!-- 逐台刪除：不必上傳 Excel 也能刪（確認後搬到 _deleted/，自動通知 Engine 重載） -->
+                    <button class="btn btn-outline-danger btn-sm" id="btnDeleteSource" style="display:none;">
+                        <i class="fas fa-trash-alt me-1"></i>@Localizer["dbcoord.btn.delete_source"]
+                    </button>
                 </div>
                 <div class="card-body" id="detailBody">
+                    <!-- Coordinator 在 DB 中存在、但 JSON 已移除 -->
+                    <div id="configMissingNote" class="alert alert-warning py-2 small" style="display:none;">
+                        <i class="fas fa-exclamation-triangle me-1"></i>@Localizer["dbcoord.msg.config_missing_hint"]
+                    </div>
                     <div id="fullDetail" class="row g-3" style="display:none;">
                         <div class="col-md-6">
                             <label class="form-label fw-bold text-muted small">@Localizer["dbcoord.label.id"]</label>
@@ -100,5 +112,6 @@
     <script>
         window._dbCoordData = @Html.Raw(coordinatorListJson);
     </script>
+    <script src="~/js/common/source-excel-import.js" asp-append-version="true"></script>
     <script src="~/js/dbcoordinator.js" asp-append-version="true"></script>
 }

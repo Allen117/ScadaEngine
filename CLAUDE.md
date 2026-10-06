@@ -154,7 +154,7 @@ ScadaEngine.sln
 | `ScadaEngine.Engine/MqttSetting/MqttSetting.json` | MQTT broker IP/port/topic/retain |
 | `ScadaEngine.Engine/Modbus/Modbus.json` | Modbus device definitions (IP, port, tags) |
 | `ScadaEngine.Engine/DatabaseSchema/DatabaseSchema.json` | 建表 + 欄位自動同步的**唯一真相來源** — 加欄位只改此檔，Engine 與 Web 啟動時自動補缺欄位（只加不減不改，詳見 docs/架構.md §資料庫結構初始化與欄位同步） |
-| `ScadaEngine.Engine/DBPoint/*.json` | DB 來源 Coordinator 點位定義（`DB通訊檔案產生工具.xlsm` 巨集產生；Web「DB 來源」頁可編輯 Name/Unit 回寫）。細節見 docs/架構.md §資料流 + docs/功能說明書_DB來源管理.md |
+| `ScadaEngine.Engine/DBPoint/*.json` | DB 來源 Coordinator 點位定義（由 Web「DB 來源」頁**匯入 Excel** 產生，範本 `DB來源範本.xlsx`；Name/Unit 可在頁面熱編輯回寫）。Modbus 同理走「Modbus 來源」頁匯入 `Modbus範本.xlsx`，共用 `ScadaEngine.Web/Services/SourceExcel/`。細節見 docs/架構.md §資料流 + docs/功能說明書_DB來源管理.md §8.4 / _Modbus來源管理.md §4.1 |
 | `ScadaEngine.Engine/OpcUaPoint/*.json` | OPC UA 來源定義（一檔一 Server 含 Devices 分組；Web「OPC UA 來源」頁全欄位動態編輯回寫，免重啟）。細節見 docs/架構.md §資料流 + docs/功能說明書_OPCUA通訊.md |
 | `ScadaEngine.Engine/Setting/DbMaintenanceSetting.json` | 自動建 DB 路徑 + 每週備份排程。同資料夾 `install-db.ps1` 為安裝腳本（idempotent，已綁入部署流程）。細節見 docs/架構.md §資料庫自動建立與每週備份 |
 | `ScadaEngine.Engine/Setting/LineSetting.json` | Line Messaging API token + rate limit |

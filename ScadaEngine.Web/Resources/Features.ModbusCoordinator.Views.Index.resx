@@ -104,4 +104,7 @@
 • 位址變更後 SID 不變，歷史資料無縫接續（前後量測對象不同屬運維責任）
 • 變更資料型態會影響暫存器讀取長度與數值轉換，請確認與設備位址表一致
 • 已佈署的組態頁元件與 LogicFlow 節點標籤不會自動改名，需至該頁重新綁定</value></data>
+  <data name="modbuscoordinator.badge.config_missing" xml:space="preserve"><value>設定檔已移除</value></data>
+  <data name="modbuscoordinator.btn.delete_source" xml:space="preserve"><value>刪除設備</value></data>
+  <data name="modbuscoordinator.msg.config_missing_hint" xml:space="preserve"><value>此設備的設定檔已移除，Engine 已停止採集；資料庫與歷史資料保留。重新匯入同名工作表即可恢復。</value></data>
 </root>

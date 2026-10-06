@@ -75,20 +75,24 @@ foreach ($dir in $engineConfigs) {
 # 現場資料夾（Modbus / DBPoint / OpcUaPoint）：dotnet publish 會依 Engine csproj 的
 # CopyToOutputDirectory 把 repo 的 dev 裝置定義（*.json）與範例（*.json.example）帶進 Engine\App。
 # 這些是各站台自有的現場資料，不該隨 release 外流到客戶伺服器。作法：清掉整個資料夾內容，
-# 只回填 repo 內的 Excel 產生工具（*.xlsm）——現場工程師靠它建裝置定義檔。
-# 資料夾（含工具）都在，Install.bat 靠「Modbus 資料夾是否存在」判斷升級的哨兵照常運作，
+# 只回填 repo 內的範本 / 產生工具：
+#   - Modbus / DBPoint：空白 Excel 範本（*.xlsx）— 現場在 Web「Modbus 來源」「DB 來源」頁匯入，不再用巨集
+#   - OpcUaPoint：仍附 Excel 產生工具（*.xlsm）
+# 資料夾（含範本）都在，Install.bat 靠「Modbus 資料夾是否存在」判斷升級的哨兵照常運作，
 # 升級時現場既有設定也照樣被備份/還原。
+$siteToolPatterns = @{ "Modbus" = "*.xlsx"; "DBPoint" = "*.xlsx"; "OpcUaPoint" = "*.xlsm" }
 foreach ($siteDir in @("Modbus", "DBPoint", "OpcUaPoint")) {
     $sitePath = "$ReleasePath\Engine\App\$siteDir"
     if (Test-Path $sitePath) { Remove-Item $sitePath -Recurse -Force }
     New-Item -ItemType Directory -Path $sitePath -Force | Out-Null
-    # 只回填產生工具（*.xlsm），不帶任何 dev 裝置 json / 範例 / 測試檔
-    $toolSrc = Join-Path $engineProject "$siteDir\*.xlsm"
+    # 只回填範本 / 產生工具，不帶任何 dev 裝置 json / 範例 / 測試檔
+    $pattern = $siteToolPatterns[$siteDir]
+    $toolSrc = Join-Path $engineProject "$siteDir\$pattern"
     if (Test-Path $toolSrc) {
         Copy-Item -Path $toolSrc -Destination $sitePath -Force
-        Write-Host "  $siteDir : kept generator tool (*.xlsm), stripped dev data" -ForegroundColor Gray
+        Write-Host "  $siteDir : kept template/tool ($pattern), stripped dev data" -ForegroundColor Gray
     } else {
-        Write-Host "  $siteDir : emptied (no generator tool found)" -ForegroundColor Gray
+        Write-Host "  $siteDir : emptied (no template/tool found)" -ForegroundColor Gray
     }
 }
 

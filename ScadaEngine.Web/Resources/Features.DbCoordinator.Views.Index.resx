@@ -87,4 +87,7 @@
   <data name="dbcoord.msg.success_default" xml:space="preserve"><value>成功</value></data>
   <data name="dbcoord.msg.failure_default" xml:space="preserve"><value>失敗</value></data>
   <data name="dbcoord.msg.call_failed_with" xml:space="preserve"><value>呼叫失敗：{error}</value></data>
+  <data name="dbcoord.badge.config_missing" xml:space="preserve"><value>設定檔已移除</value></data>
+  <data name="dbcoord.btn.delete_source" xml:space="preserve"><value>刪除來源</value></data>
+  <data name="dbcoord.msg.config_missing_hint" xml:space="preserve"><value>此來源的設定檔已移除，Engine 已停止輪詢；資料庫與歷史資料保留。重新匯入同名工作表即可恢復。</value></data>
 </root>

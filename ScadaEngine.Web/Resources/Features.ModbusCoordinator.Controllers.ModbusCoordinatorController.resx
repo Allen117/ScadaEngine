@@ -53,4 +53,5 @@
   <data name="modbuscoordinator.api.structure_changed" xml:space="preserve"><value>點位數量或順序不可變更</value></data>
   <data name="modbuscoordinator.api.invalid_point" xml:space="preserve"><value>點位資料不合法</value></data>
   <data name="modbuscoordinator.api.save_failed" xml:space="preserve"><value>存檔失敗</value></data>
+  <data name="modbuscoordinator.api.excel_ext_invalid" xml:space="preserve"><value>只接受 .xlsx / .xlsm 檔案</value></data>
 </root>

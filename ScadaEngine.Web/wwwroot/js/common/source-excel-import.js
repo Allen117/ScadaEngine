@@ -1,0 +1,390 @@
+/**
+ * Excel 匯入 / 匯出 / 刪除 共用前端（Modbus 來源、DB 來源兩頁共用）。
+ *
+ * 流程：選檔 → POST {base}/ImportPreview（不寫檔）→ 預覽 Modal 列出 新增/覆寫/無變更/錯誤 + 刪除候選 + 其他既有
+ *       → 使用者勾選 →（有覆寫或刪除時）確認 Modal 列出名稱 → POST {base}/ImportCommit → 重新整理頁面。
+ * SID 位移（中間插入/刪除/重排）需另外勾選「我了解…」才能提交。
+ *
+ * 參數化：工具列 [data-srcxl-base] 帶 Controller 路由前綴（/ModbusCoordinator、/DbCoordinator）。
+ * 對外：window.SourceExcelImport.deleteSource(name) — 各頁「刪除設備」按鈕呼叫（確認後 POST {base}/DeleteSource）。
+ */
+(function () {
+    'use strict';
+
+    function t(key, args) { return (window.i18n && window.i18n.t) ? window.i18n.t(key, args) : key; }
+
+    function escapeHtml(s) {
+        if (s == null) return '';
+        return String(s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    var toolbar = document.querySelector('[data-srcxl-base]');
+    if (!toolbar) return;
+
+    var szBase = toolbar.dataset.srcxlBase;
+    var previewModalEl = document.getElementById('srcxlPreviewModal');
+    var confirmModalEl = document.getElementById('srcxlConfirmModal');
+    var fileInput = document.getElementById('srcxlFileInput');
+    var btnImport = document.getElementById('srcxlBtnImport');
+    var btnCommit = document.getElementById('srcxlBtnCommit');
+
+    var preview = null;          // 最近一次預覽結果
+    var szNoSelectableMsg = null; // 非 null = 這份預覽完全沒有可勾選項目（狀態列顯示原因而非「尚未勾選」）
+    var isCommitting = false;
+    var confirmCallback = null;  // 確認 Modal 按「確定」時要跑的函數
+
+    /* ───────────── 共用 UI helper ───────────── */
+
+    function setStatus(szText, isError) {
+        var el = document.getElementById('srcxlPreviewStatus');
+        if (!el) return;
+        el.textContent = szText || '';
+        el.className = 'small me-auto ' + (isError ? 'text-danger' : 'text-success');
+    }
+
+    function showConfirm(szHtml, onYes) {
+        document.getElementById('srcxlConfirmBody').innerHTML = szHtml;
+        confirmCallback = onYes;
+        bootstrap.Modal.getOrCreateInstance(confirmModalEl).show();
+    }
+
+    document.getElementById('srcxlBtnConfirmYes').addEventListener('click', function () {
+        bootstrap.Modal.getOrCreateInstance(confirmModalEl).hide();
+        var cb = confirmCallback;
+        confirmCallback = null;
+        if (cb) cb();
+    });
+
+    function kindBadge(szKind) {
+        var map = {
+            Added:     ['bg-success', 'srcxl.kind.added'],
+            Overwrite: ['bg-warning text-dark', 'srcxl.kind.overwrite'],
+            Unchanged: ['bg-secondary', 'srcxl.kind.unchanged'],
+            Error:     ['bg-danger', 'srcxl.kind.error']
+        };
+        var m = map[szKind] || ['bg-secondary', szKind];
+        return '<span class="badge ' + m[0] + '">' + escapeHtml(t(m[1])) + '</span>';
+    }
+
+    function listHtml(items, szClass, nMax) {
+        if (!items || !items.length) return '';
+        var shown = items.slice(0, nMax);
+        var html = '<ul class="srcxl-list ' + (szClass || '') + '">' +
+            shown.map(function (s) { return '<li>' + escapeHtml(s) + '</li>'; }).join('') + '</ul>';
+        if (items.length > nMax) {
+            html += '<div class="text-muted">' + escapeHtml(t('srcxl.detail.more', { count: items.length - nMax })) + '</div>';
+        }
+        return html;
+    }
+
+    /* ───────────── 上傳 → 預覽 ───────────── */
+
+    btnImport.addEventListener('click', function () { fileInput.value = ''; fileInput.click(); });
+
+    fileInput.addEventListener('change', function () {
+        var file = fileInput.files && fileInput.files[0];
+        if (!file) return;
+        uploadForPreview(file);
+    });
+
+    async function uploadForPreview(file) {
+        preview = null;
+        szNoSelectableMsg = null;
+        document.getElementById('srcxlWorkbookName').textContent = file.name;
+        document.getElementById('srcxlPreviewLoading').style.display = '';
+        document.getElementById('srcxlPreviewBody').style.display = 'none';
+        document.getElementById('srcxlPreviewError').style.display = 'none';
+        document.getElementById('srcxlAckSidShift').checked = false;
+        btnCommit.disabled = true;
+        setStatus('', false);
+        bootstrap.Modal.getOrCreateInstance(previewModalEl).show();
+
+        var form = new FormData();
+        form.append('file', file, file.name);
+
+        try {
+            var resp = await fetch(szBase + '/ImportPreview', { method: 'POST', body: form, credentials: 'same-origin' });
+            var data = null;
+            try { data = await resp.json(); } catch (e) { /* 非 JSON（如 413/500 頁面） */ }
+
+            document.getElementById('srcxlPreviewLoading').style.display = 'none';
+            document.getElementById('srcxlPreviewBody').style.display = '';
+
+            if (!resp.ok || !data || !data.success) {
+                var errEl = document.getElementById('srcxlPreviewError');
+                errEl.textContent = (data && data.message) || t('srcxl.msg.preview_failed', { status: resp.status });
+                errEl.style.display = '';
+                clearTables();
+                return;
+            }
+
+            preview = data;
+            renderPreview(data);
+        } catch (ex) {
+            document.getElementById('srcxlPreviewLoading').style.display = 'none';
+            document.getElementById('srcxlPreviewBody').style.display = '';
+            var errEl2 = document.getElementById('srcxlPreviewError');
+            errEl2.textContent = t('srcxl.msg.call_failed_with', { error: ex.message });
+            errEl2.style.display = '';
+            clearTables();
+        }
+    }
+
+    function clearTables() {
+        document.getElementById('srcxlSheetsBody').innerHTML = '';
+        document.getElementById('srcxlDeleteBody').innerHTML = '';
+        document.getElementById('srcxlOtherBody').innerHTML = '';
+        document.getElementById('srcxlDeleteSection').style.display = 'none';
+        document.getElementById('srcxlOtherSection').style.display = 'none';
+        document.getElementById('srcxlSidShiftBox').style.display = 'none';
+        document.getElementById('srcxlNoSelectableBox').style.display = 'none';
+    }
+
+    /**
+     * 整份預覽沒有任何可勾選項目（工作表全是錯誤／無變更、也沒有刪除候選）時，
+     * 頂部提示從「勾選後匯入」換成說明原因，避免使用者以為勾選框壞掉。
+     */
+    function refreshNoSelectableHint(data) {
+        var box = document.getElementById('srcxlNoSelectableBox');
+        var nSelectable = document.querySelectorAll('.srcxl-sheet-check:not(:disabled), .srcxl-del-check, .srcxl-other-check').length;
+        if (nSelectable > 0) { box.style.display = 'none'; return null; }
+
+        var nErrors = (data.sheets || []).filter(function (s) { return s.kind === 'Error'; }).length;
+        var szMsg = nErrors > 0
+            ? t('srcxl.msg.no_selectable_errors', { count: nErrors })
+            : t('srcxl.msg.no_selectable_unchanged');
+        box.textContent = szMsg;
+        box.style.display = '';
+        return szMsg;
+    }
+
+    /* ───────────── 預覽渲染 ───────────── */
+
+    function renderPreview(data) {
+        var tbody = document.getElementById('srcxlSheetsBody');
+        tbody.innerHTML = (data.sheets || []).map(function (s, i) {
+            var isSelectable = s.kind === 'Added' || s.kind === 'Overwrite';
+            var detail = '';
+
+            if (s.renameHintFrom) {
+                detail += '<div class="text-primary"><i class="fas fa-info-circle me-1"></i>' +
+                    escapeHtml(t('srcxl.detail.rename_hint', { from: s.renameHintFrom })) + '</div>';
+            }
+            if (s.existingSourceWorkbook && s.kind !== 'Added') {
+                detail += '<div class="text-muted">' + escapeHtml(t('srcxl.detail.source_workbook', { name: s.existingSourceWorkbook })) + '</div>';
+            }
+            if (s.hasSidShift) {
+                detail += '<div class="text-danger fw-bold"><i class="fas fa-exclamation-triangle me-1"></i>' +
+                    escapeHtml(t('srcxl.detail.sid_shift', { index: s.sidShiftFromIndex })) + '</div>';
+            } else if (s.tailRemovedCount > 0) {
+                detail += '<div class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>' +
+                    escapeHtml(t('srcxl.detail.tail_removed', { count: s.tailRemovedCount })) + '</div>';
+            }
+            detail += listHtml(s.headerChanges, 'srcxl-list-change', 10);
+            var pointLines = (s.pointChanges || []).map(function (c) {
+                var szLabel = c.change === 'Added' ? t('srcxl.change.added')
+                            : c.change === 'Removed' ? t('srcxl.change.removed') : '';
+                return '#' + c.index + ' ' + c.name + (szLabel ? ' ' + szLabel : '') + (c.summary ? ' — ' + c.summary : '');
+            });
+            detail += listHtml(pointLines, 'srcxl-list-change', 10);
+            detail += listHtml((s.errors || []).map(function (e) { return e.message; }), 'srcxl-list-error', 20);
+            detail += listHtml((s.warnings || []).map(function (w) { return w.message; }), 'srcxl-list-warn text-muted', 5);
+            if (!detail && s.kind === 'Unchanged') detail = '<span class="text-muted">—</span>';
+
+            var szPoints = s.kind === 'Added' ? String(s.newPointCount)
+                         : (s.oldPointCount === s.newPointCount ? String(s.newPointCount) : s.oldPointCount + ' → ' + s.newPointCount);
+
+            return '<tr class="' + (s.kind === 'Error' ? 'table-danger' : '') + '">' +
+                '<td class="srcxl-col-check"><input type="checkbox" class="form-check-input srcxl-sheet-check" data-index="' + i + '"' +
+                    (isSelectable ? '' : ' disabled') + (s.defaultChecked ? ' checked' : '') + ' /></td>' +
+                '<td class="fw-bold">' + escapeHtml(s.sheetName) + '</td>' +
+                '<td>' + kindBadge(s.kind) + '</td>' +
+                '<td class="text-nowrap">' + escapeHtml(szPoints) + '</td>' +
+                '<td class="srcxl-detail">' + detail + '</td>' +
+            '</tr>';
+        }).join('');
+
+        // 刪除候選
+        var delSection = document.getElementById('srcxlDeleteSection');
+        var delBody = document.getElementById('srcxlDeleteBody');
+        if (data.deleteCandidates && data.deleteCandidates.length) {
+            delSection.style.display = '';
+            delBody.innerHTML = data.deleteCandidates.map(function (d, i) { return existingRow(d, 'srcxl-del-check', i); }).join('');
+        } else {
+            delSection.style.display = 'none';
+            delBody.innerHTML = '';
+        }
+
+        // 其他未包含
+        var otherSection = document.getElementById('srcxlOtherSection');
+        var otherBody = document.getElementById('srcxlOtherBody');
+        if (data.otherExisting && data.otherExisting.length) {
+            otherSection.style.display = '';
+            document.getElementById('srcxlOtherCount').textContent = data.otherExisting.length;
+            otherBody.innerHTML = data.otherExisting.map(function (d, i) { return existingRow(d, 'srcxl-other-check', i); }).join('');
+        } else {
+            otherSection.style.display = 'none';
+            otherBody.innerHTML = '';
+        }
+
+        tbody.querySelectorAll('.srcxl-sheet-check').forEach(function (cb) { cb.addEventListener('change', refreshCommitState); });
+        delBody.querySelectorAll('input').forEach(function (cb) { cb.addEventListener('change', refreshCommitState); });
+        otherBody.querySelectorAll('input').forEach(function (cb) { cb.addEventListener('change', refreshCommitState); });
+        szNoSelectableMsg = refreshNoSelectableHint(data);
+        refreshCommitState();
+    }
+
+    function existingRow(d, szClass, i) {
+        var szSource = d.sourceWorkbook
+            ? t('srcxl.detail.source_workbook', { name: d.sourceWorkbook })
+            : t('srcxl.detail.source_unknown');
+        return '<tr>' +
+            '<td class="srcxl-col-check"><input type="checkbox" class="form-check-input ' + szClass + '" data-name="' + escapeHtml(d.name) + '"' +
+                (d.defaultChecked ? ' checked' : '') + ' /></td>' +
+            '<td class="fw-bold">' + escapeHtml(d.name) + '</td>' +
+            '<td class="text-muted small">' + escapeHtml(szSource) + '</td>' +
+        '</tr>';
+    }
+
+    document.getElementById('srcxlCheckAllSheets').addEventListener('change', function () {
+        var isChecked = this.checked;
+        document.querySelectorAll('.srcxl-sheet-check:not(:disabled)').forEach(function (cb) { cb.checked = isChecked; });
+        refreshCommitState();
+    });
+
+    document.getElementById('srcxlAckSidShift').addEventListener('change', refreshCommitState);
+
+    function getSelection() {
+        var importSheets = [];
+        var overwriteNames = [];
+        var isShift = false;
+        document.querySelectorAll('.srcxl-sheet-check:checked').forEach(function (cb) {
+            var s = preview.sheets[parseInt(cb.dataset.index, 10)];
+            importSheets.push(s.sheetName);
+            if (s.kind === 'Overwrite') overwriteNames.push(s.sheetName);
+            if (s.hasSidShift) isShift = true;
+        });
+        var deleteNames = [];
+        document.querySelectorAll('.srcxl-del-check:checked, .srcxl-other-check:checked').forEach(function (cb) {
+            deleteNames.push(cb.dataset.name);
+        });
+        return { importSheets: importSheets, overwriteNames: overwriteNames, deleteNames: deleteNames, hasSidShift: isShift };
+    }
+
+    function refreshCommitState() {
+        if (!preview) { btnCommit.disabled = true; return; }
+        var sel = getSelection();
+        var shiftBox = document.getElementById('srcxlSidShiftBox');
+        shiftBox.style.display = sel.hasSidShift ? '' : 'none';
+        var isAckOk = !sel.hasSidShift || document.getElementById('srcxlAckSidShift').checked;
+        var nTotal = sel.importSheets.length + sel.deleteNames.length;
+        btnCommit.disabled = isCommitting || nTotal === 0 || !isAckOk;
+        if (nTotal === 0 && szNoSelectableMsg) {
+            setStatus(szNoSelectableMsg, true);
+            return;
+        }
+        setStatus(nTotal === 0 ? t('srcxl.msg.nothing_selected') : t('srcxl.msg.selection_summary', {
+            imports: sel.importSheets.length, deletes: sel.deleteNames.length
+        }), false);
+    }
+
+    /* ───────────── 提交 ───────────── */
+
+    btnCommit.addEventListener('click', function () {
+        if (!preview || isCommitting) return;
+        var sel = getSelection();
+
+        if (sel.overwriteNames.length === 0 && sel.deleteNames.length === 0) {
+            commit(sel);
+            return;
+        }
+
+        var html = '';
+        if (sel.overwriteNames.length) {
+            html += '<div class="fw-bold mb-1">' + escapeHtml(t('srcxl.confirm.overwrite_list', { count: sel.overwriteNames.length })) + '</div>' +
+                listHtml(sel.overwriteNames, 'mb-2', 50);
+        }
+        if (sel.deleteNames.length) {
+            html += '<div class="fw-bold text-danger mb-1">' + escapeHtml(t('srcxl.confirm.delete_list', { count: sel.deleteNames.length })) + '</div>' +
+                listHtml(sel.deleteNames, 'mb-2', 50) +
+                '<div class="text-muted">' + escapeHtml(t('srcxl.confirm.delete_note')) + '</div>';
+        }
+        showConfirm(html, function () { commit(sel); });
+    });
+
+    async function commit(sel) {
+        isCommitting = true;
+        btnCommit.disabled = true;
+        setStatus(t('srcxl.msg.committing'), false);
+
+        try {
+            var resp = await fetch(szBase + '/ImportCommit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    token: preview.token,
+                    importSheets: sel.importSheets,
+                    deleteNames: sel.deleteNames,
+                    acknowledgeSidShift: document.getElementById('srcxlAckSidShift').checked
+                })
+            });
+            var data = null;
+            try { data = await resp.json(); } catch (e) { /* ignore */ }
+
+            if (resp.ok && data && data.success) {
+                setStatus(data.message || t('srcxl.msg.commit_success'), false);
+                setTimeout(function () { window.location.reload(); }, 1200);
+                return;
+            }
+
+            isCommitting = false;
+            setStatus((data && data.message) || t('srcxl.msg.commit_failed', { status: resp.status }), true);
+            if (resp.status === 409) {
+                // 預覽後設定已被更動 → 必須重新上傳
+                preview = null;
+                btnCommit.disabled = true;
+            } else {
+                refreshCommitState();
+            }
+        } catch (ex) {
+            isCommitting = false;
+            setStatus(t('srcxl.msg.call_failed_with', { error: ex.message }), true);
+            refreshCommitState();
+        }
+    }
+
+    /* ───────────── 逐台刪除（各頁按鈕呼叫） ───────────── */
+
+    function deleteSource(szName, onDone) {
+        if (!szName) return;
+        var html = '<div class="fw-bold text-danger mb-1">' + escapeHtml(t('srcxl.confirm.delete_one', { name: szName })) + '</div>' +
+            '<div class="text-muted">' + escapeHtml(t('srcxl.confirm.delete_note')) + '</div>';
+
+        showConfirm(html, async function () {
+            try {
+                var resp = await fetch(szBase + '/DeleteSource', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ name: szName })
+                });
+                var data = null;
+                try { data = await resp.json(); } catch (e) { /* ignore */ }
+                var szMsg = (data && data.message) || (resp.ok ? t('srcxl.msg.delete_success') : t('srcxl.msg.delete_failed', { status: resp.status }));
+                if (typeof onDone === 'function') onDone(resp.ok && data && data.success, szMsg);
+                else {
+                    window.alert(szMsg);
+                    if (resp.ok && data && data.success) window.location.reload();
+                }
+            } catch (ex) {
+                var szErr = t('srcxl.msg.call_failed_with', { error: ex.message });
+                if (typeof onDone === 'function') onDone(false, szErr); else window.alert(szErr);
+            }
+        });
+    }
+
+    window.SourceExcelImport = { deleteSource: deleteSource };
+})();

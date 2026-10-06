@@ -1,9 +1,9 @@
-using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using ScadaEngine.Engine.Communication.Modbus.Models;
 using ScadaEngine.Web.Features.ModbusCoordinator.Models;
+using ScadaEngine.Web.Services.SourceExcel;
 
 namespace ScadaEngine.Web.Services;
 
@@ -14,16 +14,14 @@ namespace ScadaEngine.Web.Services;
 ///   點位數量、順序與設備層欄位（IP / Port / ModbusId / ConnectTimeout）一律鎖死 —
 ///   SID 由陣列索引產生、控制指令用 TagIndex 定位，結構一變就是歷史資料錯位 + 控制寫錯暫存器。
 ///   DataType 限 Engine 支援的型態白名單（影響暫存器讀取長度與控制轉換）。
-/// - 原子寫檔：先寫 *.json.tmp（不符 Engine watcher 的 *.json filter）再 File.Replace 替換，
-///   確保控制路徑任何瞬間讀到的都是完整舊檔或完整新檔；並保留 *.json.bak 備份。
+/// - 檔案 I/O（路徑解析、原子寫檔、編碼偵測、鏡像寫回）走共用 <see cref="SourceConfigFileIo"/>，
+///   與 Excel 匯入（SourceExcelImportCoordinator）同一份行為。
 /// - 保留原檔編碼（現場檔案為 UTF-16 LE with BOM，工具產生）。
-/// - MirrorFolder（可選，dev 用）：同步寫回原始碼資料夾，避免 rebuild 後設定倒退。
 /// </summary>
 public class ModbusConfigFileService
 {
     private readonly ILogger<ModbusConfigFileService> _logger;
-    private readonly IConfiguration _configuration;
-    private readonly IWebHostEnvironment _env;
+    private readonly SourceConfigFileIo _io;
 
     /// <summary>寫檔序列化鎖 — 防止兩個 Admin 同時存檔互相覆蓋</summary>
     private static readonly SemaphoreSlim _writeLock = new(1, 1);
@@ -34,35 +32,10 @@ public class ModbusConfigFileService
     /// </summary>
     public static readonly string[] SupportedDataTypes = ModbusTagModel.SupportedDataTypes;
 
-    public ModbusConfigFileService(
-        IConfiguration configuration,
-        IWebHostEnvironment env,
-        ILogger<ModbusConfigFileService> logger)
+    public ModbusConfigFileService(SourceConfigFileIo io, ILogger<ModbusConfigFileService> logger)
     {
         _logger = logger;
-        _configuration = configuration;
-        _env = env;
-    }
-
-    /// <summary>
-    /// 每次呼叫即時解析監控資料夾 — 不在建構子快取，appsettings.json 熱重載（reloadOnChange）改路徑即生效，
-    /// 免重啟也不會殘留舊路徑。相對路徑以 Web ContentRoot 為基準；找不到設定回傳 null。
-    /// </summary>
-    private string? GetWatchedFolder()
-    {
-        var szWatched = _configuration["EngineModbusConfig:WatchedFolder"];
-        return string.IsNullOrWhiteSpace(szWatched)
-            ? null
-            : Path.GetFullPath(Path.Combine(_env.ContentRootPath, szWatched));
-    }
-
-    /// <summary>每次呼叫即時解析鏡像資料夾（可選，dev 用）</summary>
-    private string? GetMirrorFolder()
-    {
-        var szMirror = _configuration["EngineModbusConfig:MirrorFolder"];
-        return string.IsNullOrWhiteSpace(szMirror)
-            ? null
-            : Path.GetFullPath(Path.Combine(_env.ContentRootPath, szMirror));
+        _io = io;
     }
 
     /// <summary>
@@ -70,11 +43,11 @@ public class ModbusConfigFileService
     /// </summary>
     public async Task<ModbusPointsFileModel?> GetPointsAsync(string szCoordinatorName)
     {
-        var szFilePath = ResolveConfigFilePath(szCoordinatorName);
+        var szFilePath = _io.ResolveConfigFilePath(SourceConfigFileIo.MODBUS_SECTION, szCoordinatorName);
         if (szFilePath == null || !File.Exists(szFilePath))
             return null;
 
-        var (szJson, _) = await ReadAllTextDetectEncodingAsync(szFilePath);
+        var (szJson, _) = await SourceConfigFileIo.ReadAllTextDetectEncodingAsync(szFilePath);
         var root = JsonNode.Parse(szJson);
         if (root == null) return null;
 
@@ -117,7 +90,7 @@ public class ModbusConfigFileService
     {
         var result = new ModbusPointsUpdateResult();
 
-        var szFilePath = ResolveConfigFilePath(szCoordinatorName);
+        var szFilePath = _io.ResolveConfigFilePath(SourceConfigFileIo.MODBUS_SECTION, szCoordinatorName);
         if (szFilePath == null || !File.Exists(szFilePath))
         {
             result.nError = ModbusPointsUpdateError.FileNotFound;
@@ -128,7 +101,7 @@ public class ModbusConfigFileService
         try
         {
             // 重讀原檔 — 以檔案現況為準驗證結構
-            var (szJson, encoding) = await ReadAllTextDetectEncodingAsync(szFilePath);
+            var (szJson, encoding) = await SourceConfigFileIo.ReadAllTextDetectEncodingAsync(szFilePath);
             var root = JsonNode.Parse(szJson);
             if (root == null || root["Tags"] is not JsonArray tags)
             {
@@ -198,8 +171,8 @@ public class ModbusConfigFileService
                 Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
             });
 
-            AtomicWrite(szFilePath, szNewJson, encoding);
-            MirrorWrite(szCoordinatorName, szNewJson, encoding);
+            SourceConfigFileIo.AtomicWrite(szFilePath, szNewJson, encoding);
+            _io.MirrorWrite(SourceConfigFileIo.MODBUS_SECTION, szCoordinatorName, szNewJson, encoding);
 
             result.isSuccess = true;
             _logger.LogInformation("Modbus 點位設定已更新: {File}, 變更 {Count} 點", szFilePath, result.changes.Count);
@@ -245,6 +218,21 @@ public class ModbusConfigFileService
             || (n >= 10000 && n <= 19999)
             || (n >= 30000 && n <= 39999)
             || (n >= 40000 && n <= 49999);
+    }
+
+    /// <summary>
+    /// 位址是否為暫存器（Holding 4xxxx / Input 3xxxx）— BIT0–BIT15 型別只能配暫存器位址，
+    /// Coil / Discrete 配 BIT 會被 Engine 載入時跳過（進而造成後續 SID 位移），須在設定端擋下。
+    /// 呼叫前應先通過 <see cref="IsValidAddress"/>。
+    /// </summary>
+    public static bool IsRegisterAddress(string? szAddress)
+    {
+        if (!IsValidAddress(szAddress)) return false;
+        var sz = szAddress!.Trim();
+        var n = int.Parse(sz);
+        if (sz.Length == 6)
+            return (n >= 300001 && n <= 365536) || (n >= 400001 && n <= 465536);
+        return (n >= 30000 && n <= 39999) || (n >= 40000 && n <= 49999);
     }
 
     /// <summary>驗證單點可編輯欄位，回傳 null 表示合法，否則回傳原因（技術描述）</summary>
@@ -293,67 +281,5 @@ public class ModbusConfigFileService
         Compare("Device", (p.Device ?? string.Empty).Trim());
 
         return string.Join(", ", aDiffs);
-    }
-
-    /// <summary>
-    /// 解析 Coordinator 名稱為監控資料夾內的檔案路徑；名稱含路徑字元或逸出資料夾一律回 null
-    /// </summary>
-    private string? ResolveConfigFilePath(string szCoordinatorName)
-    {
-        var szWatchedFolder = GetWatchedFolder();
-        if (szWatchedFolder == null || string.IsNullOrWhiteSpace(szCoordinatorName))
-            return null;
-
-        if (szCoordinatorName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 || szCoordinatorName.Contains(".."))
-            return null;
-
-        var szFullPath = Path.GetFullPath(Path.Combine(szWatchedFolder, szCoordinatorName + ".json"));
-
-        // 防路徑逸出
-        if (!szFullPath.StartsWith(szWatchedFolder + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
-            return null;
-
-        return szFullPath;
-    }
-
-    /// <summary>讀檔並偵測 BOM 編碼（無 BOM 視為 UTF-8）</summary>
-    private static async Task<(string szText, Encoding encoding)> ReadAllTextDetectEncodingAsync(string szFilePath)
-    {
-        using var reader = new StreamReader(szFilePath, new UTF8Encoding(false), detectEncodingFromByteOrderMarks: true);
-        var szText = await reader.ReadToEndAsync();
-        return (szText, reader.CurrentEncoding);
-    }
-
-    /// <summary>
-    /// 原子寫檔：寫 *.json.tmp（不觸發 Engine watcher）→ File.Replace 原子替換 → 留 *.json.bak 備份。
-    /// 控制路徑每筆指令都直接讀 JSON 且失敗不重試，半份 JSON 會讓控制無聲失敗 — 原子替換杜絕此窗口。
-    /// </summary>
-    private static void AtomicWrite(string szFilePath, string szContent, Encoding encoding)
-    {
-        var szTmpPath = szFilePath + ".tmp";
-        var szBakPath = szFilePath + ".bak";
-
-        File.WriteAllText(szTmpPath, szContent, encoding);
-        File.Replace(szTmpPath, szFilePath, szBakPath, ignoreMetadataErrors: true);
-    }
-
-    /// <summary>dev 環境鏡像寫回原始碼資料夾（失敗僅記 log，不影響主寫入）</summary>
-    private void MirrorWrite(string szCoordinatorName, string szContent, Encoding encoding)
-    {
-        var szMirrorFolder = GetMirrorFolder();
-        if (szMirrorFolder == null) return;
-
-        try
-        {
-            var szMirrorPath = Path.Combine(szMirrorFolder, szCoordinatorName + ".json");
-            if (!Directory.Exists(szMirrorFolder)) return;
-
-            File.WriteAllText(szMirrorPath, szContent, encoding);
-            _logger.LogInformation("Modbus 點位設定已鏡像寫回: {File}", szMirrorPath);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "鏡像寫回失敗（不影響主寫入）: {Name}", szCoordinatorName);
-        }
     }
 }

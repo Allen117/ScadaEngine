@@ -10,6 +10,10 @@ public class DbCoordinatorListItemDto
     public int pollingInterval { get; set; }
     public int connectTimeout { get; set; }
     public bool monitorEnabled { get; set; }
+
+    /// <summary>true = DB 有此 Coordinator 但 DBPoint/{Name}.json 已不存在（被刪除）→ 頁面標示「設定檔已移除」</summary>
+    public bool configMissing { get; set; }
+
     public List<DbPointListItemDto> points { get; set; } = new();
 }
 

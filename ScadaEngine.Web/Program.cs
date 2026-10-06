@@ -243,8 +243,15 @@ builder.Services.AddScoped<ScadaEngine.Web.Services.OpcUaCoordinatorService>();
 // Designer 列範本 JSON 讀寫（Singleton：內含 SemaphoreSlim 檔案鎖）
 builder.Services.AddSingleton<ScadaEngine.Web.Services.DesignerTemplateService>();
 
+// 來源設定 JSON 共用檔案 I/O（Modbus / DBPoint：路徑防護、原子寫檔、鏡像、刪除備份）— 熱編輯與 Excel 匯入共用
+builder.Services.AddSingleton<ScadaEngine.Web.Services.SourceExcel.SourceConfigFileIo>();
 // Modbus 點位熱編輯 — 讀寫 Engine 執行目錄 Modbus JSON（原子替換，Engine watcher 自動重載）
 builder.Services.AddSingleton<ScadaEngine.Web.Services.ModbusConfigFileService>();
+// Excel 匯入（Modbus / DB 來源）：adapter 為純解析/序列化（Singleton）；Coordinator 依賴 IStringLocalizer → Scoped；預覽暫存走 IMemoryCache
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<ScadaEngine.Web.Services.SourceExcel.ModbusExcelAdapter>();
+builder.Services.AddSingleton<ScadaEngine.Web.Services.SourceExcel.DbPointExcelAdapter>();
+builder.Services.AddScoped<ScadaEngine.Web.Services.SourceExcel.SourceExcelImportCoordinator>();
 // Scoped：依賴 IStringLocalizer<T>（Scoped），且 exporter 本身無狀態
 builder.Services.AddScoped<ScadaEngine.Web.Services.EnergyReportExcelExporter>();
 builder.Services.AddScoped<ScadaEngine.Web.Services.RefrigerationTonReportExcelExporter>();

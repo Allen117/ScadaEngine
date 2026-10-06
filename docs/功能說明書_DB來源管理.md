@@ -7,10 +7,10 @@ DB 來源是 Modbus / 計算點位之外的**第三類點位來源**。專供「
 ### 核心能力
 - **零下游改動**：採既有 SID 字串型別與 `DB{Id}-S{N}` 格式，警報 / 計算 / 能源報表 / MQTT 全部不需改判斷邏輯
 - **每個 Coordinator 100 個 slot**：Sequence 由 JSON 陣列順序自動產生（與 Modbus 對齊），1~100
-- **設定唯一來源**：`ScadaEngine.Engine/DBPoint/DB通訊檔案產生工具.xlsm` 的巨集 → 各 sheet → `DBPoint/{SheetName}.json`
-- **即時生效**：Web 端按「通知 Engine 重新載入 JSON」→ MQTT `SCADA/Sys/DbCoordinator/Reload` → Engine 重讀 JSON、UPSERT DB、重建 polling loops，免重啟 Engine
+- **設定來源 = Web 匯入 Excel**：`/DbCoordinator` 頁「匯入 Excel」上傳 `DB來源範本.xlsx`（一張工作表 = 一個 Coordinator）→ 預覽差異 → 確認 → Web 寫 `DBPoint/{SheetName}.json` 並自動發 Reload（見 §8.4）。JSON 仍是 Engine 的執行期唯一設定來源，使用者不再直接接觸；舊 `DB通訊檔案產生工具.xlsm` 巨集已移除（舊 xlsm 檔可直接上傳）
+- **即時生效**：匯入／刪除／改名後 Web 自動發 MQTT `SCADA/Sys/DbCoordinator/Reload` → Engine 重讀 JSON、UPSERT DB、重建 polling loops，免重啟 Engine；頁面另保留「通知 Engine 重新載入 JSON」按鈕作為手動放檔或 MQTT 失敗時的補救
 - **DBLatestData.Value 即工程值**：外部系統直接寫工程值，Engine 不再做任何縮放（不再有 Ratio）
-- **UI 以唯讀為主，點位名稱/單位可編輯**：Web `/DbCoordinator` 顯示已載入結果（Coordinator + 點位列表）；點位**名稱與單位**可行內編輯並回寫 JSON（見 §8.3），結構性編輯（增刪點位、改 Min/Max）仍透過 Excel 巨集
+- **UI 以唯讀為主，點位名稱/單位可編輯**：Web `/DbCoordinator` 顯示已載入結果（Coordinator + 點位列表）；點位**名稱與單位**可行內編輯並回寫 JSON（見 §8.3），結構性編輯（增刪點位、改 Min/Max、新增／刪除 Coordinator）透過「匯出 Excel → 修改 → 匯入 Excel」或「刪除來源」按鈕（見 §8.4）
 
 ---
 
@@ -21,6 +21,11 @@ DB 來源是 Modbus / 計算點位之外的**第三類點位來源**。專供「
 | GET  | `/DbCoordinator`        | DB 來源管理頁面（清單 + 點位名稱/單位編輯） | 需登入 |
 | POST | `/DbCoordinator/Reload` | 通知 Engine 重新載入 `DBPoint/*.json`（發 MQTT） | 需登入 |
 | POST | `/DbCoordinator/UpdatePoint` | 更新單一點位名稱+單位（回寫 JSON + UPSERT DBPoints + 自動發 reload MQTT） | 需登入 |
+| GET  | `/DbCoordinator/ImportTemplate` | 下載空白 Excel 範本（`DB來源範本.xlsx`） | Engineer |
+| GET  | `/DbCoordinator/ExportExcel?workbook=` | 匯出現行設定為 .xlsx（一個 JSON 一張工作表；`workbook` 省略 = 全部） | Engineer |
+| POST | `/DbCoordinator/ImportPreview` | 上傳 .xlsx/.xlsm → 解析、驗證、比對既有 JSON → 預覽 + `token`（不寫檔） | Engineer |
+| POST | `/DbCoordinator/ImportCommit` | 帶 token + 勾選結果提交 → 寫檔／刪檔 → **自動發 Reload**；預覽後設定被更動回 409 | Engineer |
+| POST | `/DbCoordinator/DeleteSource` | `{ name }` 逐台刪除（JSON 移到 `_deleted/`）→ 自動發 Reload | Engineer |
 
 ---
 
@@ -153,7 +158,8 @@ JSON 內**不放 Id 也不放 Sequence**：
 ## 7. Reload 機制（Web → Engine 即時生效）
 
 ```
-使用者改完 Excel → 跑巨集生成新 JSON → 切到 Web /DbCoordinator → 按「通知 Engine 重新載入 JSON」
+使用者在 Web /DbCoordinator 匯入 Excel → 預覽確認 → Web 寫 JSON → Controller 自動發 Reload
+（或手動放檔後按「通知 Engine 重新載入 JSON」）
     ↓
 DbCoordinatorReloadPublisher (Web Singleton + IHostedService)
     ↓ MQTT 發布 SCADA/Sys/DbCoordinator/Reload   QoS=1, Retain=false
@@ -178,11 +184,11 @@ DbCoordinatorReloadSubscriber (Engine BackgroundService)
 
 採用與 `/ModbusCoordinator` 一致的「左側清單 + 右側詳情」雙欄佈局：
 
-- **上方按鈕列**：「重新整理頁面」「通知 Engine 重新載入 JSON」
-- **左側「DB 通訊」卡**：列出所有已載入的 DB Coordinator（依 `DBPoint/*.json` 順序），停用者顯示灰色「停用」徽章
+- **上方按鈕列**：「下載範本」「匯出 Excel（全部／依來源 Excel 檔）」「匯入 Excel」+「重新整理頁面」「通知 Engine 重新載入 JSON」
+- **左側「DB 通訊」卡**：列出所有已載入的 DB Coordinator（依 `DBPoint/*.json` 順序），停用者顯示灰色「停用」徽章；DB 有紀錄但 JSON 已移除者顯示黃色「設定檔已移除」徽章
 - **右側「設備詳細資料」卡**：點擊左側項目後顯示該 Coordinator 的 Id / Name / PollingInterval / ConnectTimeout / MonitorEnabled / 點位數，下方附**點位列表**（SID / 名稱 / 單位 / Min / Max，名稱與單位可行內編輯）
-- 預設自動載入第一筆 Coordinator
-- 結構性編輯（增刪點位、改 Min/Max）透過 `DBPoint/DB通訊檔案產生工具.xlsm`，按右上「通知 Engine 重新載入 JSON」即時生效
+- 預設自動載入第一筆 Coordinator；詳情卡右上「刪除來源」按鈕可逐台刪除（確認後移到 `_deleted/`、自動發 Reload）
+- 結構性編輯（增刪點位、改 Min/Max、增刪 Coordinator）透過「匯出 Excel → 修改 → 匯入 Excel」，提交後自動通知 Engine 重載（見 §8.4）
 
 ### 8.2 SID 下拉清單整合
 
@@ -220,7 +226,24 @@ Engine 熱重載 → 之後 MQTT payload / Realtime 頁即帶新名稱；依 Uni
 - **寫檔路徑由 `appsettings.json` 的 `EngineDbPointConfig` 明定**（`WatchedFolder` + `MirrorFolder`，比照 `EngineModbusConfig` / `EngineOpcUaConfig` 慣例）；`WatchedFolder` 未設定時儲存回傳明確錯誤，不猜路徑
 - **reload MQTT 發布失敗不回滾**：點位已存檔，UI 提示使用者手動按「通知 Engine 重新載入 JSON」
 
-⚠️ **Excel 巨集覆蓋須知**：日後重跑 `DB通訊檔案產生工具.xlsm` 會以巨集輸出覆蓋 Web 端改的名稱/單位 — 請在 Excel 端同步維護，或以 Web 端為準時避免重跑巨集。
+ℹ️ 預覽整份都不可勾選（工作表全是錯誤／無變更、無刪除候選）時，頂部黃底與底部狀態列會說明原因（例如上傳了空白範本）；規則與 Modbus 來源共用，見 `功能說明書_Modbus來源管理.md` §預覽分類與確認規則。
+
+⚠️ **Excel 匯入覆蓋須知**：匯入 Excel 時若該工作表的名稱/單位與 Web 端改過的不同，預覽會列為「覆寫」並逐點顯示 `Name: 舊 → 新`，需勾選確認才會寫入 — 建議「先匯出再改」，讓 Excel 以現行 JSON 為底。
+
+### 8.4 Excel 匯入／匯出／刪除（取代 xlsm 巨集）
+
+共用框架與預覽／確認／刪除候選／SID 位移規則**與 Modbus 完全相同**，見 [功能說明書_Modbus來源管理.md](功能說明書_Modbus來源管理.md) §4.1；DB 來源的差異只有版面、驗證與提交後處理：
+
+| 項目 | DB 來源 |
+|------|---------|
+| 範本版面 | 第 1 列：`A1~D1` 欄位標題、`F1=ConnectTimeout G1=1000`、`H1=PollingInterval I1=1000`、`J1=MonitorEnabled K1=TRUE`（以標籤掃描第 1 列，找不到才退回巨集的 G1/I1/K1）；第 2 列起 `A~D = Name / Unit / Min / Max` |
+| 預設值 | ConnectTimeout／PollingInterval 空白 → 1000；MonitorEnabled 空白 → TRUE（接受 TRUE/FALSE/1/0/是/否/Y/N）；Min/Max 空白 → 0/100（與巨集相同） |
+| 驗證 | 名稱 ≤100 字、單位 ≤50 字、Min/Max 數字；**超過 100 點列為錯誤**（巨集是靜默截斷） |
+| JSON | `Name` = 工作表名稱、`Min/Max` 數字、`MonitorEnabled` 布林、頂層 `SourceWorkbook`；新檔 UTF-8 BOM（與 §8.3 回寫一致） |
+| 提交後 | Controller 自動發 `SCADA/Sys/DbCoordinator/Reload`；Engine `ReloadAsync` 取消全部 polling loop、依**現有** JSON 重建 → 被刪除（移到 `_deleted/`）的 Coordinator 自然停止，**Engine 不需改** |
+| 刪除 | `DBCoordinator` / `DBPoints` / 歷史資料都保留；頁面標示「設定檔已移除」；同名重新匯入 Id 不變、SID 一致 |
+
+Adapter：`ScadaEngine.Web/Services/SourceExcel/DbPointExcelAdapter.cs`；範本：`ScadaEngine.Engine/DBPoint/DB來源範本.xlsx`；測試：`ScadaEngine.Tests/SourceExcel/DbPointExcelAdapterTests.cs` + `SourceExcelRoundTripTests.cs`。
 
 ---
 
@@ -256,7 +279,7 @@ Engine 熱重載 → 之後 MQTT payload / Realtime 頁即帶新名稱；依 Uni
 - `ScadaEngine.Engine/Services/DbCoordinatorJsonLoader.cs`
 - `ScadaEngine.Engine/Services/DbCommunicationService.cs`
 - `ScadaEngine.Engine/Services/DbCoordinatorReloadSubscriber.cs`
-- `ScadaEngine.Engine/DBPoint/*.json`（含 `DB通訊檔案產生工具.xlsm`）
+- `ScadaEngine.Engine/DBPoint/*.json`（含隨 Release 附的空白範本 `DB來源範本.xlsx`；舊 `DB通訊檔案產生工具.xlsm` 已移除）
 
 ### Web
 - `ScadaEngine.Web/Features/DbCoordinator/Controllers/DbCoordinatorController.cs`
@@ -266,6 +289,8 @@ Engine 熱重載 → 之後 MQTT payload / Realtime 頁即帶新名稱；依 Uni
 - `ScadaEngine.Web/Features/DbCoordinator/Views/Index.cshtml`
 - `ScadaEngine.Web/Services/DbCoordinatorService.cs`
 - `ScadaEngine.Web/Services/DbPointConfigFileService.cs` — 點位名稱/單位回寫 JSON + UPSERT DBPoints
+- `ScadaEngine.Web/Services/SourceExcel/` — Excel 匯入共用框架（`SourceConfigFileIo` 檔案 I/O、`DbPointExcelAdapter`、`SourceExcelDiffBuilder`、`SourceExcelImportCoordinator`、`SourceExcelTemplateWriter`）
+- `ScadaEngine.Web/Features/Shared/Models/SourceExcel*.cs`、`Features/Shared/Views/_SourceExcelImport.cshtml`、`wwwroot/js/common/source-excel-import.js`、`wwwroot/css/source-excel-import.css` — 匯入 DTO + 共用工具列／預覽 Modal
 - `ScadaEngine.Web/Services/DbCoordinatorReloadPublisher.cs`
 - `ScadaEngine.Web/wwwroot/css/dbcoordinator.css`
 - `ScadaEngine.Web/wwwroot/js/dbcoordinator.js`

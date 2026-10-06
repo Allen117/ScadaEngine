@@ -53,4 +53,5 @@
   <data name="modbuscoordinator.api.structure_changed" xml:space="preserve"><value>Point count or order cannot be changed</value></data>
   <data name="modbuscoordinator.api.invalid_point" xml:space="preserve"><value>Invalid point data</value></data>
   <data name="modbuscoordinator.api.save_failed" xml:space="preserve"><value>Save failed</value></data>
+  <data name="modbuscoordinator.api.excel_ext_invalid" xml:space="preserve"><value>Only .xlsx / .xlsm files are accepted</value></data>
 </root>

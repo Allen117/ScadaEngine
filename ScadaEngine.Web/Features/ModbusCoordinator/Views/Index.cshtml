@@ -1,14 +1,26 @@
 @using ScadaEngine.Engine.Models
+@using ScadaEngine.Web.Features.Shared.Models
 @model List<CoordinatorModel>
 @{
     ViewData["Title"] = Localizer["modbuscoordinator.title"].Value;
     Layout = "~/Views/Shared/_Layout.cshtml";
+    var sourceExcel = ViewBag.SourceExcel as SourceExcelImportViewModel ?? new SourceExcelImportViewModel { BaseUrl = "/ModbusCoordinator", Kind = "modbus" };
+    var missingConfigNames = ViewBag.MissingConfigNames as List<string> ?? new List<string>();
+    var missingSet = new HashSet<string>(missingConfigNames, StringComparer.OrdinalIgnoreCase);
+    var pendingConfigNames = ViewBag.PendingConfigNames as List<string> ?? new List<string>();
 }
 
 <link rel="stylesheet" href="~/css/modbuscoordinator.css" />
 
 <div class="container-fluid mt-4">
-    <h4 class="mb-3"><i class="fas fa-network-wired me-2"></i>@Localizer["modbuscoordinator.title"]</h4>
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <h4 class="mb-0"><i class="fas fa-network-wired me-2"></i>@Localizer["modbuscoordinator.title"]</h4>
+        @if (User.IsInRole("Engineer"))
+        {
+            <!-- Excel 匯入 / 匯出 / 範本（共用 partial，含預覽與確認 Modal） -->
+            <partial name="~/Features/Shared/Views/_SourceExcelImport.cshtml" model="sourceExcel" />
+        }
+    </div>
 
     <div class="row">
         <!-- 左側選單 -->
@@ -40,6 +52,10 @@
                                         @if (!c.isMonitorEnabled)
                                         {
                                             <span class="badge bg-secondary ms-1" style="font-size:.6rem;">@Localizer["modbuscoordinator.badge.disabled"]</span>
+                                        }
+                                        @if (missingSet.Contains(c.szName))
+                                        {
+                                            <span class="badge bg-warning text-dark ms-1 srcxl-missing-badge">@Localizer["modbuscoordinator.badge.config_missing"]</span>
                                         }
                                     </a>
                                     <div class="sub-menu" style="display:none;">
@@ -74,6 +90,10 @@
                                     {
                                         <span class="badge bg-secondary ms-1" style="font-size:.6rem;">@Localizer["modbuscoordinator.badge.disabled"]</span>
                                     }
+                                    @if (missingSet.Contains(c.szName))
+                                    {
+                                        <span class="badge bg-warning text-dark ms-1 srcxl-missing-badge">@Localizer["modbuscoordinator.badge.config_missing"]</span>
+                                    }
                                 </a>
                             }
                         }
@@ -99,12 +119,22 @@
                     </h6>
                     @if (User.IsInRole("Engineer"))
                     {
-                        <button class="btn btn-outline-primary btn-sm" id="btnOpenPoints" style="display:none;">
-                            <i class="fas fa-list-ol me-1"></i>@Localizer["modbuscoordinator.points.title"]
-                        </button>
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-outline-primary btn-sm" id="btnOpenPoints" style="display:none;">
+                                <i class="fas fa-list-ol me-1"></i>@Localizer["modbuscoordinator.points.title"]
+                            </button>
+                            <!-- 逐台刪除：不必上傳 Excel 也能刪（確認後搬到 _deleted/，Engine 停止採集） -->
+                            <button class="btn btn-outline-danger btn-sm" id="btnDeleteSource" style="display:none;">
+                                <i class="fas fa-trash-alt me-1"></i>@Localizer["modbuscoordinator.btn.delete_source"]
+                            </button>
+                        </div>
                     }
                 </div>
                 <div class="card-body" id="detailBody">
+                    <!-- Coordinator 在 DB 中存在、但 JSON 已移除 -->
+                    <div id="configMissingNote" class="alert alert-warning py-2 small" style="display:none;">
+                        <i class="fas fa-exclamation-triangle me-1"></i>@Localizer["modbuscoordinator.msg.config_missing_hint"]
+                    </div>
                     @if (Model.Any())
                     {
                         <!-- 完整欄位（單一 ModbusID 時顯示） -->
@@ -217,6 +247,8 @@
 @section Scripts {
     <script>
         window._modbusCoordinatorData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model));
+        window._modbusMissingConfig = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(missingConfigNames));
     </script>
-    <script src="~/js/modbuscoordinator.js"></script>
+    <script src="~/js/common/source-excel-import.js" asp-append-version="true"></script>
+    <script src="~/js/modbuscoordinator.js" asp-append-version="true"></script>
 }

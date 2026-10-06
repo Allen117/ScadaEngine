@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="srcxl.btn.template" xml:space="preserve"><value>下載範本</value></data>
+  <data name="srcxl.btn.template_hint" xml:space="preserve"><value>下載空白 Excel 範本（一張工作表 = 一台設備）</value></data>
+  <data name="srcxl.btn.export_all" xml:space="preserve"><value>匯出 Excel</value></data>
+  <data name="srcxl.btn.export_hint" xml:space="preserve"><value>把現行設定匯出為 Excel（可修改後再匯入；建議先匯出再改）</value></data>
+  <data name="srcxl.export.by_workbook" xml:space="preserve"><value>依來源 Excel 檔匯出</value></data>
+  <data name="srcxl.btn.import" xml:space="preserve"><value>匯入 Excel</value></data>
+  <data name="srcxl.btn.import_hint" xml:space="preserve"><value>上傳 .xlsx / .xlsm，先預覽差異再確認寫入</value></data>
+  <data name="srcxl.preview.title" xml:space="preserve"><value>匯入預覽</value></data>
+  <data name="srcxl.preview.loading" xml:space="preserve"><value>解析中…</value></data>
+  <data name="srcxl.preview.hint" xml:space="preserve"><value>以下為解析結果與既有設定的比對，尚未寫入任何檔案。勾選要匯入／刪除的項目後按「確認匯入」。</value></data>
+  <data name="srcxl.preview.check_all" xml:space="preserve"><value>全選可匯入的工作表</value></data>
+  <data name="srcxl.col.sheet" xml:space="preserve"><value>工作表（設備）</value></data>
+  <data name="srcxl.col.kind" xml:space="preserve"><value>狀態</value></data>
+  <data name="srcxl.col.points" xml:space="preserve"><value>點位數</value></data>
+  <data name="srcxl.col.detail" xml:space="preserve"><value>差異／問題</value></data>
+  <data name="srcxl.preview.delete_candidates" xml:space="preserve"><value>刪除候選（同一份 Excel 先前匯入、這次沒有的設備）</value></data>
+  <data name="srcxl.preview.delete_candidates_hint" xml:space="preserve"><value>預設勾選；取消勾選即保留。刪除 = Engine 停止採集、設定檔搬到 _deleted 備份，資料庫與歷史資料保留。</value></data>
+  <data name="srcxl.preview.others" xml:space="preserve"><value>其他未包含在這份 Excel 的既有設定</value></data>
+  <data name="srcxl.preview.others_hint" xml:space="preserve"><value>其他盤或舊流程手動放入的設定，預設不刪；只有勾選才會刪除。</value></data>
+  <data name="srcxl.sidshift.warning" xml:space="preserve"><value>有工作表的點位在中間插入、刪除或換順序，SID 會從該點起位移：歷史趨勢、警報規則、計算點位、控制、ScadaPage 綁點都會對到錯的點位。建置期重排可接受，上線後請務必確認。</value></data>
+  <data name="srcxl.sidshift.ack" xml:space="preserve"><value>我了解歷史資料與控制對應會錯位，仍要覆寫</value></data>
+  <data name="srcxl.btn.cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="srcxl.btn.commit" xml:space="preserve"><value>確認匯入</value></data>
+  <data name="srcxl.confirm.title" xml:space="preserve"><value>請確認</value></data>
+  <data name="srcxl.confirm.yes" xml:space="preserve"><value>確定執行</value></data>
+  <data name="srcxl.kind.added" xml:space="preserve"><value>新增</value></data>
+  <data name="srcxl.kind.overwrite" xml:space="preserve"><value>覆寫</value></data>
+  <data name="srcxl.kind.unchanged" xml:space="preserve"><value>無變更</value></data>
+  <data name="srcxl.kind.error" xml:space="preserve"><value>錯誤</value></data>
+  <data name="srcxl.detail.more" xml:space="preserve"><value>…還有 {count} 項</value></data>
+  <data name="srcxl.detail.rename_hint" xml:space="preserve"><value>點位與刪除候選「{from}」完全相同，可能是工作表改名：將建立新設備（新 CoordinatorId），舊設備刪除後歷史資料不會接上</value></data>
+  <data name="srcxl.detail.source_workbook" xml:space="preserve"><value>來源：{name}</value></data>
+  <data name="srcxl.detail.source_unknown" xml:space="preserve"><value>來源：未知（手動放入）</value></data>
+  <data name="srcxl.detail.sid_shift" xml:space="preserve"><value>第 {index} 點起 SID 位移（高風險，需另外勾選）</value></data>
+  <data name="srcxl.detail.tail_removed" xml:space="preserve"><value>尾端移除 {count} 點（該 SID 的歷史資料將孤立）</value></data>
+  <data name="srcxl.change.added" xml:space="preserve"><value>(新增)</value></data>
+  <data name="srcxl.change.removed" xml:space="preserve"><value>(移除)</value></data>
+  <data name="srcxl.msg.preview_failed" xml:space="preserve"><value>預覽失敗（HTTP {status}）</value></data>
+  <data name="srcxl.msg.call_failed_with" xml:space="preserve"><value>呼叫失敗：{error}</value></data>
+  <data name="srcxl.msg.nothing_selected" xml:space="preserve"><value>尚未勾選任何項目</value></data>
+  <data name="srcxl.msg.no_selectable_errors" xml:space="preserve"><value>沒有可匯入的項目：{count} 張工作表有錯誤（勾選框已鎖住）。請依「明細」欄紅字修正 Excel（例如填入 IP、至少一筆點位）後重新上傳。</value></data>
+  <data name="srcxl.msg.no_selectable_unchanged" xml:space="preserve"><value>沒有可匯入或刪除的項目：所有工作表皆與既有設定相同。</value></data>
+  <data name="srcxl.msg.selection_summary" xml:space="preserve"><value>將匯入 {imports} 張工作表、刪除 {deletes} 個設定</value></data>
+  <data name="srcxl.msg.committing" xml:space="preserve"><value>寫入中…</value></data>
+  <data name="srcxl.msg.commit_success" xml:space="preserve"><value>匯入完成，頁面即將重新整理</value></data>
+  <data name="srcxl.msg.commit_failed" xml:space="preserve"><value>匯入失敗（HTTP {status}）</value></data>
+  <data name="srcxl.confirm.overwrite_list" xml:space="preserve"><value>以下 {count} 台設備的設定將被覆寫：</value></data>
+  <data name="srcxl.confirm.delete_list" xml:space="preserve"><value>以下 {count} 個設定將被刪除：</value></data>
+  <data name="srcxl.confirm.delete_note" xml:space="preserve"><value>刪除後 Engine 停止採集；設定檔備份於 _deleted 資料夾，資料庫與歷史資料保留，重新匯入同名工作表即可恢復。</value></data>
+  <data name="srcxl.confirm.delete_one" xml:space="preserve"><value>確定要刪除「{name}」的設定？</value></data>
+  <data name="srcxl.msg.delete_success" xml:space="preserve"><value>已刪除</value></data>
+  <data name="srcxl.msg.delete_failed" xml:space="preserve"><value>刪除失敗（HTTP {status}）</value></data>
+</root>

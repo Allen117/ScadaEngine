@@ -375,15 +375,30 @@ public class ModbusConfigService
     /// <summary>
     /// 監控設定檔變更
     /// </summary>
-    /// <param name="onConfigChanged">設定檔變更時的回調函式</param>
+    /// <param name="onConfigChanged">設定檔新增 / 變更時的回調函式（參數：設定檔完整路徑）</param>
+    /// <param name="onConfigDeleted">
+    /// 設定檔移除時的回調函式（參數：被移除的設定檔完整路徑）。
+    /// Web 端「刪除設備」是把 {name}.json 搬到 _deleted/ 子資料夾，Windows 對搬離監控範圍的檔案只發 Deleted 事件（已實測）；
+    /// 同資料夾內 X.json → Y.json 改名也視為 X 移除 + Y 新增。
+    /// </param>
     /// <returns>檔案監控器</returns>
-    public FileSystemWatcher CreateConfigFileWatcher(Action<string> onConfigChanged)
+    public FileSystemWatcher CreateConfigFileWatcher(Action<string> onConfigChanged, Action<string>? onConfigDeleted = null)
     {
+        // 資料夾不存在時 FileSystemWatcher 建構會丟例外 → 先建好（新裝機可能只有空資料夾甚至沒有）
+        Directory.CreateDirectory(_szConfigFolderPath);
+
         var watcher = new FileSystemWatcher(_szConfigFolderPath)
         {
             Filter = "*.json",
             EnableRaisingEvents = true,
             IncludeSubdirectories = false
+        };
+
+        watcher.Deleted += (sender, e) =>
+        {
+            if (!IsJsonConfigFile(e.FullPath)) return;
+            _logger.LogInformation("偵測到設定檔移除: {FilePath}", e.FullPath);
+            onConfigDeleted?.Invoke(e.FullPath!);
         };
 
         watcher.Changed += async (sender, e) =>
@@ -410,7 +425,26 @@ public class ModbusConfigService
         // 舊名符合而以 e.FullPath=X.json.bak 觸發，IsJsonConfigFile 守衛在此擋掉，避免吃到 .bak 生幽靈 coordinator。
         watcher.Renamed += async (sender, e) =>
         {
-            if (!IsJsonConfigFile(e.FullPath)) return;
+            var isOldJson = IsJsonConfigFile(e.OldFullPath);
+            var isNewJson = IsJsonConfigFile(e.FullPath);
+            var isSameDir = string.Equals(Path.GetDirectoryName(e.OldFullPath), Path.GetDirectoryName(e.FullPath),
+                                          StringComparison.OrdinalIgnoreCase);
+
+            // 舊名是 .json 且「改成另一個 .json 名」或「搬離資料夾」→ 舊設備視為移除。
+            // X.json → X.json.bak（File.Replace 中間步驟，同資料夾、新名非 .json）不算移除，否則每次熱編輯都會把設備停掉。
+            if (isOldJson && (isNewJson || !isSameDir))
+            {
+                _logger.LogInformation("偵測到設定檔改名 / 搬離，舊設定視為移除: {OldPath}", e.OldFullPath);
+                onConfigDeleted?.Invoke(e.OldFullPath!);
+            }
+
+            if (!isNewJson) return;
+
+            // 新名落在監控資料夾外（搬進子資料夾）不載入
+            if (!string.Equals(Path.GetDirectoryName(e.FullPath), _szConfigFolderPath.TrimEnd(Path.DirectorySeparatorChar),
+                               StringComparison.OrdinalIgnoreCase))
+                return;
+
             _logger.LogInformation("偵測到設定檔改名（原子替換）: {FilePath}", e.FullPath);
 
             await Task.Delay(500);

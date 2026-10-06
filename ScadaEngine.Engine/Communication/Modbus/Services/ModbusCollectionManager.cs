@@ -27,6 +27,13 @@ public class ModbusCollectionManager : IDisposable
     private readonly ConcurrentDictionary<string, System.Threading.Timer> _reloadDebounceTimers = new(StringComparer.OrdinalIgnoreCase);
     private const int RELOAD_DEBOUNCE_MS = 1000;
 
+    /// <summary>
+    /// 設定檔名（= Coordinator 名稱，不含副檔名、不分大小寫）→ deviceKey(IP:Port)。
+    /// 設定檔被移除（Web 刪除設備 → 搬到 _deleted/）時據此找到並停止對應採集；
+    /// 同一設定檔改 IP/Port 重載時也靠它停掉舊連線。
+    /// </summary>
+    private readonly ConcurrentDictionary<string, string> _deviceKeyByConfigName = new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>true 時各採集迴圈跳過資料讀取（連線保持）</summary>
     private volatile bool _isSuspended = false;
 
@@ -73,9 +80,14 @@ public class ModbusCollectionManager : IDisposable
             // 載入所有設備配置
             var deviceConfigs = await _configService.LoadAllDeviceConfigsAsync();
 
+            // 啟動配置檔案監控 — 一定要在「有沒有設備」判斷之前：
+            // 新裝機 Modbus\ 是空的（Release 只帶範本），設備全靠 Web 匯入 Excel 事後寫入，
+            // 若空載時不掛 watcher，匯入的 JSON 要等 Engine 重啟才會被採集。
+            StartConfigFileWatcher();
+
             if (deviceConfigs.Count == 0)
             {
-                _logger.LogWarning("未找到有效的 Modbus 設備配置，採集服務將以空載模式執行");
+                _logger.LogWarning("未找到有效的 Modbus 設備配置，採集服務將以空載模式執行（watcher 已啟動，匯入設定後自動開始採集）");
                 return;
             }
 
@@ -84,9 +96,6 @@ public class ModbusCollectionManager : IDisposable
             {
                 StartDeviceCollection(config);
             }
-
-            // 啟動配置檔案監控
-            StartConfigFileWatcher();
 
             _logger.LogInformation("Modbus 採集管理器啟動完成，共管理 {DeviceCount} 個設備", deviceConfigs.Count);
         }
@@ -113,6 +122,10 @@ public class ModbusCollectionManager : IDisposable
             var communicationService = new ModbusCommunicationService(deviceConfig, logger, _mqttPublishService);
 
             _communicationServices[szDeviceKey] = communicationService;
+
+            // 記錄設定檔 → 連線鍵對照（設定檔移除時停止採集用）
+            if (!string.IsNullOrEmpty(deviceConfig.szCoordinatorName))
+                _deviceKeyByConfigName[deviceConfig.szCoordinatorName] = szDeviceKey;
 
             // 建立採集任務的取消令牌
             var cancellationTokenSource = new CancellationTokenSource();
@@ -233,7 +246,7 @@ public class ModbusCollectionManager : IDisposable
     {
         try
         {
-            _configFileWatcher = _configService.CreateConfigFileWatcher(DebounceReloadDeviceConfig);
+            _configFileWatcher = _configService.CreateConfigFileWatcher(DebounceReloadDeviceConfig, HandleConfigFileDeleted);
 
             _logger.LogInformation("配置檔案監控已啟動");
         }
@@ -287,6 +300,16 @@ public class ModbusCollectionManager : IDisposable
 
             var szDeviceKey = GetDeviceKey(newConfig);
 
+            // 同一設定檔改了 IP / Port → 舊連線鍵不同，必須先停掉舊連線（否則舊設備會繼續採集）
+            if (!string.IsNullOrEmpty(newConfig.szCoordinatorName)
+                && _deviceKeyByConfigName.TryGetValue(newConfig.szCoordinatorName, out var szOldKey)
+                && !string.Equals(szOldKey, szDeviceKey, StringComparison.OrdinalIgnoreCase)
+                && !IsDeviceKeyUsedByOtherConfig(szOldKey, newConfig.szCoordinatorName))
+            {
+                _logger.LogInformation("設定檔 {Name} 連線位址變更 {Old} → {New}，停止舊連線", newConfig.szCoordinatorName, szOldKey, szDeviceKey);
+                await StopDeviceCollectionAsync(szOldKey);
+            }
+
             // 停止舊的採集任務
             await StopDeviceCollectionAsync(szDeviceKey);
 
@@ -300,6 +323,55 @@ public class ModbusCollectionManager : IDisposable
             _logger.LogError(ex, "重新載入設備配置時發生錯誤");
         }
     }
+
+    /// <summary>
+    /// 設定檔被移除（Web 刪除設備 → 搬到 _deleted/、或改名）— 依「檔名 → deviceKey」對照停止該設備採集。
+    /// FileSystemWatcher 回調執行緒不可阻塞，丟到 Task.Run。
+    /// </summary>
+    /// <param name="szDeletedFilePath">被移除的設定檔完整路徑</param>
+    private void HandleConfigFileDeleted(string szDeletedFilePath)
+    {
+        if (_isDisposed) return;
+        _ = Task.Run(() => RemoveDeviceForConfigAsync(szDeletedFilePath));
+    }
+
+    private async Task RemoveDeviceForConfigAsync(string szDeletedFilePath)
+    {
+        try
+        {
+            var szName = Path.GetFileNameWithoutExtension(szDeletedFilePath);
+
+            // 取消尚未執行的重載（避免對已不存在的檔案重載）
+            if (_reloadDebounceTimers.TryRemove(szDeletedFilePath, out var timer))
+                timer.Dispose();
+
+            if (!_deviceKeyByConfigName.TryRemove(szName, out var szDeviceKey))
+            {
+                _logger.LogDebug("設定檔移除但無對應採集（可能本就載入失敗）: {Name}", szName);
+                return;
+            }
+
+            // 兩個設定檔指到同一 IP:Port 時共用一條連線 — 另一個還在就不停
+            if (IsDeviceKeyUsedByOtherConfig(szDeviceKey, szName))
+            {
+                _logger.LogInformation("設定檔 {Name} 已移除，但 {DeviceKey} 仍被其他設定檔使用，保留連線", szName, szDeviceKey);
+                return;
+            }
+
+            await StopDeviceCollectionAsync(szDeviceKey);
+            _logger.LogInformation("設定檔已移除，停止採集: {Name} ({DeviceKey})。資料庫與歷史資料保留", szName, szDeviceKey);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "處理設定檔移除時發生錯誤: {FilePath}", szDeletedFilePath);
+        }
+    }
+
+    /// <summary>deviceKey 是否仍被 szExceptName 以外的設定檔使用</summary>
+    private bool IsDeviceKeyUsedByOtherConfig(string szDeviceKey, string szExceptName)
+        => _deviceKeyByConfigName.Any(kv =>
+            string.Equals(kv.Value, szDeviceKey, StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(kv.Key, szExceptName, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
     /// 停止指定設備的採集

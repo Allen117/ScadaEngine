@@ -3,35 +3,75 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 using ScadaEngine.Engine.Data.Interfaces;
 using ScadaEngine.Web.Features.ModbusCoordinator.Models;
+using ScadaEngine.Web.Features.Shared.Models;
 using ScadaEngine.Web.Services;
+using ScadaEngine.Web.Services.SourceExcel;
 
 namespace ScadaEngine.Web.Features.ModbusCoordinator.Controllers;
 
 [Authorize(Roles = "Engineer")]
 public class ModbusCoordinatorController : Controller
 {
+    private const string XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
     private readonly IDataRepository _repository;
     private readonly ModbusConfigFileService _configFileService;
     private readonly ControlEventLogger _controlEventLogger;
+    private readonly SourceExcelImportCoordinator _importCoordinator;
+    private readonly ModbusExcelAdapter _excelAdapter;
     private readonly IStringLocalizer<ModbusCoordinatorController> _l;
 
     public ModbusCoordinatorController(
         IDataRepository repository,
         ModbusConfigFileService configFileService,
         ControlEventLogger controlEventLogger,
+        SourceExcelImportCoordinator importCoordinator,
+        ModbusExcelAdapter excelAdapter,
         IStringLocalizer<ModbusCoordinatorController> localizer)
     {
         _repository = repository;
         _configFileService = configFileService;
         _controlEventLogger = controlEventLogger;
+        _importCoordinator = importCoordinator;
+        _excelAdapter = excelAdapter;
         _l = localizer;
     }
 
     [HttpGet("/ModbusCoordinator")]
     public async Task<IActionResult> Index()
     {
-        var coordinators = await _repository.GetAllCoordinatorsAsync();
-        return View(coordinators.ToList());
+        var coordinators = (await _repository.GetAllCoordinatorsAsync()).ToList();
+
+        // 既有 JSON 一覽：Coordinator 在 DB 中存在、但 JSON 不存在 → 頁面標示「設定檔已移除」
+        var existing = await _importCoordinator.ListExistingAsync(_excelAdapter);
+        var existingNames = new HashSet<string>(existing.Select(e => e.Name), StringComparer.OrdinalIgnoreCase);
+        ViewBag.MissingConfigNames = coordinators
+            .Where(c => !existingNames.Contains(c.szName))
+            .Select(c => c.szName)
+            .ToList();
+
+        // 反向：JSON 已存在但 DB 還沒有 → Engine 尚未載入（Engine 未啟動 / watcher 未接到 / 設定驗證失敗），頁面列為「待 Engine 載入」
+        var coordinatorNames = new HashSet<string>(coordinators.Select(c => c.szName), StringComparer.OrdinalIgnoreCase);
+        ViewBag.PendingConfigNames = existing
+            .Select(e => e.Name)
+            .Where(n => !coordinatorNames.Contains(n))
+            .OrderBy(n => n, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        ViewBag.SourceExcel = new SourceExcelImportViewModel
+        {
+            BaseUrl = "/ModbusCoordinator",
+            Kind = "modbus",
+            Workbooks = existing
+                .Select(e => e.SourceWorkbook)
+                .Where(w => !string.IsNullOrWhiteSpace(w))
+                .Select(w => w!)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(w => w, StringComparer.OrdinalIgnoreCase)
+                .ToList(),
+        };
+
+        return View(coordinators);
     }
 
     [HttpPost("/ModbusCoordinator/UpdateDeviceName")]
@@ -120,5 +160,67 @@ public class ModbusCoordinatorController : Controller
         }
 
         return Ok(new { success = true, changedCount = result.changes.Count });
+    }
+
+    // ───────────────────────────── Excel 匯入 / 匯出 / 刪除（流程見 SourceExcelImportCoordinator） ─────────────────────────────
+
+    /// <summary>下載空白 Excel 範本</summary>
+    [HttpGet("/ModbusCoordinator/ImportTemplate")]
+    public IActionResult ImportTemplate()
+        => File(_importCoordinator.BuildTemplate(_excelAdapter), XLSX_MIME, _excelAdapter.TemplateFileName);
+
+    /// <summary>匯出現行設定（全部，或 ?workbook= 指定來源 Excel 檔）</summary>
+    [HttpGet("/ModbusCoordinator/ExportExcel")]
+    public async Task<IActionResult> ExportExcel(string? workbook)
+    {
+        var bytes = await _importCoordinator.ExportAsync(_excelAdapter, workbook);
+        var szStamp = DateTime.Now.ToString("yyyyMMdd_HHmm");
+        var szFileName = string.IsNullOrWhiteSpace(workbook)
+            ? $"{_excelAdapter.ExportFileNamePrefix}_{szStamp}.xlsx"
+            : $"{Path.GetFileNameWithoutExtension(workbook)}_{szStamp}.xlsx";
+        return File(bytes, XLSX_MIME, szFileName);
+    }
+
+    /// <summary>上傳 Excel → 解析、驗證、比對既有設定 → 回傳預覽與 token（不寫檔）</summary>
+    [HttpPost("/ModbusCoordinator/ImportPreview")]
+    [RequestSizeLimit(20_000_000)]
+    public async Task<IActionResult> ImportPreview(IFormFile? file)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest(new { success = false, message = _l["modbuscoordinator.api.param_error"].Value });
+
+        var szExt = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (szExt != ".xlsx" && szExt != ".xlsm")
+            return BadRequest(new { success = false, message = _l["modbuscoordinator.api.excel_ext_invalid"].Value });
+
+        using var ms = new MemoryStream();
+        await file.CopyToAsync(ms);
+        ms.Position = 0;
+
+        var result = await _importCoordinator.PreviewAsync(_excelAdapter, ms, file.FileName, User.Identity?.Name ?? "anonymous");
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    /// <summary>帶預覽 token + 勾選結果提交寫檔；預覽後設定被更動回 409</summary>
+    [HttpPost("/ModbusCoordinator/ImportCommit")]
+    public async Task<IActionResult> ImportCommit([FromBody] SourceExcelCommitRequest request)
+    {
+        if (request == null)
+            return BadRequest(new { success = false, message = _l["modbuscoordinator.api.param_error"].Value });
+
+        var result = await _importCoordinator.CommitAsync(_excelAdapter, request, User.Identity?.Name ?? "anonymous");
+        if (result.Success) return Ok(result);
+        return result.Conflict ? StatusCode(409, result) : BadRequest(result);
+    }
+
+    /// <summary>逐台刪除設備設定（移到 _deleted/ 備份；Engine watcher 收到 Deleted 即停止採集）</summary>
+    [HttpPost("/ModbusCoordinator/DeleteSource")]
+    public async Task<IActionResult> DeleteSource([FromBody] SourceExcelDeleteRequest request)
+    {
+        if (request == null || string.IsNullOrWhiteSpace(request.Name))
+            return BadRequest(new { success = false, message = _l["modbuscoordinator.api.param_error"].Value });
+
+        var result = await _importCoordinator.DeleteAsync(_excelAdapter, request.Name, User.Identity?.Name ?? "anonymous");
+        return result.Success ? Ok(result) : NotFound(result);
     }
 }

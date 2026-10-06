@@ -1,0 +1,138 @@
+@model ScadaEngine.Web.Features.Shared.Models.SourceExcelImportViewModel
+@*
+    Excel 匯入 / 匯出 / 範本 共用 partial（Modbus 來源、DB 來源兩頁共用；OPC UA 日後可直接沿用）。
+    內含：工具列（下載範本 / 匯出 Excel / 匯入 Excel）+ 預覽 Modal + 確認 Modal。
+    行為全在 wwwroot/js/common/source-excel-import.js，以 data-srcxl-base 參數化 Controller 路由前綴。
+    逐台刪除由各頁按鈕呼叫 window.SourceExcelImport.deleteSource(name)。
+*@
+<link rel="stylesheet" href="~/css/source-excel-import.css" asp-append-version="true" />
+
+<div class="srcxl-toolbar d-inline-flex flex-wrap gap-2 align-items-center"
+     data-srcxl-base="@Model.BaseUrl" data-srcxl-kind="@Model.Kind">
+    <a class="btn btn-outline-secondary btn-sm" href="@Model.BaseUrl/ImportTemplate" title="@Localizer["srcxl.btn.template_hint"]">
+        <i class="fas fa-file-download me-1"></i>@Localizer["srcxl.btn.template"]
+    </a>
+    <div class="btn-group">
+        <a class="btn btn-outline-secondary btn-sm" href="@Model.BaseUrl/ExportExcel" title="@Localizer["srcxl.btn.export_hint"]">
+            <i class="fas fa-file-export me-1"></i>@Localizer["srcxl.btn.export_all"]
+        </a>
+        @if (Model.Workbooks.Count > 0)
+        {
+            <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle dropdown-toggle-split"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                <span class="visually-hidden">@Localizer["srcxl.export.by_workbook"]</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><h6 class="dropdown-header">@Localizer["srcxl.export.by_workbook"]</h6></li>
+                @foreach (var szWorkbook in Model.Workbooks)
+                {
+                    <li><a class="dropdown-item small" href="@Model.BaseUrl/ExportExcel?workbook=@Uri.EscapeDataString(szWorkbook)">@szWorkbook</a></li>
+                }
+            </ul>
+        }
+    </div>
+    <button type="button" class="btn btn-primary btn-sm" id="srcxlBtnImport" title="@Localizer["srcxl.btn.import_hint"]">
+        <i class="fas fa-file-upload me-1"></i>@Localizer["srcxl.btn.import"]
+    </button>
+    <input type="file" id="srcxlFileInput" accept=".xlsx,.xlsm" class="d-none" />
+</div>
+
+<!-- 預覽 Modal：上傳後先比對，不寫檔；使用者勾選確認後才提交 -->
+<div class="modal fade" id="srcxlPreviewModal" tabindex="-1" aria-labelledby="srcxlPreviewTitle" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title" id="srcxlPreviewTitle">
+                    <i class="fas fa-file-excel me-1"></i>@Localizer["srcxl.preview.title"]
+                    <span class="text-muted fw-normal ms-2 small" id="srcxlWorkbookName"></span>
+                </h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="srcxlPreviewLoading" class="text-center text-muted py-4">
+                    <i class="fas fa-spinner fa-spin fa-2x mb-2 d-block"></i>@Localizer["srcxl.preview.loading"]
+                </div>
+
+                <div id="srcxlPreviewBody" style="display:none;">
+                    <div class="alert alert-danger py-2 small" id="srcxlPreviewError" style="display:none;"></div>
+
+                    <p class="small text-muted mb-2">@Localizer["srcxl.preview.hint"]</p>
+
+                    <!-- 沒有任何可勾選項目（全部錯誤／無變更、無刪除候選）時說明原因，文字由 JS 依預覽結果填入 -->
+                    <div class="alert alert-warning py-2 small fw-bold" id="srcxlNoSelectableBox" style="display:none;"></div>
+
+                    <!-- 工作表比對 -->
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle srcxl-table mb-3">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="srcxl-col-check"><input type="checkbox" class="form-check-input" id="srcxlCheckAllSheets" title="@Localizer["srcxl.preview.check_all"]" /></th>
+                                    <th>@Localizer["srcxl.col.sheet"]</th>
+                                    <th class="srcxl-col-kind">@Localizer["srcxl.col.kind"]</th>
+                                    <th class="srcxl-col-points">@Localizer["srcxl.col.points"]</th>
+                                    <th>@Localizer["srcxl.col.detail"]</th>
+                                </tr>
+                            </thead>
+                            <tbody id="srcxlSheetsBody"></tbody>
+                        </table>
+                    </div>
+
+                    <!-- 刪除候選（同一來源 Excel、這次沒帶到；預設勾選） -->
+                    <div id="srcxlDeleteSection" style="display:none;">
+                        <h6 class="mb-1"><i class="fas fa-trash-alt me-1 text-danger"></i>@Localizer["srcxl.preview.delete_candidates"]</h6>
+                        <p class="small text-muted mb-2">@Localizer["srcxl.preview.delete_candidates_hint"]</p>
+                        <table class="table table-sm align-middle srcxl-table mb-3">
+                            <tbody id="srcxlDeleteBody"></tbody>
+                        </table>
+                    </div>
+
+                    <!-- 其他未包含的設備（預設不勾、收合） -->
+                    <div id="srcxlOtherSection" style="display:none;">
+                        <a class="small text-decoration-none" data-bs-toggle="collapse" href="#srcxlOtherCollapse" role="button" aria-expanded="false">
+                            <i class="fas fa-chevron-right me-1 srcxl-collapse-icon"></i>@Localizer["srcxl.preview.others"]（<span id="srcxlOtherCount">0</span>）
+                        </a>
+                        <div class="collapse mt-2" id="srcxlOtherCollapse">
+                            <p class="small text-muted mb-2">@Localizer["srcxl.preview.others_hint"]</p>
+                            <table class="table table-sm align-middle srcxl-table mb-3">
+                                <tbody id="srcxlOtherBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- SID 位移高風險確認 -->
+                    <div class="alert alert-warning py-2 small mb-0" id="srcxlSidShiftBox" style="display:none;">
+                        <div><i class="fas fa-exclamation-triangle me-1"></i>@Localizer["srcxl.sidshift.warning"]</div>
+                        <div class="form-check mt-2 mb-0">
+                            <input class="form-check-input" type="checkbox" id="srcxlAckSidShift" />
+                            <label class="form-check-label fw-bold" for="srcxlAckSidShift">@Localizer["srcxl.sidshift.ack"]</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer py-2">
+                <span id="srcxlPreviewStatus" class="small me-auto"></span>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">@Localizer["srcxl.btn.cancel"]</button>
+                <button type="button" class="btn btn-primary btn-sm" id="srcxlBtnCommit" disabled>
+                    <i class="fas fa-check me-1"></i>@Localizer["srcxl.btn.commit"]
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 確認 Modal：列出將被覆寫 / 刪除的名稱 -->
+<div class="modal fade" id="srcxlConfirmModal" tabindex="-1" aria-labelledby="srcxlConfirmTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title" id="srcxlConfirmTitle"><i class="fas fa-exclamation-circle me-1 text-warning"></i>@Localizer["srcxl.confirm.title"]</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body small" id="srcxlConfirmBody"></div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">@Localizer["srcxl.btn.cancel"]</button>
+                <button type="button" class="btn btn-danger btn-sm" id="srcxlBtnConfirmYes">@Localizer["srcxl.confirm.yes"]</button>
+            </div>
+        </div>
+    </div>
+</div>

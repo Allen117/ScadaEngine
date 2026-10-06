@@ -1,0 +1,58 @@
+/* Excel 匯入 / 匯出 共用 partial（_SourceExcelImport.cshtml） */
+.srcxl-toolbar .btn {
+    white-space: nowrap;
+}
+
+.srcxl-table th,
+.srcxl-table td {
+    font-size: .85rem;
+    vertical-align: top;
+}
+.srcxl-col-check {
+    width: 2.2rem;
+    text-align: center;
+}
+.srcxl-col-kind {
+    width: 6rem;
+}
+.srcxl-col-points {
+    width: 6rem;
+}
+.srcxl-detail {
+    font-size: .8rem;
+    line-height: 1.35;
+}
+
+/* 差異 / 問題清單 */
+.srcxl-list {
+    margin: .15rem 0 .25rem;
+    padding-left: 1.1rem;
+}
+.srcxl-list li {
+    word-break: break-all;
+}
+.srcxl-list-change li {
+    color: #495057;
+}
+.srcxl-list-error li {
+    color: #dc3545;
+    font-weight: 600;
+    font-size: .85rem;
+}
+.srcxl-list-warn li {
+    color: #6c757d;
+}
+
+/* 收合箭頭 */
+.srcxl-collapse-icon {
+    font-size: .7rem;
+    transition: transform .2s;
+}
+a[aria-expanded="true"] .srcxl-collapse-icon {
+    transform: rotate(90deg);
+}
+
+/* 設備頁「設定檔已移除」提示 */
+.srcxl-missing-badge {
+    font-size: .6rem;
+}

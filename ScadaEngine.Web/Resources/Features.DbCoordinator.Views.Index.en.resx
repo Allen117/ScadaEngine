@@ -87,4 +87,7 @@
   <data name="dbcoord.msg.success_default" xml:space="preserve"><value>Success</value></data>
   <data name="dbcoord.msg.failure_default" xml:space="preserve"><value>Failed</value></data>
   <data name="dbcoord.msg.call_failed_with" xml:space="preserve"><value>Call failed: {error}</value></data>
+  <data name="dbcoord.badge.config_missing" xml:space="preserve"><value>Config removed</value></data>
+  <data name="dbcoord.btn.delete_source" xml:space="preserve"><value>Delete Source</value></data>
+  <data name="dbcoord.msg.config_missing_hint" xml:space="preserve"><value>This source's config file has been removed and the Engine stopped polling it; DB rows and history are kept. Re-import a worksheet with the same name to restore.</value></data>
 </root>

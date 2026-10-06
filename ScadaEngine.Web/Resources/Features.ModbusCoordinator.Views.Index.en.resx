@@ -104,4 +104,7 @@ Note:
 • SID stays unchanged after an address change; history data continues seamlessly (measuring a different register before/after is an operations responsibility)
 • Changing data type affects register read length and value conversion; make sure it matches the device register map
 • Labels of deployed SCADA page widgets and LogicFlow nodes will NOT be renamed automatically; re-bind them on those pages</value></data>
+  <data name="modbuscoordinator.badge.config_missing" xml:space="preserve"><value>Config removed</value></data>
+  <data name="modbuscoordinator.btn.delete_source" xml:space="preserve"><value>Delete Device</value></data>
+  <data name="modbuscoordinator.msg.config_missing_hint" xml:space="preserve"><value>This device's config file has been removed and the Engine stopped polling it; DB rows and history are kept. Re-import a worksheet with the same name to restore.</value></data>
 </root>

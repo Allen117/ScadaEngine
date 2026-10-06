@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="srcxl.btn.template" xml:space="preserve"><value>Download Template</value></data>
+  <data name="srcxl.btn.template_hint" xml:space="preserve"><value>Download a blank Excel template (one worksheet = one device)</value></data>
+  <data name="srcxl.btn.export_all" xml:space="preserve"><value>Export Excel</value></data>
+  <data name="srcxl.btn.export_hint" xml:space="preserve"><value>Export the current configuration to Excel (edit and re-import; exporting first is recommended)</value></data>
+  <data name="srcxl.export.by_workbook" xml:space="preserve"><value>Export by source workbook</value></data>
+  <data name="srcxl.btn.import" xml:space="preserve"><value>Import Excel</value></data>
+  <data name="srcxl.btn.import_hint" xml:space="preserve"><value>Upload .xlsx / .xlsm; preview the differences before anything is written</value></data>
+  <data name="srcxl.preview.title" xml:space="preserve"><value>Import Preview</value></data>
+  <data name="srcxl.preview.loading" xml:space="preserve"><value>Parsing…</value></data>
+  <data name="srcxl.preview.hint" xml:space="preserve"><value>Below is the comparison against the existing configuration. Nothing has been written yet. Tick the items to import / delete, then click "Confirm Import".</value></data>
+  <data name="srcxl.preview.check_all" xml:space="preserve"><value>Select all importable worksheets</value></data>
+  <data name="srcxl.col.sheet" xml:space="preserve"><value>Worksheet (Device)</value></data>
+  <data name="srcxl.col.kind" xml:space="preserve"><value>Status</value></data>
+  <data name="srcxl.col.points" xml:space="preserve"><value>Points</value></data>
+  <data name="srcxl.col.detail" xml:space="preserve"><value>Differences / Issues</value></data>
+  <data name="srcxl.preview.delete_candidates" xml:space="preserve"><value>Delete candidates (previously imported from this workbook, missing this time)</value></data>
+  <data name="srcxl.preview.delete_candidates_hint" xml:space="preserve"><value>Ticked by default; untick to keep. Delete = the Engine stops polling and the config file moves to _deleted; DB rows and history are kept.</value></data>
+  <data name="srcxl.preview.others" xml:space="preserve"><value>Other existing configs not in this workbook</value></data>
+  <data name="srcxl.preview.others_hint" xml:space="preserve"><value>Configs from other panels or placed manually; not deleted unless you tick them.</value></data>
+  <data name="srcxl.sidshift.warning" xml:space="preserve"><value>Some worksheets insert, delete or reorder points in the middle. SIDs shift from that point on: history trends, alarm rules, calc points, controls and ScadaPage bindings will point at the wrong tags. Acceptable during commissioning; double-check after go-live.</value></data>
+  <data name="srcxl.sidshift.ack" xml:space="preserve"><value>I understand history and control mappings will be misaligned; overwrite anyway</value></data>
+  <data name="srcxl.btn.cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="srcxl.btn.commit" xml:space="preserve"><value>Confirm Import</value></data>
+  <data name="srcxl.confirm.title" xml:space="preserve"><value>Please Confirm</value></data>
+  <data name="srcxl.confirm.yes" xml:space="preserve"><value>Proceed</value></data>
+  <data name="srcxl.kind.added" xml:space="preserve"><value>New</value></data>
+  <data name="srcxl.kind.overwrite" xml:space="preserve"><value>Overwrite</value></data>
+  <data name="srcxl.kind.unchanged" xml:space="preserve"><value>Unchanged</value></data>
+  <data name="srcxl.kind.error" xml:space="preserve"><value>Error</value></data>
+  <data name="srcxl.detail.more" xml:space="preserve"><value>… {count} more</value></data>
+  <data name="srcxl.detail.rename_hint" xml:space="preserve"><value>Points are identical to delete candidate "{from}"; this looks like a renamed worksheet. A new device (new CoordinatorId) will be created and history will not carry over once the old one is deleted</value></data>
+  <data name="srcxl.detail.source_workbook" xml:space="preserve"><value>Source: {name}</value></data>
+  <data name="srcxl.detail.source_unknown" xml:space="preserve"><value>Source: unknown (placed manually)</value></data>
+  <data name="srcxl.detail.sid_shift" xml:space="preserve"><value>SID shift from point #{index} (high risk, extra confirmation required)</value></data>
+  <data name="srcxl.detail.tail_removed" xml:space="preserve"><value>{count} point(s) removed at the tail (their SID history becomes orphaned)</value></data>
+  <data name="srcxl.change.added" xml:space="preserve"><value>(added)</value></data>
+  <data name="srcxl.change.removed" xml:space="preserve"><value>(removed)</value></data>
+  <data name="srcxl.msg.preview_failed" xml:space="preserve"><value>Preview failed (HTTP {status})</value></data>
+  <data name="srcxl.msg.call_failed_with" xml:space="preserve"><value>Request failed: {error}</value></data>
+  <data name="srcxl.msg.nothing_selected" xml:space="preserve"><value>Nothing selected</value></data>
+  <data name="srcxl.msg.no_selectable_errors" xml:space="preserve"><value>Nothing can be imported: {count} worksheet(s) have errors (checkboxes are locked). Fix the Excel file per the red notes in the "Detail" column (e.g. fill in the IP, add at least one point) and upload again.</value></data>
+  <data name="srcxl.msg.no_selectable_unchanged" xml:space="preserve"><value>Nothing to import or delete: every worksheet matches the existing configuration.</value></data>
+  <data name="srcxl.msg.selection_summary" xml:space="preserve"><value>Import {imports} worksheet(s), delete {deletes} config(s)</value></data>
+  <data name="srcxl.msg.committing" xml:space="preserve"><value>Writing…</value></data>
+  <data name="srcxl.msg.commit_success" xml:space="preserve"><value>Import complete; reloading page</value></data>
+  <data name="srcxl.msg.commit_failed" xml:space="preserve"><value>Import failed (HTTP {status})</value></data>
+  <data name="srcxl.confirm.overwrite_list" xml:space="preserve"><value>The following {count} device config(s) will be overwritten:</value></data>
+  <data name="srcxl.confirm.delete_list" xml:space="preserve"><value>The following {count} config(s) will be deleted:</value></data>
+  <data name="srcxl.confirm.delete_note" xml:space="preserve"><value>After deletion the Engine stops polling; the config file is backed up in _deleted, DB rows and history are kept. Re-import a worksheet with the same name to restore.</value></data>
+  <data name="srcxl.confirm.delete_one" xml:space="preserve"><value>Delete the configuration of "{name}"?</value></data>
+  <data name="srcxl.msg.delete_success" xml:space="preserve"><value>Deleted</value></data>
+  <data name="srcxl.msg.delete_failed" xml:space="preserve"><value>Delete failed (HTTP {status})</value></data>
+</root>

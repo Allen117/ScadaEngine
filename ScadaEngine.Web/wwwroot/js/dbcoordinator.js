@@ -38,7 +38,22 @@
         document.getElementById('fieldMonitorEnabled').value  = c.monitorEnabled ? t('dbcoord.value.yes') : t('dbcoord.value.no');
         document.getElementById('fieldPointCount').value      = (c.points || []).length;
 
+        // 設定檔已移除標示 + 逐台刪除按鈕（Excel 匯入功能，共用 source-excel-import.js）
+        var note = document.getElementById('configMissingNote');
+        if (note) note.style.display = c.configMissing ? '' : 'none';
+        var btnDel = document.getElementById('btnDeleteSource');
+        if (btnDel) btnDel.style.display = c.configMissing ? 'none' : '';
+
         renderPointTable(c);
+    }
+
+    var btnDeleteSource = document.getElementById('btnDeleteSource');
+    if (btnDeleteSource) {
+        btnDeleteSource.addEventListener('click', function () {
+            var c = coordinators[nCurrentIndex];
+            if (!c || !window.SourceExcelImport) return;
+            window.SourceExcelImport.deleteSource(c.name);
+        });
     }
 
     // ── 點位列表 + 行內名稱編輯 ──────────────────────────────
@@ -206,8 +221,9 @@
         }
 
         var disabledBadge = '<span class="badge bg-secondary ms-1" style="font-size:.6rem;">' + escapeHtml(t('dbcoord.badge.disabled')) + '</span>';
+        var missingBadge = '<span class="badge bg-warning text-dark ms-1 srcxl-missing-badge">' + escapeHtml(t('dbcoord.badge.config_missing')) + '</span>';
         var html = coordinators.map(function (c, i) {
-            var badge = c.monitorEnabled ? '' : disabledBadge;
+            var badge = (c.monitorEnabled ? '' : disabledBadge) + (c.configMissing ? missingBadge : '');
             return '<a href="#" class="list-group-item list-group-item-action py-2 coordinator-item" data-index="' + i + '">' +
                 '<i class="fas fa-database me-1 text-secondary"></i>' +
                 '<span class="small">' + escapeHtml(c.name) + '</span>' +

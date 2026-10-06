@@ -1,9 +1,11 @@
+using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using Microsoft.Extensions.Localization;
 using ScadaEngine.Engine.Data.Interfaces;
 using ScadaEngine.Engine.Models;
 using ScadaEngine.Web.Features.DbCoordinator.Models;
+using ScadaEngine.Web.Services.SourceExcel;
 
 namespace ScadaEngine.Web.Services;
 
@@ -15,18 +17,15 @@ namespace ScadaEngine.Web.Services;
 /// 只開放改 Name：SID = DB{Id}-S{陣列索引+1}，增刪或重排會使後續 SID 位移、歷史資料錯接，
 /// 故點位順序與數量一律不動。
 ///
-/// 寫檔路徑由 appsettings.json 的 EngineDbPointConfig 明定（比照 EngineModbusConfig / EngineOpcUaConfig）：
-/// WatchedFolder = Engine 實際讀取的部署資料夾；MirrorFolder（可選，dev 用）鏡像寫回原始碼資料夾。
-/// 原子寫檔（*.json.tmp → File.Replace → 留 *.json.bak）。
-/// 現檔可能是 Excel 巨集產的 UTF-16 LE BOM，讀取依 BOM 自動偵測；寫回統一 UTF-8（Engine 兩種都讀得動）。
+/// 檔案 I/O（路徑解析、原子寫檔、鏡像寫回）走共用 <see cref="SourceConfigFileIo"/>（appsettings `EngineDbPointConfig`），
+/// 與 Excel 匯入同一份行為。現檔可能是舊巨集產的 UTF-16 LE BOM，讀取依 BOM 自動偵測；寫回統一 UTF-8（Engine 兩種都讀得動）。
 /// </summary>
 public class DbPointConfigFileService
 {
     private readonly IDataRepository _repository;
     private readonly ILogger<DbPointConfigFileService> _logger;
     private readonly IStringLocalizer<DbPointConfigFileService> _l;
-    private readonly IConfiguration _configuration;
-    private readonly IWebHostEnvironment _env;
+    private readonly SourceConfigFileIo _io;
 
     /// <summary>JSON 檔寫入互斥（static — Scoped service 跨請求共用）</summary>
     private static readonly SemaphoreSlim _fileGate = new(1, 1);
@@ -48,36 +47,12 @@ public class DbPointConfigFileService
         IDataRepository repository,
         ILogger<DbPointConfigFileService> logger,
         IStringLocalizer<DbPointConfigFileService> localizer,
-        IConfiguration configuration,
-        IWebHostEnvironment env)
+        SourceConfigFileIo io)
     {
         _repository = repository;
         _logger = logger;
         _l = localizer;
-        _configuration = configuration;
-        _env = env;
-    }
-
-    /// <summary>
-    /// 每次呼叫即時解析監控資料夾（Engine 實際讀取的 DBPoint 位置）— 不在建構子快取，
-    /// appsettings.json 熱重載改路徑即生效。相對路徑以 Web ContentRoot 為基準；未設定回傳 null（呼叫端明確報錯）。
-    /// 比照 ModbusConfigFileService 的 EngineModbusConfig 慣例，禁止猜測式 fallback。
-    /// </summary>
-    private string? GetWatchedFolder()
-    {
-        var szWatched = _configuration["EngineDbPointConfig:WatchedFolder"];
-        return string.IsNullOrWhiteSpace(szWatched)
-            ? null
-            : Path.GetFullPath(Path.Combine(_env.ContentRootPath, szWatched));
-    }
-
-    /// <summary>每次呼叫即時解析鏡像資料夾（可選，dev 用 — 同步寫回原始碼資料夾避免 rebuild 後設定倒退）</summary>
-    private string? GetMirrorFolder()
-    {
-        var szMirror = _configuration["EngineDbPointConfig:MirrorFolder"];
-        return string.IsNullOrWhiteSpace(szMirror)
-            ? null
-            : Path.GetFullPath(Path.Combine(_env.ContentRootPath, szMirror));
+        _io = io;
     }
 
     /// <summary>
@@ -105,16 +80,17 @@ public class DbPointConfigFileService
         await _fileGate.WaitAsync();
         try
         {
-            var szFolder = GetWatchedFolder();
+            var szFolder = _io.GetWatchedFolder(SourceConfigFileIo.DBPOINT_SECTION);
             if (szFolder == null)
                 return (false, _l["dbpointcfg.svc.folder_not_configured"].Value);
 
-            var szPath = Path.Combine(szFolder, coordinator.szName + ".json");
+            var szPath = SourceConfigFileIo.ResolveWithin(szFolder, coordinator.szName)
+                         ?? Path.Combine(szFolder, coordinator.szName + ".json");
             if (!File.Exists(szPath))
                 return (false, _l["dbpointcfg.svc.json_not_found", szPath].Value);
 
-            // File.ReadAllTextAsync 依 BOM 自動偵測編碼（Excel 巨集產出為 UTF-16 LE BOM）
-            var szJson = await File.ReadAllTextAsync(szPath);
+            // 依 BOM 自動偵測編碼（舊巨集產出為 UTF-16 LE BOM）
+            var (szJson, _) = await SourceConfigFileIo.ReadAllTextDetectEncodingAsync(szPath);
             DbPointJsonFile? file;
             try
             {
@@ -133,7 +109,9 @@ public class DbPointConfigFileService
             file.Points[nSequence - 1].Name = szNewName;
             file.Points[nSequence - 1].Unit = szNewUnit;
 
-            await WriteJsonFileAsync(szPath, file);
+            var szNewJson = JsonSerializer.Serialize(file, _jsonWriteOptions);
+            SourceConfigFileIo.AtomicWrite(szPath, szNewJson, Encoding.UTF8);
+            _io.MirrorWrite(SourceConfigFileIo.DBPOINT_SECTION, coordinator.szName, szNewJson, Encoding.UTF8);
 
             // 以剛寫回的 JSON 為準重建 DBPoints（走既有 SaveDbPointsAsync，DELETE+INSERT 冪等；
             // 映射邏輯與 Engine 載入器一致：Sequence = 索引+1、上限 100 點）
@@ -166,45 +144,6 @@ public class DbPointConfigFileService
         finally
         {
             _fileGate.Release();
-        }
-    }
-
-    /// <summary>
-    /// 原子寫檔 + 鏡像寫回（比照 OpcUaCoordinatorService）：
-    /// 先寫 *.json.tmp 再 File.Replace 原子替換（留 *.json.bak 備份），
-    /// 確保 Engine reload 任何瞬間讀到的都是完整舊檔或完整新檔。
-    /// </summary>
-    private Task WriteJsonFileAsync(string szPath, DbPointJsonFile file)
-    {
-        var szJson = JsonSerializer.Serialize(file, _jsonWriteOptions);
-
-        var szTmpPath = szPath + ".tmp";
-        File.WriteAllText(szTmpPath, szJson, System.Text.Encoding.UTF8);
-        if (File.Exists(szPath))
-            File.Replace(szTmpPath, szPath, szPath + ".bak", ignoreMetadataErrors: true);
-        else
-            File.Move(szTmpPath, szPath);
-
-        MirrorWrite(Path.GetFileName(szPath), szJson);
-        return Task.CompletedTask;
-    }
-
-    /// <summary>dev 環境鏡像寫回原始碼資料夾（失敗僅記 log，不影響主寫入）</summary>
-    private void MirrorWrite(string szFileName, string szContent)
-    {
-        var szMirrorFolder = GetMirrorFolder();
-        if (szMirrorFolder == null) return;
-
-        try
-        {
-            if (!Directory.Exists(szMirrorFolder)) return;
-            var szMirrorPath = Path.Combine(szMirrorFolder, szFileName);
-            File.WriteAllText(szMirrorPath, szContent, System.Text.Encoding.UTF8);
-            _logger.LogInformation("DBPoint 設定已鏡像寫回: {File}", szMirrorPath);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "DBPoint 鏡像寫回失敗（不影響主寫入）: {File}", szFileName);
         }
     }
 }

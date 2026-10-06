@@ -3,6 +3,9 @@
 
     var coordinators = window._modbusCoordinatorData || [];
 
+    /** DB 有 Coordinator 但 JSON 已移除的名稱（小寫）— 顯示「設定檔已移除」、隱藏點位設定與刪除按鈕 */
+    var aMissingConfig = (window._modbusMissingConfig || []).map(function (s) { return String(s).toLowerCase(); });
+
     var nCurrentIndex = -1;
     var nCurrentSubIndex = -1;
 
@@ -27,6 +30,7 @@
         document.getElementById('fieldMonitorEnabled').value = c.isMonitorEnabled ? t('modbuscoordinator.value.yes') : t('modbuscoordinator.value.no');
 
         showOpenPointsButton(c.szName || '');
+        updateSourceControls(c.szName || '');
     }
 
     function showSubDetail(id, modbusId, name, index, subIndex) {
@@ -44,6 +48,7 @@
         document.getElementById('saveStatus').style.display = 'none';
 
         hideOpenPointsButton();
+        updateSourceControls(null);
     }
 
     // 單一 Coordinator 點擊
@@ -152,6 +157,28 @@
 
     function hideOpenPointsButton() {
         if (btnOpenPoints) btnOpenPoints.style.display = 'none';
+    }
+
+    /* ── 設定檔已移除標示 + 逐台刪除（Excel 匯入功能，共用 source-excel-import.js）── */
+    var btnDeleteSource = document.getElementById('btnDeleteSource');
+    var configMissingNote = document.getElementById('configMissingNote');
+
+    /**
+     * 依目前選中的設備切換「刪除設備」按鈕與「設定檔已移除」提示。
+     * JSON 已移除的設備：隱藏點位設定（檔案不在了）與刪除按鈕，只顯示提示。
+     */
+    function updateSourceControls(szName) {
+        var isMissing = !!szName && aMissingConfig.indexOf(szName.toLowerCase()) >= 0;
+        if (configMissingNote) configMissingNote.style.display = isMissing ? '' : 'none';
+        if (btnDeleteSource) btnDeleteSource.style.display = (szName && !isMissing) ? '' : 'none';
+        if (isMissing) hideOpenPointsButton();
+    }
+
+    if (btnDeleteSource) {
+        btnDeleteSource.addEventListener('click', function () {
+            if (!szPointsCoordinator || !window.SourceExcelImport) return;
+            window.SourceExcelImport.deleteSource(szPointsCoordinator);
+        });
     }
 
     if (btnOpenPoints && pointsModalEl) {

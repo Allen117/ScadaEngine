@@ -629,6 +629,20 @@
 | 連線逾時 | Connect Timeout | 設備唯讀資訊列 |
 | 無變更 | No changes | 存檔提示 |
 | 短暫斷線重連 | briefly disconnect and reconnect | 存檔確認框 |
+| 下載範本 | Download Template | Excel 匯入工具列（_SourceExcelImport partial） |
+| 匯出 Excel | Export Excel | 工具列 |
+| 依來源 Excel 檔匯出 | Export by source workbook | 匯出下拉 |
+| 匯入 Excel | Import Excel | 工具列 |
+| 匯入預覽 | Import Preview | Modal 標題 |
+| 確認匯入 | Confirm Import | Modal 主按鈕 |
+| 新增 / 覆寫 / 無變更 / 錯誤 | New / Overwrite / Unchanged / Error | 預覽狀態徽章 |
+| 刪除候選 | Delete candidates | 預覽區塊 |
+| 其他未包含在這份 Excel 的既有設定 | Other existing configs not in this workbook | 預覽收合區 |
+| SID 位移 | SID shift | 高風險警示（中間插入/刪除/重排點位） |
+| 我了解歷史資料與控制對應會錯位，仍要覆寫 | I understand history and control mappings will be misaligned; overwrite anyway | 高風險確認勾選 |
+| 刪除設備 / 刪除來源 | Delete Device / Delete Source | ModbusCoordinator / DbCoordinator 詳情卡按鈕 |
+| 設定檔已移除 | Config removed | 側欄徽章（DB 有 Coordinator 但 JSON 不存在） |
+| 來源：{name} | Source: {name} | 既有設定的 SourceWorkbook |
 
 ## 計算點位 (CalcPoint)
 

@@ -7,6 +7,7 @@
 1. **子設備名稱編輯**：多站號（ModbusID 逗號分隔）設備可為每個站號取名（寫 `ModbusCoordinator.DeviceName`，主權在 DB）
 2. **點位熱編輯**（限 Admin）：選擇設備後，右側詳情卡片標題列出現「點位設定」按鈕，點擊彈出 Modal 視窗，原地編輯設備 JSON 內點位的 Name / Address / DataType / Ratio / Unit / Min / Max / **子設備（Device）**，存檔後 **不需重啟 Engine**，數秒內以新設定採集
 3. **站號內子設備分群（Tag.Device）**：一顆 PLC（單一站號）內放多台設備時，可為每個點位標註所屬子設備做分群，讓點位選擇器可展開瀏覽（見 §站號內子設備分群）
+4. **Excel 匯入／匯出／刪除**（限 Engineer）：頁首「下載範本／匯出 Excel／匯入 Excel」，上傳 .xlsx（或舊 .xlsm，巨集忽略）→ 預覽差異（新增／覆寫／無變更／錯誤 + 刪除候選）→ 勾選確認 → 寫 JSON，Engine watcher 數秒內生效；每台設備另有「刪除設備」按鈕。**取代舊 `Modbus通訊檔案產生工具.xlsm` 巨集流程**（見 §4.1）
 
 ### 點位熱編輯核心設計
 
@@ -61,7 +62,7 @@
 
 「SID → 站號內子設備」的解析（`split(',')` + `CoordinatorId*65536 + ModbusId*256` 落點）原本被複製 5+ 份、fallback 各自走偏。已收斂為 `wwwroot/js/common/point-grouping.js`（`window.PointGrouping`），對外提供 `parseCoord` / `subOfSid` / `pointDeviceLabel`（四級鏈）/ `coordDeviceGroups`（單站號盤點 Device、多站號回 null）等。designer / logicflow / calcpoint 點位選擇器據此讓「單站號有 Device」的 Coordinator 可展開子選單 + 「未分群」桶；eventlog / energy-baseline / history 的設備標籤亦走同一支。
 
-> ⚠️ **現場 `Modbus通訊檔案產生工具.xlsm` 需同步**：巨集若不加 `Device` 欄輸出，現場重產設定檔會讓分群整批消失（VBA 需人工改，見 docs/plans 對應 plan）。
+> ℹ️ 舊 `Modbus通訊檔案產生工具.xlsm` 巨集不輸出 `Device` 欄，已於 2026-10 移除；改由 Web「匯入 Excel」（§4.1）產生 JSON，範本 H 欄即 Device。用**舊版面 xlsm 直接上傳**時 Device 會是空白，預覽差異會顯示 `Device: X → ` — 建議「先匯出再改」。
 
 ## 2. 路由
 
@@ -71,6 +72,11 @@
 | POST | `/ModbusCoordinator/UpdateDeviceName` | 更新子設備名稱（寫 DB） | 需登入 |
 | GET  | `/ModbusCoordinator/Points/{name}` | 讀取設備 JSON 點位清單 | **Admin** |
 | POST | `/ModbusCoordinator/UpdatePoints` | 原地更新點位欄位（寫 JSON） | **Admin** |
+| GET  | `/ModbusCoordinator/ImportTemplate` | 下載空白 Excel 範本（`Modbus範本.xlsx`） | Engineer |
+| GET  | `/ModbusCoordinator/ExportExcel?workbook=` | 匯出現行設定為 .xlsx（一個 JSON 一張工作表；`workbook` 省略 = 全部，指定 = 只匯出該來源 Excel 檔的設備） | Engineer |
+| POST | `/ModbusCoordinator/ImportPreview` | 上傳 .xlsx/.xlsm（multipart `file`）→ 解析、驗證、比對既有 JSON → 回傳預覽 + `token`（**不寫檔**） | Engineer |
+| POST | `/ModbusCoordinator/ImportCommit` | `{ token, importSheets[], deleteNames[], acknowledgeSidShift }` → 提交前重新比對 → 寫檔／刪檔；預覽後設定被更動回 **409** | Engineer |
+| POST | `/ModbusCoordinator/DeleteSource` | `{ name }` 逐台刪除（JSON 移到 `_deleted/`） | Engineer |
 
 `{name}` = Coordinator 名稱 = JSON 檔名（不含副檔名）。非 Admin 直接呼叫回 403，頁面上不渲染編輯卡片。
 
@@ -109,6 +115,73 @@ Web UI 存檔（Admin）
 - Ratio 必須為數字；Min / Max 為數字或留空
 - 無任何欄位變更時不寫檔（不觸發重連）
 
+## 4.1 Excel 匯入／匯出／刪除（取代 xlsm 巨集）
+
+**第一性原理**：舊巨集只做「儲存格 → 欄位」直接對應，沒有任何邏輯需要 Excel 本身；真正要消除的是「啟用巨集、每張表按一次、手動搬檔」這些人工步驟。JSON 保留為 Engine 內部存檔格式（熱編輯、watcher、升級備份都建立在它上面），使用者不再接觸。
+
+### 流程
+
+```
+Install.bat → 填 Modbus範本.xlsx（任何能編輯 xlsx 的軟體；或頁面「匯出 Excel」拿現行設定來改）
+  → Engineer 登入 /ModbusCoordinator → 「匯入 Excel」上傳
+  → POST ImportPreview：ClosedXML 解析每張工作表 → 驗證 → 與既有 JSON 比對 → 預覽（不寫檔；結果以 token 暫存 IMemoryCache 10 分鐘、綁定使用者）
+  → 使用者勾選 → 有覆寫／刪除時確認對話框列出名稱 → POST ImportCommit
+  → 提交前重新比對既有檔 SHA-256（有人同時熱編輯 → 409 要求重新預覽）
+  → System.Text.Json 寫 JSON（原子寫檔 tmp → File.Replace；新檔 UTF-16 LE BOM、既有檔沿用原編碼；頂層多寫 SourceWorkbook=上傳檔名）
+  → Engine watcher Created/Renamed → 去抖 1 秒 → 重載；刪除 → Deleted → 依「檔名 → IP:Port」對照停止採集
+```
+
+### 範本版面（沿用舊 xlsm，舊檔可直接上傳）
+
+| 位置 | 內容 |
+|------|------|
+| 第 1 列 | `A1=IP` `B1=值`、`C1=Port` `D1=502`、`E1=ModbusID` `F1=1,2,3`、`G1=ConnectTimeout` `H1=1000`（以**標籤文字**掃描第 1 列取右側值，找不到才退回固定位置；Port 空白 → 502、ConnectTimeout 空白 → 1000） |
+| 第 2 列 | 欄位標題 |
+| 第 3 列起 | `A~G = Name / Address / DataType / Ratio / Unit / Min / Max`，**`H = Device`（可留白）**；`I` 欄 DataType 清單（C 欄下拉驗證來源） |
+| 工作表名稱 | = 設備名稱 = JSON 檔名；一個 Excel 可放多張工作表（現場習慣**一盤／一 Gateway 一份 Excel、一盤多設備**） |
+
+- Address 欄為文字格式，保留 6 位數擴充慣例的前導 0（`000001`）；數值儲存格 `40001` 讀成 `"40001"`
+- 名稱空白的列整列略過並在預覽提示「第 N 列已略過」；最後一筆有名稱的列之後不讀
+- 驗證（與 Engine 載入一致，錯誤指出「工作表 + 列 + 欄 + 原因」，該張不可匯入、其他合法工作表仍可）：IP 必填、Port 1~65535、ModbusID 0~255 逗號分隔、Address 格式、DataType 白名單、**BIT 型別只能配 3xxxx/4xxxx**（否則 Engine 載入會跳過該點 → 後續 SID 位移）、Ratio/Min/Max 數字
+- JSON 字串經 System.Text.Json 跳脫（修正巨集名稱含 `"` / `\` 會壞檔的問題）
+
+### 預覽分類與確認規則
+
+| 分類 | 條件 | 預設勾選 |
+|------|------|---------|
+| 新增 | 既有 JSON 不存在 | ✅ |
+| 覆寫 | 既有 JSON 存在且有差異（列出設備層欄位與逐點「欄位: 舊 → 新」） | ✅（提交前確認框列出名稱） |
+| 無變更 | 內容相同（匯出後不改直接匯入即此狀態） | 不可勾 |
+| 錯誤 | 格式錯誤 | 不可勾 |
+| 刪除候選 | 既有 JSON 的 `SourceWorkbook` 與這次上傳檔名相同（不分大小寫、忽略副檔名）、但這次沒有的工作表 | ✅（確認框列出） |
+| 其他未包含 | 其他盤或舊流程手動放入（`SourceWorkbook` 不同或缺） | ☐（預設收合） |
+
+- **整份都不可勾選時**（工作表全是錯誤／無變更、也沒有刪除候選）：預覽頂部顯示黃底說明、底部狀態列紅字「沒有可匯入的項目：N 張工作表有錯誤…」而非「尚未勾選任何項目」。常見情境是直接上傳**空白範本**（IP 未填、無點位）—— 修正 Excel 後重新上傳即可，勾選框並非故障
+
+- **SID 位移**（高風險、不擋）：逐點比對 Name，只在尾端增減 → 一般覆寫；中間插入／刪除／換順序 → 標示「第 N 點起 SID 位移」，需另外勾選「我了解歷史資料與控制對應會錯位」才能提交。同位置改名且新舊名稱都不在另一側 → 視為原地改名，不算位移
+- **工作表改名**：新增的工作表點位名稱與某刪除候選完全相同 → 提示「可能是改名：會建立新 CoordinatorId，歷史不會接上」
+- Excel 改檔名（`盤A_v2.xlsx`）時舊設備落到「其他」區不會自動勾選 → 預覽每筆都顯示來源檔名
+
+### 刪除語意
+
+- 刪除 = `{name}.json` 移到 `Modbus/_deleted/{name}_{yyyyMMddHHmmss}.json`（子資料夾不在 watcher 與載入範圍；人工搬回即復原）
+- Engine 收到 `Deleted` → 依 ModbusCollectionManager 的「檔名 → IP:Port」對照 `StopDeviceCollectionAsync`；兩個設定檔共用同一 IP:Port 時另一個還在就不停
+- `ModbusCoordinator` / `ModbusPoints` 與歷史資料**都不刪**：同名重新匯入時 CoordinatorId 不變、SID 一致、歷史接得上；頁面對「DB 有 Coordinator 但 JSON 不存在」者標示「設定檔已移除」並隱藏點位設定
+- 同資料夾 `X.json → Y.json` 改名也視為 X 移除 + Y 新增；`File.Replace` 的 `X.json → X.json.bak` 中間步驟（同資料夾、新名非 .json）不算移除
+
+### 相關元件
+
+| 元件 | 用途 |
+|------|------|
+| `Services/SourceExcel/SourceConfigFileIo.cs` | 共用檔案 I/O：路徑防護、BOM 編碼偵測、原子寫檔、鏡像、`_deleted/`（熱編輯與匯入共用） |
+| `Services/SourceExcel/ISourceExcelAdapter.cs` + `ModbusExcelAdapter.cs` / `DbPointExcelAdapter.cs` | 各來源版面解析、驗證、JSON 序列化、範本版面（純函數，Singleton） |
+| `Services/SourceExcel/SourceExcelDiffBuilder.cs` | 新增／覆寫／無變更、SID 位移、刪除候選分區 |
+| `Services/SourceExcel/SourceExcelImportCoordinator.cs` | 預覽 → token → 提交前重比對 → 寫檔／刪檔；範本與匯出（Scoped） |
+| `Services/SourceExcel/SourceExcelTemplateWriter.cs` | ClosedXML 組 workbook |
+| `Features/Shared/Views/_SourceExcelImport.cshtml` + `wwwroot/js/common/source-excel-import.js` + `css/source-excel-import.css` | 工具列 + 預覽／確認 Modal（兩頁共用，`data-srcxl-base` 參數化） |
+| `ScadaEngine.Engine/Modbus/Modbus範本.xlsx` | 隨 Release 附的空白範本（由 TemplateWriter 產生） |
+| `ScadaEngine.Tests/SourceExcel/*` | 解析／驗證／差異／往返單元測試 |
+
 ## 5. 已知限制與運維注意
 
 - **改 Address 後 SID 不變**：歷史資料無縫接續 — 同一 SID 前後量測不同實體暫存器屬運維語意責任（存檔確認框已註明）
@@ -126,5 +199,6 @@ Web UI 存檔（Admin）
 | `Features/ModbusCoordinator/Models/ModbusPointEditDtos.cs` | 點位 DTO + 更新請求/結果 |
 | `ScadaEngine.Web/Services/ControlEventLogger.cs` | `LogPointConfigChangedAsync` 稽核寫入 |
 | `wwwroot/js/modbuscoordinator.js` | 點位表格載入 / 驗證 / 存檔（IIFE） |
-| `ScadaEngine.Engine/.../ModbusCollectionManager.cs` | watcher 去抖重載 |
-| `ScadaEngine.Engine/.../ModbusConfigService.cs` | watcher（Changed / Created / Renamed） |
+| `ScadaEngine.Engine/.../ModbusCollectionManager.cs` | watcher 去抖重載；「檔名 → IP:Port」對照，設定檔移除時停止採集 |
+| `ScadaEngine.Engine/.../ModbusConfigService.cs` | watcher（Changed / Created / Renamed / **Deleted**） |
+| `Services/SourceExcel/*`、`Features/Shared/Views/_SourceExcelImport.cshtml`、`js/common/source-excel-import.js` | Excel 匯入／匯出／刪除（見 §4.1） |
