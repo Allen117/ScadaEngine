@@ -1,4 +1,4 @@
-# SCADA Web Service Deployment Script
+# JOULARIS Web Deployment Script
 # Encoding: UTF-8
 
 param([string]$Action = "status")
@@ -12,8 +12,8 @@ $ProjectPath = Split-Path -Parent $ScriptPath
 $TargetPath = "C:\SCADA\Web\App"
 
 # Service configuration
-$ServiceName = "ScadaWebService"
-$ServiceDisplayName = "SCADA Web Service"
+$ServiceName = "JoularisWeb"
+$ServiceDisplayName = "JOULARIS Web"
 $ServiceDescription = "SCADA Web Dashboard (http://0.0.0.0:5038)"
 
 # Function: Check service status
@@ -335,7 +335,7 @@ function Show-Logs {
 
 # Function: Diagnose
 function Diagnose-Service {
-    Write-Host "=== SCADA Web Service Diagnostics ===" -ForegroundColor Cyan
+    Write-Host "=== JOULARIS Web Diagnostics ===" -ForegroundColor Cyan
 
     Write-Host "`n1. Service Status:" -ForegroundColor Yellow
     Get-ServiceStatus
@@ -411,7 +411,7 @@ switch ($Action.ToLower()) {
     "diagnose"  { Diagnose-Service }
     "cleanup"   { Force-Cleanup }
     default {
-        Write-Host "SCADA Web Service Deployment Tool" -ForegroundColor Cyan
+        Write-Host "JOULARIS Web Deployment Tool" -ForegroundColor Cyan
         Write-Host ""
         Write-Host "Available actions:"
         Write-Host "  .\DeployWebService.ps1 install   - Install service to $TargetPath"

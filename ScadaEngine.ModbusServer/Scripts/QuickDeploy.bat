@@ -1,6 +1,6 @@
 @echo off
 echo ========================================
-echo    SCADA Modbus Gateway Service Manager
+echo    JOULARIS Modbus Gateway Manager
 echo ========================================
 echo.
 

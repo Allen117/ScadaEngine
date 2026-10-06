@@ -1,6 +1,6 @@
 @echo off
 echo ========================================
-echo        SCADA Web Service Manager
+echo        JOULARIS Web Manager
 echo ========================================
 echo.
 
@@ -47,13 +47,13 @@ goto main
 
 :INSTALL
 echo.
-echo Installing SCADA Web Service...
+echo Installing JOULARIS Web...
 powershell.exe -ExecutionPolicy Bypass -File "%~dp0DeployWebService.ps1" -Action install
 goto CONTINUE
 
 :UNINSTALL
 echo.
-echo Uninstalling SCADA Web Service...
+echo Uninstalling JOULARIS Web...
 powershell.exe -ExecutionPolicy Bypass -File "%~dp0DeployWebService.ps1" -Action uninstall
 goto CONTINUE
 

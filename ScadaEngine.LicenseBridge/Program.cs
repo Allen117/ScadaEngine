@@ -14,7 +14,7 @@ Log.Logger = new LoggerConfiguration()
 try
 {
     var host = Host.CreateDefaultBuilder(args)
-        .UseWindowsService(o => o.ServiceName = "ScadaEngineLicense")
+        .UseWindowsService(o => o.ServiceName = "JoularisLicense")
         .UseSerilog((ctx, services, cfg) => cfg
             .WriteTo.Console()
             .WriteTo.File(

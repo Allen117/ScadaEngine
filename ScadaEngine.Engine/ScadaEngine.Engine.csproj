@@ -9,12 +9,9 @@
     <PublishSingleFile>false</PublishSingleFile>
     <SelfContained>false</SelfContained>
     <UseAppHost>true</UseAppHost>
-    <AssemblyTitle>SCADA Engine Service</AssemblyTitle>
+    <AssemblyTitle>JOULARIS Engine</AssemblyTitle>
     <AssemblyDescription>SCADA 監控系統核心引擎服務 - Modbus/MQTT 通訊與資料採集</AssemblyDescription>
-    <AssemblyCompany>工研院</AssemblyCompany>
-    <AssemblyProduct>SCADA Engine</AssemblyProduct>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <AssemblyFileVersion>1.0.0.0</AssemblyFileVersion>
+    <!-- 版號由 repo 根目錄 Directory.Build.props 集中提供 -->
   </PropertyGroup>
 
   <!-- HASP 原生執行期 DLL：TargetPath 指定輸出根目錄，確保 publish 後在 exe 同層 -->

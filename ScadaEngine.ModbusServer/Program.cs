@@ -54,7 +54,7 @@ try
 
     if (isWindowsService)
     {
-        builder.Services.AddWindowsService(options => options.ServiceName = "SCADA Modbus Gateway Service");
+        builder.Services.AddWindowsService(options => options.ServiceName = "JOULARIS Modbus Gateway");
     }
 
     builder.Host.UseSerilog();

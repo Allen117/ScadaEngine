@@ -1,9 +1,9 @@
-# SCADA Engine Service 自動恢復設定腳本
+# JOULARIS Engine 自動恢復設定腳本
 # 此腳本設定服務失敗時的自動重啟策略
 
 param(
     [Parameter(Mandatory=$false)]
-    [string]$szServiceName = "ScadaEngineService"
+    [string]$szServiceName = "JoularisEngine"
 )
 
 function Write-Log {
@@ -54,7 +54,7 @@ function Set-ServiceRecoveryOptions {
             sc.exe failureflag $szServiceName 1 | Out-Null
             
             # 設定恢復程式（可選）
-            # sc.exe failure $szServiceName reboot= "SCADA Engine Service 發生嚴重錯誤，系統將重新啟動"
+            # sc.exe failure $szServiceName reboot= "JOULARIS Engine 發生嚴重錯誤，系統將重新啟動"
             
             Write-Log "恢復策略詳細設定："
             Write-Log "  - 失敗計數重置時間：24 小時"
@@ -184,7 +184,7 @@ function Show-ServiceConfiguration {
 
 # 主程式邏輯
 Write-Log "==============================================="
-Write-Log "SCADA Engine Service 恢復設定工具"
+Write-Log "JOULARIS Engine 恢復設定工具"
 Write-Log "==============================================="
 
 Write-Log "開始設定服務恢復與監控選項..."

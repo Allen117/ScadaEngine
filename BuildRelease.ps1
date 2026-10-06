@@ -1,7 +1,8 @@
 # SCADA 一鍵打包腳本 — 在開發機執行，產出可直接部署的資料夾
 # 用法: .\BuildRelease.ps1            （完整包，含 Python 基礎包）
 #       .\BuildRelease.ps1 -NoPython  （app-only 更新包，不含 Python；目標機沿用現有 Python）
-# 產出: .\Release\SCADA_Release_yyyyMMdd\
+# 產出: .\Release\SCADA_Release_yyyyMMdd_HHmm_vYY.A.B\
+#       版號取自 repo 根目錄 Directory.Build.props <Version>（CLAUDE.md §版本號規則）
 param([switch]$NoPython)
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -9,13 +10,26 @@ param([switch]$NoPython)
 $RootPath = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Definition }
 if (-not $RootPath) { $RootPath = (Get-Location).Path }
 $DateTag = Get-Date -Format "yyyyMMdd_HHmm"
-$ReleasePath = Join-Path $RootPath "Release\SCADA_Release_$DateTag"
+$BuildDate = Get-Date -Format "yyyy-MM-dd"
+
+# 產品版號唯一真相來源：Directory.Build.props <Version>。同一份數字同時進 csproj（exe 檔案屬性、
+# Web footer）與這裡（包名 + Install.bat 的 Windows 服務描述），改一處四處同步。
+$propsPath = Join-Path $RootPath "Directory.Build.props"
+[xml]$propsXml = Get-Content $propsPath -Raw -Encoding UTF8
+$AppVersion = ($propsXml.Project.PropertyGroup | ForEach-Object { $_.Version } | Where-Object { $_ } | Select-Object -First 1)
+if (-not $AppVersion -or $AppVersion -notmatch '^\d{2}\.\d+\.\d+$') {
+    Write-Host "Directory.Build.props <Version> missing or not YY.A.B (got '$AppVersion')" -ForegroundColor Red
+    exit 1
+}
+# 包名保留 SCADA_Release_<日期> 前綴（QuickDeployAll.bat 以名稱倒序取最新，日期在前排序才正確），版號接尾
+$ReleasePath = Join-Path $RootPath "Release\SCADA_Release_${DateTag}_v$AppVersion"
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "  SCADA Release Builder" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Output: $ReleasePath"
+Write-Host "Version: $AppVersion  (Directory.Build.props)"
+Write-Host "Output:  $ReleasePath"
 Write-Host ""
 
 # Clean
@@ -263,7 +277,7 @@ Write-Host "[5/6] Creating install scripts..." -ForegroundColor Yellow
 @"
 @echo off
 echo ========================================
-echo   SCADA On-Site Installer
+echo   JOULARIS On-Site Installer  v$AppVersion
 echo ========================================
 echo.
 
@@ -362,9 +376,24 @@ if exist "C:\SCADA\Web\App\Setting" (
 
 echo [1/8] Stopping existing services (if any)...
 echo.
-net stop ScadaEngineService >nul 2>&1
-net stop ScadaWebService >nul 2>&1
-net stop ScadaEngineLicense >nul 2>&1
+net stop JoularisEngine >nul 2>&1
+net stop JoularisWeb >nul 2>&1
+net stop JoularisLicense >nul 2>&1
+
+:: -- Migrate legacy service names (pre-v26.1.0: ScadaEngineService / ScadaWebService / ScadaEngineLicense) --
+:: Windows cannot rename a service: stop + delete the old registration, the new-name create below
+:: re-registers the same exe. Without this the old and new service would BOTH point at the same exe
+:: and both auto-start -> Web fights over port 5038, Engine collects twice.
+:: NOTE: if services.msc is open, "sc delete" only MARKS the old service for deletion (it disappears
+:: after reboot); the new-name service is still created and started fine.
+for %%S in (ScadaEngineService ScadaWebService ScadaEngineLicense) do (
+    sc query %%S >nul 2>&1
+    if not errorlevel 1 (
+        echo [MIGRATE] Removing legacy service %%S ^(replaced by JOULARIS service names^)...
+        net stop %%S >nul 2>&1
+        sc delete %%S >nul 2>&1
+    )
+)
 
 echo [2/8] Installing Engine...
 echo.
@@ -405,12 +434,14 @@ if exist "%_PYDST%\python.exe" (
 )
 :PY_DONE
 echo.
-sc create ScadaEngineService binPath= "\"C:\SCADA\Engine\App\ScadaEngine.Engine.exe\"" DisplayName= "\"SCADA Engine Service\"" start= auto
+:: Service name = machine identifier (stable, no spaces). DisplayName / description = for humans:
+:: role (Backend / Frontend), product version (Directory.Build.props) and package build date.
+sc create JoularisEngine binPath= "\"C:\SCADA\Engine\App\ScadaEngine.Engine.exe\"" DisplayName= "JOULARIS Engine" start= auto
 :: sc create is a no-op when the service already exists (upgrade); force start type back
 :: to auto so a previously disabled service doesn't survive the reinstall and block net start
-sc config ScadaEngineService start= auto >nul
-sc description ScadaEngineService "Industrial SCADA data collection engine"
-sc failure ScadaEngineService reset= 86400 actions= restart/5000/restart/10000/restart/30000
+sc config JoularisEngine start= auto >nul
+sc description JoularisEngine "JOULARIS Engine | Backend - data collection (Modbus/DB/OPC UA -> MQTT/SQL) | v$AppVersion | $BuildDate"
+sc failure JoularisEngine reset= 86400 actions= restart/5000/restart/10000/restart/30000
 echo Engine installed.
 echo.
 
@@ -419,10 +450,10 @@ echo.
 :: -- Clean stale root files before deploy (same reason as Engine above) --
 if exist "C:\SCADA\Web\App" for %%F in ("C:\SCADA\Web\App\*") do del /Q "%%F" >nul 2>&1
 xcopy /E /I /Y "%~dp0Web\App" "C:\SCADA\Web\App"
-sc create ScadaWebService binPath= "\"C:\SCADA\Web\App\ScadaEngine.Web.exe\"" DisplayName= "\"SCADA Web Service\"" start= auto
-sc config ScadaWebService start= auto >nul
-sc description ScadaWebService "SCADA Web Dashboard (http://0.0.0.0:5038)"
-sc failure ScadaWebService reset= 86400 actions= restart/5000/restart/10000/restart/30000
+sc create JoularisWeb binPath= "\"C:\SCADA\Web\App\ScadaEngine.Web.exe\"" DisplayName= "JOULARIS Web" start= auto
+sc config JoularisWeb start= auto >nul
+sc description JoularisWeb "JOULARIS Web | Frontend - web dashboard (http://0.0.0.0:5038, https 7189) | v$AppVersion | $BuildDate"
+sc failure JoularisWeb reset= 86400 actions= restart/5000/restart/10000/restart/30000
 echo Web installed.
 echo.
 
@@ -430,10 +461,10 @@ echo [4/8] Installing License Bridge (HASP)...
 echo.
 :: net48 x86 bridge; exe path is hard-coded in Engine as C:\SCADA\LicenseBridge\ (no \App subfolder)
 xcopy /E /I /Y "%~dp0LicenseBridge\App" "C:\SCADA\LicenseBridge"
-sc create ScadaEngineLicense binPath= "\"C:\SCADA\LicenseBridge\ScadaEngine.LicenseBridge.exe\"" DisplayName= "\"SCADA Engine License Bridge\"" start= auto
-sc config ScadaEngineLicense start= auto >nul
-sc description ScadaEngineLicense "32-bit HASP verification bridge (Named Pipe)"
-sc failure ScadaEngineLicense reset= 86400 actions= restart/5000/restart/10000/restart/30000
+sc create JoularisLicense binPath= "\"C:\SCADA\LicenseBridge\ScadaEngine.LicenseBridge.exe\"" DisplayName= "JOULARIS License Bridge" start= auto
+sc config JoularisLicense start= auto >nul
+sc description JoularisLicense "JOULARIS License Bridge | Backend - 32-bit HASP verification (Named Pipe, Engine only) | v$AppVersion | $BuildDate"
+sc failure JoularisLicense reset= 86400 actions= restart/5000/restart/10000/restart/30000
 echo License Bridge installed.
 echo   NOTE: still needs the HASP USB dongle plugged in + Sentinel runtime driver on this server.
 echo.
@@ -496,18 +527,26 @@ if exist "C:\SCADA\Web\App\certs\ScadaEngine-CA.crt" (
 echo.
 
 echo [7/8] Opening firewall ports 5038 (HTTP) and 7189 (HTTPS)...
-netsh advfirewall firewall add rule name="ScadaEngine Web" dir=in action=allow protocol=TCP localport=5038
-netsh advfirewall firewall add rule name="ScadaEngine Web HTTPS" dir=in action=allow protocol=TCP localport=7189
+:: rule names renamed to JOULARIS (pre-v26.1.0: "ScadaEngine Web*"); delete old + any duplicate of the new before adding
+netsh advfirewall firewall delete rule name="ScadaEngine Web" >nul 2>&1
+netsh advfirewall firewall delete rule name="ScadaEngine Web HTTPS" >nul 2>&1
+:: also the names the old HTTPS doc told people to add by hand
+netsh advfirewall firewall delete rule name="ScadaEngine Web 5038" >nul 2>&1
+netsh advfirewall firewall delete rule name="ScadaEngine Web 7189" >nul 2>&1
+netsh advfirewall firewall delete rule name="JOULARIS Web" >nul 2>&1
+netsh advfirewall firewall delete rule name="JOULARIS Web HTTPS" >nul 2>&1
+netsh advfirewall firewall add rule name="JOULARIS Web" dir=in action=allow protocol=TCP localport=5038
+netsh advfirewall firewall add rule name="JOULARIS Web HTTPS" dir=in action=allow protocol=TCP localport=7189
 echo.
 
 echo [8/8] Starting services...
-net start ScadaEngineLicense
-net start ScadaEngineService
-net start ScadaWebService
+net start JoularisLicense
+net start JoularisEngine
+net start JoularisWeb
 echo.
 
 echo ========================================
-echo   Installation Complete!
+echo   Installation Complete!  JOULARIS v$AppVersion
 echo   Web URL: http://localhost:5038
 echo   Default login: ITRI / ITRI
 echo ========================================
@@ -528,17 +567,17 @@ echo   - Until each client installs the CA, browsers show a certificate warning 
 echo   - To remove the warning: copy the C:\SCADA\ClientCA_Installer folder to each client PC,
 echo     run install-ca-on-client.ps1 as Administrator, then fully restart the browser.
 echo   - Connect using the server IP printed in the certs output above (must match the certificate SAN).
-echo   - To disable HTTPS (HTTP-only on 5038): delete C:\SCADA\Web\App\certs\scada-web.pfx and restart ScadaWebService.
+echo   - To disable HTTPS (HTTP-only on 5038): delete C:\SCADA\Web\App\certs\scada-web.pfx and restart JoularisWeb.
 echo.
 echo ========================================
 echo   Service Status  (RUNNING = OK)
 echo ========================================
-echo [Engine ] ScadaEngineService
-sc query ScadaEngineService  | find "STATE"
-echo [Web    ] ScadaWebService
-sc query ScadaWebService     | find "STATE"
-echo [License] ScadaEngineLicense
-sc query ScadaEngineLicense  | find "STATE"
+echo [Engine ] JoularisEngine
+sc query JoularisEngine  | find "STATE"
+echo [Web    ] JoularisWeb
+sc query JoularisWeb     | find "STATE"
+echo [License] JoularisLicense
+sc query JoularisLicense | find "STATE"
 echo.
 echo If a line is blank or shows STOPPED, that service did not start -
 echo check its log and re-run this installer. (License also needs the HASP dongle.)
@@ -550,23 +589,23 @@ echo.
 :: timestamp) to C:\SCADA\install-log.txt - open that file any time to see how the last run went.
 set "_LOG=C:\SCADA\install-log.txt"
 set "_FAIL="
-sc query ScadaEngineService | find "RUNNING" >nul || set "_FAIL=1"
-sc query ScadaWebService    | find "RUNNING" >nul || set "_FAIL=1"
+sc query JoularisEngine  | find "RUNNING" >nul || set "_FAIL=1"
+sc query JoularisWeb     | find "RUNNING" >nul || set "_FAIL=1"
 set "_LICOK=1"
-sc query ScadaEngineLicense | find "RUNNING" >nul || set "_LICOK="
+sc query JoularisLicense | find "RUNNING" >nul || set "_LICOK="
 echo ========================================
 if defined _FAIL (
     echo   [RESULT] FAILED - Engine and/or Web is NOT running. See the states above.
 ) else (
     echo   [RESULT] SUCCESS - Engine + Web are RUNNING.
-    if not defined _LICOK echo   [NOTE] License not running yet - plug the HASP dongle then: net start ScadaEngineLicense
+    if not defined _LICOK echo   [NOTE] License not running yet - plug the HASP dongle then: net start JoularisLicense
 )
 echo   This result was also saved to: %_LOG%
 echo ========================================
->>"%_LOG%" echo [%DATE% %TIME%] ---- Install finished ----
-sc query ScadaEngineService  | find "STATE" >>"%_LOG%"
-sc query ScadaWebService     | find "STATE" >>"%_LOG%"
-sc query ScadaEngineLicense  | find "STATE" >>"%_LOG%"
+>>"%_LOG%" echo [%DATE% %TIME%] ---- Install finished (JOULARIS v$AppVersion) ----
+sc query JoularisEngine  | find "STATE" >>"%_LOG%"
+sc query JoularisWeb     | find "STATE" >>"%_LOG%"
+sc query JoularisLicense | find "STATE" >>"%_LOG%"
 if defined _FAIL (>>"%_LOG%" echo [%DATE% %TIME%] RESULT: FAILED ^(Engine/Web not running^)) else (>>"%_LOG%" echo [%DATE% %TIME%] RESULT: SUCCESS)
 echo.
 echo ----------------------------------------
@@ -580,11 +619,12 @@ Write-Host "  Install.bat created" -ForegroundColor Green
 
 # ModbusServer standalone installer — deliberately NOT part of Install.bat（安裝解耦，見 docs/plans）
 # 單引號 herestring：內容含 PowerShell 變數（$c/$p/$j），不可被 build 腳本插值；bat 內容須全 ASCII（Set-Content -Encoding ASCII）
+# 版號 / 日期以 __APPVERSION__ / __BUILDDATE__ 占位，寫檔前 -replace 代入
 @'
 @echo off
 setlocal
 echo ========================================
-echo   SCADA Modbus Gateway Installer
+echo   JOULARIS Modbus Gateway Installer  v__APPVERSION__
 echo   (standalone - NOT installed by Install.bat)
 echo ========================================
 echo.
@@ -598,7 +638,8 @@ if %errorLevel% NEQ 0 (
 
 set "_APP=C:\SCADA\ModbusServer\App"
 set "_BACKUP=C:\SCADA\_ModbusGatewayBackup"
-set "_SVC=ScadaModbusGatewayService"
+set "_SVC=JoularisModbusGateway"
+set "_OLDSVC=ScadaModbusGatewayService"
 set "_IS_UPGRADE=0"
 
 :: -- Detect upgrade: backup site config + AddressMap.json (address assignments must survive) --
@@ -613,6 +654,13 @@ if exist "%_APP%\Setting" (
 
 echo [1/6] Stopping existing service (if any)...
 net stop %_SVC% >nul 2>&1
+:: -- Migrate legacy service name (pre-v26.1.0): Windows cannot rename, so stop + delete the old one --
+sc query %_OLDSVC% >nul 2>&1
+if not errorlevel 1 (
+    echo [MIGRATE] Removing legacy service %_OLDSVC% ^(replaced by %_SVC%^)...
+    net stop %_OLDSVC% >nul 2>&1
+    sc delete %_OLDSVC% >nul 2>&1
+)
 
 echo [2/6] Copying files...
 xcopy /E /I /Y "%~dp0ModbusServer\App" "%_APP%" >nul
@@ -664,25 +712,29 @@ powershell -NoProfile -Command "$f='%_APP%\Setting\ModbusServerSetting.json'; $j
 echo [4/6] Registering Windows service...
 sc query %_SVC% >nul 2>&1
 if %errorLevel% NEQ 0 (
-    sc create %_SVC% binPath= "\"%_APP%\ScadaEngine.ModbusServer.exe\"" DisplayName= "\"SCADA Modbus Gateway Service\"" start= auto
-    sc description %_SVC% "SCADA realtime data Modbus TCP gateway (FC4 input registers, float32)"
+    sc create %_SVC% binPath= "\"%_APP%\ScadaEngine.ModbusServer.exe\"" DisplayName= "JOULARIS Modbus Gateway" start= auto
     sc failure %_SVC% reset= 86400 actions= restart/5000/restart/10000/restart/30000
 )
 :: upgrade path skips the create block above; force start type back to auto so a
 :: previously disabled service doesn't block the net start below
 sc config %_SVC% start= auto >nul
+:: description carries version + build date, so refresh it on every install (not only on create)
+sc description %_SVC% "JOULARIS Modbus Gateway | Backend - Modbus TCP gateway (FC4 input registers, float32) | v__APPVERSION__ | __BUILDDATE__"
 
 echo [5/6] Opening firewall for ports %MODBUS_PORT% (Modbus) and %WEB_PORT% (Web)...
+:: rule names renamed to JOULARIS (pre-v26.1.0: "SCADA Modbus Gateway *"); delete both old and new before adding
 netsh advfirewall firewall delete rule name="SCADA Modbus Gateway TCP" >nul 2>&1
 netsh advfirewall firewall delete rule name="SCADA Modbus Gateway Web" >nul 2>&1
-netsh advfirewall firewall add rule name="SCADA Modbus Gateway TCP" dir=in action=allow protocol=TCP localport=%MODBUS_PORT%
-netsh advfirewall firewall add rule name="SCADA Modbus Gateway Web" dir=in action=allow protocol=TCP localport=%WEB_PORT%
+netsh advfirewall firewall delete rule name="JOULARIS Modbus Gateway TCP" >nul 2>&1
+netsh advfirewall firewall delete rule name="JOULARIS Modbus Gateway Web" >nul 2>&1
+netsh advfirewall firewall add rule name="JOULARIS Modbus Gateway TCP" dir=in action=allow protocol=TCP localport=%MODBUS_PORT%
+netsh advfirewall firewall add rule name="JOULARIS Modbus Gateway Web" dir=in action=allow protocol=TCP localport=%WEB_PORT%
 
 echo [6/6] Starting service...
 net start %_SVC%
 echo.
 echo ========================================
-echo   Modbus Gateway installed!
+echo   JOULARIS Modbus Gateway installed!  v__APPVERSION__
 echo   Modbus TCP : port %MODBUS_PORT% (FC4, float32)
 echo   Address map: http://localhost:%WEB_PORT%
 echo ========================================
@@ -710,7 +762,7 @@ for /f "usebackq tokens=*" %%o in (`powershell -NoProfile -Command "$c=Get-NetTC
     set "PORT_OWNER=%%o"
 )
 exit /b
-'@ | Set-Content -Path "$ReleasePath\InstallModbusServer.bat" -Encoding ASCII
+'@ -replace '__APPVERSION__', $AppVersion -replace '__BUILDDATE__', $BuildDate | Set-Content -Path "$ReleasePath\InstallModbusServer.bat" -Encoding ASCII
 
 Write-Host "  InstallModbusServer.bat created (standalone gateway installer)" -ForegroundColor Green
 
@@ -725,11 +777,12 @@ Write-Host "========================================" -ForegroundColor Green
 Write-Host "  Build Complete!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "Output: $ReleasePath" -ForegroundColor Cyan
-Write-Host "Size:   ${totalSize} MB" -ForegroundColor Cyan
+Write-Host "Version: $AppVersion" -ForegroundColor Cyan
+Write-Host "Output:  $ReleasePath" -ForegroundColor Cyan
+Write-Host "Size:    ${totalSize} MB" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Folder structure:"
-Write-Host "  SCADA_Release_$DateTag\"
+Write-Host "  SCADA_Release_${DateTag}_v$AppVersion\"
 Write-Host "  +-- Install.bat              <- On-site: right-click Run as Admin (Engine + Web only)"
 Write-Host "  +-- InstallModbusServer.bat  <- Optional Modbus gateway (standalone, run separately)"
 if (-not $NoPython) {

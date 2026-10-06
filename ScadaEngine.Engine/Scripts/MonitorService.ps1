@@ -1,4 +1,4 @@
-# SCADA Engine Service 監控與維護腳本
+# JOULARIS Engine 監控與維護腳本
 # 提供服務健康檢查、日誌管理、效能監控等功能
 
 param(
@@ -12,7 +12,7 @@ param(
     [string]$szLogPath = "C:\SCADA\Engine\App\Log"
 )
 
-$szServiceName = "ScadaEngineService"
+$szServiceName = "JoularisEngine"
 
 function Write-Log {
     param([string]$szMessage, [string]$szLevel = "INFO")
@@ -69,7 +69,7 @@ function Get-ServiceHealthStatus {
 }
 
 function Show-ServiceMonitor {
-    Write-Log "開始監控 SCADA Engine Service (每 $nIntervalSeconds 秒更新一次)"
+    Write-Log "開始監控 JOULARIS Engine (每 $nIntervalSeconds 秒更新一次)"
     Write-Log "按 Ctrl+C 停止監控"
     Write-Log "==============================================="
     
@@ -79,7 +79,7 @@ function Show-ServiceMonitor {
             $nCounter++
             Clear-Host
             
-            Write-Host "SCADA Engine Service 監控面板" -ForegroundColor Green
+            Write-Host "JOULARIS Engine 監控面板" -ForegroundColor Green
             Write-Host "更新次數: $nCounter | 最後更新: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" -ForegroundColor Gray
             Write-Host "===============================================" -ForegroundColor Gray
             
@@ -246,7 +246,7 @@ function Show-ServicePerformance {
     try {
         $process = Get-Process -Id $healthStatus.Details.ProcessId
         
-        Write-Log "SCADA Engine Service 效能資訊:"
+        Write-Log "JOULARIS Engine 效能資訊:"
         Write-Log "==============================================="
         Write-Log "行程名稱: $($process.ProcessName)"
         Write-Log "行程 ID: $($process.Id)"
@@ -265,7 +265,7 @@ function Show-ServicePerformance {
 
 # 主程式邏輯
 Write-Log "==============================================="
-Write-Log "SCADA Engine Service 監控與維護工具"
+Write-Log "JOULARIS Engine 監控與維護工具"
 Write-Log "==============================================="
 
 switch ($szAction.ToLower()) {

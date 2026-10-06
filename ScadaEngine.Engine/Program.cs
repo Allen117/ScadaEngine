@@ -49,7 +49,7 @@ try
     {
         builder.Services.AddWindowsService(options =>
         {
-            options.ServiceName = "SCADA Engine Service";
+            options.ServiceName = "JOULARIS Engine";
         });
     }
 

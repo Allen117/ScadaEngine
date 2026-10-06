@@ -1,4 +1,4 @@
-# SCADA Engine Service Deployment Script
+# JOULARIS Engine Deployment Script
 # Encoding: UTF-8
 
 param([string]$Action = "status")
@@ -14,8 +14,8 @@ $ProjectPath = Split-Path -Parent $ScriptPath
 $TargetPath = "C:\SCADA\Engine\App"
 
 # Service configuration
-$ServiceName = "ScadaEngineService"
-$ServiceDisplayName = "SCADA Engine Service"
+$ServiceName = "JoularisEngine"
+$ServiceDisplayName = "JOULARIS Engine"
 $ServiceDescription = "Industrial SCADA data collection engine"
 
 # Function: Check service status
@@ -575,7 +575,7 @@ function Show-Logs {
 
 # Function: Diagnose service environment
 function Diagnose-Service {
-    Write-Host "=== SCADA Engine Service Diagnostics ===" -ForegroundColor Cyan
+    Write-Host "=== JOULARIS Engine Diagnostics ===" -ForegroundColor Cyan
     
     # 1. 檢查服務狀態
     Write-Host "`n1. Service Status:" -ForegroundColor Yellow
@@ -755,7 +755,7 @@ function Deploy-LicenseBridge {
 
     $BridgeProject = Join-Path $SolutionRoot "ScadaEngine.LicenseBridge\ScadaEngine.LicenseBridge.csproj"
     $BridgeTarget  = "C:\SCADA\LicenseBridge"
-    $BridgeSvc     = "ScadaEngineLicense"
+    $BridgeSvc     = "JoularisLicense"
     $BridgeExe     = Join-Path $BridgeTarget "ScadaEngine.LicenseBridge.exe"
 
     Write-Host ""
@@ -799,7 +799,7 @@ function Deploy-LicenseBridge {
         Write-Host "Creating Windows Service: $BridgeSvc"
         sc.exe create $BridgeSvc `
             binPath= "`"$BridgeExe`"" `
-            DisplayName= "SCADA Engine License Bridge" `
+            DisplayName= "JOULARIS License Bridge" `
             start= auto | Out-Null
         sc.exe description $BridgeSvc "32-bit HASP 驗證橋接服務" | Out-Null
     }

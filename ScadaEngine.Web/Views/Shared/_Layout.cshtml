@@ -635,7 +635,8 @@
                         </svg>
                     </span>
                     <span class="me-3 d-inline-flex align-items-center">
-                        <i class="fas fa-code me-1"></i>@Localizer["layout.footer.version", "2.2.3"]
+                        @* 產品版號唯一來源 = Directory.Build.props <Version>，經 AppVersion 讀組件屬性（CLAUDE.md §版本號規則） *@
+                        <i class="fas fa-code me-1"></i>@Localizer["layout.footer.version", ScadaEngine.Web.Services.AppVersion.szCurrent]
                         <img src="~/images/itri-logo.svg" alt="ITRI" style="height:18px;vertical-align:middle;" class="ms-2" />
                     </span>
                     <span>

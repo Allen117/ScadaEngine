@@ -12,14 +12,14 @@ namespace ScadaEngine.Engine.Services;
 ///   驗證失敗 → 暫停 Modbus 採集 + 更新 LicenseState；
 ///   驗證恢復 → 恢復採集；
 ///   結果以 Retain MQTT 發布至 SCADA/Sys/License/Status。
-/// 驗證透過 Named Pipe 委派給 32-bit ScadaEngineLicense Bridge 服務。
+/// 驗證透過 Named Pipe 委派給 32-bit JoularisLicense Bridge 服務（Pipe 名稱維持 ScadaEngineLicense）。
 /// </summary>
 public class LicenseService : BackgroundService
 {
     private static readonly TimeSpan CHECK_INTERVAL = TimeSpan.FromMinutes(30);
 
     private const string PIPE_NAME  = "ScadaEngineLicense";
-    private const string BRIDGE_SVC = "ScadaEngineLicense";
+    private const string BRIDGE_SVC = "JoularisLicense";
     private const string BRIDGE_EXE = @"C:\SCADA\LicenseBridge\ScadaEngine.LicenseBridge.exe";
     private const string MQTT_STATUS_TOPIC = "SCADA/Sys/License/Status";
 
@@ -172,7 +172,7 @@ public class LicenseService : BackgroundService
         if (!exists)
         {
             _logger.LogInformation("Bridge 服務不存在，建立服務...");
-            RunSc($"create {BRIDGE_SVC} binPath= \"{BRIDGE_EXE}\" DisplayName= \"SCADA Engine License Bridge\" start= auto");
+            RunSc($"create {BRIDGE_SVC} binPath= \"{BRIDGE_EXE}\" DisplayName= \"JOULARIS License Bridge\" start= auto");
         }
 
         _logger.LogInformation("啟動 Bridge 服務...");

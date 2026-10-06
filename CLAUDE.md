@@ -58,6 +58,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 空一行後接 **body**：詳細內容照舊全寫（動機、設計決策、相容性、bug 修正、i18n / docs 同步），資訊量不減，只是從單行 subject 搬進 body，建議 `-` 條列分項
 - 歷史 commit 為千字單行 subject 舊格式，**不回改**；讀舊 history 時知悉即可
 
+## 版本號規則（YY.A.B）
+
+- 格式 `YY.A.B`：YY = 西元年末兩位（2026 → 26）、A = 功能版、B = 修正版
+- **有新增功能 → A+1、B 歸 0**；只修 bug / 重構 / 文案 / 文件 → **B+1**
+- 跨年：該年首次異動時 YY 換新、A 與 B 歸 0 後再依本次性質遞增（例 `27.1.0` 或 `27.0.1`）
+- 唯一真相來源：repo 根目錄 `Directory.Build.props` 的 `<Version>`，Web footer、Windows 服務描述、Release 包名、exe 檔案屬性皆由此帶出
+- **每次程式改完、commit 前，必須向使用者提出版本提議並等確認**，例：「本次新增 X 功能，26.1.0 → 26.2.0？」。使用者確認後才改版號，並與程式同一個 commit
+  - 走 plan 流程者，併入「實作完成後停下等使用者驗證」那一步一起問
+  - 「功能 vs 修正」由 Claude 提議、使用者裁定；拿不準就問，不可自行決定後直接 commit
+
 ## Project Overview
 
 .NET 8 SCADA 工業監控系統，包含 Engine（Modbus 資料採集 + MQTT 發布）與 Web（ASP.NET Core MVC 儀表板）。
@@ -75,8 +85,8 @@ Engine 是背景服務，無 HTTP endpoint。
 
 ### 測試撞埠時可暫停生產服務（2026-09-24 使用者授權）
 
-Web 埠 5038 寫死在 Program.cs（`ListenAnyIP`，環境變數無效），生產服務 `ScadaWebService` 佔住雙棧時開發實例起不來。
-**為了驗證改動而需要起開發 Web 實例時，允許 `Stop-Service ScadaWebService` 暫停生產服務**（Engine 對應 `ScadaEngineService` 同理）。
+Web 埠 5038 寫死在 Program.cs（`ListenAnyIP`，環境變數無效），生產服務 `JoularisWeb` 佔住雙棧時開發實例起不來。
+**為了驗證改動而需要起開發 Web 實例時，允許 `Stop-Service JoularisWeb` 暫停生產服務**（Engine 對應 `JoularisEngine` 同理；四個服務名見 docs/功能說明書_部署與遠端更新.md §服務命名）。
 
 - 驗完**同一輪必須復原**：關掉開發實例（路徑過濾殺進程，見下節）→ `Start-Service` 把停掉的服務全部拉回來，並確認 `Get-Service` 為 Running
 - 停/啟服務要在回覆中明講，讓使用者知道生產監控有中斷窗口

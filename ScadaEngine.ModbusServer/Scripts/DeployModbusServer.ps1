@@ -1,4 +1,4 @@
-# SCADA Modbus Gateway Service Deployment Script
+# JOULARIS Modbus Gateway Deployment Script
 # Encoding: UTF-8
 # 仿 Engine Scripts\DeployService.ps1，精簡版（無 Python / LicenseBridge / DB setup）
 
@@ -13,8 +13,8 @@ $ProjectPath = Split-Path -Parent $ScriptPath
 $TargetPath = "C:\SCADA\ModbusServer\App"
 
 # Service configuration
-$ServiceName = "ScadaModbusGatewayService"
-$ServiceDisplayName = "SCADA Modbus Gateway Service"
+$ServiceName = "JoularisModbusGateway"
+$ServiceDisplayName = "JOULARIS Modbus Gateway"
 $ServiceDescription = "SCADA realtime data Modbus TCP gateway (FC4 input registers, float32)"
 
 function Get-ConfiguredPorts {

@@ -745,8 +745,8 @@ dotnet run
 dotnet publish -c Release -o ./Publish
 
 # 註冊 Windows 服務
-sc.exe create "SCADA Engine Service" binPath="C:\path\to\ScadaEngine.Engine.exe"
-sc.exe start "SCADA Engine Service"
+sc.exe create JoularisEngine binPath="C:\path\to\ScadaEngine.Engine.exe" DisplayName="JOULARIS Engine"
+sc.exe start JoularisEngine
 ```
 
 ### 14.3 相依服務

@@ -1,6 +1,6 @@
 @echo off
 echo ========================================
-echo        SCADA Engine Service Manager
+echo        JOULARIS Engine Manager
 echo ========================================
 echo.
 
@@ -45,13 +45,13 @@ goto main
 
 :INSTALL
 echo.
-echo Installing SCADA Engine Service...
+echo Installing JOULARIS Engine...
 powershell.exe -ExecutionPolicy Bypass -File "%~dp0DeployService.ps1" -Action install
 goto CONTINUE
 
 :UNINSTALL
 echo.
-echo Uninstalling SCADA Engine Service...
+echo Uninstalling JOULARIS Engine...
 powershell.exe -ExecutionPolicy Bypass -File "%~dp0DeployService.ps1" -Action uninstall
 goto CONTINUE
 

@@ -8,12 +8,9 @@
     <PublishSingleFile>false</PublishSingleFile>
     <SelfContained>false</SelfContained>
     <UseAppHost>true</UseAppHost>
-    <AssemblyTitle>SCADA Modbus Gateway Service</AssemblyTitle>
+    <AssemblyTitle>JOULARIS Modbus Gateway</AssemblyTitle>
     <AssemblyDescription>SCADA 即時資料 Modbus TCP Server 對外閘道（FC4 Input Registers + float32）</AssemblyDescription>
-    <AssemblyCompany>工研院</AssemblyCompany>
-    <AssemblyProduct>SCADA Modbus Gateway</AssemblyProduct>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <AssemblyFileVersion>1.0.0.0</AssemblyFileVersion>
+    <!-- 版號由 repo 根目錄 Directory.Build.props 集中提供 -->
   </PropertyGroup>
 
   <ItemGroup>

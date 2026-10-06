@@ -41,7 +41,7 @@ Engine ──SQL(LatestData 啟動預填)──▶ │  ┌───────
 | 項目 | 值 |
 |------|-----|
 | 專案 | `ScadaEngine.ModbusServer`（net8.0，Kestrel + Worker） |
-| Windows 服務名 | `ScadaModbusGatewayService`（顯示名 SCADA Modbus Gateway Service） |
+| Windows 服務名 | `JoularisModbusGateway`（顯示名 JOULARIS Modbus Gateway；描述帶 Backend 角色 + 版號。v26.1.0 前為 `ScadaModbusGatewayService`，InstallModbusServer.bat 升級時自動停用並刪除舊名） |
 | 部署路徑 | `C:\SCADA\ModbusServer\App` |
 | 預設埠 | Modbus TCP **502** / 瀏覽網頁 HTTP **5041**（安裝時可改，見下；刻意避開 Win10/11 內建 CDPSvc 必占的 5040） |
 | 日誌 | 服務模式寫 `Log\ModbusGateway-*.log`（Serilog，30 天輪替） |

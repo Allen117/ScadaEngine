@@ -73,7 +73,7 @@
 ```powershell
 # 部署路徑
 powershell -ExecutionPolicy Bypass -File C:\SCADA\Web\App\certs\generate-https-cert.ps1
-net stop ScadaWebService; net start ScadaWebService   # 重啟讓 Kestrel 載入憑證
+net stop JoularisWeb; net start JoularisWeb   # 重啟讓 Kestrel 載入憑證
 ```
 
 > 開發機測試則於原始碼路徑 `ScadaEngine.Web\certs\` 直接跑 `./generate-https-cert.ps1`，`dotnet run` 即讀取。
@@ -81,8 +81,8 @@ net stop ScadaWebService; net start ScadaWebService   # 重啟讓 Kestrel 載入
 防火牆 5038 / 7189 由 Install.bat 自動放行；若手動部署（非 Install.bat），需自行放行：
 
 ```powershell
-New-NetFirewallRule -DisplayName "ScadaEngine Web 5038" -Direction Inbound -Protocol TCP -LocalPort 5038 -Action Allow
-New-NetFirewallRule -DisplayName "ScadaEngine Web 7189" -Direction Inbound -Protocol TCP -LocalPort 7189 -Action Allow
+New-NetFirewallRule -DisplayName "JOULARIS Web" -Direction Inbound -Protocol TCP -LocalPort 5038 -Action Allow
+New-NetFirewallRule -DisplayName "JOULARIS Web HTTPS" -Direction Inbound -Protocol TCP -LocalPort 7189 -Action Allow
 ```
 
 啟動 Web 後，控制台會印出實際可用的 HTTP / HTTPS 位址。

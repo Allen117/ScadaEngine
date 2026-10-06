@@ -1,7 +1,7 @@
 # SCADA Engine Windows Service 部署指南
 
 ## 概述
-SCADA Engine Service 是一個基於 .NET 8 的 Windows 服務，提供 Modbus/MQTT 通訊與資料採集功能。本服務設計為永續運行的系統服務，具備自動重啟、日誌記錄、效能監控等生產環境特性。
+JOULARIS Engine（Windows 服務名 `JoularisEngine`）是一個基於 .NET 8 的 Windows 服務，提供 Modbus/MQTT 通訊與資料採集功能。本服務設計為永續運行的系統服務，具備自動重啟、日誌記錄、效能監控等生產環境特性。
 
 ## 系統需求
 - **作業系統**: Windows 10/11 或 Windows Server 2019/2022
@@ -30,13 +30,13 @@ cd "C:\Users\A50388.ITRI\Desktop\ScadaEngine\ScadaEngine.Engine\Scripts"
 dotnet publish --configuration Release --self-contained true --runtime win-x64 --output "C:\SCADA\Engine\App"
 
 # 2. 註冊 Windows Service
-sc.exe create ScadaEngineService binPath="C:\SCADA\Engine\App\ScadaEngine.Engine.exe" start=auto DisplayName="SCADA Engine Service"
+sc.exe create JoularisEngine binPath="C:\SCADA\Engine\App\ScadaEngine.Engine.exe" start=auto DisplayName="JOULARIS Engine"
 
 # 3. 設定服務描述
-sc.exe description ScadaEngineService "SCADA 監控系統核心引擎 - Modbus/MQTT 通訊與資料採集"
+sc.exe description JoularisEngine "JOULARIS Engine | Backend - data collection | vYY.A.B | yyyy-MM-dd"
 
 # 4. 啟動服務
-sc.exe start ScadaEngineService
+sc.exe start JoularisEngine
 ```
 
 ## 服務管理
@@ -168,7 +168,7 @@ C:\SCADA\Engine\App\
 如需詳細除錯，可暫時以 Console 模式執行：
 ```cmd
 # 停止 Windows Service
-sc.exe stop ScadaEngineService
+sc.exe stop JoularisEngine
 
 # 以 Console 模式執行
 cd "C:\SCADA\Engine\App"
